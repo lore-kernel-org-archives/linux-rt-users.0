@@ -1,153 +1,89 @@
-Received: from mx.kolabnow.com (mx.kolabnow.com [212.103.80.153])
+Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 3447A2AE84;
-	Sat, 28 Dec 2024 18:24:11 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=212.103.80.153
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id C9AE919CCFC;
+	Tue, 31 Dec 2024 17:21:47 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1735410254; cv=none; b=lI5tdVL5a/b31qztH87bQgYtqVBdGM+/4dgoTHQGXDR9caFErrjNeKNP6FTrySGGYwDHvRvZ3Xtw46UIBetou7Mi7u/1y3B3P/yXtCvMhGC9BDse44sqEHnn1ojRAlrFwWOi8lgIzP4UluQtDKf5EiSa233eZHWiwDo7VvSk75k=
+	t=1735665707; cv=none; b=Ag6xGYFwC11JP+k+UTci12hh9u2FzOdKUVDT7+ISPnheMPEYUleq9qd4na03exfkiSj002V+v56HElJBTPBEqq/KFfY5kqmPUqikDs2lp6AT9ke94Cb4M/ObSzvAlWgaR62kv8E03jTbEQVg+nBIzq4/dMftyeyQRHv2x2pOqnA=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1735410254; c=relaxed/simple;
-	bh=W9X7p17yquGpl2tx6mVEIkuGE1Us+XeGw9X+OgjS5Vc=;
-	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=mJZLj/elPvGUK9+rnSkRtiyQ7OWEshYco2Je4eH2iErTXEiysZMPKx8AQa7OiZlMV/eB7Vqhzr8r0E7r9J1UhLu20rdoT3UPOnsKS3Og+6Ewjn6GrzaSo/GjZdpuHri8qVYj20CcU+8AtxAALZ9j+iXhiXJnIpt1rimKFvU/Q5w=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=she-devel.com; spf=pass smtp.mailfrom=she-devel.com; dkim=pass (2048-bit key) header.d=kolabnow.com header.i=@kolabnow.com header.b=jYXKNcTA; arc=none smtp.client-ip=212.103.80.153
-Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=she-devel.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=she-devel.com
-Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kolabnow.com header.i=@kolabnow.com header.b="jYXKNcTA"
-Received: from localhost (unknown [127.0.0.1])
-	by mx.kolabnow.com (Postfix) with ESMTP id 7904E2092280;
-	Sat, 28 Dec 2024 19:16:17 +0100 (CET)
-Authentication-Results: ext-mx-out011.mykolab.com (amavis);
- dkim=pass (2048-bit key) reason="pass (just generated, assumed good)"
- header.d=kolabnow.com
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=kolabnow.com; h=
-	content-transfer-encoding:organization:mime-version:message-id
-	:date:date:subject:subject:from:from:received:received:received;
-	 s=dkim20240523; t=1735409776; x=1737224177; bh=nL+MZ0VyHEjSS3oe
-	exumhAkBGkQi0VdLil4PCIZamn0=; b=jYXKNcTAJPOEJJ395zYrUX+IT31uiisE
-	+kYfJP4X9vWp/BPlYiAQ+bkjhzAzlr4wsCZ6Ub05FRBU4otFP+qlicZWbnE/O7Uc
-	j0ooJ4MJyHuDb1gQUnlSPlvlC4wSXMEV71uVjihgheJX9ttZhkHeLOlCuQGMyI/L
-	5NjDV5SPVjJ4b4VJI5v2xV/+YJhLMQnd7JcLLGvfS+z0pHpW+6ZyBdD4moDYMZN2
-	IhOkliHP/RL1cCAPSubtzjMgYfEpgjRg5eFzcXuP44y6WFVeRDYiaSHt+xMjo1JC
-	jjNCIrObLXu0AvM9oZ/zq5Ze/4T8dAn2Cyx8Fyk+UKkhFos4ufRKSg==
-X-Virus-Scanned: amavis at mykolab.com
-X-Spam-Flag: NO
-X-Spam-Score: -1
-X-Spam-Level:
-Received: from mx.kolabnow.com ([127.0.0.1])
- by localhost (ext-mx-out011.mykolab.com [127.0.0.1]) (amavis, port 10024)
- with ESMTP id ki73FNpCzVbV; Sat, 28 Dec 2024 19:16:16 +0100 (CET)
-Received: from int-mx009.mykolab.com (unknown [10.9.13.9])
-	by mx.kolabnow.com (Postfix) with ESMTPS id D07F420A53E5;
-	Sat, 28 Dec 2024 19:16:13 +0100 (CET)
-Received: from ext-subm010.mykolab.com (unknown [10.9.6.10])
-	by int-mx009.mykolab.com (Postfix) with ESMTPS id 1DFBE20DC7FB;
-	Sat, 28 Dec 2024 19:16:13 +0100 (CET)
-From: alison@she-devel.com
-To: corbet@lwn.net
-Cc: gratian.crisan@ni.com,
-	triegel@redhat.com,
-	bigeasy@linutronix.de,
-	rostedt@goodmis.org,
-	linux-kernel@vger.kernel.org,
-	linux-rt-users@vger.kernel.org,
-	alison@she-devel.com,
-	achaiken@aurora.tech
-Subject: [PATCH] Documentation: locking: update libc support status of PI futexes
-Date: Sat, 28 Dec 2024 10:15:46 -0800
-Message-ID: <20241228181546.1315328-1-alison@she-devel.com>
+	s=arc-20240116; t=1735665707; c=relaxed/simple;
+	bh=AS7sFPEyloo9TYdS4oO3ZNs7ufXRc7lIn0buH0r6Efo=;
+	h=From:Subject:Date:Message-ID:To; b=gwI2MBEuJQzVaRKAGF4o4sd1mjVf2iUFUpEzorAlQDZ5j90TJzsQiCG1u6CDy8jz0HB3ylv1bEI2X8eZkLLu4/dM3D7ENlYRo5tAn7PMz3RfP7b9APi+h6VDMGSc7E/hN9wdFao/I1lBzVpPtqhzXcy73jnFS6Z2NhZU5QbO1bM=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id 26456C4CED2;
+	Tue, 31 Dec 2024 17:21:47 +0000 (UTC)
+From: Clark Williams <williams@redhat.com>
+Subject: [ANNOUNCE] 6.1.120-rt47
+Date: Tue, 31 Dec 2024 17:16:49 -0000
+Message-ID: <173566540925.1432029.4935545966181953250@demetrius>
+To: LKML <linux-kernel@vger.kernel.org>,linux-rt-users <linux-rt-users@vger.kernel.org>,Steven Rostedt <rostedt@goodmis.org>,Thomas Gleixner <tglx@linutronix.de>,Carsten Emde <C.Emde@osadl.org>,John Kacur <jkacur@redhat.com>,Sebastian Andrzej Siewior <bigeasy@linutronix.de>,Daniel Wagner <daniel.wagner@suse.com>,Tom Zanussi <tom.zanussi@linux.intel.com>,Clark Williams <williams@redhat.com>,Pavel Machek <pavel@denx.de>,Joseph Salisbury <joseph.salisbury@oracle.com>,Luis Claudio R. Goncalves <lgoncalv@redhat.com>
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
 List-Subscribe: <mailto:linux-rt-users+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
-MIME-Version: 1.0
-Organization: Aurora Innovation
-Content-Transfer-Encoding: 8bit
 
-From: Alison Chaiken <alison@she-devel.com>
+Hello RT-list!
 
-Update the text of futex-requeue-pi.rst to explain that, because of a
-conflict between POSIX requirements and ABI constraints, glibc does
-not support requeueing of PI futexes.  Add some information about
-librtpi, a library which provides an implementation of condition
-variables which supports priority inheritance.
+I'm pleased to announce the 6.1.120-rt47 stable release.
 
-Signed-off-by: Alison Chaiken <alison@she-devel.com>
+Well, not so much pleased as embarrassed :)  This is a fix to a mistake
+I made when doing conflict resolution for merging the 6.1.120 kernel
+into the v6.1-rt stable tree. I picked the wrong diff hunk for the file
+drivers/net/vrf.c, which caused a reference to an invalid structure name.
+I compounded this mistake by skipping an 'allmodconfig' build, so shipped
+a borken vrf driver.
+
+Many thanks to Ranjan Dutta for pointing this out!
+
+You can get this release via the git tree at:
+
+  git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
+
+  branch: v6.1-rt
+  Head SHA1: 029f397b09cddc99b8748dc23a4c3d5a5cb1c85c
+
+Or to build 6.1.120-rt47 directly, the following patches should be applied:
+
+  https://www.kernel.org/pub/linux/kernel/v6.x/linux-6.1.tar.xz
+
+  https://www.kernel.org/pub/linux/kernel/v6.x/patch-6.1.120.xz
+
+  https://www.kernel.org/pub/linux/kernel/projects/rt/6.1/patch-6.1.120-rt47.patch.xz
+
+
+Enjoy!
+Clark
+
+Changes from v6.1.120-rt46:
 ---
- Documentation/locking/futex-requeue-pi.rst | 47 +++++++++++++++++++---
- 1 file changed, 42 insertions(+), 5 deletions(-)
 
-diff --git a/Documentation/locking/futex-requeue-pi.rst b/Documentation/locking/futex-requeue-pi.rst
-index dd4ecf4528a4..6ad7f0c9ea4b 100644
---- a/Documentation/locking/futex-requeue-pi.rst
-+++ b/Documentation/locking/futex-requeue-pi.rst
-@@ -54,7 +54,7 @@ In order to support PI-aware pthread_condvar's, the kernel needs to
- be able to requeue tasks to PI futexes.  This support implies that
- upon a successful futex_wait system call, the caller would return to
- user space already holding the PI futex.  The glibc implementation
--would be modified as follows::
-+would need to be modified as follows::
- 
- 
- 	/* caller must lock mutex */
-@@ -78,10 +78,20 @@ would be modified as follows::
- 		futex_requeue_pi(cond->data.__futex, cond->mutex);
- 	}
- 
--The actual glibc implementation will likely test for PI and make the
--necessary changes inside the existing calls rather than creating new
--calls for the PI cases.  Similar changes are needed for
--pthread_cond_timedwait() and pthread_cond_signal().
-+The actual glibc libpthread implementation has not made these changes,
-+nor has it made similar changes needed for pthread_cond_timedwait()
-+and pthread_cond_signal().  The reason is that POSIX has a strict
-+notion of "eligible" waiters on a futex, which means the set of
-+waiters created before a given signal is sent.  Because userspace has
-+no atomic way to perform lock operations together with the futex
-+system call, the implementation must also carefully guard against lost
-+wakeups on a multicore system.  These constraints mean that the
-+libpthread condition variable would need an ABI break into order to
-+support requeueing.  The fundamental underlying difficulty stems from
-+the limited size of the futex word, which is 32 bits even on 64-bit
-+systems.  See
-+https://wiki.linuxfoundation.org/realtime/events/rt-summit2016/pthread-condvars
-+for details.
- 
- Implementation
- --------------
-@@ -130,3 +140,30 @@ either pthread_cond_broadcast() or pthread_cond_signal() acquire the
- mutex prior to making the call. FUTEX_CMP_REQUEUE_PI requires that
- nr_wake=1.  nr_requeue should be INT_MAX for broadcast and 0 for
- signal.
-+
-+librtpi
-+--------------
-+
-+librtpi (https://gitlab.com/linux-rt/librtpi) implements condition
-+variables which closely follow the guidance above.  The librtpi
-+implementation adds a new mutex parameter to the waiting and signaling
-+functions in order to support the requirement that mutexes with the
-+PTHREAD_PRIO_INHERIT attribute always have an owner:
-+
-+int pi_cond_wait(pi_cond_t *cond, pi_mutex_t *mutex);
-+int pi_cond_signal(pi_cond_t *cond, pi_mutex_t *mutex);
-+
-+Realtime userspace applications which rely on librtpi must therefore
-+make code changes.
-+
-+librtpi works with the kernel scheduler to wake the highest-priority
-+waiters on a futex in FIFO order.  The code is much simpler than
-+glibc's at the cost of omitting some POSIX-mandated features.  librtpi
-+has no notion of POSIX's eligible waiters, and it does not support
-+robust, process-private or PTHREAD_PRIO_PROTECT mutexes.
-+
-+other C libraries
-+--------------
-+
-+Like glibc's NPTL, other prominent threading libraries like musl,
-+Thread Building Blocks and Boost do not implement futex requeueing.
--- 
-2.45.2
-
+Clark Williams (2):
+      net: fix mis-merge from stable in drivers/net/vrf.c
+      Linux 6.1.120-rt47
+---
+drivers/net/vrf.c | 2 +-
+ localversion-rt   | 2 +-
+ 2 files changed, 2 insertions(+), 2 deletions(-)
+---
+diff --git a/drivers/net/vrf.c b/drivers/net/vrf.c
+index c3e5fb98cf7f..164ffe1919de 100644
+--- a/drivers/net/vrf.c
++++ b/drivers/net/vrf.c
+@@ -154,7 +154,7 @@ static void vrf_get_stats64(struct net_device *dev,
+ 			tpkts = dstats->tx_packets;
+ 			tdrops = dstats->tx_drops;
+ 			rbytes = dstats->rx_bytes;
+-			rpkts = dstats->rx_pkts;
++			rpkts = dstats->rx_packets;
+ 		} while (u64_stats_fetch_retry(&dstats->syncp, start));
+ 		stats->tx_bytes += tbytes;
+ 		stats->tx_packets += tpkts;
+diff --git a/localversion-rt b/localversion-rt
+index 272158183778..8a777ac42aab 100644
+--- a/localversion-rt
++++ b/localversion-rt
+@@ -1 +1 @@
+--rt46
++-rt47
