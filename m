@@ -1,75 +1,79 @@
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id BEC8F146D57
-	for <linux-rt-users@vger.kernel.org>; Tue,  7 Jan 2025 22:02:39 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 360C03596C
+	for <linux-rt-users@vger.kernel.org>; Tue,  7 Jan 2025 22:02:43 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1736287361; cv=none; b=stcqgDB1jAssxVd8cCJj0xdNsSG3zR0+QgcxBmPpHpfGftxeIirtQuQTB46cv25uMOuwediy+8g2cQZMPcpo9Oa62GNv/7G4+ARlYESO3cfrKK+z0R6Qc07Of+QzhUnGFecmCJ5xL8pMfcqpt36/tUSRljNjWHaYSzab4gk6H9o=
+	t=1736287366; cv=none; b=coyQeKX3TtnHxvGJ9ab2wfSdFedRhP39epeF2N+BC9kUjZZKGhQyj+QTsHq2AmmCCq0WAMxtNikZNZ2KCrfqH4zCkrKJdjkcNpo+wmE5SqnvDO2FEVN2UzwGspWUiYJ+dMVH6dzet6pmetCrgdHNsxE6435mTT4/eiTTo2APt4o=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1736287361; c=relaxed/simple;
-	bh=8MPi/qiASsEBVUuvUngL0NJursIhW1YjFvyTDCSErfg=;
-	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=k4650+lOwVwZNW4DJ3YDKMLxEpmODjw0zXctoNR1pd2LXjbRo/dL3MnVFHxF4LSFnGciuL2J1ff9w0IijEniyVs0jpzdnkBxGG6FnMQ3hhPyucqMSjaERcSa7v6RsXMyw54SecpL4p8PMK3r9cd2QJPLXI/4kgseXpgSLQPmjQM=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=hkte5LQF; arc=none smtp.client-ip=170.10.129.124
+	s=arc-20240116; t=1736287366; c=relaxed/simple;
+	bh=4i4Z9R5XCF8jgkOApqDnWleGXBvKIncf38S7dne9vSk=;
+	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
+	 MIME-Version; b=WcVCDimxBl9O57JoRRACSt/mJSO6h/QKI+RK6HWCKOTUwELYBeWzvoscgRsFVCgyXzlz1jfbqUIJKLcH740PsxA/1zsaPLTDyftCAB0qe28ZMp/NAz1vRdJGsqZcu+h6qUO8x5z+ReQ7R+bewjdb1kjU8wI2q2S8BgkiiUC3udw=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=G2n9C1RA; arc=none smtp.client-ip=170.10.129.124
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="hkte5LQF"
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="G2n9C1RA"
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1736287358;
+	s=mimecast20190719; t=1736287363;
 	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
 	 to:to:cc:cc:mime-version:mime-version:
-	 content-transfer-encoding:content-transfer-encoding;
-	bh=rvP6mxlibHlhXHzgMqvT5/pAt4NYTiYGl2sZTTJqQg4=;
-	b=hkte5LQFBWsJ9QEBPmn42TutRgJfIYdZu+29QNtEDHpJrgNd1K3WbgVJ0c34awf+hxI7Hk
-	KoM3rA6XXz77xrcpUpFU9E6ADySTl8ZBxvB0hCBbm+oWEE7nRxhRl49wbXiaDD9kFz2ABF
-	fEFAHUO3al/Al4W5ol3WYhkBZ8RuNY8=
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references;
+	bh=woOeh0OqNuAIcJTTAVafTJw0IaURCPmTFY0QIPEcjBg=;
+	b=G2n9C1RAghuLIa4DTgedVfl0CZHAc0xcQ9tB8Qtn9Gw5a0n6ErBtSTrXaRNQSxOd/GP6dB
+	YUL7wVrLHLEwabAbi7ckzoTsh8uZWtnK2U83i/wQXbGBspt2VBuORxGJpxYpDLA3iNi2zi
+	theLoQDXVNiHyJnGPU2KzYXJGp4xkJc=
 Received: from mail-qt1-f199.google.com (mail-qt1-f199.google.com
  [209.85.160.199]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
- us-mta-261-nikaRDtjM3K9a2by8aJ3tw-1; Tue, 07 Jan 2025 17:02:37 -0500
-X-MC-Unique: nikaRDtjM3K9a2by8aJ3tw-1
-X-Mimecast-MFC-AGG-ID: nikaRDtjM3K9a2by8aJ3tw
-Received: by mail-qt1-f199.google.com with SMTP id d75a77b69052e-4679db55860so321294511cf.3
-        for <linux-rt-users@vger.kernel.org>; Tue, 07 Jan 2025 14:02:37 -0800 (PST)
+ us-mta-357-_Qjt-drAPN6zLOjRDJja-w-1; Tue, 07 Jan 2025 17:02:39 -0500
+X-MC-Unique: _Qjt-drAPN6zLOjRDJja-w-1
+X-Mimecast-MFC-AGG-ID: _Qjt-drAPN6zLOjRDJja-w
+Received: by mail-qt1-f199.google.com with SMTP id d75a77b69052e-467c08e67easo323423171cf.1
+        for <linux-rt-users@vger.kernel.org>; Tue, 07 Jan 2025 14:02:39 -0800 (PST)
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1736287357; x=1736892157;
-        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
-         :to:from:x-gm-message-state:from:to:cc:subject:date:message-id
-         :reply-to;
-        bh=rvP6mxlibHlhXHzgMqvT5/pAt4NYTiYGl2sZTTJqQg4=;
-        b=D93i/AKcauV+8pg6ltHHbHEVd5jjhJAYGaW1p3iVpXznH9zwykQIm6YTmyp0Z7H7x8
-         eoRqz5qIKZjpcpA02u89MLOe/aBxMsKQ4vgrnR1KO45gkhkN2Lke7S9Npg3qbaqB6Bud
-         TyI9x+lE+o4c1AttKAO4oYc7zqPpjJrOHXQi96juXJ3iexsC82flnNWgwRACodv3Wgx/
-         prFLq8Yzxk037TwkQoRle0NAZAJuuYuVwPQOUFlOTUrUd90wQrHyX1tiG25NvS4xRYPZ
-         3myvsxKuMk1KcSkjaM/SKaBPpr/7w/8y2yseX2kJCe1JZjp3vthaDbVTb7ubX1CzS7eX
-         MYrw==
-X-Gm-Message-State: AOJu0YwrpEpmxw7j82IAX+aO9gGpZPFs0oPKX/vyy4qcpDxFdYkzX2HD
-	TgGSBOUlotErRDSMLeVMHwh4FFKCqgnPfwpk+e7/Vjw6I0XZLRlrthY6IYkEwk2atFg4V5w9K5Y
-	+g2zwb6nZi+QWqR1EZIbJ1fXervQ+V6Eywbb+7UfeKsjycyvAo1aBNwGSOChBZitg
-X-Gm-Gg: ASbGnct0WnOCpUh/cFuFx9qeS5RipFI/WjrD2aX4c3Mxhh6thFfL/INNJwf3N4PonYn
-	G9vFqwW512htim/llGFvLDCXqGa2uqy9ZkbLdTI9GNEzs1nyqQu5y7BqZr0dZT54RTQZVaBKnEQ
-	ziJ5tRDCX4WNz9nRohhsA4RsVT6HKQo8lAlQqahoWcP5ysTB2VYreVJi2vSgjvxVgi0oE0ybfAY
-	DHKgXSxTaSjDB2C6xSUGgsTL6uuz1pyi2GvtrtrQCeyrCgczabspz8owoKMrFRs4hEh3LJr27Ac
-	46ph08ggaFT521hdZR8U2TpaLW+ruK9o3BNiXUhdIkMugQ==
-X-Received: by 2002:a05:622a:1a19:b0:467:6e45:2177 with SMTP id d75a77b69052e-46c70ffed13mr7375721cf.12.1736287356989;
-        Tue, 07 Jan 2025 14:02:36 -0800 (PST)
-X-Google-Smtp-Source: AGHT+IErquDYqFFTYyBGd5upVonOrMpA4LiGwCe8OOhEwlKE35ePeuh+ntf4jtRULLxuPrhSW9Q2VA==
-X-Received: by 2002:a05:622a:1a19:b0:467:6e45:2177 with SMTP id d75a77b69052e-46c70ffed13mr7375541cf.12.1736287356723;
-        Tue, 07 Jan 2025 14:02:36 -0800 (PST)
+        d=1e100.net; s=20230601; t=1736287359; x=1736892159;
+        h=content-transfer-encoding:mime-version:references:in-reply-to
+         :message-id:date:subject:cc:to:from:x-gm-message-state:from:to:cc
+         :subject:date:message-id:reply-to;
+        bh=woOeh0OqNuAIcJTTAVafTJw0IaURCPmTFY0QIPEcjBg=;
+        b=XizJhma5LSz7mjNnDESspRYpXn7mpJpcgrzlAUXQ0UyIDpPqkcJtmhVo9L7sOC2TFJ
+         QI+Xi7Pr2K7ta/5tcAngPc6ucB/lXDZ00f6QlMjGOE6u2oJ7ylwGZmBUXDzHac7SnAJR
+         ERcBj+ScYeMqcxMtv1eBznn7xj7TM0TLJMC7s0uDsmYqCxIabieOxXo/O0p1zIZo40OW
+         OMY3QeiZ+8Y7L97iPAmfGni/T892KujhXsT2p58Z1TEm+elATK7wIm9452CSCfdc9HnA
+         1x8I//yZ/RJvkFfp+dfmjoFvhUJRGsFJofSdKt30+uLemxHQFKrJcBe7pCvVs7vppgvI
+         ZXUQ==
+X-Gm-Message-State: AOJu0YyK4U5rSYvDQ3tEZ46QUA8cPm+87GYtCFsirQuhTiybzG2QlKxl
+	xfw2YVZmq9D532P+uu/joc8PE1QvG1k1eFiPcZOFEJipI4HUZpLiQi6Vv6fkliJViUSmzXX2w1W
+	F1VnabGjYfSvcOBzQ199GtCheyidtpYETN7o++BTLRdc7r8FwbSCdK8cnjC8GnPzf
+X-Gm-Gg: ASbGncuPtdQBEC4VbV6bk7gz6rWyyXvsWyjYq9sufdzt64FVgaZQWny5kIq0lHtXe4K
+	AdES3hejoKUZxh4jsSXvXFjZ8fI+/9Yoep/VcOE7uhWLjtvZC5PuW1HODlbzQ5zc6Ad4QoXcJpt
+	Yl69A3yiagUIQEsHThkm9v8X0t73nUNBmTP2H7GehAkrXNfjxoLPIhzbJ+DBH89j/VlxKvZ1ZOL
+	csuevABUc8CvkyTtkurK1qXPEOi3ZaW2lcZP+OY4e7mZ2aOVLKRBViLEw9OUlA8ZstrpcZDejO4
+	kA/82zY06i9iCb68Dfp4f/erGB3l/ffHBS8wbaETXprBHw==
+X-Received: by 2002:a05:622a:1a0d:b0:466:99a9:c354 with SMTP id d75a77b69052e-46c71005c9emr9093271cf.22.1736287359285;
+        Tue, 07 Jan 2025 14:02:39 -0800 (PST)
+X-Google-Smtp-Source: AGHT+IFW++rskcKSRGENRu3zZK7afIOdRsLBhliPfK46sptIjE5NDt0JSrLElVTbh7aPCyXBNVRcbQ==
+X-Received: by 2002:a05:622a:1a0d:b0:466:99a9:c354 with SMTP id d75a77b69052e-46c71005c9emr9092851cf.22.1736287358912;
+        Tue, 07 Jan 2025 14:02:38 -0800 (PST)
 Received: from crwood-thinkpadp16vgen1.minnmso.csb (syn-050-074-019-099.biz.spectrum.com. [50.74.19.99])
-        by smtp.gmail.com with ESMTPSA id d75a77b69052e-46a3e6ada4fsm189884261cf.52.2025.01.07.14.02.36
+        by smtp.gmail.com with ESMTPSA id d75a77b69052e-46a3e6ada4fsm189884261cf.52.2025.01.07.14.02.38
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Tue, 07 Jan 2025 14:02:36 -0800 (PST)
+        Tue, 07 Jan 2025 14:02:38 -0800 (PST)
 From: Crystal Wood <crwood@redhat.com>
 To: John Kacur <jkacur@redhat.com>
 Cc: linux-rt-users@vger.kernel.org,
 	Clark Williams <williams@redhat.com>,
 	Crystal Wood <crwood@redhat.com>
-Subject: [PATCH 0/3] rt-tests: -Wno-unused-parameter and -Werror
-Date: Tue,  7 Jan 2025 17:02:26 -0500
-Message-ID: <20250107220229.156201-1-crwood@redhat.com>
+Subject: [PATCH 1/3] rt-tests: Turn off -Wunused-parameter
+Date: Tue,  7 Jan 2025 17:02:27 -0500
+Message-ID: <20250107220229.156201-2-crwood@redhat.com>
 X-Mailer: git-send-email 2.47.1
+In-Reply-To: <20250107220229.156201-1-crwood@redhat.com>
+References: <20250107220229.156201-1-crwood@redhat.com>
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
@@ -78,29 +82,32 @@ List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 
-Disable unused parameter warnings and remove associated annotations,
-and enable -Werror to catch new warnings
+-Wunused-parameter (part of -Wextra) is an obnoxious warning as it flags
+perfectly reasonable code that takes unneeded parameters in order to
+comply with a function pointer interface, or where the parameter is used
+only by code inside an ifdef, etc.  This results in numerous annotations
+just to shut the compiler up, all for a warning that has relatively
+little value even in cases where it's not a false positive (where it's
+just an indication that cleanup is warranted).
 
-Crystal Wood (3):
-  rt-tests: Turn off -Wunused-parameter
-  rt-tests: Enable -Werror
-  rt-tests: Remove unused parameter annotations
+Signed-off-by: Crystal Wood <crwood@redhat.com>
+---
+ Makefile | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
- Makefile                              |  2 +-
- src/cyclictest/cyclictest.c           | 11 +++++------
- src/oslat/oslat.c                     |  4 ++--
- src/pi_tests/pi_stress.c              |  4 ++--
- src/pmqtest/pmqtest.c                 |  7 +++----
- src/ptsematest/ptsematest.c           |  7 +++----
- src/queuelat/queuelat.c               |  2 +-
- src/rt-migrate-test/rt-migrate-test.c |  4 ++--
- src/sched_deadline/cyclicdeadline.c   |  2 +-
- src/signaltest/signaltest.c           |  2 +-
- src/sigwaittest/sigwaittest.c         |  4 ++--
- src/ssdd/ssdd.c                       |  2 +-
- src/svsematest/svsematest.c           |  5 +++--
- 13 files changed, 27 insertions(+), 29 deletions(-)
-
+diff --git a/Makefile b/Makefile
+index 0fa0928..dda29c3 100644
+--- a/Makefile
++++ b/Makefile
+@@ -33,7 +33,7 @@ prefix  ?= /usr/local
+ bindir  ?= $(prefix)/bin
+ mandir	?= $(prefix)/share/man
+ 
+-CFLAGS ?= -Wall -Wno-nonnull -Wextra -Wno-sign-compare
++CFLAGS ?= -Wall -Wno-nonnull -Wextra -Wno-sign-compare -Wno-unused-parameter
+ CPPFLAGS += -D_GNU_SOURCE -Isrc/include
+ LDFLAGS ?=
+ 
 -- 
 2.47.1
 
