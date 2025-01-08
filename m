@@ -1,107 +1,115 @@
-Received: from mout.gmx.net (mout.gmx.net [212.227.17.20])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id D6B6F1B0F17
-	for <linux-rt-users@vger.kernel.org>; Wed,  8 Jan 2025 09:49:08 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=212.227.17.20
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id F17DF200138
+	for <linux-rt-users@vger.kernel.org>; Wed,  8 Jan 2025 18:17:47 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1736329754; cv=none; b=Y9W5JPwpRwHpC+jG2437zqLwm9dj9UxCLnAXNzqjkP7qBhHTctEFGvVfeR2o+dqCaxIb1l+CAVdqgTU/XL9e6xDXXPsrDclwbwFV9bYz9DKIAsP5rjuxSiByNxaMS3xFkXYVASE9VJTFQFdBDSsGnfR9jCHjziEIdIry7x5aIhg=
+	t=1736360269; cv=none; b=SSir/GUBcay2px2+Q0l+dqioeqK2emvN5OiDKes85hxi+qzEkPH/qBFvNFdIEduAXtIY6UN3JWiFiCHv7AsmWubKoDyTGiWDlQyxlNbk9OGpw6YRThUyww3cjVd1mxd2DG8Z9ZWK8j2VWI9/85H0vs24YF4nPLV8yxyoWfxVgso=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1736329754; c=relaxed/simple;
-	bh=9VlznO0gIu3qeEb2YykSbHYD+ISel2LtdybcAmpG+kI=;
-	h=Message-ID:Date:MIME-Version:Subject:To:Cc:References:From:
-	 In-Reply-To:Content-Type; b=nqo11dqomnD0bynlTWbHod373KSKNGpXRsw5lXL8spreKp/jRbPO/4J+HeojOOt2NmNVaXl11BZr0Yq9LZ922LgxTsqPAnFSDfkh4tsZWrrEiY+HT7czjgpSWDBI1Nvu5LEm20d6Eddm+wmZwHJOMWMD3nkz8Q6j/MS9jtFn/ac=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=gmx.net; spf=pass smtp.mailfrom=gmx.net; dkim=pass (2048-bit key) header.d=gmx.net header.i=mista.tapas@gmx.net header.b=WAUEbkLT; arc=none smtp.client-ip=212.227.17.20
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=gmx.net
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmx.net
+	s=arc-20240116; t=1736360269; c=relaxed/simple;
+	bh=XLa1smcbtHqLoNFa8m4HphAi6ecwR4t+CSrfN1V8vGI=;
+	h=Date:From:To:cc:Subject:In-Reply-To:Message-ID:References:
+	 MIME-Version:Content-Type; b=mHgrnmDTzo1gvuhVPBjPohajIOqdUMu74Rl+ivSkGiF2jB9qcUzzYRSuJYF130HH/ReYQTOtF9QYMePqmgk67Z3zvs9cQKUUpnBTV9x3AmAF49lE0JlyGIjOYEg5Cu5LtQePElQuFEeeYJKJFcXVsmh/Ep3o03B7fBGa0241aqE=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=Q+OPCOz3; arc=none smtp.client-ip=170.10.133.124
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmx.net header.i=mista.tapas@gmx.net header.b="WAUEbkLT"
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=gmx.net;
-	s=s31663417; t=1736329737; x=1736934537; i=mista.tapas@gmx.net;
-	bh=9VlznO0gIu3qeEb2YykSbHYD+ISel2LtdybcAmpG+kI=;
-	h=X-UI-Sender-Class:Message-ID:Date:MIME-Version:Subject:To:Cc:
-	 References:From:In-Reply-To:Content-Type:
-	 Content-Transfer-Encoding:cc:content-transfer-encoding:
-	 content-type:date:from:message-id:mime-version:reply-to:subject:
-	 to;
-	b=WAUEbkLTW0DpzmAAoJwrCp9IPPEzE5JBBZDUVW+V9drJAods/vtvnBsgPJEJhICY
-	 COKfNso8o8z6AYJ8pnGTIaLLMHtOfGDL3d4xn3psKegl9VgH/Uj4H0o/qI6cZy9Nr
-	 ojCiS8EwQUAHNu9Ac1LrRfUMSJFgP+YCdIxKjnZEqZ6nQFMvBFblWXRGp4VJbuW9T
-	 iMHic1QSaXGQQ4A8TrrWR9UhxiCiefVLt+Dql0L1OF/LaIcE2063WSJqgxSlIduWJ
-	 aZUbcn/kd/I/euwUXIp+movD/qawwmUIj8TtjO5Isj1DeGA6+c4EF1/zuUaehuxOJ
-	 eH3vcgClhXrUrgH8Kg==
-X-UI-Sender-Class: 724b4f7f-cbec-4199-ad4e-598c01a50d3a
-Received: from [129.70.76.171] ([129.70.76.171]) by mail.gmx.net (mrgmx105
- [212.227.17.168]) with ESMTPSA (Nemesis) id 1Mq2nK-1tr68B03qE-00oZw9; Wed, 08
- Jan 2025 10:48:57 +0100
-Message-ID: <6b290601-7112-410b-9a85-bde02f62d7c3@gmx.net>
-Date: Wed, 8 Jan 2025 10:48:56 +0100
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="Q+OPCOz3"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1736360266;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 in-reply-to:in-reply-to:references:references;
+	bh=NjSqqe+S8DIxCy3qas8xCUD2GisbTT4Hy9QM4TWYk9w=;
+	b=Q+OPCOz3HOQ2DgMCf1lKIwMM1fNYDBsDNI00k2001VmrUkWYQa8H3VvGSaE140DmmISYlv
+	KWZmmSgwa9Mwhy5J2IRBJ7WENsl9kEyNhRdVWSvhWJKJ7faROOdX8vq0R9s0CNjX1JZqNC
+	YEqV5hM05ThyV6eYtydJX7tx3auyf4o=
+Received: from mail-qt1-f198.google.com (mail-qt1-f198.google.com
+ [209.85.160.198]) by relay.mimecast.com with ESMTP with STARTTLS
+ (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
+ us-mta-12-fyjHkccTPbisLHiidGxINA-1; Wed, 08 Jan 2025 13:17:45 -0500
+X-MC-Unique: fyjHkccTPbisLHiidGxINA-1
+X-Mimecast-MFC-AGG-ID: fyjHkccTPbisLHiidGxINA
+Received: by mail-qt1-f198.google.com with SMTP id d75a77b69052e-4679fc5c542so248891cf.0
+        for <linux-rt-users@vger.kernel.org>; Wed, 08 Jan 2025 10:17:45 -0800 (PST)
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20230601; t=1736360265; x=1736965065;
+        h=mime-version:references:message-id:in-reply-to:subject:cc:to:from
+         :date:x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
+        bh=NjSqqe+S8DIxCy3qas8xCUD2GisbTT4Hy9QM4TWYk9w=;
+        b=bGRhPYDa3WjD9nxtz1QLnMnK7BK3TrlZZXfKGasYqVXCSPstbbTN8Tk7r83HdDTBeP
+         mL9V23GpITaSrbC9YfPpoicGwbWTB2e+JkSStvFUDl2k6fv4vNRUAjITM/ajzwjy5Z/C
+         UCLBfC6dWJ4zv26gFwtJorfBqke/kIiwOSDUXfGjU7TKyUFb8ZrjfHBWTHGrx9OJ/i3z
+         dEOZ6CbvKgCNSELZPtarJOHOkDU6pHJejgsWW4E9tNFyELiymXpizk7cJsAzDgO5Rbwr
+         W4dUjnDboRHBWXDYyo02IWuO3DxSyAGrZChAtRbW4MtH30Pt5o/BzTWeTAFZPtxCxsL/
+         mhww==
+X-Forwarded-Encrypted: i=1; AJvYcCWn8pB+JV28mFTlsAMUVdnjGu/W5ecQMXxxOf9QW5IvFgrjnRlC1ehGZYegtCJ5ThRnFL6gvcv0mR3WYjqDqg==@vger.kernel.org
+X-Gm-Message-State: AOJu0YycYoMn9P9RQaZgTkz9WR6/2PL3GhoFg76I+vXq5FPqnxd0ZdOm
+	EYrgkHZxuBNMos04vlYUSy5zVvGIVEP7gCsPTZzN6nURBjtsaNFpq04kEprGh6MPyqouFk/xU9G
+	ongBeMLclAMbRJElmqtnjNnWSLfUhaHSAC4noPfPjB8PgA4DRTMvAL6q6n1CUGOTc
+X-Gm-Gg: ASbGncvqNxtj2r+eY+K0rQR1xOnmkWgbr3kEUrmwn/kj6kFUzO+wlksszrmF7FBYIDO
+	jP8VyiiM4ylR5KtkbAWC1gK5Y8D4tvXEY7LILFYqMoL1fMhc456pOI7yLBfGlXuq7wN1o3si5ib
+	S/41SAlPXnYFb2+by2LkQZ1JKhjWPpNaiHiyXYzjInmgMhUTwhu10BdZDRrYY4nSw7418bdpXKK
+	UofbY5yO49jHd5Ib1Aog3sHXhxm/9a1ITQ7zCG1eXmuYw8=
+X-Received: by 2002:a05:622a:d6:b0:46a:3579:d137 with SMTP id d75a77b69052e-46c7108c3f5mr58766191cf.43.1736360265123;
+        Wed, 08 Jan 2025 10:17:45 -0800 (PST)
+X-Google-Smtp-Source: AGHT+IGk3T9Wq0xQFybz3ZfioUdM9remnZ9ba9qc4Q+I0a79ofFln9MMYo3yM5zZczIkhT5cUL43aQ==
+X-Received: by 2002:a05:622a:d6:b0:46a:3579:d137 with SMTP id d75a77b69052e-46c7108c3f5mr58765921cf.43.1736360264823;
+        Wed, 08 Jan 2025 10:17:44 -0800 (PST)
+Received: from fionn ([142.189.102.234])
+        by smtp.gmail.com with ESMTPSA id d75a77b69052e-46c77b71b94sm4183231cf.73.2025.01.08.10.17.44
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Wed, 08 Jan 2025 10:17:44 -0800 (PST)
+Date: Wed, 8 Jan 2025 13:17:43 -0500 (EST)
+From: John Kacur <jkacur@redhat.com>
+To: Kurt Kanzenbach <kurt@linutronix.de>
+cc: Thomas Petazzoni <thomas.petazzoni@bootlin.com>, 
+    linux-rt-users@vger.kernel.org
+Subject: Re: rt-tests release tarball location
+In-Reply-To: <87h66b2c6m.fsf@kurt.kurt.home>
+Message-ID: <6569931b-16e5-5965-dfd0-7ffdf80fffab@redhat.com>
+References: <20241228114346.6020d6b0@windsurf> <87h66b2c6m.fsf@kurt.kurt.home>
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
 List-Subscribe: <mailto:linux-rt-users+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-User-Agent: Mozilla Thunderbird
-Subject: Re: Raspberry Pi 5 and PREEMPT_RT (6.13.0-rc3)
-To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Cc: linux-rt-users@vger.kernel.org
-References: <d445e582-4e49-4135-9d94-f52d72ec5df6@gmx.net>
- <20250107143937.d_ho7CXb@linutronix.de>
-Content-Language: en-US
-From: Florian Paul Schmidt <mista.tapas@gmx.net>
-In-Reply-To: <20250107143937.d_ho7CXb@linutronix.de>
-Content-Type: text/plain; charset=UTF-8; format=flowed
-Content-Transfer-Encoding: quoted-printable
-X-Provags-ID: V03:K1:hBEmLct8B4E2GwpY0RqkP8agMXu6q0GE8lMwJL/nQkoW18YOv7s
- Qm663KhgjKyeTnZkQqOUVB6gzrJvEBJVKgyeqIiJKxihTjbvVThAPfaJsnARnZbTtpXwjoz
- kxT2XCG7ey9hhecSIGdeeQCXIA8AJUPgUCNKsY7KVXH2IZoiZXsmKPeISidCR2w+09Blmru
- EhLZKaToTw82LCRw/1rAA==
-X-Spam-Flag: NO
-UI-OutboundReport: notjunk:1;M01:P0:7g+IXpBfIes=;vV1mwjTAsp0spu1sNAsJeiUMhUw
- BXfJnFymjL8hAPxg8HmL4maYTDFGrD98M8lm+joJCnfbsFhuVvWKiNka9DoUsCHjttSR4i7cK
- rVC0dn8gi0qHf7J799uADvmaxS9W/zvSbDwo5YRGXem1kSkBX01vgiDhmceNj/ksiF6DWV/MY
- pzOTbT/6BBSAUfLZIBoBhjFaCOPxiReOOUN41vwPlzdwcpPMgkNFT1jrHLjJ12q903zSXSFAO
- sbJZCG+JdenqEbqZFW/YUYFrJlmOU8EDprzEjAc9QMDgtPM+hW9R46V3JbBDfvkbzWEU1kKcm
- UuH62oM0QJiu2kg/OUVW6+i18GgKRlBz8woPLDEgqyK6GP3yoBGGp6mI8zne1/1aU+fd75yqn
- IHtx+72hYriOlkkNYm5AKaZoyhM7qbyGzb019/CKgJkYCvWhOaejVcVyKkLl//iyqGzUl0wsq
- q6GDtY/VJLoSgVprnUbPAbrY7TSBHLZ35RNtDEVd3mKD1MaYLnLI1UyICMDqfCIUgGjlW9YZw
- RkCIcGBB7zi+gMxdJkoo7w/eVRWQhtIzEvQZTSsCTwjbZFNyuJjlpdlmA5YuPr6sqkCtv5Hwd
- q+rm8jopfNlTDn7fFxTpktt4GcYCKmKjoQzWdYJEP7Q/b03vihS3XkoYoiTfUrzXoCQrRGtul
- kCpEHJ2OXuugDZtk7fa9Wr84WsfgmUKvMuy12Y6nJybwtCvLN+QrPIQezIVOOdA7p9+8+PMAZ
- gza/Kw1DywvGbqtScFOgQw2GyoAiusA1WTh8gfMkR0kQnfIgKvEfdcdMh4l/nXjfrmB/jP4yl
- z5t9p2fiPmEUN2a5RVpmYmUnn0K3MAHWrAMVHgUHWtCMqz4n5mnWEgxdOXj1TUmb51YwDh/64
- dxmgSIb3Eq3Ka9fvjyD2DAEwR4Ddru4Rut/ATyc8J8h0Ts1dl/Hz9Paxk3sApATFSCgyllBZR
- MD0Ww2o/m2pAldOvZyj8aWZ0YkPWbKwZEf5XApQuggDz4qmtD8sPy6zdTyxfaUdDQmtjK74lv
- kkAmODB13k1l7X/iLke0oQhbPXXt1p4H8PyDP/mbo28A+5qTVg6Bn0LMhWiZV8NR+G47tFOcs
- 1wKzlo73TlpVLqvFdZeNjq6ilyk5+F
+Content-Type: text/plain; charset=US-ASCII
 
-Hi!
 
-On 1/7/2025 3:39 PM, Sebastian Andrzej Siewior wrote:
-> On 2024-12-20 14:18:43 [+0100], Florian Paul Schmidt wrote:
 
-[...]
+On Tue, 7 Jan 2025, Kurt Kanzenbach wrote:
 
-> The backtrace appears long but everything up to folios_put_refs()
-> appears preemtible. Then there is the interrupt handler. This looks
-> okay.
+> On Sat Dec 28 2024, Thomas Petazzoni wrote:
+> > Hello,
+> >
+> > I am one of the co-maintainers of Buildroot, an embedded Linux build
+> > system. Among many other packages, we obviously have rt-tests as one of
+> > our packages. When rt-tests is built, we download it from kernel.org.
+> > Unfortunately, the rt-tests tarballs are moved around: the latest
+> > release is available at https://www.kernel.org/pub/linux/utils/rt-tests/,
+> > but as soon as another newer release is available, the older release
+> > tarballs get moved to
+> > https://www.kernel.org/pub/linux/utils/rt-tests/older/.
+> >
+> > This breaks the build for build systems such as Buildroot, that expect
+> > a release tarball to stay at a given location, and not being moved
+> > around.
+> >
+> > Would it possible to keep the tarballs at the same location? Either by
+> > not having the older/ folder entirely, or by populating it immediately
+> > with the latest release, so that all releases are always available from
+> > the older/ folder?
+> 
+> +1
+> 
+> For Gentoo I had to add both URLs to SRC_URI in the ebuilds. It first
+> tries rt-tests/ and then rt-tests/older/ location, which is also not
+> ideal.
 
-That was my impression as well. Nothing really surprising (at least for
-my limited knowledge in these matters.)
+Why is it not ideal? This seems like a perfectly reasonable solution?
 
-> Based on this trace, I don't see a section which disables preemption/
-> interrupts and be the reason for the interrupt happening.
->
-> One thing that could delay your doing are small caches.
-> Then there is looking within the system: An inaccurate/ low resolution
-> clocksource and/ or timer device.
-
-I will look into these. Thanks for the pointers!
-
-Kind regards,
-FPS
-
-=2D-
-https://blog.dfdx.eu
+John
 
