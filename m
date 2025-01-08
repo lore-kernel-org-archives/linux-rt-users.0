@@ -1,75 +1,76 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id F17DF200138
-	for <linux-rt-users@vger.kernel.org>; Wed,  8 Jan 2025 18:17:47 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 4A59C15853B
+	for <linux-rt-users@vger.kernel.org>; Wed,  8 Jan 2025 18:21:24 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1736360269; cv=none; b=SSir/GUBcay2px2+Q0l+dqioeqK2emvN5OiDKes85hxi+qzEkPH/qBFvNFdIEduAXtIY6UN3JWiFiCHv7AsmWubKoDyTGiWDlQyxlNbk9OGpw6YRThUyww3cjVd1mxd2DG8Z9ZWK8j2VWI9/85H0vs24YF4nPLV8yxyoWfxVgso=
+	t=1736360485; cv=none; b=bOZcrrPmU/SI+G+/fQbE8Qv0zGPGR5Z+qtZ5Nl5YL399S7S/eCZoPBKML3Zno7ZyRAHvY+YXPPa3TFeIuN50XzA7EUI0YBF6pk2qQVHk3t7clmEynDG4LkC2tn/RgaBJrnRQ73XCNkQhvtk0A7ZpLbytJrrrFgQHfoGseuSaEqM=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1736360269; c=relaxed/simple;
-	bh=XLa1smcbtHqLoNFa8m4HphAi6ecwR4t+CSrfN1V8vGI=;
+	s=arc-20240116; t=1736360485; c=relaxed/simple;
+	bh=+S8NvkoAYyTrwgUEYcA5F/xXUJWZSIXTmK9VzIshLjA=;
 	h=Date:From:To:cc:Subject:In-Reply-To:Message-ID:References:
-	 MIME-Version:Content-Type; b=mHgrnmDTzo1gvuhVPBjPohajIOqdUMu74Rl+ivSkGiF2jB9qcUzzYRSuJYF130HH/ReYQTOtF9QYMePqmgk67Z3zvs9cQKUUpnBTV9x3AmAF49lE0JlyGIjOYEg5Cu5LtQePElQuFEeeYJKJFcXVsmh/Ep3o03B7fBGa0241aqE=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=Q+OPCOz3; arc=none smtp.client-ip=170.10.133.124
+	 MIME-Version:Content-Type; b=AsWZMUrwnr+sDF7uzuxEQgzdfv7DAXWpMwPrFIIt9wjczv2X5Ewm/F8ZUuOFuabAPL2kKng2rqNh17lfSF00dcusDxR9Ip8v2LsW1jOTcNSbzvmDQBS5PJjoLTxmbhBSODn6YeqyRnnjRJZGqQMT6oYKde8dIItR8mT4UkFQwTs=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=RKBK29UG; arc=none smtp.client-ip=170.10.129.124
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="Q+OPCOz3"
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="RKBK29UG"
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1736360266;
+	s=mimecast20190719; t=1736360483;
 	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
 	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
 	 in-reply-to:in-reply-to:references:references;
-	bh=NjSqqe+S8DIxCy3qas8xCUD2GisbTT4Hy9QM4TWYk9w=;
-	b=Q+OPCOz3HOQ2DgMCf1lKIwMM1fNYDBsDNI00k2001VmrUkWYQa8H3VvGSaE140DmmISYlv
-	KWZmmSgwa9Mwhy5J2IRBJ7WENsl9kEyNhRdVWSvhWJKJ7faROOdX8vq0R9s0CNjX1JZqNC
-	YEqV5hM05ThyV6eYtydJX7tx3auyf4o=
-Received: from mail-qt1-f198.google.com (mail-qt1-f198.google.com
- [209.85.160.198]) by relay.mimecast.com with ESMTP with STARTTLS
+	bh=VlpLNqlwYQ6yBwAYzG/drxPjjxL7jhtneUfhF5aj9WI=;
+	b=RKBK29UGlcQF7O7I1MwcFCGiU2QtqLIJlijt8rT3o0uAhH9egdQ6CC8uX5FphPYRuxaR7h
+	cCUX6eEZTkNXVPhzJwGnikDoxC8S3giLrHveanVFTfUFz1OZM+pBwzdw9V56qlEsRMeOUs
+	MuiaMQ6Vgg3L4WhNVwNGqw+BAeRPGZQ=
+Received: from mail-qv1-f72.google.com (mail-qv1-f72.google.com
+ [209.85.219.72]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
- us-mta-12-fyjHkccTPbisLHiidGxINA-1; Wed, 08 Jan 2025 13:17:45 -0500
-X-MC-Unique: fyjHkccTPbisLHiidGxINA-1
-X-Mimecast-MFC-AGG-ID: fyjHkccTPbisLHiidGxINA
-Received: by mail-qt1-f198.google.com with SMTP id d75a77b69052e-4679fc5c542so248891cf.0
-        for <linux-rt-users@vger.kernel.org>; Wed, 08 Jan 2025 10:17:45 -0800 (PST)
+ us-mta-543-aVm3e7DbOVG1R3d0ns_ERw-1; Wed, 08 Jan 2025 13:21:21 -0500
+X-MC-Unique: aVm3e7DbOVG1R3d0ns_ERw-1
+X-Mimecast-MFC-AGG-ID: aVm3e7DbOVG1R3d0ns_ERw
+Received: by mail-qv1-f72.google.com with SMTP id 6a1803df08f44-6dcd1e4a051so2332566d6.2
+        for <linux-rt-users@vger.kernel.org>; Wed, 08 Jan 2025 10:21:21 -0800 (PST)
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1736360265; x=1736965065;
+        d=1e100.net; s=20230601; t=1736360481; x=1736965281;
         h=mime-version:references:message-id:in-reply-to:subject:cc:to:from
          :date:x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
-        bh=NjSqqe+S8DIxCy3qas8xCUD2GisbTT4Hy9QM4TWYk9w=;
-        b=bGRhPYDa3WjD9nxtz1QLnMnK7BK3TrlZZXfKGasYqVXCSPstbbTN8Tk7r83HdDTBeP
-         mL9V23GpITaSrbC9YfPpoicGwbWTB2e+JkSStvFUDl2k6fv4vNRUAjITM/ajzwjy5Z/C
-         UCLBfC6dWJ4zv26gFwtJorfBqke/kIiwOSDUXfGjU7TKyUFb8ZrjfHBWTHGrx9OJ/i3z
-         dEOZ6CbvKgCNSELZPtarJOHOkDU6pHJejgsWW4E9tNFyELiymXpizk7cJsAzDgO5Rbwr
-         W4dUjnDboRHBWXDYyo02IWuO3DxSyAGrZChAtRbW4MtH30Pt5o/BzTWeTAFZPtxCxsL/
-         mhww==
-X-Forwarded-Encrypted: i=1; AJvYcCWn8pB+JV28mFTlsAMUVdnjGu/W5ecQMXxxOf9QW5IvFgrjnRlC1ehGZYegtCJ5ThRnFL6gvcv0mR3WYjqDqg==@vger.kernel.org
-X-Gm-Message-State: AOJu0YycYoMn9P9RQaZgTkz9WR6/2PL3GhoFg76I+vXq5FPqnxd0ZdOm
-	EYrgkHZxuBNMos04vlYUSy5zVvGIVEP7gCsPTZzN6nURBjtsaNFpq04kEprGh6MPyqouFk/xU9G
-	ongBeMLclAMbRJElmqtnjNnWSLfUhaHSAC4noPfPjB8PgA4DRTMvAL6q6n1CUGOTc
-X-Gm-Gg: ASbGncvqNxtj2r+eY+K0rQR1xOnmkWgbr3kEUrmwn/kj6kFUzO+wlksszrmF7FBYIDO
-	jP8VyiiM4ylR5KtkbAWC1gK5Y8D4tvXEY7LILFYqMoL1fMhc456pOI7yLBfGlXuq7wN1o3si5ib
-	S/41SAlPXnYFb2+by2LkQZ1JKhjWPpNaiHiyXYzjInmgMhUTwhu10BdZDRrYY4nSw7418bdpXKK
-	UofbY5yO49jHd5Ib1Aog3sHXhxm/9a1ITQ7zCG1eXmuYw8=
-X-Received: by 2002:a05:622a:d6:b0:46a:3579:d137 with SMTP id d75a77b69052e-46c7108c3f5mr58766191cf.43.1736360265123;
-        Wed, 08 Jan 2025 10:17:45 -0800 (PST)
-X-Google-Smtp-Source: AGHT+IGk3T9Wq0xQFybz3ZfioUdM9remnZ9ba9qc4Q+I0a79ofFln9MMYo3yM5zZczIkhT5cUL43aQ==
-X-Received: by 2002:a05:622a:d6:b0:46a:3579:d137 with SMTP id d75a77b69052e-46c7108c3f5mr58765921cf.43.1736360264823;
-        Wed, 08 Jan 2025 10:17:44 -0800 (PST)
+        bh=VlpLNqlwYQ6yBwAYzG/drxPjjxL7jhtneUfhF5aj9WI=;
+        b=CJHdlwrVQBNErumI7jgcUVFo1yRD4BKqbzPbsibtkpkBN4wgW9WXAzlmtX4IvwvPSa
+         ActNYwAY79R/fWf4blEulTB2DTXTsWe0PPfbSb7Jijv9XUd8y2YrCFXZUOTIC54AVLkv
+         pO1ho+sxA7bwjEzc5Tp5ue7pcNKktNyICe0C01RpNBl+PWpLBHrF2GBl4d6jJRMcDkmA
+         06vHaE9NKHsk4VdxXcaRgFqXgtAt7SR2621nnAl45CcQOpaO0zRX0ol5BFDytsajUbMO
+         v2eE4u2zqCB4hRwElVm3BUxBlFP3iD/209MANOK3PakHouY2LBasu2c9Cxru9YQ9Euvt
+         Z1Ig==
+X-Forwarded-Encrypted: i=1; AJvYcCX62k0YHsclBPwv0i3LrpPyThr1xl4iYfqEnpco3GtKPmCclZanspOJ9uarukJsRU5yi7xwjzkHhVlDvT2UiA==@vger.kernel.org
+X-Gm-Message-State: AOJu0Yy8i9EOsDcacZu17FvKv+rEjLA+E8BGGk43LsaeKIg07BbMmxSd
+	wS93uWtyxXrDEpiIjyWlx4j65DisbmCY73cbC3PGCBTanhNfWSSPoBKwjAQTs82ciAYk68/5b+j
+	W3MP4dmcA6gK2cCAdc/i98E1hYHFhlUER2QeQRC4lBBjGdZXZNjRri3B1a51Zp0Dn
+X-Gm-Gg: ASbGncsPbeUYqiKANKNhIPvupLKW8Fq8/C7XOzPWwqZ8QOsJkmq2CqjTMLnVzO7+vZt
+	rsEgsOvjAjToIplGdNzYihd/Vf70I3Ok7amKUlSa4Pyi5SyaBYLC4O6dU4ebbpQzlkpNB4bIbPT
+	hmTRGlStRbAzp5TLxYImOFdUA2S66dkKw38IwTCNF7+zdFjuk33SZm9xr1XhiapgZVdVmqtHedE
+	IfKS8zdbfk8YlAMsBOVZxPv6UPrAdbm+NfTHdPZkPg/RVE=
+X-Received: by 2002:a05:6214:20eb:b0:6d8:8742:137c with SMTP id 6a1803df08f44-6df9b230fefmr51860696d6.24.1736360481184;
+        Wed, 08 Jan 2025 10:21:21 -0800 (PST)
+X-Google-Smtp-Source: AGHT+IFtoxKl96A9quCEU97ixWPX5t/wor8k6E8c0UUAhuz176F1Acu/Qdc81mrMU2DwBTqcBTSqgg==
+X-Received: by 2002:a05:6214:20eb:b0:6d8:8742:137c with SMTP id 6a1803df08f44-6df9b230fefmr51860426d6.24.1736360480892;
+        Wed, 08 Jan 2025 10:21:20 -0800 (PST)
 Received: from fionn ([142.189.102.234])
-        by smtp.gmail.com with ESMTPSA id d75a77b69052e-46c77b71b94sm4183231cf.73.2025.01.08.10.17.44
+        by smtp.gmail.com with ESMTPSA id 6a1803df08f44-6dd18110460sm192554566d6.41.2025.01.08.10.21.20
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Wed, 08 Jan 2025 10:17:44 -0800 (PST)
-Date: Wed, 8 Jan 2025 13:17:43 -0500 (EST)
+        Wed, 08 Jan 2025 10:21:20 -0800 (PST)
+Date: Wed, 8 Jan 2025 13:21:19 -0500 (EST)
 From: John Kacur <jkacur@redhat.com>
-To: Kurt Kanzenbach <kurt@linutronix.de>
-cc: Thomas Petazzoni <thomas.petazzoni@bootlin.com>, 
-    linux-rt-users@vger.kernel.org
+To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+cc: Kurt Kanzenbach <kurt@linutronix.de>, Clark Williams <williams@redhat.com>, 
+    Thomas Petazzoni <thomas.petazzoni@bootlin.com>, 
+    linux-rt-users <linux-rt-users@vger.kernel.org>
 Subject: Re: rt-tests release tarball location
-In-Reply-To: <87h66b2c6m.fsf@kurt.kurt.home>
-Message-ID: <6569931b-16e5-5965-dfd0-7ffdf80fffab@redhat.com>
-References: <20241228114346.6020d6b0@windsurf> <87h66b2c6m.fsf@kurt.kurt.home>
+In-Reply-To: <20250107141424.EoC5uS6y@linutronix.de>
+Message-ID: <f87b2d77-7925-8678-d0fe-9a0d471a38f1@redhat.com>
+References: <20241228114346.6020d6b0@windsurf> <87h66b2c6m.fsf@kurt.kurt.home> <20250107141424.EoC5uS6y@linutronix.de>
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
@@ -80,36 +81,41 @@ Content-Type: text/plain; charset=US-ASCII
 
 
 
-On Tue, 7 Jan 2025, Kurt Kanzenbach wrote:
+On Tue, 7 Jan 2025, Sebastian Andrzej Siewior wrote:
 
-> On Sat Dec 28 2024, Thomas Petazzoni wrote:
-> > Hello,
-> >
-> > I am one of the co-maintainers of Buildroot, an embedded Linux build
-> > system. Among many other packages, we obviously have rt-tests as one of
-> > our packages. When rt-tests is built, we download it from kernel.org.
-> > Unfortunately, the rt-tests tarballs are moved around: the latest
-> > release is available at https://www.kernel.org/pub/linux/utils/rt-tests/,
-> > but as soon as another newer release is available, the older release
-> > tarballs get moved to
-> > https://www.kernel.org/pub/linux/utils/rt-tests/older/.
-> >
-> > This breaks the build for build systems such as Buildroot, that expect
-> > a release tarball to stay at a given location, and not being moved
-> > around.
-> >
-> > Would it possible to keep the tarballs at the same location? Either by
-> > not having the older/ folder entirely, or by populating it immediately
-> > with the latest release, so that all releases are always available from
-> > the older/ folder?
+> +John, +Clark
+> On 2025-01-07 10:41:37 [+0100], Kurt Kanzenbach wrote:
+> > On Sat Dec 28 2024, Thomas Petazzoni wrote:
+> > > Hello,
+> > >
+> > > I am one of the co-maintainers of Buildroot, an embedded Linux build
+> > > system. Among many other packages, we obviously have rt-tests as one of
+> > > our packages. When rt-tests is built, we download it from kernel.org.
+> > > Unfortunately, the rt-tests tarballs are moved around: the latest
+> > > release is available at https://www.kernel.org/pub/linux/utils/rt-tests/,
+> > > but as soon as another newer release is available, the older release
+> > > tarballs get moved to
+> > > https://www.kernel.org/pub/linux/utils/rt-tests/older/.
+> > >
+> > > This breaks the build for build systems such as Buildroot, that expect
+> > > a release tarball to stay at a given location, and not being moved
+> > > around.
+> > >
+> > > Would it possible to keep the tarballs at the same location? Either by
+> > > not having the older/ folder entirely, or by populating it immediately
+> > > with the latest release, so that all releases are always available from
+> > > the older/ folder?
 > 
-> +1
+> John, any favorites?
 > 
-> For Gentoo I had to add both URLs to SRC_URI in the ebuilds. It first
-> tries rt-tests/ and then rt-tests/older/ location, which is also not
-> ideal.
 
-Why is it not ideal? This seems like a perfectly reasonable solution?
+We've been doing this for 15+ years. Normally I would expect the package 
+creators to come-up with a work around and not expect the people offering 
+the packages to accomdate your packaging software.
+
+How many kernels back to you need to keep? Could we come up with a 
+compromise where we keep the newest kernel, plus say the last 3 in the 
+rt-tests directory before they get moved to the older directory?
 
 John
 
