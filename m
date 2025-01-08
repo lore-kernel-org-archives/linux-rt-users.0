@@ -1,60 +1,41 @@
-Received: from mx0a-001b2d01.pphosted.com (mx0a-001b2d01.pphosted.com [148.163.156.1])
+Received: from mout.gmx.net (mout.gmx.net [212.227.17.21])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id E843179FE;
-	Wed,  8 Jan 2025 04:56:55 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=148.163.156.1
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 13C6A1D932F
+	for <linux-rt-users@vger.kernel.org>; Wed,  8 Jan 2025 09:42:16 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=212.227.17.21
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1736312217; cv=none; b=q9Ae8rfBD8pOrzPr6m6Yu2WRpjD3EXxnZlBFHTabgih4USPcMvoevDwi0VdsGtPQ3eKX++FQeewvTyNOG33v8jsIRIVM1hBwSz750zyqq2pI4qzdDNvfimAOPkGioav59Elo9XoHtgIREm81tPlJFayzuDRT7wyQeXB3Zo8jOFo=
+	t=1736329339; cv=none; b=BiHYwOwekPMZ5C+3mgd6Wd4VJtKJ30M/Zx+Qt/OeUCZ+HeAcbFsvMO2p/BKZvFqQXMFEi242rtZ1sxXX1kBtM4sbBGD/H8brshFI9iuy0wQPXz69yj8Aa0lrwd42ci8Nhs6vEwnCBcJVb5OFf2oHmSMD6AN2jOh3v9yCijHVzvU=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1736312217; c=relaxed/simple;
-	bh=2w/rNo0EdC6MPXNXtBSlyh+3s3vZO2+7r06jX7Nw3dU=;
+	s=arc-20240116; t=1736329339; c=relaxed/simple;
+	bh=wUJKk9R+S6Kui82AnvidA1TrQ5vXMAlP6ha2CJb6nHU=;
 	h=Message-ID:Date:MIME-Version:Subject:To:Cc:References:From:
-	 In-Reply-To:Content-Type; b=kePwvY5La1Rhh4gpDv7Hx1yWll3RMvJWXYAPbc8Jrskm7F7o6exHlqkiUJMhDIs7DQZkssBuNJcgz2f8uSckYMGNO9dI89Tsf+I7VOphELC5pi+FG6eGZhxtj2H/rCG9j1DM+/UA2dnJlXcBB2WDbn85CRNJyPXDFVl0Nk5SPjk=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.ibm.com; spf=pass smtp.mailfrom=linux.ibm.com; dkim=pass (2048-bit key) header.d=ibm.com header.i=@ibm.com header.b=o6loSkfe; arc=none smtp.client-ip=148.163.156.1
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.ibm.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=linux.ibm.com
+	 In-Reply-To:Content-Type; b=alyJIdWhYUtXDKRDKp/IYejy2azCxl1IROuIxeWcDSnFoLsLqcDM3+xmEFICbQuXv/u5P5Ie528nzhpNBkPN5+71HG/P1n10BVbMwgjL9UyEuW0Dmg5Clxz92A4VuN1X/SzJ6s2QLWhmmeZNZMLmLGb0JnMza7BMCBDw4f48WOA=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=gmx.net; spf=pass smtp.mailfrom=gmx.net; dkim=pass (2048-bit key) header.d=gmx.net header.i=mista.tapas@gmx.net header.b=L3+oh2R3; arc=none smtp.client-ip=212.227.17.21
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=gmx.net
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmx.net
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=ibm.com header.i=@ibm.com header.b="o6loSkfe"
-Received: from pps.filterd (m0353729.ppops.net [127.0.0.1])
-	by mx0a-001b2d01.pphosted.com (8.18.1.2/8.18.1.2) with ESMTP id 507Nx5cj024746;
-	Wed, 8 Jan 2025 04:56:42 GMT
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=ibm.com; h=cc
-	:content-transfer-encoding:content-type:date:from:in-reply-to
-	:message-id:mime-version:references:subject:to; s=pp1; bh=yl7WOU
-	HBv0UNTaIo+rq/jnbruTQsoczPnl2Vyg7Z2Lk=; b=o6loSkfeRvMhzRjd9ll9Yf
-	vk54YpZ0qFH2XFELxdvjHcnm0XPRdPryGAf+6HbTSYLFWb2Aqzy92cywLDBnBggF
-	2y5d18ODBPy0baiz/PKQQEh+Vf3LBpMsimzgHTsI9vnnEsPYuMr0aNg4a8DS7UKF
-	7jCuuE2g7BSo9UslQ1U+XUDaeBp7is15ugVVJygIHnzmJWV8ZcmOSLmAHs0hpIte
-	mCXimjqvvGSsd/KoRIanVkSsx+NHC3SxMQ8k2JC5PLHXjWJ3Tz/6QpmGrotNGJoF
-	cZSl5KY2Y/i58lgE1dSaEtwgfTI0lO/n2Rh1vD/4oe6BGGD0n74GWS5FhfLSI74Q
-	==
-Received: from ppma11.dal12v.mail.ibm.com (db.9e.1632.ip4.static.sl-reverse.com [50.22.158.219])
-	by mx0a-001b2d01.pphosted.com (PPS) with ESMTPS id 441edj0wa6-1
-	(version=TLSv1.2 cipher=ECDHE-RSA-AES256-GCM-SHA384 bits=256 verify=NOT);
-	Wed, 08 Jan 2025 04:56:41 +0000 (GMT)
-Received: from pps.filterd (ppma11.dal12v.mail.ibm.com [127.0.0.1])
-	by ppma11.dal12v.mail.ibm.com (8.18.1.2/8.18.1.2) with ESMTP id 5082NTQ5026179;
-	Wed, 8 Jan 2025 04:56:41 GMT
-Received: from smtprelay07.fra02v.mail.ibm.com ([9.218.2.229])
-	by ppma11.dal12v.mail.ibm.com (PPS) with ESMTPS id 43yj125qe3-1
-	(version=TLSv1.2 cipher=ECDHE-RSA-AES256-GCM-SHA384 bits=256 verify=NOT);
-	Wed, 08 Jan 2025 04:56:40 +0000
-Received: from smtpav04.fra02v.mail.ibm.com (smtpav04.fra02v.mail.ibm.com [10.20.54.103])
-	by smtprelay07.fra02v.mail.ibm.com (8.14.9/8.14.9/NCO v10.0) with ESMTP id 5084udDu62456140
-	(version=TLSv1/SSLv3 cipher=DHE-RSA-AES256-GCM-SHA384 bits=256 verify=OK);
-	Wed, 8 Jan 2025 04:56:39 GMT
-Received: from smtpav04.fra02v.mail.ibm.com (unknown [127.0.0.1])
-	by IMSVA (Postfix) with ESMTP id 575C920043;
-	Wed,  8 Jan 2025 04:56:39 +0000 (GMT)
-Received: from smtpav04.fra02v.mail.ibm.com (unknown [127.0.0.1])
-	by IMSVA (Postfix) with ESMTP id EDD4320040;
-	Wed,  8 Jan 2025 04:56:37 +0000 (GMT)
-Received: from [9.39.20.66] (unknown [9.39.20.66])
-	by smtpav04.fra02v.mail.ibm.com (Postfix) with ESMTP;
-	Wed,  8 Jan 2025 04:56:37 +0000 (GMT)
-Message-ID: <e0364c9a-0364-4993-99a1-9e51a47529fe@linux.ibm.com>
-Date: Wed, 8 Jan 2025 10:26:36 +0530
+	dkim=pass (2048-bit key) header.d=gmx.net header.i=mista.tapas@gmx.net header.b="L3+oh2R3"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=gmx.net;
+	s=s31663417; t=1736329325; x=1736934125; i=mista.tapas@gmx.net;
+	bh=wUJKk9R+S6Kui82AnvidA1TrQ5vXMAlP6ha2CJb6nHU=;
+	h=X-UI-Sender-Class:Message-ID:Date:MIME-Version:Subject:To:Cc:
+	 References:From:In-Reply-To:Content-Type:
+	 Content-Transfer-Encoding:cc:content-transfer-encoding:
+	 content-type:date:from:message-id:mime-version:reply-to:subject:
+	 to;
+	b=L3+oh2R3k1QghOw3VZotd9IQH8KDJw0B0LsAb0TNwz0HKFTgRA8SOJbktEbhEFOy
+	 r8MLAF0YbeofKjUrIMaX3ZJNP9chp9Y/1uLAUc8qlju8qQh0sIw1n1JeA578llfM8
+	 TzTf1yaKBRL5G8AmlQ4aiip+dr0Uoedqaj4Lx0JGRBNn/mPyUB0NtqOTs9AcRbtvS
+	 OtNOf1tm3orav5UeNm+zJ0qzvd6zHwN5Kmh8ctPmlKEOoOOMNYcfg1D6Sb8RVplfg
+	 j4+NVS0vIxPgJBnQlnfcvY0WJyveHNlDkA22AzvtA0q1m9vG/X0r7HqyYt5nMrInz
+	 2fOPA0jtUPNIs1c9Dw==
+X-UI-Sender-Class: 724b4f7f-cbec-4199-ad4e-598c01a50d3a
+Received: from [129.70.76.171] ([129.70.76.171]) by mail.gmx.net (mrgmx105
+ [212.227.17.168]) with ESMTPSA (Nemesis) id 1MNt0C-1t7CWj345g-00PbGT; Wed, 08
+ Jan 2025 10:42:05 +0100
+Message-ID: <a8afdc70-a3fa-4713-989a-36b14ccdeb74@gmx.net>
+Date: Wed, 8 Jan 2025 10:42:05 +0100
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
@@ -62,85 +43,69 @@ List-Subscribe: <mailto:linux-rt-users+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
 User-Agent: Mozilla Thunderbird
-Subject: Re: [PATCH] powerpc: Allow scheduling of IRQ with PREEMPT_RT
-To: Robert Joslyn <robert_joslyn@selinc.com>
-Cc: "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>,
-        "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>,
-        "tglx@linutronix.de" <tglx@linutronix.de>,
-        "rostedt@goodmis.org" <rostedt@goodmis.org>,
-        Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-References: <20241226191238.2559880-1-robert_joslyn@selinc.com>
- <20250107115606.q67--i0f@linutronix.de>
- <da4d15ce-eabb-4c8c-bc8b-cee75f9993bd@linux.ibm.com>
- <SJ2PR22MB3822B4550212A2418187A075E5112@SJ2PR22MB3822.namprd22.prod.outlook.com>
-From: Shrikanth Hegde <sshegde@linux.ibm.com>
+Subject: Re: Raspberry Pi 5 and PREEMPT_RT (6.13.0-rc3)
+To: Leon Woestenberg <leon@sidebranch.com>
+Cc: John Ogness <john.ogness@linutronix.de>, linux-rt-users@vger.kernel.org
+References: <d445e582-4e49-4135-9d94-f52d72ec5df6@gmx.net>
+ <84bjx6h2kd.fsf@jogness.linutronix.de>
+ <cb569b76-e0ac-4063-9956-ab6307594d86@gmx.net>
+ <CAMjhiJjpnP4Nr5YmgntPd43gndBXnh_DOjW_davDVG2fu0F4sQ@mail.gmail.com>
 Content-Language: en-US
-In-Reply-To: <SJ2PR22MB3822B4550212A2418187A075E5112@SJ2PR22MB3822.namprd22.prod.outlook.com>
+From: Florian Paul Schmidt <mista.tapas@gmx.net>
+In-Reply-To: <CAMjhiJjpnP4Nr5YmgntPd43gndBXnh_DOjW_davDVG2fu0F4sQ@mail.gmail.com>
 Content-Type: text/plain; charset=UTF-8; format=flowed
-Content-Transfer-Encoding: 7bit
-X-TM-AS-GCONF: 00
-X-Proofpoint-GUID: Vn5aBguMhkirMZeKmLiNSvu1ylBlAjje
-X-Proofpoint-ORIG-GUID: Vn5aBguMhkirMZeKmLiNSvu1ylBlAjje
-X-Proofpoint-Virus-Version: vendor=baseguard
- engine=ICAP:2.0.293,Aquarius:18.0.1051,Hydra:6.0.680,FMLib:17.12.62.30
- definitions=2024-10-15_01,2024-10-11_01,2024-09-30_01
-X-Proofpoint-Spam-Details: rule=outbound_notspam policy=outbound score=0 suspectscore=0 mlxscore=0
- lowpriorityscore=0 bulkscore=0 mlxlogscore=450 phishscore=0 malwarescore=0
- impostorscore=0 priorityscore=1501 clxscore=1015 adultscore=0 spamscore=0
- classifier=spam adjust=0 reason=mlx scancount=1 engine=8.19.0-2411120000
- definitions=main-2501080033
+Content-Transfer-Encoding: quoted-printable
+X-Provags-ID: V03:K1:/WJJ3Z79f8wwSlCKh6p7XASLKCFtlC39aVUrL9ykbxGOXCL7ZSp
+ 6ja1guAvmUxXKWrbkDh116BBf1MQqFMKlJ4I1iGHR1a9I1s8zdocK8aZyMZHE9ryp0u7L7i
+ RvZQnLjOnQrodmci9VzoAYZxA3iH5Nmro+ldJppqFJQp58ZlgQHVYgSKJ337aCuc66rBrTV
+ mb+Gxr/kcTOqwfYw/drtA==
+X-Spam-Flag: NO
+UI-OutboundReport: notjunk:1;M01:P0:7lpmuISAprA=;saW8hpP59JYn8rNK/zHOFbyIm89
+ NfYI7wApQn4Dt1yQc718uPzJt08sPiFAj3WuH3lLtiJ4iGPjimwHTlHECaKkuIg+lku45NbSX
+ 7Rw1Jl2AYt2hd00qUB+LdlSJZuSZuMtIo+gSVLnRRQ97I+292gWLcW4IdpTGT0va9Vcgl+S5O
+ Ef3jfTvo2WnbERt7xaCBF//xU4ULUyKEXzO7UzJ4sZDgPCt4C5NR7M9cZNGDompMZvP2jdW6d
+ z+UlMKyzcucUmABZuQ6wdXHIACWEPV9tSGyorD2+djVlp9aw/wFrkl5um5gVk2AI8M+/DO0z4
+ 0CuGr+o7rFfg45WUP8C22No0ehYbDTbT8/jwIyUaQ9+OCiMszAsQXo4Mw18rMBqqDpGFzusSw
+ zM/Xcxxohemx549uhVfPhSeQWH8sbI1OLvB5l7SOQcy+lafuTyT5ccGzvO9oVRRb90W3dH8sf
+ Z+q03/7xO7qLrlnGc8LkxUDbOE43lKn6r6nm/xMwdDZQtS38biObHEPvVPtJBIRYkNrMuDAA8
+ hUw3NaJK2y+tik+NY/A13nmoIMrw4oJnOqDlbmh0OxJbo4HcupZnifusuH84qMm9GuKU4m9pZ
+ zTx00i1cLro7He+r5SKkpq/Z5QGRkuZFCgH5/OkhpEhi/ok2hQK6AjeKzLepUN+ggG21qr67B
+ unn8gbBU5V5j53/0/G7l0TZhGg9TjNoxF8pc+fr0ikK/Nld4yR9eXjTrmxUIFguDMZQndUpIo
+ bqpx05u5m9UnqnHKlmPHhi/eO67sCphAGgOzQECkvquOJX4euAoXkcoW6ArUZSly1DxrNu3Kb
+ aG2d6I5AJoXA/n1CifB/SU+ntXCDC+V8KqyBZB60hJ5PYPcwJRHw276NMFgnsRXGNQBy3f/Vw
+ CNOKau8/LGq+H/i4IOqnZZ3Zr3XIJ9SPgbe4erD5e4pqbzcSyL8xQdk1VFJprvHK+j8GzIdQc
+ l5s345xLQDiU+aJ2xWTiaMFxDih5zbr/NFK7djDXYnTewfB1jBoKUv1kOkRH6Dw6Jzjv+6uBD
+ gZiSQxUOBsP1+I3B/zEjfoWVT4gK5lfLXhov7Qax4l1vvv99wpO6oX5+QUK3RiYLjGIGFKJyN
+ bouPEZfv8=
 
+Hi!
 
+On 12/22/2024 11:32 AM, Leon Woestenberg wrote:
+> Hello,
+>
+> First of all, you can loo-kup long-term latency plot for PREEMPT_RT on
+> different systems. I doubt Raspberry Pi 5 differs from Celeron/Atom,
+> in my experience and from looking at the plots:, but YMMD.
+>
+> https://www.osadl.org/Latency-plot-of-system-in-rack-2-slot.qa-latencypl=
+ot-r2s7.0.html?shadow=3D0
+> https://www.osadl.org/Long-term-latency-plot-of-system-in-rack.qa-3d-lat=
+encyplot-rds3.0.html?shadow=3D0
 
-On 1/7/25 23:43, Robert Joslyn wrote:
->> -----Original Message-----
->> From: Shrikanth Hegde <sshegde@linux.ibm.com>
->> Sent: Tuesday, January 7, 2025 5:10 AM
->> To: Robert Joslyn <robert_joslyn@selinc.com>
->> Cc: linux-kernel@vger.kernel.org; linux-rt-users@vger.kernel.org;
->> tglx@linutronix.de; rostedt@goodmis.org; Sebastian Andrzej Siewior
->> <bigeasy@linutronix.de>
->> Subject: Re: [PATCH] powerpc: Allow scheduling of IRQ with PREEMPT_RT
->>
->> [Caution - External]
->>
->> On 1/7/25 17:26, Sebastian Andrzej Siewior wrote:
->>> On 2024-12-26 11:12:38 [-0800], Robert Joslyn wrote:
->>>> This branch is needed to allow preemptible IRQs to be scheduled,
->>>> otherwise the kernel hangs during boot on my e300 based platforms.
->>>> This branch is needed for both CONFIG_PREEMPT and
->> CONFIG_PREEMPT_RT,
->>
->> Hi Robert.
->>
->> Are you running with preempt=full or enabled preempt_rt ?
->> rt is yet to be supported on powerpc. are you having it enabled out of tree?
-> 
-> I'm running PREEMPT_RT using the out of tree patches on 6.6.58-rt45:
-> https://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git/
-> 
-> I haven't tried using the mainline kernel, since as you said, it doesn't have powerpc support for PREEMPT_RT yet.
-> 
->>
->> Also, I have sent out patch to enable dynamic preemption. It uses
->> preempt_model_preemptible.
->> I think it should work for you as well. If you could give that a try and ensure it
->> works, it would be great.
->> https://urldefense.com/v3/__https://lore.kernel.org/all/20250106051919.5
->> 5020-2-
->> sshegde@linux.ibm.com/__;!!O7uE89YCNVw!IDeomstGeuiEZi9FmLHH8C2xo
->> PPo_ewL-
->> k2kiQ9CmVID35U4J_v3Dkafjo3RnS9ygPoUZWwyyp91SP2euRkKArk$
-> 
-> Does the dynamic preemption support let me enable the same functionality as PREEMPT_RT with the out of tree patches? I can test it out either way.
-> 
+I am aware of the OSADL test farm :) But thanks for the pointer nonetheles=
+s!
 
+> You could consider using isolated CPU cores, which should give you
+> much lower latencies, if you have full control over the application
+> logic.
 
-with preempt_rt, dynamic preemption allows you to switch between full 
-and lazy. without preempt_rt, you can switch between none, 
-voluntary,full and lazy.
+I would love to make use of all 4 cores though. I'll play around and see
+if the latency reductions with isolated cores make up for the loss of a
+core for the RT work.
 
+Thanks and regards,
+FPS
 
-> Thanks,
-> Robert
+=2D-
+https://blog.dfdx.eu
 
