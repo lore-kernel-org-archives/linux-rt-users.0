@@ -1,129 +1,69 @@
-Received: from mout.gmx.net (mout.gmx.net [212.227.17.22])
+Received: from mail.thorsis.com (mail.thorsis.com [217.92.40.78])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 66A5E206F3E
-	for <linux-rt-users@vger.kernel.org>; Thu,  9 Jan 2025 08:39:26 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=212.227.17.22
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 481CD215051;
+	Thu,  9 Jan 2025 08:42:02 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=217.92.40.78
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1736411970; cv=none; b=OVLxnGtO6rwlIvXsZC4PA0qoUgA26XGkfZcMK8Bf67rjjZVNJu91KcDgF8NsbpeFDHhivU3vTt3g3s75HiBXdj+TbpcYbtuhOSeE50qD5GCjT0cTJaZ+y4umxatXMfFYdiBVCdf/CdV14v7spegQSXSZ9aNNkk53huIv+cwHy40=
+	t=1736412126; cv=none; b=JaNQmHLU7hEeXZT0E+P1JtBMfTVZLCuZ6X9jwYXnoV4gbVdXXmSXnPfM5zBDXp08f6LnsQ1Qh26YggKHpsGi3MuOryhJXDfk7DEUFiLiUnI/pE67LAWyJ8iTa0apCxPDpbko8eCw+BXb3yvjdQXEjaUE6xOESloc59IJKyYJguI=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1736411970; c=relaxed/simple;
-	bh=e/A3l8sCpAs2kZgSXpWBFQLf0vbEO8gtO1gW92xjNtA=;
-	h=Message-ID:Date:MIME-Version:Subject:To:References:From:
-	 In-Reply-To:Content-Type; b=o267+L2+YHaUTg3Ug7JOYR7Dwh4foMNShBkdQgMbDzTgsrWtlD2fPWY+isXfV5/lmIqWfUmGobtQyex87HXxy9vh2BrczarD6CKAh3yM20qsOcVKtpxLC+s8aeeDlm9yzcfHvTyjT3snWDjteb6oxxprao6p92I37Ziqn/vHj+M=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=gmx.net; spf=pass smtp.mailfrom=gmx.net; dkim=pass (2048-bit key) header.d=gmx.net header.i=mista.tapas@gmx.net header.b=Iig0BbxA; arc=none smtp.client-ip=212.227.17.22
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=gmx.net
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmx.net
+	s=arc-20240116; t=1736412126; c=relaxed/simple;
+	bh=lIExu1+mqud5aFROnKe3lpewKfZw+pyDw7Q5chPEnKk=;
+	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
+	 Content-Type:Content-Disposition:In-Reply-To; b=Cbw+NtUpXE6x5+3UOC+gz/1znKj1mxufJ5wU2wPnheOfRErcypEOTB/qxeXcr22io2GRgjBpmTX2b2OLi6jvLG16rc1xOGBVXY2Y2+WpUlM5qM71DDNRhJJivU7nUcXJXDMfNbh2KP7mOEnVX2/Y5biGhwDIpp0Nug4kpv+9X4M=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=thorsis.com; spf=pass smtp.mailfrom=thorsis.com; dkim=pass (2048-bit key) header.d=thorsis.com header.i=@thorsis.com header.b=c3AJxysG; arc=none smtp.client-ip=217.92.40.78
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=thorsis.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=thorsis.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmx.net header.i=mista.tapas@gmx.net header.b="Iig0BbxA"
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=gmx.net;
-	s=s31663417; t=1736411956; x=1737016756; i=mista.tapas@gmx.net;
-	bh=qcF7EycuROUt0WlqyuGmIRx817MyumfKKfrx/LoR9WM=;
-	h=X-UI-Sender-Class:Message-ID:Date:MIME-Version:Subject:To:
-	 References:From:In-Reply-To:Content-Type:
-	 Content-Transfer-Encoding:cc:content-transfer-encoding:
-	 content-type:date:from:message-id:mime-version:reply-to:subject:
-	 to;
-	b=Iig0BbxA4eTsTnOGStxr57dON/Q61tAtgj+obOAEXPW+5LufmV55hx/+g1PZOTpq
-	 ttm689Mj28iI9BUazmBGMmHv6rjIke2L5GJWwQWZPxQN1vQczeEBA+AiYludeuAcn
-	 SOe6tyw0eVKMVm7a8P9qbrKr2lIMvLVeBYLKazVAhZZNtWDz7zbLJj0jFGeIxc+9z
-	 4GDT1HuruCROKqrS4IQme2zDJYHzhPQPuPmuAUnl7Y0sE8mNklEHOr1PmPmfZUj6E
-	 28AUX88BnVzio3LQBfjZoeu632K9Gbr8WeUV8lLG7qLI0Z2X1DIa0WyKLKKsSSCDX
-	 kL5OFWzb+Sew8oGnAg==
-X-UI-Sender-Class: 724b4f7f-cbec-4199-ad4e-598c01a50d3a
-Received: from [129.70.76.171] ([129.70.76.171]) by mail.gmx.net (mrgmx104
- [212.227.17.168]) with ESMTPSA (Nemesis) id 1MhD2Y-1tzvt82It8-00ifgl; Thu, 09
- Jan 2025 09:39:16 +0100
-Message-ID: <91fd6206-ec8d-4336-8e64-64464d88548e@gmx.net>
-Date: Thu, 9 Jan 2025 09:39:16 +0100
+	dkim=pass (2048-bit key) header.d=thorsis.com header.i=@thorsis.com header.b="c3AJxysG"
+Received: from [127.0.0.1] (localhost [127.0.0.1]) by localhost (Mailerdaemon) with ESMTPSA id 669F51484E5B;
+	Thu,  9 Jan 2025 09:35:22 +0100 (CET)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=thorsis.com; s=dkim;
+	t=1736411722;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 in-reply-to:in-reply-to:references:references;
+	bh=/4QbobkL/IsJcR2v57oNKdG88iAe5/cIdPqkEqSLI2A=;
+	b=c3AJxysGFQqy7sWqzuZ1N4go0DyM83F3ILV0ifSSuSLY4RmAdLL7wzMnmfar0dFEmlwKoL
+	aKoOPU6QHP/PJX8OfumlIvMxlvpenYKvk8NH63YM9frxkCVffVqEg3pWcAoH6u6b4MvCFI
+	K0EgAqqqoTtAXmpT1MC2YweTexf08c1o6N2zfTJjht47n28RqdLVGvVsgExsVO8i9eCbQa
+	u+Dxn3m2OZnxNd5WaRFUuRLC5LjNl6PwFU31cHfJOVbRQ3Sg6xmFlHUZlbWD5+4YtnItlf
+	d2bJ/XHNQejKAJ/sAi/6R5JO55DPbWle6lIHu2QY1isNjJdBLM4bMMVWggZAvQ==
+Date: Thu, 9 Jan 2025 09:35:20 +0100
+From: Alexander Dahl <ada@thorsis.com>
+To: Christian Eggers <ceggers@arri.de>
+Cc: linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org
+Subject: Re: [RT] v6.12-rt stable branch?
+Message-ID: <20250109-sensation-diabetic-9b082008c6d4@thorsis.com>
+Mail-Followup-To: Christian Eggers <ceggers@arri.de>,
+	linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org
+References: <2732654.vuYhMxLoTh@n9w6sw14>
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
 List-Subscribe: <mailto:linux-rt-users+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-User-Agent: Mozilla Thunderbird
-Subject: Re: Raspberry Pi 5 and PREEMPT_RT (6.13.0-rc3)
-To: John Ogness <john.ogness@linutronix.de>, linux-rt-users@vger.kernel.org
-References: <d445e582-4e49-4135-9d94-f52d72ec5df6@gmx.net>
- <84bjx6h2kd.fsf@jogness.linutronix.de>
-Content-Language: en-US
-From: Florian Paul Schmidt <mista.tapas@gmx.net>
-In-Reply-To: <84bjx6h2kd.fsf@jogness.linutronix.de>
-Content-Type: text/plain; charset=UTF-8; format=flowed
-Content-Transfer-Encoding: quoted-printable
-X-Provags-ID: V03:K1:VpQcinl69/WmlwxWxcPn6+v3Yd8pKE56BY79nTREo5RsOJ+R+U0
- lEcUofpAcfP4WVuh79oBFk7PXIRozRtA6E7A4U1szbmcTqIXW5huWPLrePQPm7HbncggPSN
- 7OUdUjMYWYK6M+EcJemSgh1WDCCg+6myuXZlN9tCjDNdj+44AkcVXBgjkj9BcNYsdNATYTg
- RG4UCdJVcDVeBmHsly6sA==
-X-Spam-Flag: NO
-UI-OutboundReport: notjunk:1;M01:P0:msIWPYEhHtk=;jgKofqr1AVSxoSW7ytQX6N7uFmA
- Slxzp31dYjL48d0gAa6+d1wjH7w/G3eQWw6Wy9NACdTmVm5IA3jLMA2BWKhtOYERDstRjDpal
- qNy4QScGPRj8EPYGYYGD2+0mY6UprxJKH1scgErcJP4kJHOt5brW4zwxuWjO0/mpUm+odnH6e
- 9+v8upGELnPEjiC1aap0f2xmNKctrrKCA2dagf87m4FruI2qHxmPfbsmAD8lMf3WBMr9Nrn57
- CdpAJJKvl65JZQNNtr6NEpVJVdqF+3SM5we9vjhvJ2vzyMZXT91emhYN0HuDdWtZ5Oz7MWedW
- hWTlYfV82+OXs1A/xnolpLg9YnWFNB5KiasFSRRv+QHFKAEUZqG9GixRZVZRjeq50X+bdv3on
- D+PNHwe50TmzBjUGxnTeamXQ93LZ8i6IR0D5KyzaqO0yHKbb1QgBXusakvWxkP4KH5u+zuW8Y
- 9t3FzM+zxI6nCd2CF324TbWN/O5Tz1cjflp++BHOJuHUfTk/weNL5x9bqr6PhCHKj30NV9vt3
- RJMqQtFW17BBT+YONGK15FYMHzTy0KWqK+0hPv7ZJ3G76M6Ya7rm1KhlQWrQcT2iXkhVADwnE
- apsEcxBNrPTH1etR4r//TPfZdlujomt5jhgRs/YXFbxAcTLyT4mUjQdpKtoQQhDbDCU8nUEr8
- Qhoi6/qPtaihjerrDsEyb7VvMnnh06DLV1jVP2pgp8E7TTEechGe8zKS2XJI6ybVdGbjlLXSX
- m/sV8nrvkOp3+2tVW1Rv3m/SP4cdssLcWqUcuQ8kKutjP++PtiCVqch8Qdo4juwqWDrqs057e
- CnXloyTPBTLe+GyTTsV8Uc5F+7sKPlOLYG0XIIAWHIgqdyQb3F2pDPFZ+prL9ryUVyxOdFpRb
- eC7dgpEMCxk3ZHq+4PMOktwfGQ8EaxATTEuf9AE4ycZbdty60gl/2U+fcmjtltBa/M7+ct5cg
- yohfi17EyvusHdBMa8IiyLbNCVIqgWN9xbwjnQKNh+Mh/641yONj8sFGOmZ1sKFwTrxY2PBpb
- 1kwujiJNymIIHUh6TRr4F9/v/2Ib50IQaDNXCIXt77od/Q01v4KK1gVQxbkyabRk6r9bqrNk5
- AiJf3mCgJhnHtNSv6s3eNn++e9k0Zh
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+In-Reply-To: <2732654.vuYhMxLoTh@n9w6sw14>
+User-Agent: Mutt/2.2.12 (2023-09-09)
+X-Last-TLS-Session-Version: TLSv1.3
 
-Hi John again, Hi list :)
+Hei hei,
 
-On 12/20/2024 3:05 PM, John Ogness wrote:
-> There are various kernel configurations that affect latency. But I am
-> curious... Why do you think a maximum latency of 80us on an $80 board is
-> large? What maximum latencies are you expecting? And why do you think it
-> is not "under control"?
+Am Thu, Jan 09, 2025 at 09:23:23AM +0100 schrieb Christian Eggers:
+> Although most of the remaining RT stuff has been merged into linux-6.12, there
+> seems to be still no out-of-the box support for RT on ARM 32 bit platforms.
 
-I played around some more and coincidentally found a way to trigger even
-longer latencies:
+This is also how I understood it.
 
-stress -m 4 --vm-stride 16 --vm-bytes 512000000 --vm-keep -c 4
+> Are there any plans to release (and maintain) a v6.12-rt stable branch? Or shall
+> I pickup the necessary patches into my local branch myself?
 
-This gives me latencies in excess of 500 us. I even saw 800 us once or
-so in my tests.. The traces still look fine. Here's one for 438us:
+We have some systems with Microchip AT91 SoCs (SAMA5D2, SAM9X60) and I
+would be interested in those patches as well.  The last patch
+published was 6.12-rc4-rt6 from october.
 
-rtla timerlat hit stop tracing
-## CPU 3 hit stop tracing, analyzing it ##
-   IRQ handler delay:                                         0.00 us
-(0.00 %)
-   IRQ latency:                                             439.58 us
-   Blocking thread:
-                           stress:1706
-     Blocking thread stack trace
-                 -> timerlat_irq
-                 -> __hrtimer_run_queues
-                 -> hrtimer_interrupt
-                 -> arch_timer_handler_phys
-                 -> handle_percpu_devid_irq
-                 -> generic_handle_domain_irq
-                 -> gic_handle_irq
-                 -> call_on_irq_stack
-                 -> do_interrupt_handler
-                 -> el0_interrupt
-                 -> __el0_irq_handler_common
-                 -> el0t_64_irq_handler
-                 -> el0t_64_irq
-=2D-----------------------------------------------------------------------
-      IRQ latency:                                          439.58 us (100=
-%)
-
-
-A Raspberry Pi 4 seems to be less susceptible to this stress test. There
-the maximum latencies go to ca. 200 us. I will try a couple of kernels
-including the one in the OSADL farm.
-
-Kind regards,
-FPS
-
-=2D-
-https://blog.dfdx.eu
-
+Greets
+Alex
