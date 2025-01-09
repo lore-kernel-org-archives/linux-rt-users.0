@@ -1,49 +1,58 @@
 Received: from galois.linutronix.de (Galois.linutronix.de [193.142.43.55])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 35B2F2594BA;
-	Thu,  9 Jan 2025 10:48:05 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 342F9215F58
+	for <linux-rt-users@vger.kernel.org>; Thu,  9 Jan 2025 10:49:54 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=193.142.43.55
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1736419688; cv=none; b=AeiW/Xu7GQQMyCE1xEozHE6r9b3WHQgLRFZCcISxUlQ9fpC9+JwmXZ3ySbVyqVeM7YZE8lDqGkTQb9vS6nXpnqXFLb52mnyzwvgANpcKNSDPqK5rSWlEbHPgk5QJ1BNtB0QRFBvtjOxvaU7apdlCyHiU4Oag8+m3UY11QAeGzgk=
+	t=1736419796; cv=none; b=nrLZsACdmHW7NrRyjgiwABnSTvwKJf8jcE8SWV5flHtHHXa+NMWp0yq8Mxuuy9vIT8n3b4z8Ui+tNrk0KIDDmjmbujmkXtkR131vJe8GX6T7mVKAgmoXfu53Yh3c0xYRKrszh0ZemOFxjDm4kkEqikt830/kEQ9ZjLTDFvHlE10=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1736419688; c=relaxed/simple;
-	bh=eet1vt7h9KZXpWS2lZkZkcP2OsOdh1WfMY62jCiMg4s=;
-	h=Date:From:To:Subject:Message-ID:References:MIME-Version:
-	 Content-Type:Content-Disposition:In-Reply-To; b=pCYGxLAC/R6eQWHEiTcyyXYMHgjkB/uRSmslUQ1cWXuPYJUOR8k39wXqoiXV84axBC+7sQPP59gCCSBCH3RNhoces4KZI0qCWAQZ2y7V+SbSsxngEyyFaSJn2cOjS/NEM7h8HTKeYC2OyR6nAuQ1zql4EVbJbhcZZ6scoU1UWSY=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linutronix.de; spf=pass smtp.mailfrom=linutronix.de; dkim=pass (2048-bit key) header.d=linutronix.de header.i=@linutronix.de header.b=NiPVoPlm; dkim=permerror (0-bit key) header.d=linutronix.de header.i=@linutronix.de header.b=rBo5TMgr; arc=none smtp.client-ip=193.142.43.55
+	s=arc-20240116; t=1736419796; c=relaxed/simple;
+	bh=s9kTdXumcjrFopGqGNOu8kIzKgC1OV3LwiOgRYi06YQ=;
+	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
+	 Content-Type:Content-Disposition:In-Reply-To; b=J+Fod9XiPEHTM9p5W3+qrz25rSv6ibmCaUeYyeWdQ+UWWroAPHGVQM4kbcVIMbJpV87R5C5Rz4mAlRy53b6ZXxGSW1TaSxGZghbrwI4ed5Mm8/aE4UHI5Ez+kRP9E6776lWVVAzTik0pJLQcOqCDuwWQThqjHBOv9Kh+7ypaZsg=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linutronix.de; spf=pass smtp.mailfrom=linutronix.de; dkim=pass (2048-bit key) header.d=linutronix.de header.i=@linutronix.de header.b=3Fl8xBqI; dkim=permerror (0-bit key) header.d=linutronix.de header.i=@linutronix.de header.b=cS8H/Ebg; arc=none smtp.client-ip=193.142.43.55
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linutronix.de
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=linutronix.de
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="NiPVoPlm";
-	dkim=permerror (0-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="rBo5TMgr"
-Date: Thu, 9 Jan 2025 11:47:57 +0100
+	dkim=pass (2048-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="3Fl8xBqI";
+	dkim=permerror (0-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="cS8H/Ebg"
+Date: Thu, 9 Jan 2025 11:49:51 +0100
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
-	s=2020; t=1736419678;
+	s=2020; t=1736419793;
 	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:mime-version:mime-version:content-type:content-type:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references;
-	bh=KAoMh6zYpVO541IvzTj+T1fwKYtnFK1Jf1u0ecw73lU=;
-	b=NiPVoPlmECE0ps6N23Uf5cJrg8sh4sk1X4V0kkwyR+AYV5bKRq3klX1tW9juJpYdS6xpzb
-	aN86vmcXuO65rHhKWtcIr/RwGa8su6GzjNWFD8KjbQbyIsseUTFJ4OyRJJu/ygZM9nsq4W
-	yQJF7AuDTINx9BZlrELgDnFkEqXIg7ow6dfbldQDxAOE2pzTARuOkqxIOeM6iDKoiUIghE
-	BgJr2bKl4VCFa07S2cTVFxb5gOJhqIQEDl4QZliv6Bvqq3VDMrrVBZF6x5o59HuuDOFRl6
-	2sNhhJjzHpBmyumzeAti1U4B0sO9dzyrN0YVT0Umq5jZo4hci2qWGXX71wXKIQ==
+	bh=1XZYGPpdnn0WkW1AQSG61BrHsUXWejImi7NVr0On94Y=;
+	b=3Fl8xBqI4yBcea3SoIXeHnPdLalQQWRoON7jcA6UQUpxV7gC6JhzhJXObPtGvz/WNlv5Re
+	Kac85ZHQ+nTDxjbYG9gCuEOCbMLbSIz0Gcehc5bEGN5L0peGaE0wC7YHdTGUgKCD7D8P7m
+	Wa6FEoEQCN8u8KEjnGV3mp0SPmR7MDvNIjhUeRdItR+NMtkZveGf3LPQojEwtncWPogQoC
+	w/RixUaVTiu+KOwMVqwVZpkbYoXZqABE2Gd5HDg6VAEBbOw/XNqoqI2Lok8r5WOKZVVkgZ
+	YNYkYefo7zyBPSc3PevKvYGI7J/S/Njsh+hrxqzS6euuqg1XFJOV9W4WXT+kmQ==
 DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
-	s=2020e; t=1736419678;
+	s=2020e; t=1736419793;
 	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:mime-version:mime-version:content-type:content-type:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references;
-	bh=KAoMh6zYpVO541IvzTj+T1fwKYtnFK1Jf1u0ecw73lU=;
-	b=rBo5TMgrisHm23sk5tdzVKBcPB7Uhcf7nG76yPaR33G/PaR/WGsrHxmceU+pANwLrYfEXh
-	VJwLVR8V+eXD3lDA==
+	bh=1XZYGPpdnn0WkW1AQSG61BrHsUXWejImi7NVr0On94Y=;
+	b=cS8H/EbgEJGFfwBEKyRjH3+DbZJc6tLjTkShwUIfqqNNAWqhnQ8MlUaliAPfEv9WF3N9i+
+	r0nnkYAvjFf2vVDQ==
 From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-To: Christian Eggers <ceggers@arri.de>, linux-rt-users@vger.kernel.org,
-	linux-kernel@vger.kernel.org
-Subject: Re: [RT] v6.12-rt stable branch?
-Message-ID: <20250109104757.lszbnJUq@linutronix.de>
-References: <2732654.vuYhMxLoTh@n9w6sw14>
- <20250109-sensation-diabetic-9b082008c6d4@thorsis.com>
+To: Tomas Glozar <tglozar@redhat.com>
+Cc: John Kacur <jkacur@redhat.com>, Kurt Kanzenbach <kurt@linutronix.de>,
+	Clark Williams <williams@redhat.com>,
+	Thomas Petazzoni <thomas.petazzoni@bootlin.com>,
+	linux-rt-users <linux-rt-users@vger.kernel.org>
+Subject: Re: rt-tests release tarball location
+Message-ID: <20250109104951.j_au4J3w@linutronix.de>
+References: <20241228114346.6020d6b0@windsurf>
+ <87h66b2c6m.fsf@kurt.kurt.home>
+ <20250107141424.EoC5uS6y@linutronix.de>
+ <f87b2d77-7925-8678-d0fe-9a0d471a38f1@redhat.com>
+ <20250109080555.WpQmRgu0@linutronix.de>
+ <CAP4=nvTmQFPrv=FtJAy_g2xxsqBSfHE1mne5sEBrsDGKVAs5+g@mail.gmail.com>
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
@@ -52,36 +61,27 @@ List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
 Content-Type: text/plain; charset=utf-8
 Content-Disposition: inline
-In-Reply-To: <20250109-sensation-diabetic-9b082008c6d4@thorsis.com>
+Content-Transfer-Encoding: quoted-printable
+In-Reply-To: <CAP4=nvTmQFPrv=FtJAy_g2xxsqBSfHE1mne5sEBrsDGKVAs5+g@mail.gmail.com>
 
-On 2025-01-09 09:35:20 [+0100], Alexander Dahl wrote:
-> Hei hei,
-> 
-> Am Thu, Jan 09, 2025 at 09:23:23AM +0100 schrieb Christian Eggers:
-> > Although most of the remaining RT stuff has been merged into linux-6.12, there
-> > seems to be still no out-of-the box support for RT on ARM 32 bit platforms.
-> 
-> This is also how I understood it.
+On 2025-01-09 11:13:50 [+0100], Tomas Glozar wrote:
+> =C4=8Dt 9. 1. 2025 v 9:06 odes=C3=ADlatel Sebastian Andrzej Siewior
+> <bigeasy@linutronix.de> napsal:
+> >
+> > What I am asking is to either please keep all rt-tests releases in
+> >         https://www.kernel.org/pub/linux/utils/rt-tests/
+> >
+> > but this would also mean that the older folder becomes removed and this
+> > might upset more people.
+>=20
+> Can't we symlink the older directory to its parent, so that all
+> releases will be available under both
+> https://www.kernel.org/pub/linux/utils/rt-tests/ and
+> https://www.kernel.org/pub/linux/utils/rt-tests/older/? Yes, it's a
+> bit ugly, but it would ensure the downloads keep working for everyone.
 
-I've been asking who needs ARM support and nobody spoke up. Arnd then
-picked up some of the patches and for v6.13 the ARM queue got smaller.
+kup supports a ln command so that would work, yes.
 
-Looking at what affects ARM from the queue there is just the ktimer
-thread and the ARM specific bits. Lazy-preempt isn't implemented.
-
-> > Are there any plans to release (and maintain) a v6.12-rt stable branch? Or shall
-> > I pickup the necessary patches into my local branch myself?
-> 
-> We have some systems with Microchip AT91 SoCs (SAMA5D2, SAM9X60) and I
-> would be interested in those patches as well.  The last patch
-> published was 6.12-rc4-rt6 from october.
-
-v6.12 is a LTS. And I wanted to add some PowerPC bits because it does
-not boot on some parts as I've been told.
-What about I make a release for the current stable tree and then update
-it once the patches no longer apply on a newer stable tree?
-
-> Greets
-> Alex
+> Tomas
 
 Sebastian
