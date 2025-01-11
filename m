@@ -1,130 +1,92 @@
-Received: from mx.kolabnow.com (mx.kolabnow.com [212.103.80.153])
+Received: from 16.mo561.mail-out.ovh.net (16.mo561.mail-out.ovh.net [188.165.56.217])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 8D9FA170A26;
-	Sat, 11 Jan 2025 19:04:14 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=212.103.80.153
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id D4D361B6544
+	for <linux-rt-users@vger.kernel.org>; Sat, 11 Jan 2025 20:33:29 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=188.165.56.217
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1736622256; cv=none; b=uF1DXicORBQ9j1cySwvchLTr0OLmZXWoBe3XhyQL1kEbhmGc6A8caDUxTFs5+ER09P0UGFWz2wrdsea4m/GLKiuC9iahM0c3L+nhWJMBkgA0UJWW5a7dm/lW8HrLJw6sQT9Ax/KAjtAFu5V/xw2JprHh7a8/u42QpUGXMhuDF8A=
+	t=1736627615; cv=none; b=W2et8GdNANk2Luhloop0yvVk2lRGB2Co9JRwAqkPekF8fLJ0a4PMueEgE+zcjFHWNJTImpol/DFpRdEhjY4aGnI7AtAmHfKCPG7ky9KE5J0PFUQfHj+i7TCAQY5UdF2vZ42rzcy95EflW6/vNfCJp6ejzq6QZoXDrx+N91lF/BE=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1736622256; c=relaxed/simple;
-	bh=7xxv6nIQW6y0nVofDWTgaDdHp0HdoXXxyMDg0XYYG8o=;
-	h=MIME-Version:Date:From:To:Cc:Subject:In-Reply-To:References:
-	 Message-ID:Content-Type; b=J4Zod2j3p7cw3JMxqJ2Xk852LsBokn8t9lKzMpiJjUjiooab5gezoRLtAlPtIk/qjUjEzA5QNCDCUM9vfljg0CLqoA24bl0DGL8S69k94HWqxLxaEsHh0SIcaxxM15u9Fg/HtdMM5mlb1rIN6X1nMvLczJLJS/WzvWvUiR3+7F0=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=she-devel.com; spf=pass smtp.mailfrom=she-devel.com; dkim=pass (2048-bit key) header.d=kolabnow.com header.i=@kolabnow.com header.b=gBuARP9V; arc=none smtp.client-ip=212.103.80.153
-Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=she-devel.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=she-devel.com
+	s=arc-20240116; t=1736627615; c=relaxed/simple;
+	bh=6q6bl0NPtNIOS/mPjS/BFesbjUs6/5FgRsu/4+p6FvE=;
+	h=Message-ID:Date:MIME-Version:From:Subject:To:Content-Type; b=tIzydWyRFxlVyh2K4elTjXMaW2TSwmkmSoAYvaNZGhzTPZcnxdN+khtFKyFO+InKDPeo1BaHLLsPn+JEGIv6CAsbZTs57Y7DE7X2HCRhREyt+ZyYcOBHnpHi3xh8yHMco+nK9sWGGe5t6ep+AdLrElgmptRjVcmmRBPFDg5qm/E=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=chaudron-nautique.fr; spf=pass smtp.mailfrom=chaudron-nautique.fr; dkim=pass (2048-bit key) header.d=chaudron-nautique.fr header.i=@chaudron-nautique.fr header.b=iVBeMEho; arc=none smtp.client-ip=188.165.56.217
+Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=chaudron-nautique.fr
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=chaudron-nautique.fr
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kolabnow.com header.i=@kolabnow.com header.b="gBuARP9V"
-Received: from localhost (unknown [127.0.0.1])
-	by mx.kolabnow.com (Postfix) with ESMTP id E16FD2091D8B;
-	Sat, 11 Jan 2025 19:56:00 +0100 (CET)
-Authentication-Results: ext-mx-out011.mykolab.com (amavis);
- dkim=pass (2048-bit key) reason="pass (just generated, assumed good)"
- header.d=kolabnow.com
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=kolabnow.com; h=
-	content-transfer-encoding:content-type:content-type:message-id
-	:references:in-reply-to:subject:subject:from:from:date:date
-	:mime-version:received:received:received; s=dkim20240523; t=
-	1736621759; x=1738436160; bh=002uzwdVq2z9HmlHP4W2hSpP50GjYOnIm89
-	ig7AE5tw=; b=gBuARP9VILBFZwcerQbSva2M3dqSJAjCNk+wSQgSK3pPAf5UTUE
-	xgMMdYqQ5PDxBeEKUbYOf2hX4lL4eTonp195qneyjHV5bcKWCp/jy4Tw8kie7GmQ
-	+3XZHhogWR+ti9LRQ2K5BiuC39ES8eLiEoQJiPRhMwtEWbqmfPLQ11JlPkHlTt1J
-	XWDG3TOJBhRaEXIES23MfhGqMYy+pCzQ1Qa1bkhADsd9fKAg7Pz2yQmZ1n7+8U4P
-	45rwDwcU0bSooAt8er/bSusOGZt2RvgDJkyseG26dMaORv4/LOLvY2din0+Zzdus
-	kcZgUXcH8T9agkcLxET8JnZ+8X2jdMnSCTA==
-X-Virus-Scanned: amavis at mykolab.com
-X-Spam-Flag: NO
-X-Spam-Score: -0.999
-X-Spam-Level:
-Received: from mx.kolabnow.com ([127.0.0.1])
- by localhost (ext-mx-out011.mykolab.com [127.0.0.1]) (amavis, port 10024)
- with ESMTP id PStAmuxGQ8bI; Sat, 11 Jan 2025 19:55:59 +0100 (CET)
-Received: from int-mx011.mykolab.com (unknown [10.9.13.11])
-	by mx.kolabnow.com (Postfix) with ESMTPS id 067252091D81;
-	Sat, 11 Jan 2025 19:55:56 +0100 (CET)
-Received: from int-subm015.mykolab.com (unknown [10.9.37.15])
-	by int-mx011.mykolab.com (Postfix) with ESMTPS id 403733141C74;
-	Sat, 11 Jan 2025 19:55:56 +0100 (CET)
+	dkim=pass (2048-bit key) header.d=chaudron-nautique.fr header.i=@chaudron-nautique.fr header.b="iVBeMEho"
+Received: from director9.ghost.mail-out.ovh.net (unknown [10.108.9.135])
+	by mo561.mail-out.ovh.net (Postfix) with ESMTP id 4YVpFR3LPFz1RtY
+	for <linux-rt-users@vger.kernel.org>; Sat, 11 Jan 2025 19:17:47 +0000 (UTC)
+Received: from ghost-submission-5b5ff79f4f-q4rhw (unknown [10.110.96.84])
+	by director9.ghost.mail-out.ovh.net (Postfix) with ESMTPS id 376D51FD42
+	for <linux-rt-users@vger.kernel.org>; Sat, 11 Jan 2025 19:17:47 +0000 (UTC)
+Received: from chaudron-nautique.fr ([37.59.142.111])
+	by ghost-submission-5b5ff79f4f-q4rhw with ESMTPSA
+	id POFQA9vDgmf5Sw4A/SUKmQ
+	(envelope-from <vanvan@chaudron-nautique.fr>)
+	for <linux-rt-users@vger.kernel.org>; Sat, 11 Jan 2025 19:17:47 +0000
+Authentication-Results:garm.ovh; auth=pass (GARM-111S0054f7d4b6d-345e-42e8-a8f1-4851d2a33a05,
+                    510E52AC6DABEA1FD68B4F42488EC675CFEBCB53) smtp.auth=vanvan@chaudron-nautique.fr
+X-OVh-ClientIp:82.64.108.188
+Message-ID: <62b8238e-c70a-40fc-bee5-11b56df2a288@chaudron-nautique.fr>
+Date: Sat, 11 Jan 2025 20:17:05 +0100
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
 List-Subscribe: <mailto:linux-rt-users+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-Date: Sat, 11 Jan 2025 10:55:55 -0800
-From: Alison Chaiken <alison@she-devel.com>
-To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Cc: corbet@lwn.net, gratian.crisan@ni.com, triegel@redhat.com,
- rostedt@goodmis.org, linux-kernel@vger.kernel.org,
- linux-rt-users@vger.kernel.org, achaiken@aurora.tech
-Subject: Re: [PATCH] Documentation: locking: update libc support status of PI
- futexes
-In-Reply-To: <20250107153121.wAL-TfKG@linutronix.de>
-References: <20241228181546.1315328-1-alison@she-devel.com>
- <20250107153121.wAL-TfKG@linutronix.de>
-Message-ID: <619bfa123308eeb3a548fae36a3f9e4c@she-devel.com>
-Content-Type: text/plain; charset=US-ASCII;
- format=flowed
-Content-Transfer-Encoding: 7bit
+User-Agent: Mozilla Thunderbird
+Content-Language: en-US
+From: Le Chaudron Nautique <vanvan@chaudron-nautique.fr>
+Subject: data shared between RT and non-RT programs
+To: linux-rt-users@vger.kernel.org
+Content-Type: text/plain; charset=UTF-8; format=flowed
+Content-Transfer-Encoding: 8bit
+X-Ovh-Tracer-Id: 14112873858378681244
+X-VR-SPAMSTATE: OK
+X-VR-SPAMSCORE: 0
+X-VR-SPAMCAUSE: gggruggvucftvghtrhhoucdtuddrgeefuddrudehtddguddvtdcutefuodetggdotefrodftvfcurfhrohhfihhlvgemucfqggfjpdevjffgvefmvefgnecuuegrihhlohhuthemucehtddtnecunecujfgurhepkfffgggfhffuvfgtgfesthekredttddvjeenucfhrhhomhepnfgvucevhhgruhgurhhonhcupfgruhhtihhquhgvuceovhgrnhhvrghnsegthhgruhgurhhonhdqnhgruhhtihhquhgvrdhfrheqnecuggftrfgrthhtvghrnhepieelgfeujedvkeeihedukeejudevleelhfdvvdfgiefgkeduieeujeetvdffudegnecukfhppeduvdejrddtrddtrddupdekvddrieegrddutdekrddukeekpdefjedrheelrddugedvrdduuddunecuvehluhhsthgvrhfuihiivgeptdenucfrrghrrghmpehinhgvthepuddvjedrtddrtddruddpmhgrihhlfhhrohhmpehvrghnvhgrnhestghhrghuughrohhnqdhnrghuthhiqhhuvgdrfhhrpdhnsggprhgtphhtthhopedupdhrtghpthhtoheplhhinhhugidqrhhtqdhushgvrhhssehvghgvrhdrkhgvrhhnvghlrdhorhhgpdfovfetjfhoshhtpehmohehiedumgdpmhhouggvpehsmhhtphhouhht
+DKIM-Signature: a=rsa-sha256; bh=wsRxEVt/jztPi+Pu7UUF8qXoTEh4gB9eqbScfGBhk0E=;
+ c=relaxed/relaxed; d=chaudron-nautique.fr; h=From;
+ s=ovhmo4169961-selector1; t=1736623067; v=1;
+ b=iVBeMEho7KI7hndhLgbMmlo993uQtmYHBTkoHxsHefCKwNBuad19TlnjXkAq0Kej+mwZxNJr
+ Mbqv39LpULiVgejloRZfOKoSuUTUPtN1vt/vWfu+6dJv/TaFXvy0yCV/C03srooJYgT/xcJFpjP
+ mbijRsaEoQ2NO+IJSJO+SZpFR9aMltqKDLWTm/fOYbFgoLhkNIrSll/XVfVy+0o1QHwXH93kSEi
+ IePR4U9bATnczg7ZQqrU3E0huaY4FgaUIHUQYfI4difp5vp/lB+7d7a4jQ88QwCy4rTIzU79Rxy
+ w6dMl0t0HBYCscBmQQzKU4obAkcGrZcYjqC7Mriopldhg==
 
-On 2025-01-07 07:31, Sebastian Andrzej Siewior wrote:
-> On 2024-12-28 10:15:46 [-0800], alison@she-devel.com wrote:
->> From: Alison Chaiken <alison@she-devel.com>
->> 
->> Update the text of futex-requeue-pi.rst to explain that, because of a
->> conflict between POSIX requirements and ABI constraints, glibc does
->> not support requeueing of PI futexes.  Add some information about
->> librtpi, a library which provides an implementation of condition
->> variables which supports priority inheritance.
-> 
-> Are you sure? My memory is that glibc avoided using the internal mutex.
-> The old problem should be gone and pthread_cond_signal() and
-> pthread_cond_wait() should work.
+Hello,
 
-Ignoring support for 64-bit time, the last substantive change to 
-pthread_cond_wait() and pthread_cond_signal() was Torvald Riegel's  
-commit ed19993b5b0d05d62cc883571519a67dae481a14 "New condvar 
-implementation that provides stronger ordering guarantees," which fixed 
-problems with waking of ineligible futex waiters and with ABA issues 
-concerning the futex word.    What the patch does not do is made clear 
-by the commit message:
+I'm setting up a system on a raspberry Pi where 2 isolated cpus are each 
+dedicated to monitoring an encoder (and compare the current values to 
+the tresholds "enc_target_1" and "enc_target_2"). These tresholds will 
+be written at a stage where nothing moves, thus I have no RT constraints 
+while writing them.
 
-      This condvar doesn't yet use a requeue optimization (ie, on a 
-broadcast,
-      waking just one thread and requeueing all others on the futex of 
-the
-      mutex supplied by the program).
+The two other "housekeeping" cpus  will also run some programs : 
+external communication, setting of enc_target_x values, launching of the 
+RT-sequence on the dedicated cpus and display of the value of the 
+encoder "enc_current_value" (for information only, no time constraint)
 
-What futex-requeue-pi.rst directs is
+What would be the more efficient/safe way to communicate the current 
+encoder value to the no-RT cpus ?
 
-      In order to support PI-aware pthread_condvar's, the kernel needs to
-      be able to requeue tasks to PI futexes.
+If the speed of the encoder is near the limits of the RT-cpus, reading 
+the "enc_current_value" from the non-RT cpus won't be possible ?
 
-Riegel and Darren Hart discussed Riegel's patch in at length at the 2016 
-RT Summit:
+I thought to have the RT cpus write a variable not too often (every 
+0,5s, or every 50 steps on the encoder) to leave enough time for the 
+non-RT to read it (the non-RT reading being preempted by the RT writing 
+if it is too slow ?).
 
-     
-https://wiki.linuxfoundation.org/realtime/events/rt-summit2016/schedule
+Is it correct ? Or is there a more "standardized" or more efficient way 
+to do it ?
 
-The related glibc bug report by Darren may be found at
+Thanks,
 
-     https://sourceware.org/bugzilla/show_bug.cgi?id=11588
+Mathieu
 
-The last comment on the bug from 2017 is by Riegel:
+-- 
 
-     So far, there is no known solution for how to achieve PI support 
-given the current constraints we have (eg, available futex operations, 
-POSIX requirements, ...).
-
-I ran the bug reproducer posted by Darren in Qemu and found that it did 
-not fail.   I'm not sure if the result is valid given the peculiarities 
-of Qemu, or whether I made some other mistake.
-
-> 
->> Signed-off-by: Alison Chaiken <alison@she-devel.com>
-> 
-> Sebastian
-
--- Alison Chaiken
-     Aurora Innovation
