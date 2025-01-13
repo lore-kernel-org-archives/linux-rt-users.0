@@ -1,140 +1,122 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+Received: from mout.gmx.net (mout.gmx.net [212.227.15.15])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id E06CB1CAA72
-	for <linux-rt-users@vger.kernel.org>; Mon, 13 Jan 2025 12:30:40 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id D3A9A16EC19
+	for <linux-rt-users@vger.kernel.org>; Mon, 13 Jan 2025 12:57:09 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=212.227.15.15
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1736771442; cv=none; b=Q7k8pLJzTtgeJxYMJ2y94XJdSlYApnkygdjX71OWfnDLHKV6krP+opaBA8mEZhTtF7C7ML+BLledfEXFzI2avlHGUA6ogPX6FDClSbIZCFQMnspUmuizmi+5CWCqNNjDpL8EjiNL4cqI/xXXVU6OX5z6oWSY28Scvgck538PO5E=
+	t=1736773032; cv=none; b=WFDGBm7j3o4u3xag2sSBhjYVvXtaguGZgw0Lg2tfnnyqbRKRVW0hsL7315WCe5MyqKLDSB0EmQkfIyXcr/DpTBmvL0PdSqOrhdmm/en/eqIfNynmHNwNdyilVdS8pSmCypawEZgjUT9gw6P/0CoQWUA+sLxcZZHIFheVDafNQDo=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1736771442; c=relaxed/simple;
-	bh=E3bDIMGDYSKxGHIGv9aPPtROswfVWsVC1C9nz/KcMcU=;
-	h=MIME-Version:References:In-Reply-To:From:Date:Message-ID:Subject:
-	 To:Cc:Content-Type; b=fZZMpEhdPr0FjBhvaC3i8Ce5tLgakLJUfoQMO1fPu/fi3Al4zX1xCh80BUbUpWgXuP6WIrHesmtAq1rkR09UWQ5EzljvhQXdtL05oc7CSvrduH6mw0atWl+3uo61DHWhfYQTeNtnxN4kQUXwfet/yh6uQWHkO+9h3haKUihAbT8=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=XnbmzwOJ; arc=none smtp.client-ip=170.10.129.124
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
+	s=arc-20240116; t=1736773032; c=relaxed/simple;
+	bh=iwtpZhongI9pviMWG+1fafGhvKwB+nvFJkYFOmQjrzA=;
+	h=Message-ID:Date:MIME-Version:Subject:To:Cc:References:From:
+	 In-Reply-To:Content-Type; b=djO9i9I4JjfnkN6dLrMcyHK8O1UqMnc2Y1rrzLAyxtoiXLZkejlSg6RdheBEBDrKPJPblR0H9gDyfXPdwpp/zNR0MXtgBGueuIA3ZbIQ8tVUJB55AbsM7bQZ+cxRghGfeNfagYa3UtlpMeYOfkZLnwpmKtb35imprVm4SqqUWP0=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=gmx.net; spf=pass smtp.mailfrom=gmx.net; dkim=pass (2048-bit key) header.d=gmx.net header.i=mista.tapas@gmx.net header.b=ciKL7rvd; arc=none smtp.client-ip=212.227.15.15
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=gmx.net
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmx.net
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="XnbmzwOJ"
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1736771439;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references;
-	bh=mqi7q3466XGx059jejHH5GdzygKkmI6P8dhA+Q79/Jo=;
-	b=XnbmzwOJARzVd1LCFExeEvhK59mGeI+4bQIRPXRngjO4V6EQMyWtzKzt90mi/puieT1KV2
-	BonD5l+Yb2nwzO4VdQjsnK2r/RSoQ/2JphKDT64aElR/R+ms5R6ntBOsgq+SH23dcAeDxO
-	WQSx+fcX/IfR3j/AzM2GSo55zGJLtV8=
-Received: from mail-ej1-f69.google.com (mail-ej1-f69.google.com
- [209.85.218.69]) by relay.mimecast.com with ESMTP with STARTTLS
- (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
- us-mta-463-8CS60_rBN5WxaJCtQe3YMA-1; Mon, 13 Jan 2025 07:30:38 -0500
-X-MC-Unique: 8CS60_rBN5WxaJCtQe3YMA-1
-X-Mimecast-MFC-AGG-ID: 8CS60_rBN5WxaJCtQe3YMA
-Received: by mail-ej1-f69.google.com with SMTP id a640c23a62f3a-aaf8f016bb1so400074666b.2
-        for <linux-rt-users@vger.kernel.org>; Mon, 13 Jan 2025 04:30:38 -0800 (PST)
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1736771437; x=1737376237;
-        h=content-transfer-encoding:cc:to:subject:message-id:date:from
-         :in-reply-to:references:mime-version:x-gm-message-state:from:to:cc
-         :subject:date:message-id:reply-to;
-        bh=mqi7q3466XGx059jejHH5GdzygKkmI6P8dhA+Q79/Jo=;
-        b=VNDFSYDwtxFGUVDRVDGhGZkgWY3J4KJb4T2JkJgqGhRnN+cGwRcpXG7or3PlHi9Dq3
-         OL0nK6OMUwr/8fOHLMuGr2Cgfd7ZphT4otcUEnxAxbRkTgPPZm4Twn+zjcTzZMWAyoRP
-         gT+Jrid8IK+Xfti4DbT2Pcl7dnMlvd8ekxqH9CdCopsXKy/vsxh4u3IZkqDJ68w4NBCO
-         fcg6wOuqUNDNINTJ1xJ3OoHikEPgQxw9lW20k49qg2ICYQ3mg4dlvDMkkf0Q1mibMIrL
-         oXNum8FL11fde5Fu4KHFe7S1UULQeBLLcMeMP2Mbk6pgJ/3XHzkTyM+caOCLE4JQJukF
-         +n9Q==
-X-Forwarded-Encrypted: i=1; AJvYcCWDhOgvaMKIUQyxYnxUIth4JjYDT62Xh1lfoNjzU5XcoUgBuEin6udW7yb6gHIBc/1YPH7jti41Kh/50uiTVA==@vger.kernel.org
-X-Gm-Message-State: AOJu0YxOTnsM00eW7eFh1CPKtFPedhnX5Lq9gL4nHnflk00d7OHD72UQ
-	EUsnLj0c0oKGHKPXibuZtMlFB2Ssqy/RHo2Q+vCvbvfnK8JCAQRziFXpHUo9URlIMlIEXNTzU+/
-	VMIKMldG/gCYMH+vOs848h1eyS0VBE2IbMcTtLYIHmQM9uaQmLs+GzWdwzCH3ojYtmABXX2qCfp
-	mMwtb3CY/ZLp/aqCUQRQiAEGyXpooYnnHUfK8Z42o=
-X-Gm-Gg: ASbGnct8mYCzgNcDE6MXzvOYmaex+yNNfGAlGWryMQ9R7W2khF18Bcll2023McUPJBU
-	6knEZzs2YS93WA+O+yfB7s5UNKK+WNXcjwZ6x7zilWL2zSpV7YpDkJT2jz0gl+dqL83+JkA==
-X-Received: by 2002:a17:907:6d01:b0:aa6:730c:acf with SMTP id a640c23a62f3a-ab2ab6fd01fmr2035934666b.13.1736771437166;
-        Mon, 13 Jan 2025 04:30:37 -0800 (PST)
-X-Google-Smtp-Source: AGHT+IGWES/Ui02QcuntMbXZL7fcXer/h8RuY27cX788OY8Yg0gCEmqDiDpRQj5Zc3PaSPQM7MMb5m8tOiJ6ptOb1W0=
-X-Received: by 2002:a17:907:6d01:b0:aa6:730c:acf with SMTP id
- a640c23a62f3a-ab2ab6fd01fmr2035932266b.13.1736771436823; Mon, 13 Jan 2025
- 04:30:36 -0800 (PST)
+	dkim=pass (2048-bit key) header.d=gmx.net header.i=mista.tapas@gmx.net header.b="ciKL7rvd"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=gmx.net;
+	s=s31663417; t=1736773018; x=1737377818; i=mista.tapas@gmx.net;
+	bh=iwtpZhongI9pviMWG+1fafGhvKwB+nvFJkYFOmQjrzA=;
+	h=X-UI-Sender-Class:Message-ID:Date:MIME-Version:Subject:To:Cc:
+	 References:From:In-Reply-To:Content-Type:
+	 Content-Transfer-Encoding:cc:content-transfer-encoding:
+	 content-type:date:from:message-id:mime-version:reply-to:subject:
+	 to;
+	b=ciKL7rvdRsa/kOej74Ta8IljYbS4SRkbAyNwF0xpYF2veoVlU8C/eMdM8o0yzyd/
+	 DWcpYqWnQvpm8ftaDXQ1OU9U6MXjk5AGSfPoXds8OknjPaP47IeZZohd61oahUgC1
+	 1bAsynhbuq1oBoFT3jeq/i2U2dHKN70Abxj7noyX3ctLPb7coh2GlsVYKqa1Njf+C
+	 KdMDZzB7shR6EJdJSFuA0xfv701n1pVC1hjy4ZdXFJww6WoAhVeQY4BIC2iYuhCLJ
+	 5+7FUVs2a7nGDNmAZAbN5gB+8QI/+7DFljADUmBNUXJT8A9CCFIX5/tqjYoMg2tIZ
+	 ZBcW/PJFp84z3RPMWA==
+X-UI-Sender-Class: 724b4f7f-cbec-4199-ad4e-598c01a50d3a
+Received: from [129.70.76.171] ([129.70.76.171]) by mail.gmx.net (mrgmx005
+ [212.227.17.190]) with ESMTPSA (Nemesis) id 1MbAh0-1t0S5S2TH6-00pA4z; Mon, 13
+ Jan 2025 13:56:58 +0100
+Message-ID: <0176e5d7-4674-4f25-8442-7052aa1ddfbd@gmx.net>
+Date: Mon, 13 Jan 2025 13:56:58 +0100
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
 List-Subscribe: <mailto:linux-rt-users+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-References: <20250113121856.225406-1-gmonaco@redhat.com>
-In-Reply-To: <20250113121856.225406-1-gmonaco@redhat.com>
-From: Tomas Glozar <tglozar@redhat.com>
-Date: Mon, 13 Jan 2025 13:30:26 +0100
-X-Gm-Features: AbW1kvZOLM2hNKNyyMlTsplwqvLRdVIBYGHOIugT9sLmqwcHuzlIERFeQIi3DX4
-Message-ID: <CAP4=nvT=n8wScH1wZJzozeGQ+uh0x6riNX3+U+1NJcJGseGLgg@mail.gmail.com>
-Subject: Re: [PATCH] rteval: Allow configuration from stdin
-To: Gabriele Monaco <gmonaco@redhat.com>
-Cc: John Kacur <jkacur@redhat.com>, Clark Williams <williams@redhat.com>, 
-	linux-rt-users@vger.kernel.org
-Content-Type: text/plain; charset="UTF-8"
+User-Agent: Mozilla Thunderbird
+Subject: Re: Raspberry Pi 5 and PREEMPT_RT (6.13.0-rc3)
+To: John Ogness <john.ogness@linutronix.de>,
+ Leon Woestenberg <leon@sidebranch.com>
+Cc: linux-rt-users@vger.kernel.org
+References: <d445e582-4e49-4135-9d94-f52d72ec5df6@gmx.net>
+ <84bjx6h2kd.fsf@jogness.linutronix.de>
+ <cb569b76-e0ac-4063-9956-ab6307594d86@gmx.net>
+ <CAMjhiJjpnP4Nr5YmgntPd43gndBXnh_DOjW_davDVG2fu0F4sQ@mail.gmail.com>
+ <ecb3c326-9d5e-4a39-b9eb-5cc318596eb0@gmx.net>
+ <84frlnsosm.fsf@jogness.linutronix.de>
+ <1ae1d4d7-4e16-4c9e-b432-5769a816375b@gmx.net>
+ <84ikqjdl7y.fsf@jogness.linutronix.de>
+Content-Language: en-US
+From: Florian Paul Schmidt <mista.tapas@gmx.net>
+In-Reply-To: <84ikqjdl7y.fsf@jogness.linutronix.de>
+Content-Type: text/plain; charset=UTF-8; format=flowed
 Content-Transfer-Encoding: quoted-printable
+X-Provags-ID: V03:K1:f6qx6VzkNyHRKi2oidv1HWABHiEnhSrdpLwZOnJxX/NMDvqdPIo
+ RtIoe6nuIfA71uWcELdg3Q72DTAbG9nZde0TpzTy4NHCrbJ1D1MpWKSLrkYUWYdN+tOwqjQ
+ ub57wPz5TdPHMc+6eCREMVbckohCUmJgNB3lqu/0+hl7Z/kl8UbS0/3SqKl22CUxF/O7hZ4
+ NVqXAJHCt5UdRb5ahLwPQ==
+X-Spam-Flag: NO
+UI-OutboundReport: notjunk:1;M01:P0:9ZagFBmU6V4=;auO8U8/aYuvBZx3gDFaeJy/dOta
+ UR7ks3jiUl1+ezeim90D3qGqfCW+0H6z8I6f9crDGVO53qXDW8/7i0GSjVNPd3j0aM2fug+am
+ P4AJsuK50L64AaWvyq84MMC5QxOaga20Ihcir4gLcoGWnE3E6L1u+JsEA63X9QMSRgrLiM6hg
+ MfhGQCx0G1P4Aw5zULAAY1QVfAYhvlJLbwszrm0V4T8AoCYYF0xdQswWJBuPsiZnsY0nFFJS4
+ BR9FjAptlFNm0PyLHTZbCIcmnlE0ynCNkx33D7ak/0d3GnUezH1CW5KnzgZ0/bop8jeQvVR3t
+ RiZos8JtFZxihhATAgwMXiGIC2Y6w4ZZH/c1ZNurLnLn64VSXyOte+ZhqRvcQDsTJ/CXnO1L2
+ 1oOta6roafH7MrIHyfHGeZjrc1X5wexeTyO7KL18UsdwqnXYqUVsBRSB+Icrs5GOu+TukMIYd
+ kXImG4NkIFiw1OIUWinZXZ5uRi/JnkPx78FlIcYgcJBiF7vHfXt+hHsbIp2ZNaFJAFoEk6HcN
+ 7HXV/vCsNiI19N1ZzVWCTSp3b5BvZpqtQ6VvSvxi7D7C3pcsnAnz2ulVCIVFA3mxwmXW7HDSa
+ 3FmruY/AFeQGudegTzSORgauaW+uVIi5aTFzAQbLETcMXG48i3gaJGKCfrNFIq0e27WrsSv2s
+ CVHu5QwxslTZdttm2WzWR0AAYL+2bxPxK+JrTF2wDwoQ5/LRfxbtyhZv5Jof9ItyiLpTI8Bwu
+ IG4bZ3YqkSCUGYs1KV/1pbCYtuuZ3zE0tbpHqIhxNkiITVRk1GAFC1iHeBn0h5oRjv8mRhkfM
+ k4LBwPJ/K3RqcNyZBkGHsn2JYIgflkFxhiuKWOPUVA73vusKXbQa1zmsBLlxynJFo4miVmoVe
+ Re804p/IVU9djgX5qeoU71iqNf3x4VGZDJM7n0uc3pw5Z/MYf/7J7bRnK7FdbH8hzd7HC6cQg
+ wALQ8cYeHtVsZX2GL5jsFHCpGl7ROXr7MaktoXz2i09wx35VWAOABjCzdBGUdgRBEY3gKwaz2
+ 7vmVFufp7p4ptMXChP1YABvlBAvYTH0B93qoocBriNG8L+ERDCqwyeWU/6VZxoidNPZjDDO7D
+ n5OHFj/+rRXLsJZngJ0YZCG61WVc2B
 
-po 13. 1. 2025 v 13:19 odes=C3=ADlatel Gabriele Monaco <gmonaco@redhat.com>=
- napsal:
+On 1/13/2025 12:09 PM, John Ogness wrote:
+[...]
+>> Yeah, I see the same behaviour with this way of running the test: The
+>> core with the stressor on it shows small latencies and the other huge
+>> ones. The effect disappears once I run two or more stressors, e.g.
+>>
+>> taskset 0x4 stress -m 1 --vm-stride 16 --vm-bytes 512000000 --vm-keep -=
+c 1
+>>
+>> and
+>>
+>> taskset 0x8 stress -m 1 --vm-stride 16 --vm-bytes 512000000 --vm-keep -=
+c 1
+>>
+>> Then all cores show huge latencies.
 >
-> Modules can currently be set only via configuration file, if rteval is
-> called from a script run on different systems, the only way to make sure
-> the loaded modules are known is to provide (or generate) a configuration
-> file and pass it via -f/--infile .
+> To me this looks like memory bus contention. I would expect you could
+> reproduce the same behavior with bare metal software.
 >
-> Add the possibility to use - as input file to read the configuration via
-> standard input.
->
-> This allows something like:
->
->  # rteval -f - << EOF
-> [measurement]
-> timerlat: module
->
-> [loads]
-> stressng:  module
-> EOF
->
-> Signed-off-by: Gabriele Monaco <gmonaco@redhat.com>
-> ---
->  rteval/rtevalConfig.py | 8 ++++++--
->  1 file changed, 6 insertions(+), 2 deletions(-)
->
-> diff --git a/rteval/rtevalConfig.py b/rteval/rtevalConfig.py
-> index 0c2fc6b..4c41ed7 100644
-> --- a/rteval/rtevalConfig.py
-> +++ b/rteval/rtevalConfig.py
-> @@ -238,10 +238,14 @@ class rtevalConfig:
->              # Don't try to reread this file if it's already been parsed
->              return
->
-> -        self.__info(f"reading config file {cfgfile}")
->          ini =3D configparser.ConfigParser()
->          ini.optionxform =3D str
-> -        ini.read(cfgfile)
-> +        if cfgfile =3D=3D "-":
-> +            self.__info("reading config file stdin")
-> +            ini.read_file(sys.stdin)
-> +        else:
-> +            self.__info(f"reading config file {cfgfile}")
-> +            ini.read(cfgfile)
->
->          # wipe any previously read config info
->          if not append:
->
-> base-commit: 5edb31a58bea3c2433e817439e053b79221a06df
-> --
-> 2.47.1
->
->
+> Someone with some experience with this platform would need to speak
+> up. The usefulness of my casual responses has come to an end. ;-)
 
-Sounds useful and simple.
+Your input is nonetheless very much appreciated :) Also the peculiar
+dependence on the stride parameter which has an effect on what memory
+banks are touched in what order and with what timing points in this
+direction IMHO.
 
-Reviewed-by: Tomas Glozar <tglozar@redhat.com>
+Another datapoint: When I set the cpu speed to 1.5 Ghz instead of 2.4 by
+way of cpufreq-set -g powersave the effect is greatly diminshed which
+also points into the contention direction.
 
-Tomas
+Kind regards,
+FPS
+
+=2D-
+https://blog.dfdx.eu
 
