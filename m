@@ -1,145 +1,136 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 37A0F1C8FD4
-	for <linux-rt-users@vger.kernel.org>; Mon, 13 Jan 2025 21:34:12 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 01AC41FBBE4
+	for <linux-rt-users@vger.kernel.org>; Tue, 14 Jan 2025 06:40:56 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1736804055; cv=none; b=RzeE1n5gGa6vBPDutxfVZoL3KOFxwCtu52S5CllbmzG594B49+n2+BJFtRvgPbjQVHxH70BLmlTxjiSJ4a6h4MXZVyZYWTZ15i+x8Qut1sxYtOToqpH86vvoQ2wEjB1tVIOCg3T+py2qy6TKBVmwLhIbrVENLcu1+1x/QJSOQsg=
+	t=1736836858; cv=none; b=lclpqZBF4aL28GU1TEsFLQcf4ZpF7XasbNaZFxsPiYY+7MX3Z04J69KmySc30Nad3cNZF+cc/HEFG0GbdYRo5nouf4TOeeiIlDpmu8AEAt1Q2xt1JGE1abghba5Fc5sbbZqj1G7jYa9J9LCuYdv94QcF4hyyoKDZrsOEy0zOuRo=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1736804055; c=relaxed/simple;
-	bh=tk43YeP0Xo39WSYwdOJphXNk7Z5pY+sRcAWPuWU3dmo=;
-	h=Date:From:To:cc:Subject:In-Reply-To:Message-ID:References:
-	 MIME-Version:Content-Type; b=dvSz8JrT2MFYEFwR6czUi9QlA4ffPJ6nbimIdxrfYKi0Bq9jiXc40ksNt0fznnfDfxyX0KmK3OaOFxqEA78o0wERJRgPGz6dM5REfZSaW5mx4aWesLu6YwveMWbSO19iMPgZDAQLfT1xu2DnD6Vy232HK/0iy155uE4WD1mJkzw=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=HWR9YdrF; arc=none smtp.client-ip=170.10.133.124
+	s=arc-20240116; t=1736836858; c=relaxed/simple;
+	bh=UyEGOq7i0Ic0E4+gJ7U58Rix3eCxeIz+yvUvkGXcnxU=;
+	h=Message-ID:Subject:From:To:Cc:Date:In-Reply-To:References:
+	 Content-Type:MIME-Version; b=GoDh6MM4jrVRD65K3RBTUsIvkMm3NSojHc6MMwU/U96ClEXPQilbp+qoi0iBldJui9iwXSr8c+UbMzJR56cvkV6LIYPKPIPIlXncyHafL1a5Hy1Y651+dDS5QETZZ5gboxaiCAZpLK5er1YnFIo2O3LLNZvqEPhmDtW4yd04QKI=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=E7aUEkFc; arc=none smtp.client-ip=170.10.129.124
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="HWR9YdrF"
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="E7aUEkFc"
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1736804052;
+	s=mimecast20190719; t=1736836855;
 	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
 	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 in-reply-to:in-reply-to:references:references;
-	bh=ua9fkjJSNgJYo/av8RaZ3nicxGrp9Ng1VM214HPfxng=;
-	b=HWR9YdrFo9lHCDzjAnzi1ee9UGH6nEk51bYZji1E3SGwCIfcaqpcoPL7ggtedyAIaMqzgC
-	O04JJG6NuZoi1lrVnqSd7fVa3QipdYOsoezNVrQFXZ6WCUswQs+wtw1DtjTjdNlSSutjZ5
-	b7HiQL/3CvCIJYHo72tAKP3n5iNzD38=
-Received: from mail-qv1-f69.google.com (mail-qv1-f69.google.com
- [209.85.219.69]) by relay.mimecast.com with ESMTP with STARTTLS
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references:autocrypt:autocrypt;
+	bh=UyEGOq7i0Ic0E4+gJ7U58Rix3eCxeIz+yvUvkGXcnxU=;
+	b=E7aUEkFcst5gwIQgS1M51s/b8D8i6SKYgCE+GVqtTRReFhmhcQm55F7se0dsfMrOffkv5s
+	/YxBLCQG4cj4+3kbrp0N3bQ+WFiu40qu7TjeqKQoZLEw97Xir0terQuIJ85CIEIVCN7nJB
+	Fk6BWqCDVjLbfEvH8i6w2w/Hl+Johbg=
+Received: from mail-wr1-f69.google.com (mail-wr1-f69.google.com
+ [209.85.221.69]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
- us-mta-678-NNxdhi9CNw-fnO9iKvW5eQ-1; Mon, 13 Jan 2025 16:34:10 -0500
-X-MC-Unique: NNxdhi9CNw-fnO9iKvW5eQ-1
-X-Mimecast-MFC-AGG-ID: NNxdhi9CNw-fnO9iKvW5eQ
-Received: by mail-qv1-f69.google.com with SMTP id 6a1803df08f44-6d87efed6c4so78230476d6.1
-        for <linux-rt-users@vger.kernel.org>; Mon, 13 Jan 2025 13:34:10 -0800 (PST)
+ us-mta-671-vNxe3hvgPT2iX9MwGLUoBA-1; Tue, 14 Jan 2025 01:40:54 -0500
+X-MC-Unique: vNxe3hvgPT2iX9MwGLUoBA-1
+X-Mimecast-MFC-AGG-ID: vNxe3hvgPT2iX9MwGLUoBA
+Received: by mail-wr1-f69.google.com with SMTP id ffacd0b85a97d-38639b4f19cso1106402f8f.0
+        for <linux-rt-users@vger.kernel.org>; Mon, 13 Jan 2025 22:40:53 -0800 (PST)
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1736804050; x=1737408850;
-        h=mime-version:references:message-id:in-reply-to:subject:cc:to:from
-         :date:x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
-        bh=ua9fkjJSNgJYo/av8RaZ3nicxGrp9Ng1VM214HPfxng=;
-        b=t4Y5YMIU/7ln7g00y3jWMrPzqxvP34ULP2Aqr0bcw80GfLHaUy2qSwzdeNpzFfxRJN
-         gU0LkIT1ypME9iwXTUlX3bTGPvQITUZfkp9X/jQFwWR2hmd+bOc5UKjJVswIL7vUthH9
-         iLXGjsnP7SA3PTFBoV46hY1Iu7JS/ApZlYtgczs4I17yaqs56lZDhZ+XNxkL1LTW3141
-         Q1y86rI/L2omKIYLYwCnj11ow5VayMn+QBSfEy2MrWV4d4AUfXNg9iLo0VVo/VbL0Kkr
-         VxP67Pt5/Xyg9CMOFuExbORsc6dkb7bGpkHQcrMgkC1dlYXACyJDpZ0Ta/lWgWSj7Tdi
-         9EsA==
-X-Forwarded-Encrypted: i=1; AJvYcCXQbY0lJfFzl38yqemszLoxs7uaWFJL65Zej5hauSGmd+ZRrxSaDPZOnMw4GG79f1KKTQJZkGUEWS5zcj9iCg==@vger.kernel.org
-X-Gm-Message-State: AOJu0YzgFD/RjMInXjSQ4B3YOGzkfmtD53gVu6qP8nBbRHs9NbVO485D
-	lSjFuBMJsEhDdgoN0KUtiwyvMJareKd1tTJrOAwwyAm+nEKq7uCiOszM2I8kcpXJb94LgFEjlIm
-	6eVQ0yeuQEodr9hrQWq+AcjPEIZX2siOYTVJKO54x5jfNDQatSe6l/PJDeuK2Vzwx
-X-Gm-Gg: ASbGncuo5TY3ZBKmHxi6jvBQTepwX82C0CyzwzeGeJcePh9BR4nWq+vxIMXCKcpSFr8
-	ru9n9eTtjclrysbWoKaS76YoiiCJfsKAq8jcGPQdYBaB74O0PTJP3f00Gaumi/zRR05kM+V6jV1
-	okiDwGsEe1jLP6fEqs6+935fDzoyTTcNAK1LMgxhrgeQfiDwf0ZCR6Umf3g6k5AknfOa2BLKK9K
-	/4hpjJ18qGDp8MghrzIl322WdvDPlN/+44uZIgMYoXsCgY=
-X-Received: by 2002:a05:6214:19c5:b0:6d8:8256:41d4 with SMTP id 6a1803df08f44-6df9b1f00c4mr389496296d6.19.1736804050250;
-        Mon, 13 Jan 2025 13:34:10 -0800 (PST)
-X-Google-Smtp-Source: AGHT+IEDgX+VZGGj1nrAem06J45boo8Ql7mJEfe0iwe00yd5N86NAjoNa91oom4dxSxTj3Vf8OJEyw==
-X-Received: by 2002:a05:6214:19c5:b0:6d8:8256:41d4 with SMTP id 6a1803df08f44-6df9b1f00c4mr389495956d6.19.1736804049899;
-        Mon, 13 Jan 2025 13:34:09 -0800 (PST)
-Received: from fionn ([142.189.102.234])
-        by smtp.gmail.com with ESMTPSA id 6a1803df08f44-6dfadeb40eesm45331046d6.123.2025.01.13.13.34.09
+        d=1e100.net; s=20230601; t=1736836853; x=1737441653;
+        h=mime-version:user-agent:content-transfer-encoding:autocrypt
+         :references:in-reply-to:date:cc:to:from:subject:message-id
+         :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
+        bh=UyEGOq7i0Ic0E4+gJ7U58Rix3eCxeIz+yvUvkGXcnxU=;
+        b=oBt1dBeH/eGeq6njq79YaPMjDKMxSR+fH+gPZSWw5zCaDJPH6KMcHhgcYrdNgzcL92
+         JlD2ZcX9TCNdAU2wX5BNcDBn6xC6I+dnet1bMVqq8ET2mRSnODePap4s1yHySTFtf5hN
+         4MLPT8TFbEyLncJPiD+0T18OKhsLBhzCmy7mKaMAdSR6MoIVo3WL/BGq0hEbtvGdNfxe
+         obkX8I425Cjr1FFUHOjbSpJhXtLWin9sh+d+VjGEFPcE83jqhYmySyrFhFr7DNy3ZELa
+         J5+7ks8w+O579jbPB2xhILoRiOj5Sxo/2B+TF8nNADBiGctxYFDm3ggk+/ZsDZocSUZ8
+         kRog==
+X-Forwarded-Encrypted: i=1; AJvYcCWIFjC8Ah/iFpvSh4PbdbF5sjPIK4iEV26KpZkPRAwYHl1WPuNdFQrFg6yBQa/j30Jiocs+VCEUcvc+ywKlIg==@vger.kernel.org
+X-Gm-Message-State: AOJu0YxMGqEgEcyOX3fJwbgbbISjAEtetB9lE+BMiV4QWDFZJZ6jYVJP
+	fCSu62cMo3zf53b9HCcnvLtzTJn092TLZJ7D4p7Ixp05vPKV4FnsKIWKqeo/RaRAxEcmnVv0ikq
+	OWof7bs0isykXtQMw/fxjjbc3BI9qQw3IHZWudMhNgCjfhH+4NJHzU4ppbLCdd8D2
+X-Gm-Gg: ASbGnctF9/zRRlglCoToERv3Mn3VqDLA4o3z+DlJ+j0dFiN3XoWiUCts37L1rdZ9kfd
+	+8Z4cGlqC9Kz6LutlQO5J1+VmOXxbgRg/x4IVa6cX+3CeV9cgPb1beWP9mUR364jLjBBNnAdT0y
+	0szsn60gLdtJLv7P5iAV+rIM1VJGK2xQQOpG0t1f0DFBtAH0ZmoNzDkW/Mi63KPtX925/PNPg/9
+	5+Un6jGdfgE/q2HWj1ryTPzygMKhZrPttutimZwPUhd7xpSEJZeV6ywYo5hjraPOgpewz+NxNnE
+	RlXcMsc=
+X-Received: by 2002:a5d:6da2:0:b0:382:3959:f429 with SMTP id ffacd0b85a97d-38a872fbcdbmr22930871f8f.5.1736836852907;
+        Mon, 13 Jan 2025 22:40:52 -0800 (PST)
+X-Google-Smtp-Source: AGHT+IGxGYACE+VcJITlOqzSfGbaw3l73/dQ7Q2ZoFV74uJczkg2pTPX13dOPdb5TcnnrgGZusgdIw==
+X-Received: by 2002:a5d:6da2:0:b0:382:3959:f429 with SMTP id ffacd0b85a97d-38a872fbcdbmr22930860f8f.5.1736836852635;
+        Mon, 13 Jan 2025 22:40:52 -0800 (PST)
+Received: from gmonaco-thinkpadt14gen3.rmtit.csb ([185.107.56.40])
+        by smtp.gmail.com with ESMTPSA id ffacd0b85a97d-38a8e37d050sm14238583f8f.15.2025.01.13.22.40.51
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Mon, 13 Jan 2025 13:34:09 -0800 (PST)
-Date: Mon, 13 Jan 2025 16:34:08 -0500 (EST)
-From: John Kacur <jkacur@redhat.com>
-To: Gabriele Monaco <gmonaco@redhat.com>
-cc: Clark Williams <williams@redhat.com>, linux-rt-users@vger.kernel.org
+        Mon, 13 Jan 2025 22:40:52 -0800 (PST)
+Message-ID: <7323d02c15095c659749147c3d2e9d4b777df2a2.camel@redhat.com>
 Subject: Re: [PATCH] rteval: Allow configuration from stdin
-In-Reply-To: <20250113121856.225406-1-gmonaco@redhat.com>
-Message-ID: <8d23151f-af7c-1b75-eae9-c8d88fa1ec3d@redhat.com>
+From: Gabriele Monaco <gmonaco@redhat.com>
+To: John Kacur <jkacur@redhat.com>
+Cc: Clark Williams <williams@redhat.com>, Tomas Glozar <tglozar@redhat.com>,
+ 	linux-rt-users@vger.kernel.org
+Date: Tue, 14 Jan 2025 07:40:49 +0100
+In-Reply-To: <8d23151f-af7c-1b75-eae9-c8d88fa1ec3d@redhat.com>
 References: <20250113121856.225406-1-gmonaco@redhat.com>
+	 <8d23151f-af7c-1b75-eae9-c8d88fa1ec3d@redhat.com>
+Autocrypt: addr=gmonaco@redhat.com; prefer-encrypt=mutual;
+ keydata=mDMEZuK5YxYJKwYBBAHaRw8BAQdAmJ3dM9Sz6/Hodu33Qrf8QH2bNeNbOikqYtxWFLVm0
+ 1a0JEdhYnJpZWxlIE1vbmFjbyA8Z21vbmFjb0ByZWRoYXQuY29tPoiZBBMWCgBBFiEEysoR+AuB3R
+ Zwp6j270psSVh4TfIFAmbiuWMCGwMFCQWjmoAFCwkIBwICIgIGFQoJCAsCBBYCAwECHgcCF4AACgk
+ Q70psSVh4TfJzZgD/TXjnqCyqaZH/Y2w+YVbvm93WX2eqBqiVZ6VEjTuGNs8A/iPrKbzdWC7AicnK
+ xyhmqeUWOzFx5P43S1E1dhsrLWgP
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
+User-Agent: Evolution 3.54.2 (3.54.2-1.fc41) 
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
 List-Subscribe: <mailto:linux-rt-users+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
 
 
+On Mon, 2025-01-13 at 16:34 -0500, John Kacur wrote:
+>=20
+>=20
+> On Mon, 13 Jan 2025, Gabriele Monaco wrote:
+>=20
+> > Modules can currently be set only via configuration file, if rteval
+> > is
+> > called from a script run on different systems, the only way to make
+> > sure
+> > the loaded modules are known is to provide (or generate) a
+> > configuration
+> > file and pass it via -f/--infile .
+>=20
+> The config files are almost obsolete.
+> Everything has a reasonable default, or can be set from the CMI
+> The one exception is for the measurement module.
+>=20
+> What would be useful would be a CMI interface to switch from rtla
+> timerlat
+> to cyclictest.
+>=20
 
-On Mon, 13 Jan 2025, Gabriele Monaco wrote:
+Mmh, that was actually my first idea, something like --measurement-
+modules=3Dtimerlat,cyclictest --loads-modules=3Dhackbench
+Basically behaving just like the measurement and loads sections in the
+config.
 
-> Modules can currently be set only via configuration file, if rteval is
-> called from a script run on different systems, the only way to make sure
-> the loaded modules are known is to provide (or generate) a configuration
-> file and pass it via -f/--infile .
+I opted for this as it was simpler but if the config file is getting
+obsolete, I think you can just ignore the patch.
 
-The config files are almost obsolete.
-Everything has a reasonable default, or can be set from the CMI
-The one exception is for the measurement module.
+I could start drafting a patch for the CLI options to specify modules
+if they look alright to you.
 
-What would be useful would be a CMI interface to switch from rtla timerlat
-to cyclictest.
+Another not too different option could be kinda like stress-ng,
+specifying the modules just like --cyclictest , --timerlat , --
+hackbench , etc.
 
-Thanks
+Both would require a bit of refactoring how we load modules.
+I don't have any strong opinion on this, thoughts?
 
-> 
-> Add the possibility to use - as input file to read the configuration via
-> standard input.
-> 
-> This allows something like:
-> 
->  # rteval -f - << EOF
-> [measurement]
-> timerlat: module
-> 
-> [loads]
-> stressng:  module
-> EOF
-> 
-> Signed-off-by: Gabriele Monaco <gmonaco@redhat.com>
-> ---
->  rteval/rtevalConfig.py | 8 ++++++--
->  1 file changed, 6 insertions(+), 2 deletions(-)
-> 
-> diff --git a/rteval/rtevalConfig.py b/rteval/rtevalConfig.py
-> index 0c2fc6b..4c41ed7 100644
-> --- a/rteval/rtevalConfig.py
-> +++ b/rteval/rtevalConfig.py
-> @@ -238,10 +238,14 @@ class rtevalConfig:
->              # Don't try to reread this file if it's already been parsed
->              return
->  
-> -        self.__info(f"reading config file {cfgfile}")
->          ini = configparser.ConfigParser()
->          ini.optionxform = str
-> -        ini.read(cfgfile)
-> +        if cfgfile == "-":
-> +            self.__info("reading config file stdin")
-> +            ini.read_file(sys.stdin)
-> +        else:
-> +            self.__info(f"reading config file {cfgfile}")
-> +            ini.read(cfgfile)
->  
->          # wipe any previously read config info
->          if not append:
-> 
-> base-commit: 5edb31a58bea3c2433e817439e053b79221a06df
-> -- 
-> 2.47.1
-> 
-> 
-> 
+Thanks,
+Gabriele
 
