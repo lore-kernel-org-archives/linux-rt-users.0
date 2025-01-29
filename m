@@ -1,75 +1,74 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id A2777191489
-	for <linux-rt-users@vger.kernel.org>; Wed, 29 Jan 2025 21:54:46 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 287E9191489
+	for <linux-rt-users@vger.kernel.org>; Wed, 29 Jan 2025 21:57:47 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1738187688; cv=none; b=rhLjNsCS4oDLlcjtRtArvU7GFRHDve5HPL+pptVBQHIl+ok/9/O/UV2qicF7zirJEj9TLzGlxajPyXcdAhOJB0r8p++6N7E5l4cIAFdfeE6DhOyP2Tq/dnt357dIfO2z+MNFpu6dVs+KzR8XdgURmhwlK6JLa9B38ADGQinRhwU=
+	t=1738187869; cv=none; b=HwkvytjuLhgr9zp/jZZ1aBZykmcuwAIkTMTb4REY/cNDVkFbtHqwfZ/6wEVvf11Gr+nzPBp5nw8XWTEA/TsGOhuQNbgLxHZT8wAiv0B2lo8Ceh/om8CpJrofolHQwbnPs26B93uXWsm7rr8rnhkP5ecvwsOVrffT6YRuE+eFEac=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1738187688; c=relaxed/simple;
-	bh=dXzauwuo9t3YX6jHww/eae9dEQOZLpwLcz6Yw0bKZ8E=;
+	s=arc-20240116; t=1738187869; c=relaxed/simple;
+	bh=bJydYA3vA5M3KYT2af39IFG0BYLLBXOiJTpLFD+zl9A=;
 	h=Date:From:To:cc:Subject:In-Reply-To:Message-ID:References:
-	 MIME-Version:Content-Type; b=Xl+kSwFLEBMdmr9Mzdq5KgNWgp6x8Uz06xj3LmUmMLnBtQGHTcVsX/jFoDv9H5wVs6do9kE8WEUm1qBigK5eY1qcu9RnErloV8ogO3fdVaQFr1eXOzNDJ5mDGT2uaz0GSef+aAhJmT4CRbVb5jPWHo64QM7n0TIUm5dOzYJx/1w=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=Bas8WYRU; arc=none smtp.client-ip=170.10.133.124
+	 MIME-Version:Content-Type; b=U6aG3kLjAyPFm69CCjrE64yLwXsRZihGMN1AXpqUD7tnUqAtfaVB8vhJsrqxakmFW1/F3gdWwnMOcVp+cAftFiGTC3TqsszAnWgf31RLM8gl4O9T9hJDCNjvf61b2ZdOQdlknpMR/oCkL85jwXa8C3+iFbz6uHNdm1THkXMM99M=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=Pt4hQym3; arc=none smtp.client-ip=170.10.129.124
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="Bas8WYRU"
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="Pt4hQym3"
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1738187685;
+	s=mimecast20190719; t=1738187867;
 	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
 	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
 	 in-reply-to:in-reply-to:references:references;
-	bh=0tjGDsHo6XzDnk2uZ0P6uKu24vKEvyYL+aEwndR94Eo=;
-	b=Bas8WYRU3EEkeEdL6xNSSnh+oR6CikSdiaOK2soXinsOqzm34vM8e1FqFfNZEbMfNQCC4P
-	WcPHzrCrb0FPwdnSfGNM2xNKilGQaCiwKsoYNSTbDTOW4Sa3JPhnAF4VkVrl+bk5Oj4So4
-	e3T2eYybuecZGegtLMrgEcx0/aikGlQ=
-Received: from mail-qk1-f198.google.com (mail-qk1-f198.google.com
- [209.85.222.198]) by relay.mimecast.com with ESMTP with STARTTLS
+	bh=Rp4xgJpW4/hK6CwdMW76um9nW30apm4eZTt6ghLU1vE=;
+	b=Pt4hQym3q9VZqmqtYM0c93oY01TDL6vr2byFG4S/Qd2PoGvOViGe/nOL+thpiIllKgKhfs
+	T1I/zP9GkkMnVUqCd+9Nyaf+sBj3803Ds3WTr4kRUfbhkI709OMQaIxRckpPzD9a7Rv/Rw
+	Cuc348cARs4dvxen9fftjaQLi1gdh6c=
+Received: from mail-qv1-f69.google.com (mail-qv1-f69.google.com
+ [209.85.219.69]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
- us-mta-518-siax5q0KOC-lkC_nmvxdRg-1; Wed, 29 Jan 2025 16:54:44 -0500
-X-MC-Unique: siax5q0KOC-lkC_nmvxdRg-1
-X-Mimecast-MFC-AGG-ID: siax5q0KOC-lkC_nmvxdRg
-Received: by mail-qk1-f198.google.com with SMTP id af79cd13be357-7be6ccb09f9so20102285a.2
-        for <linux-rt-users@vger.kernel.org>; Wed, 29 Jan 2025 13:54:44 -0800 (PST)
+ us-mta-33-ESYrtqhJNtqyRCns_GjHzQ-1; Wed, 29 Jan 2025 16:57:45 -0500
+X-MC-Unique: ESYrtqhJNtqyRCns_GjHzQ-1
+X-Mimecast-MFC-AGG-ID: ESYrtqhJNtqyRCns_GjHzQ
+Received: by mail-qv1-f69.google.com with SMTP id 6a1803df08f44-6d8b3173b5bso2057066d6.3
+        for <linux-rt-users@vger.kernel.org>; Wed, 29 Jan 2025 13:57:40 -0800 (PST)
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1738187683; x=1738792483;
+        d=1e100.net; s=20230601; t=1738187860; x=1738792660;
         h=mime-version:references:message-id:in-reply-to:subject:cc:to:from
          :date:x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
-        bh=0tjGDsHo6XzDnk2uZ0P6uKu24vKEvyYL+aEwndR94Eo=;
-        b=iM/BGQa5HDS7OwwLsW5n5KQQUozMXww74Fo4A8uU3+Crsq0+Fdjx4nZrLSlf/wUxqm
-         DZ66jZmIVnkd3DQqy14KZAfAfph7i6Q4GCntJRbNc+WMwXypED58sRqj5pqmWfqdh+M5
-         SZIyslbvjXMUqwSp36OVj/mOnWE8rbQHMv/Zb52G/wPX4E6JimPlZb86IdprfY+RCbhm
-         nsmMHF/2atkKvIzj8VrMbslwvhxXndsV0SFkBTYNra6vzaImgamHRzO3vhIxzsDZ3g21
-         xe808+0ek3/WYCWG3w5jd55blY8GB/jrJ5/FuCw04dtc5v0kmvTzGDWVwRYR99Y9ey4q
-         SvEQ==
-X-Forwarded-Encrypted: i=1; AJvYcCVmM4Bd98hSjTC6Ueyu91iDJLBcH7bAUqaocDUirFjYHJsQvjtFNhA++TzTWmeAnANnfiIq0ItToFacv4F0fA==@vger.kernel.org
-X-Gm-Message-State: AOJu0Yxuv5ko/BlwKsEhLXB5BPbYSaY4Vn1nJi808mrZ58Oy2mNe1vuw
-	imHcbTGPYYiWs11Daz0ENEX0Ntl/w5QSL9pRh4Ig12+TDWYdsHN77dNtIdke5R2CNvbCEYU4YwB
-	qcuOVqjFAKDhsQfSDdoG0V7TIWo1Yw8rdhodG6RpIE8/7cdLUaKZS40Q1zykfrNpE
-X-Gm-Gg: ASbGnct1U3K/c+Fzvgt9/vn7bWpQcy21Juk7pPNeuWQ6Mxy5UwKI+r3t2ds3eIc5N6v
-	TGQYfIGS3qGFVwQgWbNk3h4ta7HEESEt9LzpHpXrZGIuaWPZkNxZ9NI0YACTvso3909276P0bV3
-	EQeljn3jKsMp3jJOhtXj2zfh3GSljX1CbjgcbIJufL2LitJhdym0ACFdpuUuNLV66Ls5ogDHUj+
-	ipSXwGjtJqUwFntOEHmRYV7/o37uJr9OUe2lqu66I376VEOK3BjjpPTE91On11kBGXy3Ok=
-X-Received: by 2002:a05:620a:bc7:b0:7b6:d8da:9095 with SMTP id af79cd13be357-7bffcce51a3mr745557385a.13.1738187683587;
-        Wed, 29 Jan 2025 13:54:43 -0800 (PST)
-X-Google-Smtp-Source: AGHT+IGIHy/pqqiBCFcLhbRwxk3acejFRXbQ5Q7lJ67sX1DeRs2a3HFoeaMrbLPhdMfJ6/MNR12CiQ==
-X-Received: by 2002:a05:620a:bc7:b0:7b6:d8da:9095 with SMTP id af79cd13be357-7bffcce51a3mr745555185a.13.1738187683273;
-        Wed, 29 Jan 2025 13:54:43 -0800 (PST)
+        bh=Rp4xgJpW4/hK6CwdMW76um9nW30apm4eZTt6ghLU1vE=;
+        b=reOMhtJEbHZvkRy5fdJoaMvJh2DZyDNXhGNvZTtxlqYWiCrJ6JZkUQ0bGH83j3jptY
+         hszNkw6mjG+XfxJP0yaws5GjmuIt7Tt59cJ1Zmse1os9U38X2aH6TKCWsOvV/uuYZKZ5
+         ZDEiBmr01XhMw1R/I68pdMjKnzS4BhvI6Zw8ox2Fg7eqoRt0H0UHULLFBCVPk1vucwWc
+         MV7exm+OTNtXOOIBooAaLDRS6o4qbUdRB1tSKN1kQAkq8rJGtDrwO1Uk9qWKvVt92OyM
+         tnuWnZZv6La7u99YMYrgzzF6Zxdbe/1AGwfioYV1j29IVA+SzCzZzzBvACIrlR4oRpVi
+         Wyuw==
+X-Gm-Message-State: AOJu0YyrD+gH+ipRPP2gLqwkTnZQp0nBz9DQKAAxRytxpmKpmEUWaRea
+	mdF2rjeYCWzHvbaNdz3B8JWmIUdbpdMUWwfwF7ssjntR+LZ+Zjpd9b8WmEZzsyhn+YqP+izxOCb
+	zPaslg/D4ML1UGCyalvIOVtz3Lwp//PggnR8QeSptRf8+e2OGdjpj7LJKDCbBRuHX
+X-Gm-Gg: ASbGncugh5rqb4cEYl6OUaSOY5RZL408bHS5DxGThXxky4CzAdncq3eCatZ6/UjL4eO
+	xjMMA9nAHWhDdrb+IGcnsgtrbJR3izn4swDD6zqnp813Yg99NimR2Wz1MSQPXLm/eh1jD4GAxXG
+	Kt7nUOBxsgGGuyWu+mz6yGldvOBNhYYgKrxWuWtRZbyox+rOf21CsXreuv+ujnndZBEO2YUY8wd
+	Ig6SC7daMW7x4EfFDa1l80kAU+ZTg+kFk9tlrGFtsvI691GNOenRttN53Da4awdjqtO04E=
+X-Received: by 2002:a05:6214:2aa7:b0:6d8:9f61:de8c with SMTP id 6a1803df08f44-6e243c56b86mr72159686d6.27.1738187860106;
+        Wed, 29 Jan 2025 13:57:40 -0800 (PST)
+X-Google-Smtp-Source: AGHT+IHKzsSTSBXyP7JG8mIU9qwNLk48DSNo8jWSgRz9lQpGdhZ9gaU3asUvp1Fjls5ECe3QDSMzpg==
+X-Received: by 2002:a05:6214:2aa7:b0:6d8:9f61:de8c with SMTP id 6a1803df08f44-6e243c56b86mr72159476d6.27.1738187859796;
+        Wed, 29 Jan 2025 13:57:39 -0800 (PST)
 Received: from fionn ([142.189.102.234])
-        by smtp.gmail.com with ESMTPSA id af79cd13be357-7c00a7ef092sm8783885a.0.2025.01.29.13.54.42
+        by smtp.gmail.com with ESMTPSA id 6a1803df08f44-6e2057a8ab6sm59248786d6.81.2025.01.29.13.57.39
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Wed, 29 Jan 2025 13:54:42 -0800 (PST)
-Date: Wed, 29 Jan 2025 16:54:41 -0500 (EST)
+        Wed, 29 Jan 2025 13:57:39 -0800 (PST)
+Date: Wed, 29 Jan 2025 16:57:38 -0500 (EST)
 From: John Kacur <jkacur@redhat.com>
-To: Khem Raj <raj.khem@gmail.com>
-cc: Clark Williams <williams@redhat.com>, 
-    rt-users <linux-rt-users@vger.kernel.org>
-Subject: Re: [PATCH] sched_attr: Do not define for glibc >= 2.41
-In-Reply-To: <20250128230838.2311298-1-raj.khem@gmail.com>
-Message-ID: <06e5ea58-b30e-0a8b-c9e8-226e8c20d70d@redhat.com>
-References: <20250128230838.2311298-1-raj.khem@gmail.com>
+To: Shizhao Chen <shichen@redhat.com>
+cc: linux-rt-users@vger.kernel.org, Crystal Wood <crwood@redhat.com>, 
+    Clark Williams <williams@redhat.com>
+Subject: Re: [PATCH v2] rt-tests: pip_stress: Add option --usleep
+In-Reply-To: <20250124075206.35834-1-shichen@redhat.com>
+Message-ID: <a73c98c7-13a5-3932-27c2-eb0d9c32de88@redhat.com>
+References: <CADm5pWf1p-SJAWp6fyOhynpxz7gJx6542d+ZPt3e66WC9JSbyA@mail.gmail.com> <20250124075206.35834-1-shichen@redhat.com>
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
@@ -80,104 +79,84 @@ Content-Type: text/plain; charset=US-ASCII
 
 
 
-On Tue, 28 Jan 2025, Khem Raj wrote:
+On Fri, 24 Jan 2025, Shizhao Chen wrote:
 
-> glibc 2.41+ has added [1] definitions for sched_setattr and sched_getattr functions
-> and struct sched_attr. Therefore, it needs to be checked for here as well before
-> defining sched_attr
+> Different hardwares have different threasholds for usleep_val to
+> reliably trigger an prio inversion, add option --usleep to allow
+> specifying it at runtime, to facilitate testing of prio inheritance
+> on different platforms.
 > 
-> Define sched_attr conditionally on SCHED_ATTR_SIZE_VER0
-> 
-> Fixes builds with glibc/trunk
-> 
-> [1] https://sourceware.org/git/?p=glibc.git;a=commitdiff;h=21571ca0d70302909cf72707b2a7736cf12190a0;hp=298bc488fdc047da37482f4003023cb9adef78f8
-> 
-> Signed-off-by: Khem Raj <raj.khem@gmail.com>
-> Cc: Clark Williams <williams@redhat.com>
-> Cc: John Kacur <jkacur@redhat.com>
-> Cc: rt-users <linux-rt-users@vger.kernel.org>
+> Signed-off-by: Shizhao Chen <shichen@redhat.com>
 > ---
->  src/include/rt-sched.h | 4 ++++
->  1 file changed, 4 insertions(+)
+>  src/pi_tests/pip_stress.8 |  6 +++++-
+>  src/pi_tests/pip_stress.c | 10 ++++++++--
+>  2 files changed, 13 insertions(+), 3 deletions(-)
 > 
-> diff --git a/src/include/rt-sched.h b/src/include/rt-sched.h
-> index 80171c7..9cf0e3a 100644
-> --- a/src/include/rt-sched.h
-> +++ b/src/include/rt-sched.h
-> @@ -42,6 +42,8 @@
->  #define __NR_sched_getattr		275
->  #endif
+> diff --git a/src/pi_tests/pip_stress.8 b/src/pi_tests/pip_stress.8
+> index 0d06dd2..0f65ad1 100644
+> --- a/src/pi_tests/pip_stress.8
+> +++ b/src/pi_tests/pip_stress.8
+> @@ -5,7 +5,8 @@
+>  .B pip_stress \- Priority Inheritance with processes
+>  .SH SYNOPSIS
+>  .B pip_stress
+> -
+> +.RB [ \-u|\-\-usleep
+> +.IR TIME ]
+>  .SH DESCRIPTION
+>  This program demonstrates the technique of using priority inheritance (PI)
+>  mutexes with processes instead of threads.
+> @@ -41,6 +42,9 @@ merely increase the time that the low priority process sleeps while
+>  holding the lock. (usleep);
+>  Also note that you have to run as a user with permission to change
+>  scheduling priorities.
+> +.SH OPTIONS
+> +.IP "\-u TIME,\-\-usleep=TIME"
+> +Specify the sleep time in usec of the low priority process. Defaults to 500.
+>  .BR
+>  .SH AUTHOR
+>  pip_stress was written by John Kacur <jkacur at redhat.com>
+> diff --git a/src/pi_tests/pip_stress.c b/src/pi_tests/pip_stress.c
+> index fb0391b..9bd225f 100644
+> --- a/src/pi_tests/pip_stress.c
+> +++ b/src/pi_tests/pip_stress.c
+> @@ -72,7 +72,9 @@ static void usage(int error)
+>  	printf("pip_stress V %1.2f\n", VERSION);
+>  	printf("Usage:\n"
+>  	       "pip_stress <options>\n"\
+> -	       "-h	--help                  Show this help menu.\n"
+> +	       "-h       --help          Show this help menu.\n"\
+> +	       "-u TIME  --usleep=TIME   Specify the sleep time in usec of the low priority process.\n"\
+> +	       "                         Defaults to 500.\n"
+>  	       );
+>  	exit(error);
+>  }
+> @@ -88,16 +90,20 @@ int main(int argc, char *argv[])
+>  	for (;;) {
+>  		struct option long_options[] = {
+>  			{ "help",	no_argument,		NULL,	'h' },
+> +			{ "usleep",	required_argument,	NULL,	'u' },
+>  			{ NULL,		0,			NULL,	0 },
+>  		};
 >  
-> +/* sched_attr is not defined in glibc < 2.41 */
-> +#ifndef SCHED_ATTR_SIZE_VER0
->  struct sched_attr {
->  	uint32_t size;
->  	uint32_t sched_policy;
-> @@ -68,4 +70,6 @@ int sched_getattr(pid_t pid,
->  		  unsigned int size,
->  		  unsigned int flags);
->  
-> +#endif /* SCHED_ATTR_SIZE_VER0 */
-> +
->  #endif /* __RT_SCHED_H__ */
+> -		int c = getopt_long(argc, argv, "s:h", long_options, NULL);
+> +		int c = getopt_long(argc, argv, "hu:", long_options, NULL);
+>  		if (c == -1)
+>  			break;
+>  		switch (c) {
+>  		case 'h':
+>  			usage(0);
+>  			break;
+> +		case 'u':
+> +			usleep_val = strtoul(optarg, NULL, 10);
+> +			break;
+>  		default:
+>  			usage(1);
+>  			break;
+> -- 
+> 2.47.1
 > 
 > 
-
-Does the following fix your problem?
-
-From 280e198c39d1b17d0491d7c4e7afda97ae6c8e6f Mon Sep 17 00:00:00 2001
-From: Yaakov Selkowitz <yselkowi@redhat.com>
-Date: Wed, 29 Jan 2025 16:46:11 -0500
-Subject: [PATCH] Fix rt-tests build with glibc-2.41
-
-The sched_*attr APIs were added to glibc
-https://sourceware.org/git/?p=glibc.git;a=commit;h=21571ca0d70302909cf72707b2a7736cf12190a0
-
-This fixes the build conflict in rt-tests with glibc-2.4
-
-Signed-off-by: Yaakov Selkowitz <yselkowi@redhat.com>
+> 
 Signed-off-by: John Kacur <jkacur@redhat.com>
----
- src/include/rt-sched.h | 2 ++
- src/lib/rt-sched.c     | 2 ++
- 2 files changed, 4 insertions(+)
-
-diff --git a/src/include/rt-sched.h b/src/include/rt-sched.h
-index 80171c76e0ee..dfd7f45f51cc 100644
---- a/src/include/rt-sched.h
-+++ b/src/include/rt-sched.h
-@@ -42,6 +42,7 @@
- #define __NR_sched_getattr		275
- #endif
- 
-+#if ! __GLIBC_PREREQ(2, 41)
- struct sched_attr {
- 	uint32_t size;
- 	uint32_t sched_policy;
-@@ -67,5 +68,6 @@ int sched_getattr(pid_t pid,
- 		  struct sched_attr *attr,
- 		  unsigned int size,
- 		  unsigned int flags);
-+#endif
- 
- #endif /* __RT_SCHED_H__ */
-diff --git a/src/lib/rt-sched.c b/src/lib/rt-sched.c
-index 8023bc70c473..2500abde26e4 100644
---- a/src/lib/rt-sched.c
-+++ b/src/lib/rt-sched.c
-@@ -14,6 +14,7 @@
- 
- #include "rt-sched.h"
- 
-+#if ! __GLIBC_PREREQ(2, 41)
- int sched_setattr(pid_t pid,
- 		  const struct sched_attr *attr,
- 		  unsigned int flags)
-@@ -28,3 +29,4 @@ int sched_getattr(pid_t pid,
- {
- 	return syscall(__NR_sched_getattr, pid, attr, size, flags);
- }
-+#endif
--- 
-2.47.1
 
