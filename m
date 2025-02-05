@@ -1,76 +1,103 @@
-Received: from galois.linutronix.de (Galois.linutronix.de [193.142.43.55])
+Received: from mx.denx.de (mx.denx.de [89.58.32.78])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 73467207E1D;
-	Tue,  4 Feb 2025 15:05:22 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=193.142.43.55
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id CC4CE24B26;
+	Wed,  5 Feb 2025 12:56:15 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=89.58.32.78
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1738681525; cv=none; b=AroWdagYQ4iScLGPKh1pHI6ofFaUa/caBa94lXlrL1zCkrJmmrb8p0ETfCj5UlrRNVrMTU1luL+0kTwjG7pbM7rwpNjN0Kf9vqAivkaNprBt8GN5fySXdjow6pW1NpYu/VuYPFavSMXXFJT8rfIxN+QICY80zXmsNN/ju7xhFhQ=
+	t=1738760177; cv=none; b=oTYed4nFQX/veueeOU9HMg9GkFCIbTiwp87emK67Ng/evnxLhVFjpcJrhdWbcCmMvT6S35y4m3jNHL0RZET1r9w9/msFZFlyo2Jq0zQIaLw4H4c/4f7Sm69syXOJCc2kQCmPrmIQlBWsByvxC3TMrvAxIFvEnrO5L9tVKmG+Hzw=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1738681525; c=relaxed/simple;
-	bh=HvW+eT2pSS1IA8hQr940Rjf5CHjdOYbpmQD8J+xjr0g=;
-	h=Date:From:To:Cc:Subject:Message-ID:MIME-Version:Content-Type:
-	 Content-Disposition; b=Qqf5w/Vg2Vfe0nv6llBFGUBFp/7G/qMa07U9xhM4aULSJGLhJwOPTAtoYWEtDy1fQmtLJauu27Dsh8lgQGLJ+nDGc4Gmbzh8T5pk9lFN++nXr7FG5A/dBzpgFagcLbG8Wfsrsl6W4WqCA3lvOahIno+ELai58fskVFv5JN/zwiE=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linutronix.de; spf=pass smtp.mailfrom=linutronix.de; dkim=pass (2048-bit key) header.d=linutronix.de header.i=@linutronix.de header.b=meITvado; dkim=permerror (0-bit key) header.d=linutronix.de header.i=@linutronix.de header.b=P66m76M1; arc=none smtp.client-ip=193.142.43.55
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linutronix.de
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=linutronix.de
+	s=arc-20240116; t=1738760177; c=relaxed/simple;
+	bh=GoJpb92TT253qilEM7jNKyGy76VaerW9l3MGYbuh2SE=;
+	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
+	 Content-Type:Content-Disposition:In-Reply-To; b=XOdrBs6ldBDq+G5uxBsOA1gfovBQ/2dV3KUwQUhjNDioKSYLTu7HEMG+Dma1frlagmoiKIpQpzeDw8y3agqJIYwhcczvt4G6QfWogov0lgzNOgZGee0qy9oB/DUO4vYA5XFYJNU0PiqZ/osQkfxKs3Ikix5dTv7ybvHcviABbqI=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=denx.de; spf=pass smtp.mailfrom=denx.de; dkim=pass (2048-bit key) header.d=denx.de header.i=@denx.de header.b=fyYF+3vR; arc=none smtp.client-ip=89.58.32.78
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=denx.de
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=denx.de
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="meITvado";
-	dkim=permerror (0-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="P66m76M1"
-Date: Tue, 4 Feb 2025 16:05:18 +0100
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
-	s=2020; t=1738681519;
+	dkim=pass (2048-bit key) header.d=denx.de header.i=@denx.de header.b="fyYF+3vR"
+Received: from [127.0.0.1] (localhost [127.0.0.1]) by localhost (Mailerdaemon) with ESMTPSA id 03DA310382D08;
+	Wed,  5 Feb 2025 13:56:02 +0100 (CET)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=denx.de; s=mx-20241105;
+	t=1738760167;
 	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type;
-	bh=AvxvlbOCR7KcOmsz+Y0q/B1Wx2NsMRadRDsq/OJENKE=;
-	b=meITvadoPEZ/aMrLrL8hKq2DrP4VTq+ndwbhySZS8EGpKITl44WL8euOESGGRBNjte5WvS
-	U/0dNWgIIjGo2FnBFOEdfktdotDKIKF35IrBGnpTRVy7MFsbA7jMyZR6TvrNd6L/oxukb4
-	KVN83uvX+DJugVRlE7Tuajmvql7ENP/Y0PEhNbEd7H6HGPGIOr4OOZVIlIBICkObwbm+j6
-	suNPIZ9L5GuwwkBnYCmR0Lp8WOvW9DDfGxQQkfz+J5dJcTC2OoSWcESuTYZXg1ytxspP5a
-	66qmnLiTN4GUK5yy2IPPdEbx85gZwZayngFhCMo68syFr6GintZDnUKiPIrhEA==
-DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
-	s=2020e; t=1738681519;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type;
-	bh=AvxvlbOCR7KcOmsz+Y0q/B1Wx2NsMRadRDsq/OJENKE=;
-	b=P66m76M1WHTiAp83ZSTGU1wo0r0cdkjJhb75hHbC4L9+nygx1M4nogd6WLxY+tG0nXEXMe
-	ML7ay8mRW0PEVKDg==
-From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-To: Thomas Gleixner <tglx@linutronix.de>, linux-rt-devel@lists.linux.dev
-Cc: LKML <linux-kernel@vger.kernel.org>, linux-rt-users@vger.kernel.org,
-	Steven Rostedt <rostedt@goodmis.org>
-Subject: [ANNOUNCE] v6.14-rc1-rt1
-Message-ID: <20250204150518.VY4TiftX@linutronix.de>
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 in-reply-to:in-reply-to:references:references;
+	bh=CDjgkHIZ2FH9yH84cxjcC4Ip4QoMP9BgMpfAV1YInSM=;
+	b=fyYF+3vRRbvpyMWQ/Qz9FEeTdhUpAefKtWKCh3i3WmKoqvT8Ci3iTmo+83b/KAk6WksX7r
+	oGMej8XgNiHXPfs1aASNR/0QQh87ITcX4AGnlGWH8+etphYlm8qU19LMnR58JJisT17tCl
+	5GOs2rSSd6pUUOJ4+3bAu0L6L6GA1c+eq9zlAKhufVdc+1dZ65xJ8Ua9K6hUwaPXA4hPLp
+	b8DQRQo3L8a4hMYtjhQequ6hwXsm7agamqwioICnDlPymvdmHYC+/CZ7DlDKqkJU9eLgfP
+	2xeIKpRPqkGGnUOeRapda7qcWBE9O+P7oWIlqZFbcORzaSJCaWR6YkRR8alIjQ==
+Date: Wed, 5 Feb 2025 13:55:59 +0100
+From: Pavel Machek <pavel@denx.de>
+To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Cc: Kazuhiro Hayashi <kazuhiro3.hayashi@toshiba.co.jp>,
+	linux-kernel@vger.kernel.org, linux-rt-devel@lists.linux.dev,
+	cip-dev@lists.cip-project.org, tglx@linutronix.de,
+	rostedt@goodmis.org, linux-rt-users@vger.kernel.org, pavel@denx.de
+Subject: Re: [PATCH 4.4 4.9 v1 2/2] mm: slub: allocate_slab() enables IRQ
+ right after scheduler starts
+Message-ID: <Z6Nf32YB/J0LMSPw@duo.ucw.cz>
+References: <1738629964-11977-1-git-send-email-kazuhiro3.hayashi@toshiba.co.jp>
+ <1738629964-11977-3-git-send-email-kazuhiro3.hayashi@toshiba.co.jp>
+ <20250204081813.7qsvLFsU@linutronix.de>
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
 List-Subscribe: <mailto:linux-rt-users+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=utf-8
+Content-Type: multipart/signed; micalg=pgp-sha1;
+	protocol="application/pgp-signature"; boundary="Omqnf7SUTSKRSslH"
 Content-Disposition: inline
+In-Reply-To: <20250204081813.7qsvLFsU@linutronix.de>
+X-Last-TLS-Session-Version: TLSv1.3
 
-Dear RT folks!
 
-I'm pleased to announce the v6.14-rc1-rt1 patch set. 
+--Omqnf7SUTSKRSslH
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+Content-Transfer-Encoding: quoted-printable
 
-Changes since v6.13-rt5:
+Hi!
 
-  - v6.14-rc1.
+> > An simple option would be to backport the series[3], which is possible
+> > and has been verified[4]. However, that series pulls functional
+> > changes like SYSTEM_SCHEDULING and adjustments for it,
+> > early might_sleep() and smp_processor_id() supports, etc.
+> > Therefore, this patch uses an extra (but not mainline) flag
+> > "system_scheduling" provided by the prior patch instead of
+> > introducing SYSTEM_SCHEDULING, then uses the same condition as
+> > newer RT kernels in allocate_slab().
+>=20
+> The proposal looks okay. However the verified upstream version not only
+> addresses your issue but also makes smp_processor_id() and might_sleep()
+> work in the early phase. I would prefer the upstream solution for those
+> two reasons.
 
-Known issues
-    None.
+So... first, thanks for review. This is mostly my fault, Kazuhiro
+Hayashi did full backport, but I asked for minimal version.
 
-You can get this release via the git tree at:
+AFAICT there's no place for stable-rt to apply this, so we'll just be
+taking this to our trees in CIP project. (And I prefer smaller
+version. Additional checking is nice for development but not so nice
+this late in development cycle).
 
-    https://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-rt-devel.git v6.14-rc1-rt1
+Best regards,
+								Pavel
+--=20
+DENX Software Engineering GmbH,        Managing Director: Erika Unter
+HRB 165235 Munich, Office: Kirchenstr.5, D-82194 Groebenzell, Germany
 
-The RT patch against v6.14-rc1 can be found here:
+--Omqnf7SUTSKRSslH
+Content-Type: application/pgp-signature; name="signature.asc"
 
-    https://cdn.kernel.org/pub/linux/kernel/projects/rt/6.14/older/patch-6.14-rc1-rt1.patch.xz
+-----BEGIN PGP SIGNATURE-----
 
-The split quilt queue is available at:
+iF0EABECAB0WIQRPfPO7r0eAhk010v0w5/Bqldv68gUCZ6Nf3wAKCRAw5/Bqldv6
+8qdHAJ4+/Dac3znHYOzsb3TSumEh2FbZEACfVqCBVseYjulmOKfgT7QMAIp7SJE=
+=d8jC
+-----END PGP SIGNATURE-----
 
-    https://cdn.kernel.org/pub/linux/kernel/projects/rt/6.14/older/patches-6.14-rc1-rt1.tar.xz
-
-Sebastian
+--Omqnf7SUTSKRSslH--
