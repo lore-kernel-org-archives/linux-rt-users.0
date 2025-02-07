@@ -1,117 +1,123 @@
-Received: from mail-qk1-f177.google.com (mail-qk1-f177.google.com [209.85.222.177])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 9D6F319DF44
-	for <linux-rt-users@vger.kernel.org>; Fri,  7 Feb 2025 19:40:31 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.222.177
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 3398419CD13
+	for <linux-rt-users@vger.kernel.org>; Fri,  7 Feb 2025 23:24:04 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1738957234; cv=none; b=dTbKmfzjOo/2mo2muBN1CUNPAcXZwYeUrV3b8om3ik9f0YzuLJMhKZL6dyx2cyUuHhaeZI+il9JXvNW3TlkanvCOBcgRevW8QSo+SmGF+69W5nKOe+QnUpViUS0SILR/B2sxzjejc32v92aQIEv8rEIVP6mE0dQTJKriCnBKLKs=
+	t=1738970647; cv=none; b=bA7CH1optMHzcBCbjvPgL42fLwn478KgOt/ikjtq7Dhz6DtID4U03udVFrXF0jX6gn1twfG78S14oYb+Ei3YLHFj9xm4IzxNQffhEuh2Uvgnkl7G0VIj4gud2s9vcReCi1MpTORyj4Rwoc7Rmvy5jlghof0HJTv6yD0vrrhcW+s=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1738957234; c=relaxed/simple;
-	bh=zSk6f5Cdfhy0BxFlNfrOJ4kaBs7eslEcXx0ndwi7gQc=;
-	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=GpgFPOVLox0qnlyup5izzTBY6vXkNO+0y7Cy6K3wN37aBmKnP6zMbcyEpGpT/kDfvnCgAkp4jAiBSticsJenlbta2RQfdxqIpU/27vsfkqUnt7gyO+/os6EK5lxKZy2/RzoDfRcYxcS0kqu7dC6JxqUvH0pAg9gW1Xe61YRdJ8E=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=fail (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=YPNhq4FN; arc=none smtp.client-ip=209.85.222.177
-Authentication-Results: smtp.subspace.kernel.org; dmarc=fail (p=none dis=none) header.from=redhat.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
+	s=arc-20240116; t=1738970647; c=relaxed/simple;
+	bh=kCkcoudRP8kbl15wNTNzvLNs1sTfryBWoKW4eGcTbqM=;
+	h=Message-ID:Subject:From:To:Cc:Date:In-Reply-To:References:
+	 Content-Type:MIME-Version; b=A9H78kTrpciSbl817WEHAjgOfIyhxGlF03gaFq62acPFkOTA/TLWs9FbJtchswYZwnigDs+RqmsA8WfhCexQ6Aw7HjBibGk8AqzEAG9SHAiyRUosdOsaGhiTE8EUroNt2hIeC9ml7euK+bwkuM8xjrsB6YQvkOuHVNiUj3uyrz4=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=bQ4wZ6VD; arc=none smtp.client-ip=170.10.133.124
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="YPNhq4FN"
-Received: by mail-qk1-f177.google.com with SMTP id af79cd13be357-7b7041273ddso222181985a.3
-        for <linux-rt-users@vger.kernel.org>; Fri, 07 Feb 2025 11:40:31 -0800 (PST)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1738957230; x=1739562030; darn=vger.kernel.org;
-        h=content-transfer-encoding:mime-version:references:in-reply-to
-         :message-id:date:subject:cc:to:from:sender:from:to:cc:subject:date
-         :message-id:reply-to;
-        bh=B/rS0IfaqBYDR17jv2fTEsgvVog3Txu57N2h8dFGeAo=;
-        b=YPNhq4FNsyqV/UHNDogvj3/gBmqjgh0Jp8SAYO7dv+Vwb9CQoQHsSO3khZBJ4H2pff
-         Ut+/gGPPQP/jOfYv3gkCUZNToDbymtDx21POvhZOuDVrll9X2mQ30Kr8ixQC0tXGaiIy
-         njKQu+0fuHV8qiPA5HnMeOFQJycg/yf+B2B8GQD9Ux1L8SxtyxsnAAdC0SD7XkzR7Wy1
-         v0DUNFXxXASnNc2NoXuhdb2AgJPr2TB4jACiSdnVFbK5goFLiUZAbB3+ALc0xyNodsq8
-         GtGLUjZQ0AGSNPeioQIG3XmbZ8Sd31/ygUnt+6KgNMet8Hh6sVu3Lq/jhJCou1Sy4PmE
-         FDQQ==
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="bQ4wZ6VD"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1738970644;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references;
+	bh=5U1aGGw5s7APxkDuS7aTTH6RJ0SW/00UW/mH23JuMF8=;
+	b=bQ4wZ6VDJ0N/jIClMtc5R81NQaKYu3Gn5f07mCLCwJ5EdavPy3QlWEqKg5CJTvCd1IVDix
+	bzDGvs9jAcM3LMKwz6wHFSX1ozMeeGaL4c31UaYAoRIQN1rf6avhQhU/Ldn1DLxV16iO5H
+	Y/NzulWile5k2E+BMRy6PwrVMCOm1jk=
+Received: from mail-io1-f72.google.com (mail-io1-f72.google.com
+ [209.85.166.72]) by relay.mimecast.com with ESMTP with STARTTLS
+ (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
+ us-mta-68-6-bdt8yzOcCKOn7jyJ80Vw-1; Fri, 07 Feb 2025 18:24:00 -0500
+X-MC-Unique: 6-bdt8yzOcCKOn7jyJ80Vw-1
+X-Mimecast-MFC-AGG-ID: 6-bdt8yzOcCKOn7jyJ80Vw
+Received: by mail-io1-f72.google.com with SMTP id ca18e2360f4ac-844d5c4a27fso517133239f.0
+        for <linux-rt-users@vger.kernel.org>; Fri, 07 Feb 2025 15:24:00 -0800 (PST)
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1738957230; x=1739562030;
-        h=content-transfer-encoding:mime-version:references:in-reply-to
-         :message-id:date:subject:cc:to:from:sender:x-gm-message-state:from
-         :to:cc:subject:date:message-id:reply-to;
-        bh=B/rS0IfaqBYDR17jv2fTEsgvVog3Txu57N2h8dFGeAo=;
-        b=gB0A2WE973tejE859g12j5WeDraYgv9mCovHg3L8kI6uZI6IVOlm+m+RsfpOkA7J8r
-         U6fOIJHkvhsj2uSYFIBiG7AdVNzVCbG3cRTb3ja2QOIVcaX2iLhXuCqF9MZSMIYYlAVY
-         i3NJAq++6yv99m1u181WOh6ji9r6XVko2/EOIKZvHOpaRYCymAmIjy4dmZWm70xRj1H8
-         NyAsqlQYKd8rozk3l4cXcDcpmgfxiIv6AF/J4OANzjVHfLpmsyyWNlQ7OGq85shxXkmr
-         kMc/c+2vIEKmpTNCxKrs4Oq+xsDiDDK3EIG2M8p0esQQeRJjdUCZt6Few9CyZtdjc91x
-         3xTQ==
-X-Gm-Message-State: AOJu0Yxj8pQfyaogvioJAu0f02TP18v6jmrnTNYq5PyPBPXjmge9VzXv
-	zHr7d583CeKlijF2eEZebCfL6BLWVimby9TaMtMu0xjZeTJccrBHzXzi6A==
-X-Gm-Gg: ASbGncvJMTdZFj7tpu1MMzh+m3LgOhvZr7NyKF+nX+jOgutpO+tm/lgYKw4OMHaG9JK
-	6ObmWPzycil6ZI4afYc4EGnanT3RJdnSvIGzSDToSYnmhtzSEOlD1MRmGxT2j2EuQBRWlXo+Ksl
-	cO3Imhg6gdHotbqrxIdnL0/puGR+wkHgBVV3DyF+4e54EDCJQPgq33Dj03EqrQD+Sf4haMJQwcE
-	t97R5I59aVVVYM+ldiUXMdLH2I7oohUFUm3DoP8FdPG1/+e0XGuKcrGjbj5yhD1U8fwUGpQK+if
-	pBM91hANsloJauNcssD8
-X-Google-Smtp-Source: AGHT+IEEP9gkoZEFFYEHstzDD7OHRXGLnZg9IlksGFepgIEeW1G9R0W640iD2soxL9GCMX7+XHifeA==
-X-Received: by 2002:a05:620a:2952:b0:7ac:9e4d:8060 with SMTP id af79cd13be357-7c047c461efmr622952385a.58.1738957229725;
-        Fri, 07 Feb 2025 11:40:29 -0800 (PST)
-Received: from fionn.redhat.com ([142.189.102.234])
-        by smtp.gmail.com with ESMTPSA id d75a77b69052e-471492adb54sm19923641cf.39.2025.02.07.11.40.28
+        d=1e100.net; s=20230601; t=1738970640; x=1739575440;
+        h=mime-version:user-agent:content-transfer-encoding:references
+         :in-reply-to:date:cc:to:from:subject:message-id:x-gm-message-state
+         :from:to:cc:subject:date:message-id:reply-to;
+        bh=5U1aGGw5s7APxkDuS7aTTH6RJ0SW/00UW/mH23JuMF8=;
+        b=HnxvAG+vvW9WQGvXKohakQrf26dFpLNm1KJnWJHCV79EkfzTFQdflh5AQSJWBSOv5r
+         XL6K3e3ihg0NJ8IdD4ySZtA2GReu5FVtZKA2OGFYw6B1XEzgVAl/c7vin3fYtm5513Ji
+         mqWQTGnKB2nE9rx8GTJRYkybLlirEkkN3nQlQkIbdF13rMsqD0iG+m+e7BFk5fVD5UDe
+         crpCxeH1MQ201s4ILK33Nl6adR+dWEOW9YKQinzj+csOqFMpfVmKNaTwjLXJlqrAbrn/
+         +bkGB6O2tCSBQiUD5XpDQ+kGruAJfD3k2GcKvEaRAKt9rI4QW4sx2mZAQRgsGCm7Uynv
+         VQTQ==
+X-Forwarded-Encrypted: i=1; AJvYcCVbjFMBirK6dMgV6G2/M1H/d+p2kfMzsVMi7AZo44iP3KKFD4AVBmDx6ZG/O+///0gpFjEilFH7J8bSu95GcQ==@vger.kernel.org
+X-Gm-Message-State: AOJu0YwLz6BAWDokUfUGghLhHWlzkooHguYb7w0agZABk/0X78pw7d3N
+	n1UWXggzFMg5CgbTLPHlvuAWf2sy8zKmE88WCK85IAGDtj4hSpTxupIJD+AKvDN6qBoJIcnrSJa
+	JgO1rQ4DNNMnGdB2hSBlmXUCbemWXNUr3kcXog2df+ornvHKkjYcBQVBu9o4/9HgA
+X-Gm-Gg: ASbGnctaADQ5LuDvsR7hGhGbh9oowmqf89KRQjcTDbvGUhx95m5qxhX5iE+rn6b0NaC
+	3WZD1Qfj6mJYqBCYVaDKmYkWJ4scPPJvZaqiDxyoSAYK197RpG7WI96iLFKGtsSKuML6v7dke/I
+	e12xANOOj3rSjbOhNRpN/xD9hHGwpYm1OQWsSy97ylQ8sDp8njJOwugKdwvkKqSD+ua4WcuKngK
+	LfIwd+E6byJ5sQrhrWlh7pd9I0wquo8YnWLYZxj31NXjiwr8bUxj8AVuvqtyNUxPdoWJ171T3qp
+	6pTPS61FM3vxZkjczu+fxj5nfg+RIvpnogx/
+X-Received: by 2002:a05:6602:4895:b0:83a:b74c:800e with SMTP id ca18e2360f4ac-854fd90748dmr544860939f.12.1738970640187;
+        Fri, 07 Feb 2025 15:24:00 -0800 (PST)
+X-Google-Smtp-Source: AGHT+IHHEqk3xC6ZABU8BlN3YTMfiBcToLXLyVXbkovhIrDhAOgKRf5/V8bfMCn35joygLgYdBPPGQ==
+X-Received: by 2002:a05:6602:4895:b0:83a:b74c:800e with SMTP id ca18e2360f4ac-854fd90748dmr544859739f.12.1738970639936;
+        Fri, 07 Feb 2025 15:23:59 -0800 (PST)
+Received: from crwood-thinkpadp16vgen1.minnmso.csb ([2601:447:c680:2b50:ee6f:85c2:7e3e:ee98])
+        by smtp.gmail.com with ESMTPSA id ca18e2360f4ac-854f67b90b7sm89941339f.40.2025.02.07.15.23.59
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Fri, 07 Feb 2025 11:40:28 -0800 (PST)
-Sender: John Kacur <jkacur@gmail.com>
-From: John Kacur <jkacur@redhat.com>
-To: RT <linux-rt-users@vger.kernel.org>
-Cc: Clark Williams <williams@redhat.com>,
-	John Kacur <jkacur@redhat.com>
-Subject: [PATCH 2/2] rteval: Change default measurement module to cyclictest
-Date: Fri,  7 Feb 2025 14:39:49 -0500
-Message-ID: <20250207193949.67985-2-jkacur@redhat.com>
-X-Mailer: git-send-email 2.48.1
-In-Reply-To: <20250207193949.67985-1-jkacur@redhat.com>
-References: <20250207193949.67985-1-jkacur@redhat.com>
+        Fri, 07 Feb 2025 15:23:59 -0800 (PST)
+Message-ID: <4bcef79ddfd9e149cd6434a038a265060a320e9d.camel@redhat.com>
+Subject: Re: [PATCH] Change min/max to float numbers
+From: Crystal Wood <crwood@redhat.com>
+To: Rafael Folco <rfolco@redhat.com>, Sebastian Andrzej Siewior
+	 <bigeasy@linutronix.de>
+Cc: williams@redhat.com, jkacur@redhat.com, linux-rt-users@vger.kernel.org
+Date: Fri, 07 Feb 2025 17:23:58 -0600
+In-Reply-To: <37c7e3c7-d9fe-4e8a-9b5d-61d041a9151a@redhat.com>
+References: <3a9f0f10-2e7a-4eb6-b094-e5492b43505f@redhat.com>
+	 <20250206120056.oE88fgG6@linutronix.de>
+	 <2cb9215a-61d8-4b97-af66-6ef4194f3e04@redhat.com>
+	 <8144971da4d48d1f3fc75decfff2434fc44f082d.camel@redhat.com>
+	 <37c7e3c7-d9fe-4e8a-9b5d-61d041a9151a@redhat.com>
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
+User-Agent: Evolution 3.52.4 (3.52.4-2.fc40) 
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
 List-Subscribe: <mailto:linux-rt-users+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
 
-Change the default measurement module in rteval to cyclictest
-until we can fix a hang in rtla timerlat hist
+On Fri, 2025-02-07 at 11:20 -0300, Rafael Folco wrote:
+> On 06/02/25 18:23, Crystal Wood wrote:
+> > On Thu, 2025-02-06 at 12:02 -0300, Rafael Folco wrote:
+> > > On 06/02/25 09:00, Sebastian Andrzej Siewior wrote:
+> > > > On 2025-02-06 06:16:22 [-0300], Rafael Folco wrote:
+> > > > > Make min/max consistent with avg by recording the latency samples
+> > > > > as float numbers instead of integers.
+> > > >=20
+> > > > Why?
+> > >=20
+> > > - More precise numbers of Max/Min for extreme low latency cases
+> > > - Distinguish zero latency in bucket 001 (us)
+> > > - Distinguish values from upper/lower boundaries in a bucket
+> > > - Clarify confusion on average (round up) vs maximum in the next buck=
+et (casting)
+> >=20
+> > If you want more precision, set --bucket-width to something lower than
+> > 1000 ns.  That will cause everything to be reported with ns precision
+> > (though maybe not quite ns accuracy, depending on the hardware).  We
+> > were hesitant to make ns precision the default in case it misleads
+> > people about the accuracy (plus I didn't know if the change might
+> > confuse some tools that consume the output).
+> Yes, it works for precision. Average is higher than max with default buck=
+et width, though.
 
-Signed-off-by: John Kacur <jkacur@redhat.com>
----
- rteval-cmd  | 2 +-
- rteval.conf | 4 ++--
- 2 files changed, 3 insertions(+), 3 deletions(-)
+This is due to the average being calculated from the histogram (rounding
+to the top of the bucket), while min/max is the direct value.  Maybe we
+should keep a running total to compute average from?
 
-diff --git a/rteval-cmd b/rteval-cmd
-index 9875903c0107..4e13d312a24a 100755
---- a/rteval-cmd
-+++ b/rteval-cmd
-@@ -250,7 +250,7 @@ if __name__ == '__main__':
- 
-         if not config.HasSection('measurement'):
-             config.AppendConfig('measurement', {
--                'timerlat' : 'module',
-+                'cyclictest' : 'module',
-                 'sysstat' : 'module'})
- 
-         # Prepare log levels before loading modules, not to have unwanted log messages
-diff --git a/rteval.conf b/rteval.conf
-index 46a9b1743716..601410b51c28 100644
---- a/rteval.conf
-+++ b/rteval.conf
-@@ -6,8 +6,8 @@ duration:  60.0
- report_interval: 600
- 
- [measurement]
--# cyclictest: module
--timerlat: module
-+cyclictest: module
-+# timerlat: module
- 
- [loads]
- kcompile:  module
--- 
-2.48.1
+We may also want to think about whether we should unconditionally use
+ns.
+
+-Crystal
 
