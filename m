@@ -1,123 +1,98 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+Received: from mail-qt1-f172.google.com (mail-qt1-f172.google.com [209.85.160.172])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id C90491624C7
-	for <linux-rt-users@vger.kernel.org>; Fri,  7 Feb 2025 14:20:44 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 4BA3D19995E
+	for <linux-rt-users@vger.kernel.org>; Fri,  7 Feb 2025 19:40:30 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.160.172
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1738938046; cv=none; b=GGGI1b8mgybvrxEoz0viJyC1zIKo/RRk59QHyiDeFzYv20uDSUw+TCzRPlwaaobTQY5YI2b3cmxLcIEnjnMFJ8JfBN1Gme1l3VpnHyV9d8OBQD2TCwy1Yh21tbKh/OcQbyXzBM531txJOGvMX9B4PU5zKtgJ/cMeSs+4TC6yC6g=
+	t=1738957231; cv=none; b=lPqF/cmRwsyOeQrTQMdQyItUeQvWDUMA43nsPlL2SvPMqbU7Jt0+YBajDElFdCourTkSzxIVm0P0pudqZ+hh17RitYX4jDG8KJLA55Gtzb+O0n1KAn9eH5X7fuXL/j5bFUiUM/EZpXwd9DD8q0AFvAFUspcms8YVxOo27/gxKj8=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1738938046; c=relaxed/simple;
-	bh=1wGYcBGxpIU7fle693PWj/gE1jH2VRR08+OC4MFHun4=;
-	h=Message-ID:Date:MIME-Version:Subject:To:Cc:References:From:
-	 In-Reply-To:Content-Type; b=pOOdzDbLeUBcGnvnojhysDan0dKyPBqlo4bVyJ2egw7QmN+DWOK+IYY1iIdDLbflPczL/2fQObwRt0CqFCts2uvtT/mst6nBOCQaagxrL2R9YxNC9d+LZyiQ75UUpfSiZ44eqHFwHKdK+ug44V0zeEDr9b+Nn5B+u9dTXMt88PA=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=eY/Yaw2e; arc=none smtp.client-ip=170.10.133.124
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
+	s=arc-20240116; t=1738957231; c=relaxed/simple;
+	bh=RBeJA2Fo9WSN1R+Am9Ma+Y1x6kY2WB/j6HKgm+H/zEk=;
+	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=ht3AxbTw0aOfzoUxMBcg5ZUVihBz6Qm1ALuZ5Ds+puepXF3NMNYLnX4O/MzmhCBs5+RbettEJE043AIYMMQGpELCqfC2wnE45Fhc/AuWYaZybwZkGbM3lf8xj+A9Ei4IdjmGKc0YJAYPLtu5wG7PyU3Bcf4uyfms9mYdm6Wn8lw=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=fail (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=VqMq6SPo; arc=none smtp.client-ip=209.85.160.172
+Authentication-Results: smtp.subspace.kernel.org; dmarc=fail (p=none dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="eY/Yaw2e"
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1738938043;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references;
-	bh=e9Bc6fH4VXlTyrQVfsJ64QwcZcAnovHNCzGIAL3+4fg=;
-	b=eY/Yaw2eCGR/2izBersQvYjU8WBwFxwrtCtixnVUtaNduVLubLcRozNAnkqTqE/4Rk+SaF
-	dgSztkzc8KTuPghFlJvfc3uuFW9KFqwBPPiA80cWqC28krNjLE3n+9qeZN8hn5tiY0hWa6
-	xSW5U/PWgZR8aA+4W/roG7/esWBCEzY=
-Received: from mail-qk1-f198.google.com (mail-qk1-f198.google.com
- [209.85.222.198]) by relay.mimecast.com with ESMTP with STARTTLS
- (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
- us-mta-86-7pKK50JkNGm4Q8I1Z598KA-1; Fri, 07 Feb 2025 09:20:42 -0500
-X-MC-Unique: 7pKK50JkNGm4Q8I1Z598KA-1
-X-Mimecast-MFC-AGG-ID: 7pKK50JkNGm4Q8I1Z598KA
-Received: by mail-qk1-f198.google.com with SMTP id af79cd13be357-7bb849aa5fbso474554085a.0
-        for <linux-rt-users@vger.kernel.org>; Fri, 07 Feb 2025 06:20:42 -0800 (PST)
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="VqMq6SPo"
+Received: by mail-qt1-f172.google.com with SMTP id d75a77b69052e-467a37a2a53so26962671cf.2
+        for <linux-rt-users@vger.kernel.org>; Fri, 07 Feb 2025 11:40:30 -0800 (PST)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20230601; t=1738957228; x=1739562028; darn=vger.kernel.org;
+        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+         :to:from:sender:from:to:cc:subject:date:message-id:reply-to;
+        bh=4sCx5HbLovmEngSUo3k9cWPwTHoicrSMEC00YGd/juQ=;
+        b=VqMq6SPol5lW05nIp8YgokHz548sE5bjbF68qVymkz4G0krf7FJ1sWRMyQgpoPr14f
+         cvGl71EDfkDTiRxFIiKOz1BIzzZPO3KfUlIi0wVmmMiq3bp5ePtmE4sYsFXUSpHqTf6X
+         ri+P/ulPryXWZMl/OHCvLvTzzrpa1T64iYE9KYt4DI6aeoa81eS+lB/inggJlvPkKn05
+         WQGBquIzv5Lm2vMx+uuzTDrmCvsi8oi8RVtEwNnnaLXOAgmc+18oGiMfpDHwaOVLPTJe
+         0zZP7E2+ZEocy9T9BadgHLdLQU9GTj54yAf4bXkPQhRP+jwgJH8FgaySNuDRu2jgUO+t
+         gcSQ==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1738938041; x=1739542841;
-        h=content-transfer-encoding:in-reply-to:from:content-language
-         :references:cc:to:subject:user-agent:mime-version:date:message-id
-         :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
-        bh=e9Bc6fH4VXlTyrQVfsJ64QwcZcAnovHNCzGIAL3+4fg=;
-        b=FNsyle8ls3QYKtsZGA4/jKgcObwLCxOyK/xfGnbg3XSYDgWpN4LiKD3tFME/AoJhay
-         UspM0BkAgincTB2S0+7/Gt1LJC8voZjfuWHM9HghiR2Ufx/15VAxTmrdDfXUubVT75Tq
-         roovT5goMNARREFhO5B4i2theIr2AgeeAu8urug7i7q0OU9sb/l6igwNqVkzefwSqAfx
-         QH3YvBut8a2ghgpd/NjLUm/fkV/K2ogIFP10d83XJI3CuiPJxcORMaTR7Cm8iMVpQ33N
-         J9t4A71DOtZ3Z9sM2Z17BhSqU7TTG/tQoQrsmSzACPniDrIeQcdaxZy0fqkrftLVYPwW
-         QJ3Q==
-X-Forwarded-Encrypted: i=1; AJvYcCUnpXUNmlM1wHiMOCHUPf6+lFJ7aeBrAd1HGGDL8GuicV4exqLG9tf2bBmrgiTHWXZqcZl5peBS0MFmt3sfjA==@vger.kernel.org
-X-Gm-Message-State: AOJu0YxROrabnxHVi2Dc5kar4taxQruHz5lWozacbaUexNV0R1jrOp63
-	RBUDxFmmOCkqlpedDx+CF9ycOD6wFFD9ifAg0fR+WhuwJv2HQpz9kzc/y+UBK1IOFrc0IuCSh1t
-	8IJALXl19gV4rFTlPXQ3qXLfcz6ys2SxeB3ypqK9o+F908vjb+E1czhuOQdVyOJlAMHBlqoJbDM
-	7Ndw==
-X-Gm-Gg: ASbGnct7JyaZLXW4SUrd7FFRWfRGDa8YOEO8rq4f3Wq7Wv4OEkQkj3S1++DoeC/RLaQ
-	/tXDsELr1Zex/o2PEIkJ0GpVWzq1E6kFI51pEY3ftPlD6LKTjmYOPKsg3XwzbAf2i8aZMdyUath
-	OXGRUmiqh5B0mK+XjNrDCa9Ki8UXBlYmH76iMRQl94vvUzxHQX7aMOd2wgndY+eeOGkzQJt9L8N
-	iajNsS0VDD26tSuCutiTH/cI6v5tjrfXpiO5yZ0TStyMfgsLRC+O17HKy1rbJCjyydpNiY/oC6t
-	YrB/qHFx9n1T6EHpXz1mPnF+ai9z0Q3keSpxwtmapZJzs3r5gqWJfrdgo1TO09+A8cvK0ZTa
-X-Received: by 2002:a05:620a:1793:b0:7b6:cb81:95d with SMTP id af79cd13be357-7c047c41e85mr557791685a.21.1738938040892;
-        Fri, 07 Feb 2025 06:20:40 -0800 (PST)
-X-Google-Smtp-Source: AGHT+IEc7pr7K4BHGaZyLEuCndR5UyAULic9AZAjXHSDUZ3hwX9wtwlvWxdbYUxqBO0mSCqOY4BO6A==
-X-Received: by 2002:a05:620a:1793:b0:7b6:cb81:95d with SMTP id af79cd13be357-7c047c41e85mr557788785a.21.1738938040625;
-        Fri, 07 Feb 2025 06:20:40 -0800 (PST)
-Received: from ?IPV6:2804:7f0:b753:c149:1db6:646b:8893:bc83? ([2804:7f0:b753:c149:1db6:646b:8893:bc83])
-        by smtp.gmail.com with ESMTPSA id af79cd13be357-7c041dec312sm194800785a.11.2025.02.07.06.20.38
-        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
-        Fri, 07 Feb 2025 06:20:39 -0800 (PST)
-Message-ID: <37c7e3c7-d9fe-4e8a-9b5d-61d041a9151a@redhat.com>
-Date: Fri, 7 Feb 2025 11:20:37 -0300
+        d=1e100.net; s=20230601; t=1738957228; x=1739562028;
+        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+         :to:from:sender:x-gm-message-state:from:to:cc:subject:date
+         :message-id:reply-to;
+        bh=4sCx5HbLovmEngSUo3k9cWPwTHoicrSMEC00YGd/juQ=;
+        b=m2YdT2H111+uEqwKqSVW+SfOERisRur2lXjMCQHAhnzeLtvY/fZrYE7NWi9zWNM5FW
+         lL1LOOt9nyNJymHnNvRpLoDDIz6UIKJVcAeSmL++vLiUM77c7KPOksOf87lCCqao/vKh
+         VhLlzt0ALf2rtQscrQ77lboWbg+JSxE2vwS5ahIMBAheYYHNt7ViAzygqY6tVj57eV8y
+         lH0ejuGoD7rbANHYEuZPjMK6jN+2F4FYJQ5b1trHyWqxgxoFbeKuqmjLg59xFUpzzmbc
+         mDdyVAqU0k+3RSZRrXL1Pdn2cqjyWDRCcCCOLdOknOOTXQmuz6BMZEo10aV4lEyOosoE
+         9JvQ==
+X-Gm-Message-State: AOJu0Yx6nFByCYnDzXY85gwEXx8nbyT6Ziwn5BZXzntKSEMakNTdu8lr
+	PpoqtgkaIyJD7zxLsQRnp7AcO874S32ngBzycVFBr3eP1vHi1h/xt3QHYg==
+X-Gm-Gg: ASbGncuBJjDkk+bpEJaOQJbniBc1Sm3lBiiLW6XkOxiDKgwBIXHGkEfMJszZm+sI8x4
+	cvDhCFy1uEwC18Ez8M1YiQcnkFOBW6/oyZcXu/aqdYDUmKef05dgrn6HP0B6lVotO8FaiTtpGfF
+	cW4H4MMk250jRxvKc9i+JNa3TOv4qof188pRW/qui9XHSUH5OGQwepL1Pbdzm5RRfPYFl/PpXaQ
+	dGkV6Eu31xqMgUJBiFh/RN5JlT5bOruA83QmM2YYlm3oQyjn/ybHNpfwTisV0Y7rgQktuVjfxDG
+	uRMB/UFlngmVKSkmNUFZ
+X-Google-Smtp-Source: AGHT+IFZr1Qskw7ZJ8qrYG29Rnfi3bB183VSJPJvJ18xN1DEhFf0CJS2gm7FpG/MY2EaKuqwmrYDGQ==
+X-Received: by 2002:a05:622a:44c:b0:467:68a3:4c44 with SMTP id d75a77b69052e-47167bcecd7mr66443251cf.39.1738957228344;
+        Fri, 07 Feb 2025 11:40:28 -0800 (PST)
+Received: from fionn.redhat.com ([142.189.102.234])
+        by smtp.gmail.com with ESMTPSA id d75a77b69052e-471492adb54sm19923641cf.39.2025.02.07.11.40.27
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Fri, 07 Feb 2025 11:40:27 -0800 (PST)
+Sender: John Kacur <jkacur@gmail.com>
+From: John Kacur <jkacur@redhat.com>
+To: RT <linux-rt-users@vger.kernel.org>
+Cc: Clark Williams <williams@redhat.com>,
+	John Kacur <jkacur@redhat.com>
+Subject: [PATCH 1/2] rteval: Change the default interval for timerlat to 1100us
+Date: Fri,  7 Feb 2025 14:39:48 -0500
+Message-ID: <20250207193949.67985-1-jkacur@redhat.com>
+X-Mailer: git-send-email 2.48.1
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
 List-Subscribe: <mailto:linux-rt-users+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-User-Agent: Mozilla Thunderbird
-Subject: Re: [PATCH] Change min/max to float numbers
-To: Crystal Wood <crwood@redhat.com>,
- Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Cc: williams@redhat.com, jkacur@redhat.com, linux-rt-users@vger.kernel.org
-References: <3a9f0f10-2e7a-4eb6-b094-e5492b43505f@redhat.com>
- <20250206120056.oE88fgG6@linutronix.de>
- <2cb9215a-61d8-4b97-af66-6ef4194f3e04@redhat.com>
- <8144971da4d48d1f3fc75decfff2434fc44f082d.camel@redhat.com>
-Content-Language: en-US
-From: Rafael Folco <rfolco@redhat.com>
-In-Reply-To: <8144971da4d48d1f3fc75decfff2434fc44f082d.camel@redhat.com>
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: 7bit
+Content-Transfer-Encoding: 8bit
 
-On 06/02/25 18:23, Crystal Wood wrote:
-> On Thu, 2025-02-06 at 12:02 -0300, Rafael Folco wrote:
->> On 06/02/25 09:00, Sebastian Andrzej Siewior wrote:
->>> On 2025-02-06 06:16:22 [-0300], Rafael Folco wrote:
->>>> Make min/max consistent with avg by recording the latency samples
->>>> as float numbers instead of integers.
->>>
->>> Why?
->>
->> - More precise numbers of Max/Min for extreme low latency cases
->> - Distinguish zero latency in bucket 001 (us)
->> - Distinguish values from upper/lower boundaries in a bucket
->> - Clarify confusion on average (round up) vs maximum in the next bucket (casting)
-> 
-> If you want more precision, set --bucket-width to something lower than
-> 1000 ns.  That will cause everything to be reported with ns precision
-> (though maybe not quite ns accuracy, depending on the hardware).  We
-> were hesitant to make ns precision the default in case it misleads
-> people about the accuracy (plus I didn't know if the change might
-> confuse some tools that consume the output).
-Yes, it works for precision. Average is higher than max with default bucket width, though.
-> 
-> I don't see the need to change things here -- and I definitely don't see
-> the need to hold on to the unit_per_us stuff if we're going to always
-> print ns resolution, regardless of whether we use fp.
-Ack
-Thanks for reviewing.
+Change the default interval for timerlat in rteval to 1100us to make it less
+likely to encounter a hang in rtla timerlat hist, until we have a better
+solution.
 
--Folco
-> 
-> -Crystal
-> 
+Signed-off-by: John Kacur <jkacur@redhat.com>
+---
+ rteval/modules/measurement/timerlat.py | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/rteval/modules/measurement/timerlat.py b/rteval/modules/measurement/timerlat.py
+index 5bfc495217ea..fe29f34bccbd 100644
+--- a/rteval/modules/measurement/timerlat.py
++++ b/rteval/modules/measurement/timerlat.py
+@@ -509,7 +509,7 @@ class Timerlat(rtevalModulePrototype):
+ def ModuleParameters():
+     """ default parameters """
+     return {"interval": {"descr": "Base interval or period of threads in microseconds",
+-                         "default": 100,
++                         "default": 1100,
+                          "metavar": "INTV_US"},
+             "priority": {"descr": "Run rtla timerlat with this priority",
+                          "default": 95,
+-- 
+2.48.1
 
