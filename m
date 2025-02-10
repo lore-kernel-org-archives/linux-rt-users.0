@@ -1,45 +1,45 @@
-Received: from mo-csw.securemx.jp (mo-csw1801.securemx.jp [210.130.202.135])
+Received: from mo-csw.securemx.jp (mo-csw1802.securemx.jp [210.130.202.152])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 2EF871ADC6B;
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 7C04F1A9B4E;
 	Mon, 10 Feb 2025 06:56:49 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=210.130.202.135
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=210.130.202.152
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1739170612; cv=none; b=cXeMX+wcwfyz+Yb6HUm8nCDwk1JBZFO59ntH73bOuNMJk2lxXdhIj/BJOFc7c8k7wjBas8Astt4RX2jZI6sdmPgjRxtyGjigwZZU/8OwWejH4V7ftHgca0Y7RnNv1zN7va5cMQP1sii8n1rO4Jag7JmCVQPLp66TTm6/DZ/48v8=
+	t=1739170612; cv=none; b=BVy4ELiRPmeke3/DoUTvyppfkDkyOFeBbexBAsFEtwvs1Quly52C1M5DEay89SoYsUE0IEzKOCOAOaptsCmqI6BnrvAo93yqUsCz28GUTTpYqlQ0G91H7pKd/mQYSGUZMiEsFYtfxvCA7sD/kL4ci69NgZ4T7SMukkt56hWfzVo=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
 	s=arc-20240116; t=1739170612; c=relaxed/simple;
-	bh=+jRq6pBjTZA/g6J9T9NYXpzObiQLHmv8zugfNAxez44=;
-	h=From:To:Cc:Subject:Date:Message-Id:In-Reply-To:References; b=R5tbDEKUu1k1ynT8A+jYs14zQ4AcVJjY87NDgkEkl1bYldkMzZj4tzgcDR6EvhbgwmdJ8fL/V7v3a0Kjnr30oUAVwNwL5/qk1Ssava4+d1vIuFRalBGluwzvCZZ1YhYQlLJjFn0onCMD/wggRR7/hUAeHPTDV3XeMHtfkpZKG2E=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=toshiba.co.jp; spf=pass smtp.mailfrom=toshiba.co.jp; dkim=pass (2048-bit key) header.d=toshiba.co.jp header.i=kazuhiro3.hayashi@toshiba.co.jp header.b=m1dhlpEF; arc=none smtp.client-ip=210.130.202.135
+	bh=fdHkPnjzNI7ozIGMiEunkAyWiyl6YSEi1qVfY9DfIV8=;
+	h=From:To:Cc:Subject:Date:Message-Id:In-Reply-To:References; b=sUcCozSqt40NXavNohYzlCXmP0iXpcZGfw0QT03pzgVn4OLVwE9knIAJP/Y0HeQ4fjARgq8ttBGKkRAN43P0WfR4ZdLByOVbL16Tb0F6ILbP8QrH0dH/wITZMAHYeob2KO5C4WKET/2HYsugOnquTS75M9IGjVOqlXCOb6knpYY=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=toshiba.co.jp; spf=pass smtp.mailfrom=toshiba.co.jp; dkim=pass (2048-bit key) header.d=toshiba.co.jp header.i=kazuhiro3.hayashi@toshiba.co.jp header.b=erlgJw0G; arc=none smtp.client-ip=210.130.202.152
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=toshiba.co.jp
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=toshiba.co.jp
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=toshiba.co.jp header.i=kazuhiro3.hayashi@toshiba.co.jp header.b="m1dhlpEF"
+	dkim=pass (2048-bit key) header.d=toshiba.co.jp header.i=kazuhiro3.hayashi@toshiba.co.jp header.b="erlgJw0G"
 DKIM-Signature: v=1;a=rsa-sha256;c=relaxed/simple;d=toshiba.co.jp;h=From:To:Cc
 	:Subject:Date:Message-Id:In-Reply-To:References;i=
-	kazuhiro3.hayashi@toshiba.co.jp;s=key2.smx;t=1739170574;x=1740380174;bh=+jRq6
-	pBjTZA/g6J9T9NYXpzObiQLHmv8zugfNAxez44=;b=m1dhlpEFy6B42fF2cCw+w2kcj//WKiD+mkj
-	o4XPUh2xy1aaRa7QTO/nuGiCALvDUTtc2SpSRIvRVqMu9hvUiFetozN1w7rZbGymt0GoVdUfNLO0D
-	MDbnYVm8nRodTAFJHI5WuyIJ8v2DHhTSX1eenFMXBJ+x0q1VNcbPFeltgBBb4ZwW/ZiOPGz+6EjRM
-	NxtKohjzL7i/d7uP7vH3gzCa9Ohz8Mfdl3Bb6OgJw/2XjXY8a4RO/CNtSdveWH3JOw2lGbAZzcPCV
-	0YvPK3VKWU5GANAqVBIvpTEpsDc3pxzpKTREi7KEdDXNHBWWFRKX0fISga7iNbh9EnzorpehBZCQ=
+	kazuhiro3.hayashi@toshiba.co.jp;s=key2.smx;t=1739170571;x=1740380171;bh=fdHkP
+	njzNI7ozIGMiEunkAyWiyl6YSEi1qVfY9DfIV8=;b=erlgJw0G1aUoinbqXGYQ/O+cmXFSoaDjP5G
+	h/7kpBbdFR2VJA3pkW97qypVabN3NZ4BRxfaSEUyOnp75fIU7LW5LQlFUtd2hznWRb9Wy/SE2n6dT
+	dC4vPNfwmMcqqdgtV//QYwFmiZLbaAUjYV0WfG2/x8YtPHG7WuuVhi0NMTue7wZIGJe4+TEtPpsh+
+	zOFQHMBMF46DVEjkfLikhXdtzkLrz5oGqh0zSSkAX7t1ATj8ifDzv0xbzIcqNr6k8xPcZuOTUGa7q
+	rcMZfh1JNobtukvzSMlitgVBscr3DV7PWhu7ap0LpSJfhcCZTgTXIglUAjyFzoljsiuFW2TNU0xA=
 	=;
-Received: by mo-csw.securemx.jp (mx-mo-csw1801) id 51A6uDur3258935; Mon, 10 Feb 2025 15:56:14 +0900
-X-Iguazu-Qid: 2yAbAvUQLMDymhsI16
-X-Iguazu-QSIG: v=2; s=0; t=1739170569; q=2yAbAvUQLMDymhsI16; m=a3H3MO9Uo5vvHAlyEcveR+c2PIVSA+TssczIWnNiNTI=
-Received: from imx2-a.toshiba.co.jp (imx2-a.toshiba.co.jp [106.186.93.35])
-	by relay.securemx.jp (mx-mr1801) id 51A6u8nV1015867
+Received: by mo-csw.securemx.jp (mx-mo-csw1802) id 51A6uBo63387719; Mon, 10 Feb 2025 15:56:11 +0900
+X-Iguazu-Qid: 2yAbyr8UnwGzlFQUfW
+X-Iguazu-QSIG: v=2; s=0; t=1739170568; q=2yAbyr8UnwGzlFQUfW; m=MaKdUf6dvxZzTTYqlF6U7FRj3iX0YihVW29YRSsydbo=
+Received: from imx12-a.toshiba.co.jp ([38.106.60.135])
+	by relay.securemx.jp (mx-mr1801) id 51A6u7xg1015857
 	(version=TLSv1.3 cipher=TLS_AES_256_GCM_SHA384 bits=256 verify=NOT);
-	Mon, 10 Feb 2025 15:56:08 +0900
+	Mon, 10 Feb 2025 15:56:07 +0900
 From: Kazuhiro Hayashi <kazuhiro3.hayashi@toshiba.co.jp>
 To: linux-kernel@vger.kernel.org, linux-rt-devel@lists.linux.dev,
         cip-dev@lists.cip-project.org
 Cc: bigeasy@linutronix.de, tglx@linutronix.de, rostedt@goodmis.org,
         linux-rt-users@vger.kernel.org, pavel@denx.de
-Subject: [PATCH 4.4 v1 15/17] init: Introduce SYSTEM_SCHEDULING state
-Date: Mon, 10 Feb 2025 15:55:43 +0900
+Subject: [PATCH 4.4 v1 11/17] async: Adjust system_state checks
+Date: Mon, 10 Feb 2025 15:55:39 +0900
 X-TSB-HOP2: ON
-Message-Id: <1739170545-25011-16-git-send-email-kazuhiro3.hayashi@toshiba.co.jp>
+Message-Id: <1739170545-25011-12-git-send-email-kazuhiro3.hayashi@toshiba.co.jp>
 X-Mailer: git-send-email 2.7.4
 In-Reply-To: <1739170545-25011-1-git-send-email-kazuhiro3.hayashi@toshiba.co.jp>
 References: <1739170545-25011-1-git-send-email-kazuhiro3.hayashi@toshiba.co.jp>
@@ -51,68 +51,67 @@ List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 
 From: Thomas Gleixner <tglx@linutronix.de>
 
-commit 69a78ff226fe0241ab6cb9dd961667be477e3cf7 upstream.
+commit b4def42724594cd399cfee365221f5b38639711d upstream.
 
-might_sleep() debugging and smp_processor_id() debugging should be active
-right after the scheduler starts working. The init task can invoke
-smp_processor_id() from preemptible context as it is pinned on the boot cpu
-until sched_smp_init() removes the pinning and lets it schedule on all non
-isolated cpus.
+To enable smp_processor_id() and might_sleep() debug checks earlier, it's
+required to add system states between SYSTEM_BOOTING and SYSTEM_RUNNING.
 
-Add a new state which allows to enable those checks earlier and add it to
-the xen do_poweroff() function.
-
-No functional change.
+Adjust the system_state check in async_run_entry_fn() and
+async_synchronize_cookie_domain() to handle the extra states.
 
 Tested-by: Mark Rutland <mark.rutland@arm.com>
 Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
 Signed-off-by: Peter Zijlstra (Intel) <peterz@infradead.org>
-Reviewed-by: Boris Ostrovsky <boris.ostrovsky@oracle.com>
-Acked-by: Mark Rutland <mark.rutland@arm.com>
+Acked-by: Arjan van de Ven <arjan@linux.intel.com>
 Cc: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
-Cc: Juergen Gross <jgross@suse.com>
 Cc: Linus Torvalds <torvalds@linux-foundation.org>
 Cc: Peter Zijlstra <peterz@infradead.org>
 Cc: Steven Rostedt <rostedt@goodmis.org>
-Link: http://lkml.kernel.org/r/20170516184736.196214622@linutronix.de
+Link: http://lkml.kernel.org/r/20170516184735.865155020@linutronix.de
 Signed-off-by: Ingo Molnar <mingo@kernel.org>
 Signed-off-by: Kazuhiro Hayashi <kazuhiro3.hayashi@toshiba.co.jp>
 ---
- drivers/xen/manage.c   | 1 +
- include/linux/kernel.h | 6 +++++-
- 2 files changed, 6 insertions(+), 1 deletion(-)
+ kernel/async.c | 8 ++++----
+ 1 file changed, 4 insertions(+), 4 deletions(-)
 
-diff --git a/drivers/xen/manage.c b/drivers/xen/manage.c
-index f494126aaecd..4f907fbda6c0 100644
---- a/drivers/xen/manage.c
-+++ b/drivers/xen/manage.c
-@@ -188,6 +188,7 @@ static void do_poweroff(void)
+diff --git a/kernel/async.c b/kernel/async.c
+index f1fd155abff6..23cae44a6ae8 100644
+--- a/kernel/async.c
++++ b/kernel/async.c
+@@ -118,14 +118,14 @@ static void async_run_entry_fn(struct work_struct *work)
+ 	ktime_t uninitialized_var(calltime), delta, rettime;
+ 
+ 	/* 1) run (and print duration) */
+-	if (initcall_debug && system_state == SYSTEM_BOOTING) {
++	if (initcall_debug && system_state < SYSTEM_RUNNING) {
+ 		pr_debug("calling  %lli_%pF @ %i\n",
+ 			(long long)entry->cookie,
+ 			entry->func, task_pid_nr(current));
+ 		calltime = ktime_get();
+ 	}
+ 	entry->func(entry->data, entry->cookie);
+-	if (initcall_debug && system_state == SYSTEM_BOOTING) {
++	if (initcall_debug && system_state < SYSTEM_RUNNING) {
+ 		rettime = ktime_get();
+ 		delta = ktime_sub(rettime, calltime);
+ 		pr_debug("initcall %lli_%pF returned 0 after %lld usecs\n",
+@@ -288,14 +288,14 @@ void async_synchronize_cookie_domain(async_cookie_t cookie, struct async_domain
  {
- 	switch (system_state) {
- 	case SYSTEM_BOOTING:
-+	case SYSTEM_SCHEDULING:
- 		orderly_poweroff(true);
- 		break;
- 	case SYSTEM_RUNNING:
-diff --git a/include/linux/kernel.h b/include/linux/kernel.h
-index d68f639f7330..d472456c6fcc 100644
---- a/include/linux/kernel.h
-+++ b/include/linux/kernel.h
-@@ -481,9 +481,13 @@ extern int root_mountflags;
+ 	ktime_t uninitialized_var(starttime), delta, endtime;
  
- extern bool early_boot_irqs_disabled;
+-	if (initcall_debug && system_state == SYSTEM_BOOTING) {
++	if (initcall_debug && system_state < SYSTEM_RUNNING) {
+ 		pr_debug("async_waiting @ %i\n", task_pid_nr(current));
+ 		starttime = ktime_get();
+ 	}
  
--/* Values used for system_state */
-+/*
-+ * Values used for system_state. Ordering of the states must not be changed
-+ * as code checks for <, <=, >, >= STATE.
-+ */
- extern enum system_states {
- 	SYSTEM_BOOTING,
-+	SYSTEM_SCHEDULING,
- 	SYSTEM_RUNNING,
- 	SYSTEM_HALT,
- 	SYSTEM_POWER_OFF,
+ 	wait_event(async_done, lowest_in_progress(domain) >= cookie);
+ 
+-	if (initcall_debug && system_state == SYSTEM_BOOTING) {
++	if (initcall_debug && system_state < SYSTEM_RUNNING) {
+ 		endtime = ktime_get();
+ 		delta = ktime_sub(endtime, starttime);
+ 
 -- 
 2.30.2
 
