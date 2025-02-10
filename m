@@ -1,123 +1,97 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+Received: from mo-csw.securemx.jp (mo-csw1802.securemx.jp [210.130.202.152])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 3398419CD13
-	for <linux-rt-users@vger.kernel.org>; Fri,  7 Feb 2025 23:24:04 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 585C3199FBA;
+	Mon, 10 Feb 2025 06:56:46 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=210.130.202.152
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1738970647; cv=none; b=bA7CH1optMHzcBCbjvPgL42fLwn478KgOt/ikjtq7Dhz6DtID4U03udVFrXF0jX6gn1twfG78S14oYb+Ei3YLHFj9xm4IzxNQffhEuh2Uvgnkl7G0VIj4gud2s9vcReCi1MpTORyj4Rwoc7Rmvy5jlghof0HJTv6yD0vrrhcW+s=
+	t=1739170610; cv=none; b=oWT83BAd+bXd4sydJtrfsN2WC7srtLt+b4D3g3Rg1Ez+clQbJ0kGtRvbXobhfwZA8gUD+yWYhNqZaXmYz1yRrjre31jtVWB+eLqEhTWn2S9eyxncSRkJB8XgB4fRuOrBVAy+8Jzx3p2XLj6C5HhbP9QFdPyBcAf6KEGsm9VADwI=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1738970647; c=relaxed/simple;
-	bh=kCkcoudRP8kbl15wNTNzvLNs1sTfryBWoKW4eGcTbqM=;
-	h=Message-ID:Subject:From:To:Cc:Date:In-Reply-To:References:
-	 Content-Type:MIME-Version; b=A9H78kTrpciSbl817WEHAjgOfIyhxGlF03gaFq62acPFkOTA/TLWs9FbJtchswYZwnigDs+RqmsA8WfhCexQ6Aw7HjBibGk8AqzEAG9SHAiyRUosdOsaGhiTE8EUroNt2hIeC9ml7euK+bwkuM8xjrsB6YQvkOuHVNiUj3uyrz4=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=bQ4wZ6VD; arc=none smtp.client-ip=170.10.133.124
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
+	s=arc-20240116; t=1739170610; c=relaxed/simple;
+	bh=r2bGSQuW3OUidgcECmo0HgSV1D5FG/L2Ld2WCzZKiPg=;
+	h=From:To:Cc:Subject:Date:Message-Id:In-Reply-To:References; b=cei6V2HFAzMH+8dxTaWqqKEq+sBK21Yr9+SDp3wy6hcQhUcYu1nFHmmT7jwOFM04oxywU2pHjitdT1qpRA4Tlz7OLnVMQ1+Y5S8+jX4FnKBRSIoB3DB51G2BN3dc2drzQufMAg2O4FWb8W5zdf8i9kXF2yfVcrP5PpVk2P/uf+w=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=toshiba.co.jp; spf=pass smtp.mailfrom=toshiba.co.jp; dkim=pass (2048-bit key) header.d=toshiba.co.jp header.i=kazuhiro3.hayashi@toshiba.co.jp header.b=knnD/rSR; arc=none smtp.client-ip=210.130.202.152
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=toshiba.co.jp
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=toshiba.co.jp
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="bQ4wZ6VD"
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1738970644;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references;
-	bh=5U1aGGw5s7APxkDuS7aTTH6RJ0SW/00UW/mH23JuMF8=;
-	b=bQ4wZ6VDJ0N/jIClMtc5R81NQaKYu3Gn5f07mCLCwJ5EdavPy3QlWEqKg5CJTvCd1IVDix
-	bzDGvs9jAcM3LMKwz6wHFSX1ozMeeGaL4c31UaYAoRIQN1rf6avhQhU/Ldn1DLxV16iO5H
-	Y/NzulWile5k2E+BMRy6PwrVMCOm1jk=
-Received: from mail-io1-f72.google.com (mail-io1-f72.google.com
- [209.85.166.72]) by relay.mimecast.com with ESMTP with STARTTLS
- (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
- us-mta-68-6-bdt8yzOcCKOn7jyJ80Vw-1; Fri, 07 Feb 2025 18:24:00 -0500
-X-MC-Unique: 6-bdt8yzOcCKOn7jyJ80Vw-1
-X-Mimecast-MFC-AGG-ID: 6-bdt8yzOcCKOn7jyJ80Vw
-Received: by mail-io1-f72.google.com with SMTP id ca18e2360f4ac-844d5c4a27fso517133239f.0
-        for <linux-rt-users@vger.kernel.org>; Fri, 07 Feb 2025 15:24:00 -0800 (PST)
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1738970640; x=1739575440;
-        h=mime-version:user-agent:content-transfer-encoding:references
-         :in-reply-to:date:cc:to:from:subject:message-id:x-gm-message-state
-         :from:to:cc:subject:date:message-id:reply-to;
-        bh=5U1aGGw5s7APxkDuS7aTTH6RJ0SW/00UW/mH23JuMF8=;
-        b=HnxvAG+vvW9WQGvXKohakQrf26dFpLNm1KJnWJHCV79EkfzTFQdflh5AQSJWBSOv5r
-         XL6K3e3ihg0NJ8IdD4ySZtA2GReu5FVtZKA2OGFYw6B1XEzgVAl/c7vin3fYtm5513Ji
-         mqWQTGnKB2nE9rx8GTJRYkybLlirEkkN3nQlQkIbdF13rMsqD0iG+m+e7BFk5fVD5UDe
-         crpCxeH1MQ201s4ILK33Nl6adR+dWEOW9YKQinzj+csOqFMpfVmKNaTwjLXJlqrAbrn/
-         +bkGB6O2tCSBQiUD5XpDQ+kGruAJfD3k2GcKvEaRAKt9rI4QW4sx2mZAQRgsGCm7Uynv
-         VQTQ==
-X-Forwarded-Encrypted: i=1; AJvYcCVbjFMBirK6dMgV6G2/M1H/d+p2kfMzsVMi7AZo44iP3KKFD4AVBmDx6ZG/O+///0gpFjEilFH7J8bSu95GcQ==@vger.kernel.org
-X-Gm-Message-State: AOJu0YwLz6BAWDokUfUGghLhHWlzkooHguYb7w0agZABk/0X78pw7d3N
-	n1UWXggzFMg5CgbTLPHlvuAWf2sy8zKmE88WCK85IAGDtj4hSpTxupIJD+AKvDN6qBoJIcnrSJa
-	JgO1rQ4DNNMnGdB2hSBlmXUCbemWXNUr3kcXog2df+ornvHKkjYcBQVBu9o4/9HgA
-X-Gm-Gg: ASbGnctaADQ5LuDvsR7hGhGbh9oowmqf89KRQjcTDbvGUhx95m5qxhX5iE+rn6b0NaC
-	3WZD1Qfj6mJYqBCYVaDKmYkWJ4scPPJvZaqiDxyoSAYK197RpG7WI96iLFKGtsSKuML6v7dke/I
-	e12xANOOj3rSjbOhNRpN/xD9hHGwpYm1OQWsSy97ylQ8sDp8njJOwugKdwvkKqSD+ua4WcuKngK
-	LfIwd+E6byJ5sQrhrWlh7pd9I0wquo8YnWLYZxj31NXjiwr8bUxj8AVuvqtyNUxPdoWJ171T3qp
-	6pTPS61FM3vxZkjczu+fxj5nfg+RIvpnogx/
-X-Received: by 2002:a05:6602:4895:b0:83a:b74c:800e with SMTP id ca18e2360f4ac-854fd90748dmr544860939f.12.1738970640187;
-        Fri, 07 Feb 2025 15:24:00 -0800 (PST)
-X-Google-Smtp-Source: AGHT+IHHEqk3xC6ZABU8BlN3YTMfiBcToLXLyVXbkovhIrDhAOgKRf5/V8bfMCn35joygLgYdBPPGQ==
-X-Received: by 2002:a05:6602:4895:b0:83a:b74c:800e with SMTP id ca18e2360f4ac-854fd90748dmr544859739f.12.1738970639936;
-        Fri, 07 Feb 2025 15:23:59 -0800 (PST)
-Received: from crwood-thinkpadp16vgen1.minnmso.csb ([2601:447:c680:2b50:ee6f:85c2:7e3e:ee98])
-        by smtp.gmail.com with ESMTPSA id ca18e2360f4ac-854f67b90b7sm89941339f.40.2025.02.07.15.23.59
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Fri, 07 Feb 2025 15:23:59 -0800 (PST)
-Message-ID: <4bcef79ddfd9e149cd6434a038a265060a320e9d.camel@redhat.com>
-Subject: Re: [PATCH] Change min/max to float numbers
-From: Crystal Wood <crwood@redhat.com>
-To: Rafael Folco <rfolco@redhat.com>, Sebastian Andrzej Siewior
-	 <bigeasy@linutronix.de>
-Cc: williams@redhat.com, jkacur@redhat.com, linux-rt-users@vger.kernel.org
-Date: Fri, 07 Feb 2025 17:23:58 -0600
-In-Reply-To: <37c7e3c7-d9fe-4e8a-9b5d-61d041a9151a@redhat.com>
-References: <3a9f0f10-2e7a-4eb6-b094-e5492b43505f@redhat.com>
-	 <20250206120056.oE88fgG6@linutronix.de>
-	 <2cb9215a-61d8-4b97-af66-6ef4194f3e04@redhat.com>
-	 <8144971da4d48d1f3fc75decfff2434fc44f082d.camel@redhat.com>
-	 <37c7e3c7-d9fe-4e8a-9b5d-61d041a9151a@redhat.com>
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
-User-Agent: Evolution 3.52.4 (3.52.4-2.fc40) 
+	dkim=pass (2048-bit key) header.d=toshiba.co.jp header.i=kazuhiro3.hayashi@toshiba.co.jp header.b="knnD/rSR"
+DKIM-Signature: v=1;a=rsa-sha256;c=relaxed/simple;d=toshiba.co.jp;h=From:To:Cc
+	:Subject:Date:Message-Id:In-Reply-To:References;i=
+	kazuhiro3.hayashi@toshiba.co.jp;s=key2.smx;t=1739170573;x=1740380173;bh=r2bGS
+	QuW3OUidgcECmo0HgSV1D5FG/L2Ld2WCzZKiPg=;b=knnD/rSRtEjokv4nwpdZLTt24aAMsPdzs30
+	OcZ6S48JJdY/JH8RrWYc+VapW96fUUfmO9pwBuSwy6Z81o9Bo7JuS7ovppPkUG+gTH/mlRg3+dBnl
+	GDZM03E3lWJDfnU/rBAG6SmfvNQbrJIfDkF8+PUgC6r4RdQVl1fkmoe2OyAaAxohC1jU+GVinBcTU
+	ilZt8iMKavIFJkjofP0PrO92gSlN0bILFlVMnOcMIt1XqmDAJCruup0n5Y3Sm5OTi74UG+73/mZcg
+	uHlD7VTjpywQ0fFNnvcyGH4yr6wleFw74zKQGqQEMjUoxK/qaiXOSkwJ/5TP1Rhk7Ocg4HNahWww=
+	=;
+Received: by mo-csw.securemx.jp (mx-mo-csw1802) id 51A6uDGN3387803; Mon, 10 Feb 2025 15:56:13 +0900
+X-Iguazu-Qid: 2yAbAvUQLMDymhsI13
+X-Iguazu-QSIG: v=2; s=0; t=1739170568; q=2yAbAvUQLMDymhsI13; m=cJHL28zEPBgbgE/lC5o0LDRLsvlwWkSeNef5Mf90hzM=
+Received: from imx2-a.toshiba.co.jp (imx2-a.toshiba.co.jp [106.186.93.35])
+	by relay.securemx.jp (mx-mr1803) id 51A6u8Qw4036156
+	(version=TLSv1.3 cipher=TLS_AES_256_GCM_SHA384 bits=256 verify=NOT);
+	Mon, 10 Feb 2025 15:56:08 +0900
+From: Kazuhiro Hayashi <kazuhiro3.hayashi@toshiba.co.jp>
+To: linux-kernel@vger.kernel.org, linux-rt-devel@lists.linux.dev,
+        cip-dev@lists.cip-project.org
+Cc: bigeasy@linutronix.de, tglx@linutronix.de, rostedt@goodmis.org,
+        linux-rt-users@vger.kernel.org, pavel@denx.de
+Subject: [PATCH 4.4 v1 13/17] printk: Adjust system_state checks
+Date: Mon, 10 Feb 2025 15:55:41 +0900
+X-TSB-HOP2: ON
+Message-Id: <1739170545-25011-14-git-send-email-kazuhiro3.hayashi@toshiba.co.jp>
+X-Mailer: git-send-email 2.7.4
+In-Reply-To: <1739170545-25011-1-git-send-email-kazuhiro3.hayashi@toshiba.co.jp>
+References: <1739170545-25011-1-git-send-email-kazuhiro3.hayashi@toshiba.co.jp>
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
 List-Subscribe: <mailto:linux-rt-users+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
-MIME-Version: 1.0
 
-On Fri, 2025-02-07 at 11:20 -0300, Rafael Folco wrote:
-> On 06/02/25 18:23, Crystal Wood wrote:
-> > On Thu, 2025-02-06 at 12:02 -0300, Rafael Folco wrote:
-> > > On 06/02/25 09:00, Sebastian Andrzej Siewior wrote:
-> > > > On 2025-02-06 06:16:22 [-0300], Rafael Folco wrote:
-> > > > > Make min/max consistent with avg by recording the latency samples
-> > > > > as float numbers instead of integers.
-> > > >=20
-> > > > Why?
-> > >=20
-> > > - More precise numbers of Max/Min for extreme low latency cases
-> > > - Distinguish zero latency in bucket 001 (us)
-> > > - Distinguish values from upper/lower boundaries in a bucket
-> > > - Clarify confusion on average (round up) vs maximum in the next buck=
-et (casting)
-> >=20
-> > If you want more precision, set --bucket-width to something lower than
-> > 1000 ns.  That will cause everything to be reported with ns precision
-> > (though maybe not quite ns accuracy, depending on the hardware).  We
-> > were hesitant to make ns precision the default in case it misleads
-> > people about the accuracy (plus I didn't know if the change might
-> > confuse some tools that consume the output).
-> Yes, it works for precision. Average is higher than max with default buck=
-et width, though.
+From: Thomas Gleixner <tglx@linutronix.de>
 
-This is due to the average being calculated from the histogram (rounding
-to the top of the bucket), while min/max is the direct value.  Maybe we
-should keep a running total to compute average from?
+commit ff48cd26fc4889b9deb5f9333d3c61746e450b7f upstream.
 
-We may also want to think about whether we should unconditionally use
-ns.
+To enable smp_processor_id() and might_sleep() debug checks earlier, it's
+required to add system states between SYSTEM_BOOTING and SYSTEM_RUNNING.
 
--Crystal
+Adjust the system_state check in boot_delay_msec() to handle the extra
+states.
+
+Conflicts: kernel/printk/printk.c
+cf775444 replace the third condition that boot_delay_msec() returns
+immediately with suppress_message_printing(). This does not affect
+system_state check.
+
+Tested-by: Mark Rutland <mark.rutland@arm.com>
+Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
+Signed-off-by: Peter Zijlstra (Intel) <peterz@infradead.org>
+Reviewed-by: Steven Rostedt (VMware) <rostedt@goodmis.org>
+Cc: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
+Cc: Linus Torvalds <torvalds@linux-foundation.org>
+Cc: Peter Zijlstra <peterz@infradead.org>
+Link: http://lkml.kernel.org/r/20170516184736.027534895@linutronix.de
+Signed-off-by: Ingo Molnar <mingo@kernel.org>
+Signed-off-by: Kazuhiro Hayashi <kazuhiro3.hayashi@toshiba.co.jp>
+---
+ kernel/printk/printk.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/kernel/printk/printk.c b/kernel/printk/printk.c
+index d8e0790f56cb..8d1e081bf9fc 100644
+--- a/kernel/printk/printk.c
++++ b/kernel/printk/printk.c
+@@ -1077,7 +1077,7 @@ static void boot_delay_msec(int level)
+ 	unsigned long long k;
+ 	unsigned long timeout;
+ 
+-	if ((boot_delay == 0 || system_state != SYSTEM_BOOTING)
++	if ((boot_delay == 0 || system_state >= SYSTEM_RUNNING)
+ 		|| (level >= console_loglevel && !ignore_loglevel)) {
+ 		return;
+ 	}
+-- 
+2.30.2
+
 
