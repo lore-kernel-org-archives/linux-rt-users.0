@@ -1,101 +1,99 @@
-Received: from mo-csw-fb.securemx.jp (mo-csw-fb1120.securemx.jp [210.130.202.128])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from galois.linutronix.de (Galois.linutronix.de [193.142.43.55])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id B68F62F2E;
-	Mon, 10 Feb 2025 08:16:27 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=210.130.202.128
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id C56241C3F36;
+	Mon, 10 Feb 2025 10:18:23 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=193.142.43.55
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1739175392; cv=none; b=sf1dN4mNSH3YCVamo5L3oHf65MjI1gnItiAMZD9+dGuEyKaNzZ1vck++uuhl1yQJNN9fxSKR7k6Gm5xzpK0K4g0DfU10Zlz1LGAmY6hVie23T86pJkPxBS7R1Oz/aszGXSzTiYV0k1lxzlLtyHHyRroooEflgrzr/fYx4XuyXYU=
+	t=1739182705; cv=none; b=iuVkC3Yt8V7Kh1hqEYOuTUjRh1Q7DzqGZC0IJc8HNWo5k65lQFjkuRmg2/PbNZIVYREhtwdW4mDFWRBQ3UIyghwKwMos4Ki0R3+Qj/hdlOOOsInxKSoezADmApZxErZGTHKERHd29wgxvGZ95ZqRp8o/6cd3/OPh9NlTxg2L/Jo=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1739175392; c=relaxed/simple;
-	bh=oeSTV1dI+T8GrwEAkCPvGHesDTdealGcRC8KdexYD5I=;
-	h=From:To:Cc:Subject:Date:Message-Id:In-Reply-To:References; b=as6Y5LJx1BpBaG6JHYe6yS2oGXsafSY1b9BqobQMtw5fYMagKT2+7B20n5xe97eaYHr8EDxmNvRYipd6/i+XGAUw5+1WT5eem1xEP3MrXrIDvZfRR1o0zpZ3vWPY25zc0ltD+zRjtBNP+FQV+AGU7LMnyAZPJhBfK/qkFwhIllA=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=toshiba.co.jp; spf=pass smtp.mailfrom=toshiba.co.jp; dkim=pass (2048-bit key) header.d=toshiba.co.jp header.i=kazuhiro3.hayashi@toshiba.co.jp header.b=AnC3Hm5Y; arc=none smtp.client-ip=210.130.202.128
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=toshiba.co.jp
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=toshiba.co.jp
+	s=arc-20240116; t=1739182705; c=relaxed/simple;
+	bh=eSvTyMDnhmkmFcppWwSm3V3i6quSbs6CTcyP13KbZDw=;
+	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
+	 Content-Type:Content-Disposition:In-Reply-To; b=czofnmAwNng5Z/clVsz1PlRajBAVYGJ3i6l4LL8BOLk6gV7h4MXBnmZrHg+w0lkHL6FBXc8rqocwCe/fE7efFpmObAH5qsEb+PyNds0vBQuURakRk8BCwt0Pssd7YeBjxz6f6MuLspDOwsOZbhYEMjG1IlmomZeM/4N4PDRi7Rg=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linutronix.de; spf=pass smtp.mailfrom=linutronix.de; dkim=pass (2048-bit key) header.d=linutronix.de header.i=@linutronix.de header.b=JOlncvx5; dkim=permerror (0-bit key) header.d=linutronix.de header.i=@linutronix.de header.b=lAJmG8ai; arc=none smtp.client-ip=193.142.43.55
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linutronix.de
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=linutronix.de
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=toshiba.co.jp header.i=kazuhiro3.hayashi@toshiba.co.jp header.b="AnC3Hm5Y"
-Received: by mo-csw-fb.securemx.jp (mx-mo-csw-fb1120) id 51A6uotC216575; Mon, 10 Feb 2025 15:56:50 +0900
-DKIM-Signature: v=1;a=rsa-sha256;c=relaxed/simple;d=toshiba.co.jp;h=From:To:Cc
-	:Subject:Date:Message-Id:In-Reply-To:References;i=
-	kazuhiro3.hayashi@toshiba.co.jp;s=key2.smx;t=1739170575;x=1740380175;bh=oeSTV
-	1dI+T8GrwEAkCPvGHesDTdealGcRC8KdexYD5I=;b=AnC3Hm5Y9xk8JXuJN1dIXHrxvS428YIDA5X
-	HWM0a1+I4rouWYEJpr/xRVuiBjunane+Ja9ZOy+ytmw7+TxD4zJkVN/Z50cTkjbRJPDaBd29ysmyn
-	CRRZLzuO1drzVvDKlRsM5AhX/RS/3S22xaF+wL90RfFL0IqCe9JQ4xPpvxB5coy/XFgOQmacv1qeg
-	zVL2WA4GCXdc2h2n8aBT1/w0K9mOXhJK6BL1lTShMAzJAznbf+3y8/+psQaN7+icFG1x7KAD54RST
-	DGrmdPrK0oyqKPp8/Y28QrtnJURMyRQPCYOQkfeCDfqJs3lQanb+Jx7qh0rjRtStkXCdS1wQm7bA=
-	=;
-Received: by mo-csw.securemx.jp (mx-mo-csw1121) id 51A6uFb13832482; Mon, 10 Feb 2025 15:56:15 +0900
-X-Iguazu-Qid: 2rWhSHZE3yt6r0xIbx
-X-Iguazu-QSIG: v=2; s=0; t=1739170569; q=2rWhSHZE3yt6r0xIbx; m=Y0hJNGDdcj4uKOoeojwG12+1jPvQ2I44K5L5a9Bg+kc=
-Received: from imx12-a.toshiba.co.jp ([38.106.60.135])
-	by relay.securemx.jp (mx-mr1122) id 51A6u6tX182804
-	(version=TLSv1.3 cipher=TLS_AES_256_GCM_SHA384 bits=256 verify=NOT);
-	Mon, 10 Feb 2025 15:56:07 +0900
-From: Kazuhiro Hayashi <kazuhiro3.hayashi@toshiba.co.jp>
-To: linux-kernel@vger.kernel.org, linux-rt-devel@lists.linux.dev,
-        cip-dev@lists.cip-project.org
-Cc: bigeasy@linutronix.de, tglx@linutronix.de, rostedt@goodmis.org,
-        linux-rt-users@vger.kernel.org, pavel@denx.de
-Subject: [PATCH 4.4 v1 03/17] arm64: Adjust system_state check
-Date: Mon, 10 Feb 2025 15:55:31 +0900
-X-TSB-HOP2: ON
-Message-Id: <1739170545-25011-4-git-send-email-kazuhiro3.hayashi@toshiba.co.jp>
-X-Mailer: git-send-email 2.7.4
-In-Reply-To: <1739170545-25011-1-git-send-email-kazuhiro3.hayashi@toshiba.co.jp>
-References: <1739170545-25011-1-git-send-email-kazuhiro3.hayashi@toshiba.co.jp>
+	dkim=pass (2048-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="JOlncvx5";
+	dkim=permerror (0-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="lAJmG8ai"
+Date: Mon, 10 Feb 2025 11:18:20 +0100
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
+	s=2020; t=1739182702;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 in-reply-to:in-reply-to:references:references;
+	bh=oONuz56ffauYF3gP0eUnBA886a0FrJODrLFYvs7U1Ig=;
+	b=JOlncvx5rr2rWhQOyUyuJaQDJ3Kc87n9AxLdVgpg85mVVsRSuvpS18oo2i+EzhXDtx5o9l
+	X9BYY2sQ9Fn7pvLm4PrdapzT1iyTSzYibu4OxPE3oGPPRmiMfMJYe0Q8GRnW1jXojazg9Y
+	o51FlNl88dS/auoi7sRkIvkAICWEjzkNOeXAxdhuxeSAPIdhHu9CH/E/CP8jBDMXQw8uZm
+	e9tEDl5/eD5/mZgKz7ABSo2TjmNBIFm0hdzblu+XWo1gOxP4h1eOVmCWG4xPbH0cv/C78Y
+	4fuSsnusUk5Ofa6ftD/lOwAhnDM6AUt8ffPPvkb501Phtd2PpOYr2mYSFJQbZA==
+DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
+	s=2020e; t=1739182702;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 in-reply-to:in-reply-to:references:references;
+	bh=oONuz56ffauYF3gP0eUnBA886a0FrJODrLFYvs7U1Ig=;
+	b=lAJmG8airbZW1/09009CVPUxyO1FpKLB8cXVjv4WV5CTiHr39O4f1zqwK4K3VqODHtQhY9
+	N69kUIM+hYWvZ2CA==
+From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+To: kazuhiro3.hayashi@toshiba.co.jp
+Cc: linux-kernel@vger.kernel.org, linux-rt-devel@lists.linux.dev,
+	cip-dev@lists.cip-project.org, tglx@linutronix.de,
+	rostedt@goodmis.org, linux-rt-users@vger.kernel.org, pavel@denx.de
+Subject: Re: RE: [PATCH 4.4 4.9 v1 2/2] mm: slub: allocate_slab() enables IRQ
+ right after scheduler starts
+Message-ID: <20250210101820.lXceJi98@linutronix.de>
+References: <1738629964-11977-1-git-send-email-kazuhiro3.hayashi@toshiba.co.jp>
+ <1738629964-11977-3-git-send-email-kazuhiro3.hayashi@toshiba.co.jp>
+ <20250204081813.7qsvLFsU@linutronix.de>
+ <TYCPR01MB11385E033624D2D9D93992A95E1F22@TYCPR01MB11385.jpnprd01.prod.outlook.com>
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
 List-Subscribe: <mailto:linux-rt-users+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
+MIME-Version: 1.0
+Content-Type: text/plain; charset=utf-8
+Content-Disposition: inline
+In-Reply-To: <TYCPR01MB11385E033624D2D9D93992A95E1F22@TYCPR01MB11385.jpnprd01.prod.outlook.com>
 
-From: Thomas Gleixner <tglx@linutronix.de>
+On 2025-02-10 07:20:35 [+0000], kazuhiro3.hayashi@toshiba.co.jp wrote:
+> Hello,
+Hi,
 
-commit ef284f5ca5f102bf855e599305c0c16d6e844635 upstream.
+> The question here is whether to insert SYSTEM_SCHEDULING is acceptable
+> or not in LTS phase. This addition would change behavior of future fixes
+> or out-of-tree codes that check system_state, so adjustments similar to
+> the mainline series[2] (2/17 ~ 15/17) are needed for them.
+> Can I ask if it's recommended to introduce SYSTEM_SCHEDULING even in LTS?
+> It's v4.4-rt specific topic but I think similar discussion is regularly
+> happening in newer -rt branches and LTS branches where PREEMPT_RT is merged.
 
-To enable smp_processor_id() and might_sleep() debug checks earlier, it's
-required to add system states between SYSTEM_BOOTING and SYSTEM_RUNNING.
+In general I try to have the same code if it is easily possible. A few
+examples where this was not the case:
+- The printk code, as work is in progress, was never fully backported.
+  The changes between kernel versions were small and there was little to
+  none user visible changes. However changes under the hood were usually
+  big so in general it was not worth the effort.
 
-Adjust the system_state check in smp_send_stop() to handle the extra states.
+- scheduling wise, we went from PREEMPT_LAZY to PREEMPT_AUTO to
+  LAZY_PREEMPT. Fixes within one implementation went all the way down
+  but the implementation as a whole was never backported. PREEMPT_AUTO
+  could be considered as half way done but nobody complained about
+  something in particular. It was "recently" discussed whether or not to
+  backport LAZY_PREEMPT to replace PREEMPT_AUTO in some of the lower
+  kernels but the changes required to backport it would be huge because
+  the scheduler in particular changed. So this is hard to justify.
 
-Conflicts: arch/arm64/kernel/smp.c
-82611c14 moves per-CPU stop message from ipi_cpu_stop() to smp_send_stop(),
-but no change in checking system_state condition.
-Apply the change to ipi_cpu_stop() instead.
+What questions can you ask?
+- Do you backport code that relies on `system_states' or did so in the
+  past?
+- Is more likely to backport code from before v4.13 or after? Either way
+  you need to look at this.
 
-Tested-by: Mark Rutland <mark.rutland@arm.com>
-Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
-Signed-off-by: Peter Zijlstra (Intel) <peterz@infradead.org>
-Acked-by: Mark Rutland <mark.rutland@arm.com>
-Acked-by: Catalin Marinas <catalin.marinas@arm.com>
-Cc: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
-Cc: Linus Torvalds <torvalds@linux-foundation.org>
-Cc: Peter Zijlstra <peterz@infradead.org>
-Cc: Steven Rostedt <rostedt@goodmis.org>
-Cc: Will Deacon <will.deacon@arm.com>
-Link: http://lkml.kernel.org/r/20170516184735.112589728@linutronix.de
-Signed-off-by: Ingo Molnar <mingo@kernel.org>
-Signed-off-by: Kazuhiro Hayashi <kazuhiro3.hayashi@toshiba.co.jp>
----
- arch/arm64/kernel/smp.c | 3 +--
- 1 file changed, 1 insertion(+), 2 deletions(-)
+> Best regards,
+> Kazu
 
-diff --git a/arch/arm64/kernel/smp.c b/arch/arm64/kernel/smp.c
-index 36182dafd63c..9b21b6ccc3f1 100644
---- a/arch/arm64/kernel/smp.c
-+++ b/arch/arm64/kernel/smp.c
-@@ -685,8 +685,7 @@ static DEFINE_RAW_SPINLOCK(stop_lock);
-  */
- static void ipi_cpu_stop(unsigned int cpu)
- {
--	if (system_state == SYSTEM_BOOTING ||
--	    system_state == SYSTEM_RUNNING) {
-+	if (system_state <= SYSTEM_RUNNING) {
- 		raw_spin_lock(&stop_lock);
- 		pr_crit("CPU%u: stopping\n", cpu);
- 		dump_stack();
--- 
-2.30.2
-
-
+Sebastian
