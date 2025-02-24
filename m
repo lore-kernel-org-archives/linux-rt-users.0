@@ -1,99 +1,134 @@
-Received: from galois.linutronix.de (Galois.linutronix.de [193.142.43.55])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id B9A942571A0
-	for <linux-rt-users@vger.kernel.org>; Mon, 24 Feb 2025 11:56:00 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=193.142.43.55
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id EC58823CEF8
+	for <linux-rt-users@vger.kernel.org>; Mon, 24 Feb 2025 13:29:41 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1740398162; cv=none; b=QvGis5KzVg2elfd/yRjOGPHuixU6qPPWIE2EIPEMZ6uC+xzcRusQJgyULd0UqhLeiJRESLuw01Eld7bUdwrfwcXy4VFsJCxrfBzcedPZK+48D8qFEjhgx9Xu2nGsmQe9Xt/P0DqaSfTA5mI+h5dtS/FFtjmbH0Fn6r+WUygyWGE=
+	t=1740403784; cv=none; b=Qb0P/u7kgf2NEag5PVtfcWpdXh4W72K6RxcTNA20rFL7iQDlS+2fEyLx+SRTMN6e/vezlpVi32OUtkzUbVYs0py+JKFcVT1sr/xsYpKBtxTZIReSXipa0RVCbEybIDGIjuypsghTt9gcyF9vYN/Cc7dy6JhNmZo6PiXa4mjwJg8=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1740398162; c=relaxed/simple;
-	bh=0SD6917174htDvkrIKg/zpUU4zwSCoaMFQv/llPpg1c=;
+	s=arc-20240116; t=1740403784; c=relaxed/simple;
+	bh=q9/TtM1NG+ifOqQFSbmWbZoInNyjK7xJ99Snl4OUlIM=;
 	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 Content-Type:Content-Disposition:In-Reply-To; b=jM5yJgh+K6/vVJTVpNZc2ZfFqT/a/9MmhrtwNlwyXlX6NmAFJxKSgKWnkubSINkAGIe5zZx9mc+6hGrMBJyJnEG8sHmd31PizfjbtqzHgvQs7CTNxAQZhL9w2VnWfDrX5wJoCwyKAL2gTloxh3SATVFAjPnZi1sRbEIacjN6uas=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linutronix.de; spf=pass smtp.mailfrom=linutronix.de; dkim=pass (2048-bit key) header.d=linutronix.de header.i=@linutronix.de header.b=WBmrTkip; dkim=permerror (0-bit key) header.d=linutronix.de header.i=@linutronix.de header.b=D7q2fAQ1; arc=none smtp.client-ip=193.142.43.55
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linutronix.de
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=linutronix.de
+	 Content-Type:Content-Disposition:In-Reply-To; b=pjJQWbhiDMVbnU2Phs5zrGS7vvPHRb7kFor4XxeHOwFWsU7Wbp9k1pjpyWhRiPGE2qPamuGVjFYT4M5OnyAWlrOCjeBFZrW8aPsV4/x+wqFdsqK2KV+s2s2RhbwSBf/UWJSei62bdOZmAG3X770QF6tbWH+gCLpxwXjwqIeHBVM=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=Rme7mC03; arc=none smtp.client-ip=170.10.133.124
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="WBmrTkip";
-	dkim=permerror (0-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="D7q2fAQ1"
-Date: Mon, 24 Feb 2025 12:55:57 +0100
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
-	s=2020; t=1740398159;
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="Rme7mC03"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1740403780;
 	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
 	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
 	 in-reply-to:in-reply-to:references:references;
-	bh=mRBbe458khfhsJGd2fn2pPUp/2+4D68Udp7pjkza420=;
-	b=WBmrTkipJr52Qaizo0JjPFI3oKNp15+8uaZJ0xMZ1Iv9MdZ/rfjcp4xwMtiiBk4PlK+Kjr
-	MGRmJUmLabZXkiRHcMIaTEdngeAK4BJ1XbDIuo2hrcXISLy2tEruuaAM3NBLc8+1vyZAhI
-	bLi0s7JybMovfuPZgguOJ7PL7NX+0CFAQ88vCevh/7tj70zdKUsX2pyC7/g0gSkQDl66zP
-	G2XETCjrB8HoG84GgF6PqB1EIXacEgvSZcbnZlKWf2GgwddeUcHOqmWJefeiA4npsXrA26
-	ChuCaFKbuQkauhsy7TaWE74ISV3wWWa40XwLr/MF7sa5Osk3+QCi9eJkiqNkfQ==
-DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
-	s=2020e; t=1740398159;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 in-reply-to:in-reply-to:references:references;
-	bh=mRBbe458khfhsJGd2fn2pPUp/2+4D68Udp7pjkza420=;
-	b=D7q2fAQ1/cdEWtjkmfXIrWgT2tUon/g8k2lzE+kLAQY23vFzFCo/buuARHaSsQDWKgcOzG
-	8mN/ChjVKGYpY2Dg==
-From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-To: "Bezdeka, Florian" <florian.bezdeka@siemens.com>
-Cc: "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>,
-	"Ziegler, Andreas" <ziegler.andreas@siemens.com>,
-	"Kiszka, Jan" <jan.kiszka@siemens.com>,
-	"MOESSBAUER, Felix" <felix.moessbauer@siemens.com>
-Subject: Re: 6.1-rt: NOHZ tick-stop error: local softirq work is pending
-Message-ID: <20250224115557.AIFtijeu@linutronix.de>
-References: <73c50e2fb53ba8cc2f1538abccc42e98fa63159b.camel@siemens.com>
+	bh=9xqhh1X8+oxDwhTT/zyF9J7eY23U1qqffowUkxLKRu0=;
+	b=Rme7mC03fwGue2liO0VoXPdVH3UT4lB7ybdddLnzVu3Fo5IGM06/1k8ehDE+YsOcNzwTJI
+	cH56iwp8SQ58v3CsEZ+qFymw1GJqo9RAYnX+toSzl2fLqySbk2EzErY6syphh2Eej+dZUI
+	q/VM10hC0LmSM3xyubpVjehnt8eBo1A=
+Received: from mx-prod-mc-03.mail-002.prod.us-west-2.aws.redhat.com
+ (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
+ relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-186-zajP-Y25PeeaW0gZRgMbhA-1; Mon,
+ 24 Feb 2025 08:29:37 -0500
+X-MC-Unique: zajP-Y25PeeaW0gZRgMbhA-1
+X-Mimecast-MFC-AGG-ID: zajP-Y25PeeaW0gZRgMbhA_1740403774
+Received: from mx-prod-int-06.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-06.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.93])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
+	(No client certificate requested)
+	by mx-prod-mc-03.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 7BD6818D95F3;
+	Mon, 24 Feb 2025 13:29:33 +0000 (UTC)
+Received: from localhost (unknown [10.22.80.185])
+	by mx-prod-int-06.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTP id 59D971800368;
+	Mon, 24 Feb 2025 13:29:32 +0000 (UTC)
+Date: Mon, 24 Feb 2025 10:29:30 -0300
+From: "Luis Claudio R. Goncalves" <lgoncalv@redhat.com>
+To: Jan Kiszka <jan.kiszka@siemens.com>
+Cc: LKML <linux-kernel@vger.kernel.org>,
+	linux-rt-users <linux-rt-users@vger.kernel.org>,
+	stable-rt <stable-rt@vger.kernel.org>,
+	Steven Rostedt <rostedt@goodmis.org>,
+	Thomas Gleixner <tglx@linutronix.de>,
+	Carsten Emde <C.Emde@osadl.org>,
+	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+	Daniel Wagner <daniel.wagner@suse.com>,
+	Tom Zanussi <tom.zanussi@linux.intel.com>,
+	Clark Williams <williams@redhat.com>,
+	Mark Gross <markgross@kernel.org>, Pavel Machek <pavel@denx.de>,
+	Jeff Brady <jeffreyjbrady@gmail.com>
+Subject: Re: [ANNOUNCE] 5.10.234-rt126
+Message-ID: <Z7x0OuwMk0rVIy_E@uudg.org>
+References: <Z7ZWPGBt4Pv9o54T@uudg.org>
+ <26f102f6-4e35-4267-b6ec-9ebd0c7572f7@siemens.com>
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
 List-Subscribe: <mailto:linux-rt-users+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=utf-8
+Content-Type: text/plain; charset=us-ascii
 Content-Disposition: inline
-In-Reply-To: <73c50e2fb53ba8cc2f1538abccc42e98fa63159b.camel@siemens.com>
+In-Reply-To: <26f102f6-4e35-4267-b6ec-9ebd0c7572f7@siemens.com>
+X-Scanned-By: MIMEDefang 3.4.1 on 10.30.177.93
 
-On 2025-02-21 09:32:41 [+0000], Bezdeka, Florian wrote:
-> Hi all,
-Hi,
-
-> when stressing a 6.1-rt based system with network load we can
-> immediately see the following in the system log:
+On Fri, Feb 21, 2025 at 10:50:04AM +0100, Jan Kiszka wrote:
+> On 19.02.25 23:07, Luis Claudio R. Goncalves wrote:
+> > Hello RT-list!
+> > 
+> > I'm pleased to announce the 5.10.234-rt126 stable release.
+> > 
+> > This release is just an update to the new stable 5.10.234 version and
+> > no RT-specific changes have been made.
+> > 
 > 
-> [  165.260690] NOHZ tick-stop error: local softirq work is pending, handler #80!!!
-> [  165.264689] NOHZ tick-stop error: local softirq work is pending, handler #80!!!
-> [  165.268687] NOHZ tick-stop error: local softirq work is pending, handler #80!!!
-
-which version is this? I think is is an imported issue. Is v6.1.119-rt45
-also affected?
-
-> It seems that
+> Was [1] coming too late for this release cycle?
 > 
-> 96c1fa04f089 ("tick/rcu: Fix false positive "softirq work is pending" messages")
+> We may have run into this bug independently a second time here, I just
+> don't know the exact kernel version yet. However, we do know that 5.10
+> needs the fix as well.
+
+Yes, I had v5.10.234-rt126-rc1 in testing since the day v5.10.234 was
+released. But I will push v5.10.234-rt127-rc1 with the patches you
+submitted and another fix I have in my queue.
+
+Thank you!
+ 
+> Jan
 > 
-> tried to fix this issue, but for some reason it does not work.
+> > You can get this release via the git tree at:
+> > 
+> >   git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
+> > 
+> >   branch: v5.10-rt
+> >   Head SHA1: 5c5f37fc0ab0914da38776700e77a46ca3e30bf6
+> > 
+> > Or to build 5.10.234-rt126 directly, the following patches should be applied:
+> > 
+> >   https://www.kernel.org/pub/linux/kernel/v5.x/linux-5.10.tar.xz
+> > 
+> >   https://www.kernel.org/pub/linux/kernel/v5.x/patch-5.10.234.xz
+> > 
+> >   https://www.kernel.org/pub/linux/kernel/projects/rt/5.10/older/patch-5.10.234-rt126.patch.xz
+> > 
+> > Signing key fingerprint:
+> > 
+> >   9354 0649 9972 8D31 D464  D140 F394 A423 F8E6 7C26
+> > 
+> > All keys used for the above files and repositories can be found on the
+> > following git repository:
+> > 
+> >    git://git.kernel.org/pub/scm/docs/kernel/pgpkeys.git
+> > 
+> > Enjoy!
+> > Luis
+> > 
 > 
-> Is that something that is really allowed to happen on RT (which means
-> that one of the conditions for the warning is still wrong) or a real
-> problem? We did not notice any negative impact on the system so far.
+> [1]
+> https://lore.kernel.org/stable-rt/CAMLffL-PTp+Y-rXsTFaC5cUJyMMiXk-Gjx59WiQvcTe46rXFrw@mail.gmail.com/T/#m67dce3408cac40318ae3dbe1c713b13621ac66c9
 > 
-> Input welcome...
+> -- 
+> Siemens AG, Foundational Technologies
+> Linux Expert Center
+> 
+---end quoted text---
 
-The thing is that this may happen on PREEMPT_RT. Usually because
-softirqs can't be run as the CPU is blocked on locks and the lock-owner
-is either preempted on another CPU or blocked on something else.
-The thing is that a NO_HZ CPU should not go idle if there are softirqs
-pending as in "there is work to do, no nap for you". But as I explained
-earlier, on PREEMPT_RT it might happen that the work can't be handled
-and if no task can be run, the CPU goes to sleep.
-
-That means if you replace with PERIODIC, the warning goes away. If you
-start a CPU-hog (on per-CPU) the warning goes away.
-
-> Best regards,
-> Florian
-
-Sebastian
