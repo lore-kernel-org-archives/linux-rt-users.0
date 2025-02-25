@@ -1,47 +1,47 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 66EBD1624CD
-	for <linux-rt-users@vger.kernel.org>; Tue, 25 Feb 2025 22:09:14 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 6BDA220E70C
+	for <linux-rt-users@vger.kernel.org>; Tue, 25 Feb 2025 22:09:17 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1740521356; cv=none; b=BudG8t8/z7NIP6EYKeaHsXIP59wpzzwPpzhwWhpEPmbwhnNi1t55LlpDgibQsPPa+FA9BLfQVNMB9wfi6t4mASp+4oGFEDOEcsA2USj0n6KkQJG76aTi8AAhpoAXdIf4vh0Z+/x/sv8xXH/j/MD71KtD/M/UiU4hk806jwQgWsM=
+	t=1740521359; cv=none; b=nxcumQFJJJETBMdnPTcBSCZYhTudzIyhLr0P4WoVfqrYpwIPbyAJDiu0rJmqw8h2Tru7V0axs7JKfU+8OfG77i3RBa6XjmuiRqvfCgSvYHmELTm8txfuhAPnq/GKgiqamWVydl8G0U5+HdcNglz8mKvGcFdokmwmcrbJlK28FRY=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1740521356; c=relaxed/simple;
-	bh=NSyF25r4Yw/4zgjmj8LJuaRXLD0Shel6jD9zX337Nrw=;
-	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=NJ20W4YzGWb/MvHd1PpvKD8zxKWGAh6A5sQBkclTivhElvhmnNNlAly7Yny67dfGhaW0gDjRzZCU44/nNYog1YZY+RESJh/y4RSQ2TMWFfPAZGUsBonnswqOW0chKXkjAKX/9kfJ+pICn02HwEipmh+1Jx+8oLUbNPegoDm88wg=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=ar/Vkrld; arc=none smtp.client-ip=170.10.129.124
+	s=arc-20240116; t=1740521359; c=relaxed/simple;
+	bh=EmocSqU7j8iZB07ryl0Vgrh0uQFTG/xczsRCQRiURbI=;
+	h=From:To:Subject:Date:Message-ID:In-Reply-To:References:
+	 MIME-Version; b=O9f4TEio316kdCvKyIaNfgb6Ju1n0Y2orQL7ZIhZjxFhaMhs/8mPgsmPfu1DdZSmVl3rhq1oTjg1MAMsokQgPzClbQk2TYtxHayJBquQIXsa5wYslLx5XFg+Eu1LYHfC+s6tCuh2K+evRGOC1XqPFSxd0OxIxBloQstvjz5W094=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=DqgQpshU; arc=none smtp.client-ip=170.10.133.124
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="ar/Vkrld"
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="DqgQpshU"
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1740521353;
+	s=mimecast20190719; t=1740521356;
 	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:
+	 to:to:cc:mime-version:mime-version:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references;
-	bh=FleZOsnnpg1qLfcgeNREkR8QiVzxGyVZpLK0axPkv9M=;
-	b=ar/VkrldzvGrp3FaaAXcbrbwSLOittEgxNXdvMRut/Ab5xAqL+ufyNtLsXuaXguODQEPqL
-	WDwiM1u3i1CXxMqNX/3a+xL9L/evPdLju+hW3WWEqbajM8zi3rPS09xATcYZkZZoKZAVeU
-	4ajqeCP6tRzQCnVyJ+gSwGO0V3I6UNw=
-Received: from mx-prod-mc-06.mail-002.prod.us-west-2.aws.redhat.com
+	bh=Ft5DNbZex974TNt1cxwk2Xo9vRwR1ucWYDv+62gn3DI=;
+	b=DqgQpshU/UYpHwyAnAvdmEMNgWnkvxN87U108jfAEb0qIcacjKOP1e2auL5V2x4m30GWli
+	PXC7f2aRlecG/CT6xM/GLtiED4KI7NTtNN2bNXcQdeKwk0tfD34shVdOwavjgIJapaxN5m
+	rkpwwhceTTbzLS6MJTtTTQcf5+h0/GQ=
+Received: from mx-prod-mc-08.mail-002.prod.us-west-2.aws.redhat.com
  (ec2-35-165-154-97.us-west-2.compute.amazonaws.com [35.165.154.97]) by
  relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-155-dOHH-D1GMJCeK91WTX51nQ-1; Tue,
- 25 Feb 2025 17:09:09 -0500
-X-MC-Unique: dOHH-D1GMJCeK91WTX51nQ-1
-X-Mimecast-MFC-AGG-ID: dOHH-D1GMJCeK91WTX51nQ_1740521347
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-668-UWyx9aV6OySeJob1_MF-_w-1; Tue,
+ 25 Feb 2025 17:09:12 -0500
+X-MC-Unique: UWyx9aV6OySeJob1_MF-_w-1
+X-Mimecast-MFC-AGG-ID: UWyx9aV6OySeJob1_MF-_w_1740521350
 Received: from mx-prod-int-08.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-08.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.111])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
 	(No client certificate requested)
-	by mx-prod-mc-06.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id D44041800878;
-	Tue, 25 Feb 2025 22:09:06 +0000 (UTC)
+	by mx-prod-mc-08.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 478D8180036F;
+	Tue, 25 Feb 2025 22:09:10 +0000 (UTC)
 Received: from localhost (unknown [10.22.80.185])
-	by mx-prod-int-08.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTP id 72C041800949;
-	Tue, 25 Feb 2025 22:09:05 +0000 (UTC)
+	by mx-prod-int-08.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTP id 91008180035E;
+	Tue, 25 Feb 2025 22:09:08 +0000 (UTC)
 From: "Luis Claudio R. Goncalves" <lgoncalv@redhat.com>
 To: linux-rt-users <linux-rt-users@vger.kernel.org>,
 	stable-rt <stable-rt@vger.kernel.org>,
@@ -60,11 +60,9 @@ To: linux-rt-users <linux-rt-users@vger.kernel.org>,
 	Xiaokai Ran <ran.xiaokai@zte.com.cn>,
 	Jan Kiszka <jan.kiszka@siemens.com>,
 	Luis Goncalves <lgoncalv@redhat.com>
-Cc: Eric Dumazet <edumazet@google.com>,
-	Pablo Neira Ayuso <pablo@netfilter.org>
-Subject: [PATCH RT 2/4] netfilter: nft_counter: Use u64_stats_t for statistic.
-Date: Tue, 25 Feb 2025 19:08:55 -0300
-Message-ID: <20250225220857.216591-3-lgoncalv@redhat.com>
+Subject: [PATCH RT 3/4] rt: fix build issue in at_hdmac
+Date: Tue, 25 Feb 2025 19:08:56 -0300
+Message-ID: <20250225220857.216591-4-lgoncalv@redhat.com>
 In-Reply-To: <20250225220857.216591-1-lgoncalv@redhat.com>
 References: <20250225220857.216591-1-lgoncalv@redhat.com>
 Precedence: bulk
@@ -76,228 +74,73 @@ MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 X-Scanned-By: MIMEDefang 3.4.1 on 10.30.177.111
 
-From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-
 v5.10.234-rt127-rc1 stable review patch.
 If anyone has any objections, please let me know.
 
 -----------
 
 
-[ Upstream commit 4a1d3acd6ea86075e77fcc1188c3fc372833ba73 ]
+The problem described here is specific to v5.10-rt.
 
-The nft_counter uses two s64 counters for statistics. Those two are
-protected by a seqcount to ensure that the 64bit variable is always
-properly seen during updates even on 32bit architectures where the store
-is performed by two writes. A side effect is that the two counter (bytes
-and packet) are written and read together in the same window.
+The functions atc_advance_work() and atc_issue_pending(), defined at
+drivers/dma/at_hdmac.c, both have a similar statement:
 
-This can be replaced with u64_stats_t. write_seqcount_begin()/ end() is
-replaced with u64_stats_update_begin()/ end() and behaves the same way
-as with seqcount_t on 32bit architectures. Additionally there is a
-preempt_disable on PREEMPT_RT to ensure that a reader does not preempt a
-writer.
-On 64bit architectures the macros are removed and the reads happen
-without any retries. This also means that the reader can observe one
-counter (bytes) from before the update and the other counter (packets)
-but that is okay since there is no requirement to have both counter from
-the same update window.
+    return spin_unlock_irqrestore(&atchan->lock, flags);
 
-Convert the statistic to u64_stats_t. There is one optimisation:
-nft_counter_do_init() and nft_counter_clone() allocate a new per-CPU
-counter and assign a value to it. During this assignment preemption is
-disabled which is not needed because the counter is not yet exposed to
-the system so there can not be another writer or reader. Therefore
-disabling preemption is omitted and raw_cpu_ptr() is used to obtain a
-pointer to a counter for the assignment.
+That results in a macro expansion error during build.
 
-Cc: Eric Dumazet <edumazet@google.com>
-Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Signed-off-by: Pablo Neira Ayuso <pablo@netfilter.org>
-Signed-off-by: Jan Kiszka <jan.kiszka@siemens.com>
+This problem is unique to v5.10-rt because of the way spin_unlock_irqrestore()
+is defined as a macro at include/linux/spinlock_rt.h.
+
+Newer versions of the PREEMPT_RT patch (v5.15-rt and newer) have
+spin_unlock_irqrestore() defined as a function.
+
+Kernels such as v4.19-rt and older are also not affected because they don't
+have the two commits below, which implement the statements that trigger the
+compiler error:
+
+  1582cc3b4805 dmaengine: at_hdmac: Fix concurrency problems by removing atc_complete_all()
+  7078e935b410 dmaengine: at_hdmac: Fix premature completion of desc in issue_pending
+
+It  makes more sense, at the current point in v5.10-rt life cycle, decoupling
+the return and spin_unlock_irqrestore() statements instead of backporting
+the new definition of spin_unlock_irqrestore() and related bits.
+
+Signed-off-by: Luis Claudio R. Goncalves <lgoncalv@redhat.com>
 ---
- net/netfilter/nft_counter.c | 78 +++++++++++++++++++------------------
- 1 file changed, 40 insertions(+), 38 deletions(-)
+ drivers/dma/at_hdmac.c | 12 ++++++++----
+ 1 file changed, 8 insertions(+), 4 deletions(-)
 
-diff --git a/net/netfilter/nft_counter.c b/net/netfilter/nft_counter.c
-index ea102b9a168b..79508b5f71d1 100644
---- a/net/netfilter/nft_counter.c
-+++ b/net/netfilter/nft_counter.c
-@@ -8,13 +8,18 @@
- #include <linux/kernel.h>
- #include <linux/init.h>
- #include <linux/module.h>
--#include <linux/seqlock.h>
-+#include <linux/u64_stats_sync.h>
- #include <linux/netlink.h>
- #include <linux/netfilter.h>
- #include <linux/netfilter/nf_tables.h>
- #include <net/netfilter/nf_tables.h>
+diff --git a/drivers/dma/at_hdmac.c b/drivers/dma/at_hdmac.c
+index 6a4f9697b574..bdbd85adeea9 100644
+--- a/drivers/dma/at_hdmac.c
++++ b/drivers/dma/at_hdmac.c
+@@ -483,8 +483,10 @@ static void atc_advance_work(struct at_dma_chan *atchan)
+ 	dev_vdbg(chan2dev(&atchan->chan_common), "advance_work\n");
  
- struct nft_counter {
-+	u64_stats_t	bytes;
-+	u64_stats_t	packets;
-+};
-+
-+struct nft_counter_tot {
- 	s64		bytes;
- 	s64		packets;
- };
-@@ -23,25 +28,24 @@ struct nft_counter_percpu_priv {
- 	struct nft_counter __percpu *counter;
- };
+ 	spin_lock_irqsave(&atchan->lock, flags);
+-	if (atc_chan_is_enabled(atchan) || list_empty(&atchan->active_list))
+-		return spin_unlock_irqrestore(&atchan->lock, flags);
++	if (atc_chan_is_enabled(atchan) || list_empty(&atchan->active_list)) {
++		spin_unlock_irqrestore(&atchan->lock, flags);
++		return;
++	}
  
--static DEFINE_PER_CPU(seqcount_t, nft_counter_seq);
-+static DEFINE_PER_CPU(struct u64_stats_sync, nft_counter_sync);
+ 	desc = atc_first_active(atchan);
+ 	/* Remove the transfer node from the active list. */
+@@ -1477,8 +1479,10 @@ static void atc_issue_pending(struct dma_chan *chan)
+ 	dev_vdbg(chan2dev(chan), "issue_pending\n");
  
- static inline void nft_counter_do_eval(struct nft_counter_percpu_priv *priv,
- 				       struct nft_regs *regs,
- 				       const struct nft_pktinfo *pkt)
- {
-+	struct u64_stats_sync *nft_sync;
- 	struct nft_counter *this_cpu;
--	seqcount_t *myseq;
+ 	spin_lock_irqsave(&atchan->lock, flags);
+-	if (atc_chan_is_enabled(atchan) || list_empty(&atchan->queue))
+-		return spin_unlock_irqrestore(&atchan->lock, flags);
++	if (atc_chan_is_enabled(atchan) || list_empty(&atchan->queue)) {
++		spin_unlock_irqrestore(&atchan->lock, flags);
++		return;
++	}
  
- 	local_bh_disable();
- 	this_cpu = this_cpu_ptr(priv->counter);
--	myseq = this_cpu_ptr(&nft_counter_seq);
--
--	write_seqcount_begin(myseq);
-+	nft_sync = this_cpu_ptr(&nft_counter_sync);
- 
--	this_cpu->bytes += pkt->skb->len;
--	this_cpu->packets++;
-+	u64_stats_update_begin(nft_sync);
-+	u64_stats_add(&this_cpu->bytes, pkt->skb->len);
-+	u64_stats_inc(&this_cpu->packets);
-+	u64_stats_update_end(nft_sync);
- 
--	write_seqcount_end(myseq);
- 	local_bh_enable();
- }
- 
-@@ -64,17 +68,16 @@ static int nft_counter_do_init(const struct nlattr * const tb[],
- 	if (cpu_stats == NULL)
- 		return -ENOMEM;
- 
--	preempt_disable();
--	this_cpu = this_cpu_ptr(cpu_stats);
-+	this_cpu = raw_cpu_ptr(cpu_stats);
- 	if (tb[NFTA_COUNTER_PACKETS]) {
--	        this_cpu->packets =
--			be64_to_cpu(nla_get_be64(tb[NFTA_COUNTER_PACKETS]));
-+		u64_stats_set(&this_cpu->packets,
-+			      be64_to_cpu(nla_get_be64(tb[NFTA_COUNTER_PACKETS])));
- 	}
- 	if (tb[NFTA_COUNTER_BYTES]) {
--		this_cpu->bytes =
--			be64_to_cpu(nla_get_be64(tb[NFTA_COUNTER_BYTES]));
-+		u64_stats_set(&this_cpu->bytes,
-+			      be64_to_cpu(nla_get_be64(tb[NFTA_COUNTER_BYTES])));
- 	}
--	preempt_enable();
-+
- 	priv->counter = cpu_stats;
- 	return 0;
- }
-@@ -102,40 +105,41 @@ static void nft_counter_obj_destroy(const struct nft_ctx *ctx,
- }
- 
- static void nft_counter_reset(struct nft_counter_percpu_priv *priv,
--			      struct nft_counter *total)
-+			      struct nft_counter_tot *total)
- {
-+	struct u64_stats_sync *nft_sync;
- 	struct nft_counter *this_cpu;
--	seqcount_t *myseq;
- 
- 	local_bh_disable();
- 	this_cpu = this_cpu_ptr(priv->counter);
--	myseq = this_cpu_ptr(&nft_counter_seq);
-+	nft_sync = this_cpu_ptr(&nft_counter_sync);
-+
-+	u64_stats_update_begin(nft_sync);
-+	u64_stats_add(&this_cpu->packets, -total->packets);
-+	u64_stats_add(&this_cpu->bytes, -total->bytes);
-+	u64_stats_update_end(nft_sync);
- 
--	write_seqcount_begin(myseq);
--	this_cpu->packets -= total->packets;
--	this_cpu->bytes -= total->bytes;
--	write_seqcount_end(myseq);
- 	local_bh_enable();
- }
- 
- static void nft_counter_fetch(struct nft_counter_percpu_priv *priv,
--			      struct nft_counter *total)
-+			      struct nft_counter_tot *total)
- {
- 	struct nft_counter *this_cpu;
--	const seqcount_t *myseq;
- 	u64 bytes, packets;
- 	unsigned int seq;
- 	int cpu;
- 
- 	memset(total, 0, sizeof(*total));
- 	for_each_possible_cpu(cpu) {
--		myseq = per_cpu_ptr(&nft_counter_seq, cpu);
-+		struct u64_stats_sync *nft_sync = per_cpu_ptr(&nft_counter_sync, cpu);
-+
- 		this_cpu = per_cpu_ptr(priv->counter, cpu);
- 		do {
--			seq	= read_seqcount_begin(myseq);
--			bytes	= this_cpu->bytes;
--			packets	= this_cpu->packets;
--		} while (read_seqcount_retry(myseq, seq));
-+			seq	= u64_stats_fetch_begin(nft_sync);
-+			bytes	= u64_stats_read(&this_cpu->bytes);
-+			packets	= u64_stats_read(&this_cpu->packets);
-+		} while (u64_stats_fetch_retry(nft_sync, seq));
- 
- 		total->bytes	+= bytes;
- 		total->packets	+= packets;
-@@ -146,7 +150,7 @@ static int nft_counter_do_dump(struct sk_buff *skb,
- 			       struct nft_counter_percpu_priv *priv,
- 			       bool reset)
- {
--	struct nft_counter total;
-+	struct nft_counter_tot total;
- 
- 	nft_counter_fetch(priv, &total);
- 
-@@ -235,7 +239,7 @@ static int nft_counter_clone(struct nft_expr *dst, const struct nft_expr *src, g
- 	struct nft_counter_percpu_priv *priv_clone = nft_expr_priv(dst);
- 	struct nft_counter __percpu *cpu_stats;
- 	struct nft_counter *this_cpu;
--	struct nft_counter total;
-+	struct nft_counter_tot total;
- 
- 	nft_counter_fetch(priv, &total);
- 
-@@ -243,11 +247,9 @@ static int nft_counter_clone(struct nft_expr *dst, const struct nft_expr *src, g
- 	if (cpu_stats == NULL)
- 		return -ENOMEM;
- 
--	preempt_disable();
--	this_cpu = this_cpu_ptr(cpu_stats);
--	this_cpu->packets = total.packets;
--	this_cpu->bytes = total.bytes;
--	preempt_enable();
-+	this_cpu = raw_cpu_ptr(cpu_stats);
-+	u64_stats_set(&this_cpu->packets, total.packets);
-+	u64_stats_set(&this_cpu->bytes, total.bytes);
- 
- 	priv_clone->counter = cpu_stats;
- 	return 0;
-@@ -279,7 +281,7 @@ static int __init nft_counter_module_init(void)
- 	int cpu, err;
- 
- 	for_each_possible_cpu(cpu)
--		seqcount_init(per_cpu_ptr(&nft_counter_seq, cpu));
-+		u64_stats_init(per_cpu_ptr(&nft_counter_sync, cpu));
- 
- 	err = nft_register_obj(&nft_counter_obj_type);
- 	if (err < 0)
+ 	desc = atc_first_queued(atchan);
+ 	list_move_tail(&desc->desc_node, &atchan->active_list);
 -- 
 2.48.1
 
