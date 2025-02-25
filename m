@@ -1,124 +1,122 @@
-Received: from mta-64-227.siemens.flowmailer.net (mta-64-227.siemens.flowmailer.net [185.136.64.227])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id C316125D546
-	for <linux-rt-users@vger.kernel.org>; Tue, 25 Feb 2025 15:16:33 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=185.136.64.227
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 829131624CD
+	for <linux-rt-users@vger.kernel.org>; Tue, 25 Feb 2025 22:09:07 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1740496596; cv=none; b=n6dBmuaIGiAb+YvFPsI5iOrbZ57/NPNLlOC2zu5wGzchf+Jls8u3IBCIDRVU3HNPFeF8mKbYykVIECpM5VkMvSIPexhzQIts6/LQOlhh8+4ekKQi4OzJTSmQwuskpHWE4qONQgybSxfRnM7g6nFB3KmsoIsoJAwD7SR/9oZITYo=
+	t=1740521349; cv=none; b=dv0Ea185tYodbgF/iy9lqiBdt+B7yiAFhxj3VvQYZ/O3/WY3BIuR5SzBlDbqcOgnkSBqhUKJXPUvUKDTPZGNAiVp6rzl1UTZ4Ag+K53iByj89QAMwhg9iBQs18cQ2oIBpqpcqkeu7oD79RaLzGUHETOt4RMaBTleqw5m9mGIWII=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1740496596; c=relaxed/simple;
-	bh=O+CpRFaNxIChKEMjk0jv94RAb5t+NylyghGwGxcz3GY=;
-	h=Message-ID:Subject:From:To:Cc:Date:In-Reply-To:References:
-	 Content-Type:MIME-Version; b=YX+yZkvagmhVj9DSznA8nY8u6vu9WLiMoy37jhxg6lbq2TkqBvtwHExVmYho6kQJYeeTooIb94vxF7lCt7rwHFunipODmUw+Dmg8yEqiN/BWPyuI0ogv0E/RPVgsQ2odH/HUyCiBF8XgBRPwC4GMSSSeX37BId00Wu75L3FYJnQ=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=siemens.com; spf=pass smtp.mailfrom=rts-flowmailer.siemens.com; dkim=pass (2048-bit key) header.d=siemens.com header.i=florian.bezdeka@siemens.com header.b=K0zKkz+r; arc=none smtp.client-ip=185.136.64.227
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=siemens.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=rts-flowmailer.siemens.com
+	s=arc-20240116; t=1740521349; c=relaxed/simple;
+	bh=2uyo8JHlC6MNj2dVaYk3E9nZEandYEAynhbhCjGRHuQ=;
+	h=From:To:Subject:Date:Message-ID:MIME-Version; b=TkC6NeWtE8lWOWyEB2xmMFvMF+dnIR33BwkqSrkSqF/UBOyKQU9c56YttyJWqlzbc2sucjan7gAySMLECbby61Xlbsg37jUrc8VI9RsIn0jjCjFaVAFgYZHDPgsZ2Vbmtu/R54TRmtFYfnmH4yEIUQrBDH4aThwzsPw2edxDQCA=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=ftC/yOAF; arc=none smtp.client-ip=170.10.129.124
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=siemens.com header.i=florian.bezdeka@siemens.com header.b="K0zKkz+r"
-Received: by mta-64-227.siemens.flowmailer.net with ESMTPSA id 20250225151625711752c3d430b4ee9f
-        for <linux-rt-users@vger.kernel.org>;
-        Tue, 25 Feb 2025 16:16:25 +0100
-DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; s=fm1;
- d=siemens.com; i=florian.bezdeka@siemens.com;
- h=Date:From:Subject:To:Message-ID:MIME-Version:Content-Type:Content-Transfer-Encoding:Cc:References:In-Reply-To;
- bh=LcQ5yc1vLYen8jxY2aTpJ+7iKqHSfGpVG9MCK/21QIg=;
- b=K0zKkz+rj4NmQLvJdCicdf/2ebYmm+fQZ78BzQmQH6oLpEC80SaHopX4dMfpHtsgzboWdj
- KSgqyE+2H4J8/2kNEqr/PMig9DeNhypDWa/eDDeGYbUO/PAlw6PfzFbpnWwhpgYvShhPqgid
- mC5xNvSySIToDADz5r6oRAvduwRsFs+VFGiQzQ5TlL4UdC+AdmvUlaXHglcuR9TbYWg0IInN
- WQIg55YecqjkiR1xbpihKlV9TFKAzORIXLuKab8pkuJNzwA6B316s2fGPmmvZq3T443x2lOj
- pFAoGlvg7uZL8vs0kWH+bngglEEc0PjF/8ELE9Qi8nGpIcSkAOhKXKuQ==;
-Message-ID: <d31ddc467399b53c3f0687db63cb64a3a7c77ca5.camel@siemens.com>
-Subject: Re: 6.1-rt: NOHZ tick-stop error: local softirq work is pending
-From: Florian Bezdeka <florian.bezdeka@siemens.com>
-To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Cc: "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>, 
- "Ziegler, Andreas" <ziegler.andreas@siemens.com>, "Kiszka, Jan"
- <jan.kiszka@siemens.com>, "MOESSBAUER, Felix"	
- <felix.moessbauer@siemens.com>
-Date: Tue, 25 Feb 2025 16:16:25 +0100
-In-Reply-To: <20250224115557.AIFtijeu@linutronix.de>
-References: <73c50e2fb53ba8cc2f1538abccc42e98fa63159b.camel@siemens.com>
-	 <20250224115557.AIFtijeu@linutronix.de>
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="ftC/yOAF"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1740521346;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:mime-version:mime-version:
+	 content-transfer-encoding:content-transfer-encoding;
+	bh=VMUwmd5c4elVuE5B7h/fsPug+slvKZ0QGpHijJBbwjM=;
+	b=ftC/yOAFc505JECamQ4lBBB+eMjzUqE1+qKNnLQZRZ9JBHk+OzohpWMxsIcnyauIeQiik9
+	t3eVILHHUVge9zShz9ViNYgrzseL9r4zqK/IIjEQTk1EU+f7DLrHooIAtARVrcfonvsweR
+	7psSkeE7+YO/6BwY+YLmZhAbdssC8BM=
+Received: from mx-prod-mc-08.mail-002.prod.us-west-2.aws.redhat.com
+ (ec2-35-165-154-97.us-west-2.compute.amazonaws.com [35.165.154.97]) by
+ relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-687-QlFK4oDJOdWGqhGJYfJAug-1; Tue,
+ 25 Feb 2025 17:09:04 -0500
+X-MC-Unique: QlFK4oDJOdWGqhGJYfJAug-1
+X-Mimecast-MFC-AGG-ID: QlFK4oDJOdWGqhGJYfJAug_1740521342
+Received: from mx-prod-int-02.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-02.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.15])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
+	(No client certificate requested)
+	by mx-prod-mc-08.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 1D5D91800873;
+	Tue, 25 Feb 2025 22:09:01 +0000 (UTC)
+Received: from localhost (unknown [10.22.80.185])
+	by mx-prod-int-02.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTP id A6FAC19560AE;
+	Tue, 25 Feb 2025 22:08:58 +0000 (UTC)
+From: "Luis Claudio R. Goncalves" <lgoncalv@redhat.com>
+To: linux-rt-users <linux-rt-users@vger.kernel.org>,
+	stable-rt <stable-rt@vger.kernel.org>,
+	Steven Rostedt <rostedt@goodmis.org>,
+	Thomas Gleixner <tglx@linutronix.de>,
+	Carsten Emde <C.Emde@osadl.org>,
+	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+	Daniel Wagner <daniel.wagner@suse.com>,
+	Tom Zanussi <tom.zanussi@linux.intel.com>,
+	Clark Williams <williams@redhat.com>,
+	Mark Gross <markgross@kernel.org>,
+	Jeff Brady <jeffreyjbrady@gmail.com>,
+	Wang Yong <wang.yong12@zte.com.cn>,
+	Xuexin Jiang <jiang.xuexin@zte.com.cn>,
+	Yang Yang <yang.yang29@zte.com.cn>,
+	Xiaokai Ran <ran.xiaokai@zte.com.cn>,
+	Jan Kiszka <jan.kiszka@siemens.com>,
+	Luis Goncalves <lgoncalv@redhat.com>
+Subject: [PATCH RT 0/4] Linux v5.10.234-rt127-rc1
+Date: Tue, 25 Feb 2025 19:08:53 -0300
+Message-ID: <20250225220857.216591-1-lgoncalv@redhat.com>
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
 List-Subscribe: <mailto:linux-rt-users+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-X-Flowmailer-Platform: Siemens
-Feedback-ID: 519:519-68982:519-21489:flowmailer
+Content-Transfer-Encoding: 8bit
+X-Scanned-By: MIMEDefang 3.0 on 10.30.177.15
 
-On Mon, 2025-02-24 at 12:55 +0100, Sebastian Andrzej Siewior wrote:
-> On 2025-02-21 09:32:41 [+0000], Bezdeka, Florian wrote:
-> > Hi all,
-> Hi,
->=20
-> > when stressing a 6.1-rt based system with network load we can
-> > immediately see the following in the system log:
-> >=20
-> > [  165.260690] NOHZ tick-stop error: local softirq work is pending, han=
-dler #80!!!
-> > [  165.264689] NOHZ tick-stop error: local softirq work is pending, han=
-dler #80!!!
-> > [  165.268687] NOHZ tick-stop error: local softirq work is pending, han=
-dler #80!!!
->=20
-> which version is this? I think is is an imported issue. Is v6.1.119-rt45
-> also affected?
+Dear RT Folks,
 
-This is a typo, right? You mean it is an important issue, no?
+This is the RT stable review cycle of patch 5.10.234-rt127-rc1.
 
-We can see that on
+Please scream at me if I messed something up. Please test the patches
+too.
 
-- v6.1.90-rt (Debian -rt kernel)
-- v6.1.120-rt (Debian -rt kernel)
-- v6.1.119-rt45 (So yes, this is also affected)
-- v6.1.120-rt47
+The -rc release is also available on kernel.org
 
->=20
-> > It seems that
-> >=20
-> > 96c1fa04f089 ("tick/rcu: Fix false positive "softirq work is pending" m=
-essages")
-> >=20
-> > tried to fix this issue, but for some reason it does not work.
-> >=20
-> > Is that something that is really allowed to happen on RT (which means
-> > that one of the conditions for the warning is still wrong) or a real
-> > problem? We did not notice any negative impact on the system so far.
-> >=20
-> > Input welcome...
->=20
-> The thing is that this may happen on PREEMPT_RT. Usually because
-> softirqs can't be run as the CPU is blocked on locks and the lock-owner
-> is either preempted on another CPU or blocked on something else.
-> The thing is that a NO_HZ CPU should not go idle if there are softirqs
-> pending as in "there is work to do, no nap for you". But as I explained
-> earlier, on PREEMPT_RT it might happen that the work can't be handled
-> and if no task can be run, the CPU goes to sleep.
->=20
-> That means if you replace with PERIODIC, the warning goes away. If you
-> start a CPU-hog (on per-CPU) the warning goes away.
+  https://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
 
-With PERIODIC you mean CONFIG_HZ_PERIODIC, right?
+on the v5.10-rt-next branch.
 
-We have CONFIG_NO_HZ_FULL=3Dy set but do net set the nohz_full=3D cmdline
-parameter, so that we should get CONFIG_NO_HZ_IDLE behavior at the end.
+If all goes well, this patch will be converted to the next main
+release on 2025-03-04.
 
-I realized today that the warning is somehow related to our RT tuning.
-Enabling NAPI threading makes the warning go away, even if NAPI threads
-are tuned the same way as ksoftirqd.
+Signing key fingerprint:
 
-I will have to look into that in more depth.
+  9354 0649 9972 8D31 D464  D140 F394 A423 F8E6 7C26
 
-Thanks for your input Sebastian.
+All keys used for the above files and repositories can be found on the
+following git repository:
 
->=20
-> > Best regards,
-> > Florian
->=20
-> Sebastian
+   git://git.kernel.org/pub/scm/docs/kernel/pgpkeys.git
+
+Enjoy!
+Luis
+
+Changes from v5.10.234-rt126:
+
+
+Ahmed S. Darwish (1):
+  u64_stats: Introduce u64_stats_set()
+
+Luis Claudio R. Goncalves (2):
+  rt: fix build issue in at_hdmac
+  Linux 5.10.234-rt127-rc1
+
+Sebastian Andrzej Siewior (1):
+  netfilter: nft_counter: Use u64_stats_t for statistic.
+
+ drivers/dma/at_hdmac.c         | 12 ++++--
+ include/linux/u64_stats_sync.h | 10 +++++
+ localversion-rt                |  2 +-
+ net/netfilter/nft_counter.c    | 78 +++++++++++++++++-----------------
+ 4 files changed, 59 insertions(+), 43 deletions(-)
+
+-- 
+2.48.1
 
