@@ -1,31 +1,31 @@
 Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id C379423959B;
-	Mon,  3 Mar 2025 22:53:02 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 15FDB23AE9A;
+	Mon,  3 Mar 2025 22:53:03 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1741042382; cv=none; b=d7TeZ1HHbx4Pf2Ivpkae7k6OZeozZ0+fTfkh21D98z5rr70dvwHW3KAP6B46NwUK7xPC/Xl9iEp2BJBugmpLaWML96PR3ne7pY4Gmk5MRXqoFUO9RHVs6jUNK/oeZ2eMJbSoXpBQ1btG/25avgTLqUIazhGQ9+EOlrfp2c10KFE=
+	t=1741042384; cv=none; b=J32G0y/SqEMK6a5WGttwJ93o2B3/rJL5C8mAfdffJvn1c4AIt6gULmHc/Zi3ggfIyg8wwdpitLSHGEeDvLz5DLOQBZ20slFxZKGTF61pfBbdfnrrYfSybORrhK2oQLjMJ/xd6mNpCt8XU1MMH3igm/isrEE/6mRN7gxLK0TiDLY=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1741042382; c=relaxed/simple;
-	bh=sor4RPR8AkE4RMrn6yjMcCsIKCkzTu3ehkf4YiV6WaE=;
+	s=arc-20240116; t=1741042384; c=relaxed/simple;
+	bh=5PDd9P7Q48zvxj9nWm103R4PqBL3obiE2ckN/i5QNBQ=;
 	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=lz3pp6Wgohz9tIuT73GGEm9n2eFKZe0ITUalbXjgSch8aVuZ3oSY40q2ro3QrBM6ghSCVn45ei+xT50UGboBYFMd6V/P115R1MQTxhzLhUSlxxgVP2nVWodNvyxrV5UqyyU1X6w0rVnV9/yad6aZI1Uhhn4KmR+E7lrb3rPCYzs=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=ba+q9rVo; arc=none smtp.client-ip=10.30.226.201
+	 MIME-Version; b=ckW1xWELEkjuaoHIKlRvbejGv98x2r3yWbhuT0/2Cc8hU1G5iEKghrCAazqxPJR0oOkbUdPhMHVcbLucloAEU/cSDQqpEIdHiziTVmyCAJE44zDwVngXtYaymq7ohMJYL5RS+BXyd9xV4dzY5LxE3y8md6O9JoRykPbxMTMdP70=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=UuTsYsz/; arc=none smtp.client-ip=10.30.226.201
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="ba+q9rVo"
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id 2835FC4CEE9;
-	Mon,  3 Mar 2025 22:53:01 +0000 (UTC)
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="UuTsYsz/"
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id 7CD43C4CEEB;
+	Mon,  3 Mar 2025 22:53:02 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-	s=k20201202; t=1741042382;
-	bh=sor4RPR8AkE4RMrn6yjMcCsIKCkzTu3ehkf4YiV6WaE=;
+	s=k20201202; t=1741042383;
+	bh=5PDd9P7Q48zvxj9nWm103R4PqBL3obiE2ckN/i5QNBQ=;
 	h=From:To:Cc:Subject:Date:In-Reply-To:References:From;
-	b=ba+q9rVom0aFHsmkQzWAJrhvdEtu1qoHPAk65iAsnlxx+41v1Rz1y8Y7nK3gEpXID
-	 eqwjAchnl3ALJaoAdNt91XBZc4U55WVfoOaHbkTuE+FtkUa5R8i5NmJbXeRazZ7h2b
-	 VGMtLoz3EVw4Gj1YPGboQoAERXAJWvpL5++p4pIm++yxZ4ESg/LCxNanebj6FNzKkb
-	 k6kGu7nQ2uXyFJQ05VWkS5c/VGP5O8KBFfjj5OeT+r7JWFr5ZNo3VMsY1tnCX4jj7i
-	 qhiXNg645Ua7O8woBVp1saf5e7g3cM4qwtuacW6iF0MbEOnOyuluBeQm6RHpATSeAL
-	 1oeeUSsrFpIcg==
+	b=UuTsYsz/bGnrF+Anbf4aEisFt2efzFY0cZk4PFv7cq9bZ9IfuLVXocAjpcQBl6M92
+	 4YZzVW7kN5GVzbxmhCmteT58yUdb/ChZkzJFR4t+yOtyPJcNUZ4HKlQ2Bbflqp8cgT
+	 szEP5E34V2qRtBpcnzvFVGD8UMQTEPCRoqWYSLjXrzHJEUnRIeEV4B7qwP/gQ5M8kU
+	 BUeb4cKgqzlc5/EZ7xyrFhIPLqzZz9EwJvDOP/RTmRzENK3g8qB8Ca3tq/fACWrPB4
+	 WoXJfntzI4CCsUfTgAr2q8u2SmiYMxo+BVqg+j/fidgKdrrixkayUytVh0wHizpP+K
+	 US3e09Kh3d6Ew==
 From: zanussi@kernel.org
 To: LKML <linux-kernel@vger.kernel.org>,
 	linux-rt-users <linux-rt-users@vger.kernel.org>,
@@ -39,11 +39,11 @@ To: LKML <linux-kernel@vger.kernel.org>,
 	"Luis Claudio R. Goncalves" <lgoncalv@redhat.com>,
 	Joseph Salisbury <joseph.salisbury@oracle.com>,
 	Tom Zanussi <zanussi@kernel.org>
-Cc: Eric Dumazet <edumazet@google.com>,
+Cc: "Ahmed S. Darwish" <a.darwish@linutronix.de>,
 	"David S . Miller" <davem@davemloft.net>
-Subject: [PATCH RT 1/4] u64_stats: provide u64_stats_t type
-Date: Mon,  3 Mar 2025 16:52:55 -0600
-Message-ID: <4159ba68c4b989be05e493a0dd95e10310a30aea.1741042351.git.zanussi@kernel.org>
+Subject: [PATCH RT 2/4] u64_stats: Introduce u64_stats_set()
+Date: Mon,  3 Mar 2025 16:52:56 -0600
+Message-ID: <e5ff954bdcc8d4f56a6a7b538f71175e08bb1f04.1741042351.git.zanussi@kernel.org>
 X-Mailer: git-send-email 2.43.0
 In-Reply-To: <cover.1741042351.git.zanussi@kernel.org>
 References: <cover.1741042351.git.zanussi@kernel.org>
@@ -55,7 +55,7 @@ List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 
-From: Eric Dumazet <edumazet@google.com>
+From: "Ahmed S. Darwish" <a.darwish@linutronix.de>
 
 v5.4.290-rt96-rc1 stable review patch.
 If anyone has any objections, please let me know.
@@ -63,105 +63,51 @@ If anyone has any objections, please let me know.
 -----------
 
 
-[ Upstream commit 316580b69d0a7aeeee5063af47438b626bc47cbd ]
+[ Upstream commit f2efdb17928924c9c935c136dea764a081032006 ]
 
-On 64bit arches, struct u64_stats_sync is empty and provides
-no help against load/store tearing.
+Allow to directly set a u64_stats_t value which is used to provide an init
+function which sets it directly to zero intead of memset() the value.
 
-Using READ_ONCE()/WRITE_ONCE() would be needed.
+Add u64_stats_set() to the u64_stats API.
 
-But the update side would be slightly more expensive.
+[bigeasy: commit message. ]
 
-local64_t was defined so that we could use regular adds
-in a manner which is atomic wrt IRQs.
-
-However the u64_stats infra means we do not have to use
-local64_t on 32bit arches since the syncp provides the needed
-protection.
-
-Signed-off-by: Eric Dumazet <edumazet@google.com>
+Signed-off-by: Ahmed S. Darwish <a.darwish@linutronix.de>
+Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 Signed-off-by: David S. Miller <davem@davemloft.net>
 Signed-off-by: Tom Zanussi <zanussi@kernel.org>
 ---
- include/linux/u64_stats_sync.h | 51 +++++++++++++++++++++++++++++++---
- 1 file changed, 47 insertions(+), 4 deletions(-)
+ include/linux/u64_stats_sync.h | 10 ++++++++++
+ 1 file changed, 10 insertions(+)
 
 diff --git a/include/linux/u64_stats_sync.h b/include/linux/u64_stats_sync.h
-index ca40163933e33..a1f656fc317e6 100644
+index a1f656fc317e6..cae87feb82d6e 100644
 --- a/include/linux/u64_stats_sync.h
 +++ b/include/linux/u64_stats_sync.h
-@@ -40,8 +40,8 @@
-  *   spin_lock_bh(...) or other synchronization to get exclusive access
-  *   ...
-  *   u64_stats_update_begin(&stats->syncp);
-- *   stats->bytes64 += len; // non atomic operation
-- *   stats->packets64++;    // non atomic operation
-+ *   u64_stats_add(&stats->bytes64, len); // non atomic operation
-+ *   u64_stats_inc(&stats->packets64);    // non atomic operation
-  *   u64_stats_update_end(&stats->syncp);
-  *
-  * While a consumer (reader) should use following template to get consistent
-@@ -52,8 +52,8 @@
-  *
-  * do {
-  *         start = u64_stats_fetch_begin(&stats->syncp);
-- *         tbytes = stats->bytes64; // non atomic operation
-- *         tpackets = stats->packets64; // non atomic operation
-+ *         tbytes = u64_stats_read(&stats->bytes64); // non atomic operation
-+ *         tpackets = u64_stats_read(&stats->packets64); // non atomic operation
-  * } while (u64_stats_fetch_retry(&stats->syncp, start));
-  *
-  *
-@@ -68,6 +68,49 @@ struct u64_stats_sync {
- #endif
- };
+@@ -80,6 +80,11 @@ static inline u64 u64_stats_read(const u64_stats_t *p)
+ 	return local64_read(&p->v);
+ }
  
-+#if BITS_PER_LONG == 64
-+#include <asm/local64.h>
-+
-+typedef struct {
-+	local64_t	v;
-+} u64_stats_t ;
-+
-+static inline u64 u64_stats_read(const u64_stats_t *p)
++static inline void u64_stats_set(u64_stats_t *p, u64 val)
 +{
-+	return local64_read(&p->v);
++	local64_set(&p->v, val);
 +}
 +
-+static inline void u64_stats_add(u64_stats_t *p, unsigned long val)
-+{
-+	local64_add(val, &p->v);
-+}
-+
-+static inline void u64_stats_inc(u64_stats_t *p)
-+{
-+	local64_inc(&p->v);
-+}
-+
-+#else
-+
-+typedef struct {
-+	u64		v;
-+} u64_stats_t;
-+
-+static inline u64 u64_stats_read(const u64_stats_t *p)
-+{
-+	return p->v;
-+}
-+
-+static inline void u64_stats_add(u64_stats_t *p, unsigned long val)
-+{
-+	p->v += val;
-+}
-+
-+static inline void u64_stats_inc(u64_stats_t *p)
-+{
-+	p->v++;
-+}
-+#endif
+ static inline void u64_stats_add(u64_stats_t *p, unsigned long val)
+ {
+ 	local64_add(val, &p->v);
+@@ -101,6 +106,11 @@ static inline u64 u64_stats_read(const u64_stats_t *p)
+ 	return p->v;
+ }
  
- #if BITS_PER_LONG == 32 && defined(CONFIG_SMP)
- #define u64_stats_init(syncp)				\
++static inline void u64_stats_set(u64_stats_t *p, u64 val)
++{
++	p->v = val;
++}
++
+ static inline void u64_stats_add(u64_stats_t *p, unsigned long val)
+ {
+ 	p->v += val;
 -- 
 2.43.0
 
