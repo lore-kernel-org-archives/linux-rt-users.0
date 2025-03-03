@@ -1,30 +1,31 @@
 Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 76CC91EEA2A;
-	Mon,  3 Mar 2025 22:53:01 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id C379423959B;
+	Mon,  3 Mar 2025 22:53:02 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1741042381; cv=none; b=QBGSD8yWOtnzAu0N9LVuvKF5xiGJ1B46tEURseeTsD2/1S84Y4KNig2nY/CXO4st//10nLetIhwkTd/pRCuICKZMssGVGBXtaNXOtw5vApW8TZlhfiLWuTS/EHHntxvw7R50HQpI719IWxzVySvduA05HuL0zJd0Z7tuXgzwkGo=
+	t=1741042382; cv=none; b=d7TeZ1HHbx4Pf2Ivpkae7k6OZeozZ0+fTfkh21D98z5rr70dvwHW3KAP6B46NwUK7xPC/Xl9iEp2BJBugmpLaWML96PR3ne7pY4Gmk5MRXqoFUO9RHVs6jUNK/oeZ2eMJbSoXpBQ1btG/25avgTLqUIazhGQ9+EOlrfp2c10KFE=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1741042381; c=relaxed/simple;
-	bh=KfiId/4HR3Wgozh0PqnBZ037FsWM5JkfptHbEcDga9U=;
-	h=From:To:Subject:Date:Message-ID:MIME-Version; b=aboIWcQFoCczu6pEUxEHO6re/9BAquXNEM8oDmRs0RurFUGqThtb/KZdmrll8AwqPy3eUvsv3AbeL3hJl5MNb7Wys3xz+U8bwX2NxgbD0G+naUzDIYVwqWuYwONZj6N5JF8OD5wECr3sOV7TN2ZX8iLFM0MiBvMQ6m6qBjJkCc0=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=grOW8QP+; arc=none smtp.client-ip=10.30.226.201
+	s=arc-20240116; t=1741042382; c=relaxed/simple;
+	bh=sor4RPR8AkE4RMrn6yjMcCsIKCkzTu3ehkf4YiV6WaE=;
+	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
+	 MIME-Version; b=lz3pp6Wgohz9tIuT73GGEm9n2eFKZe0ITUalbXjgSch8aVuZ3oSY40q2ro3QrBM6ghSCVn45ei+xT50UGboBYFMd6V/P115R1MQTxhzLhUSlxxgVP2nVWodNvyxrV5UqyyU1X6w0rVnV9/yad6aZI1Uhhn4KmR+E7lrb3rPCYzs=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=ba+q9rVo; arc=none smtp.client-ip=10.30.226.201
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="grOW8QP+"
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id E8F6AC4CEE8;
-	Mon,  3 Mar 2025 22:52:59 +0000 (UTC)
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="ba+q9rVo"
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id 2835FC4CEE9;
+	Mon,  3 Mar 2025 22:53:01 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-	s=k20201202; t=1741042380;
-	bh=KfiId/4HR3Wgozh0PqnBZ037FsWM5JkfptHbEcDga9U=;
-	h=From:To:Subject:Date:From;
-	b=grOW8QP+fyUQG0KpaiXdIr8wBsyWSLEaBktJ0xZDiz625GrvV642y8ZH1bbO2aAE7
-	 66GqpDZKUfF/kc3vvR9x6QFMsmb4vfM6wtIZczRehtrR3Pqqq/uPuv8Y5U/g5rHxuf
-	 EV7+PbHgCD39/2mLoeAep/4s3yAIYHHAH/Z6R38kNzq5AnAOd5HriU/r2XLOnTUfFA
-	 vRCU/jwZUO11JOGBk+QnS+efK0qknkDzeUtK18mWiDfdA7m88XkP2AoMss55lperFF
-	 dP9sGupr1Xpo+hoGl8pA8/zHe4c8v6SVNGXvSZcCGHAKstqAkiZdBPb9Z54M4/4Pf/
-	 ESldI+yfSqpnA==
+	s=k20201202; t=1741042382;
+	bh=sor4RPR8AkE4RMrn6yjMcCsIKCkzTu3ehkf4YiV6WaE=;
+	h=From:To:Cc:Subject:Date:In-Reply-To:References:From;
+	b=ba+q9rVom0aFHsmkQzWAJrhvdEtu1qoHPAk65iAsnlxx+41v1Rz1y8Y7nK3gEpXID
+	 eqwjAchnl3ALJaoAdNt91XBZc4U55WVfoOaHbkTuE+FtkUa5R8i5NmJbXeRazZ7h2b
+	 VGMtLoz3EVw4Gj1YPGboQoAERXAJWvpL5++p4pIm++yxZ4ESg/LCxNanebj6FNzKkb
+	 k6kGu7nQ2uXyFJQ05VWkS5c/VGP5O8KBFfjj5OeT+r7JWFr5ZNo3VMsY1tnCX4jj7i
+	 qhiXNg645Ua7O8woBVp1saf5e7g3cM4qwtuacW6iF0MbEOnOyuluBeQm6RHpATSeAL
+	 1oeeUSsrFpIcg==
 From: zanussi@kernel.org
 To: LKML <linux-kernel@vger.kernel.org>,
 	linux-rt-users <linux-rt-users@vger.kernel.org>,
@@ -38,10 +39,14 @@ To: LKML <linux-kernel@vger.kernel.org>,
 	"Luis Claudio R. Goncalves" <lgoncalv@redhat.com>,
 	Joseph Salisbury <joseph.salisbury@oracle.com>,
 	Tom Zanussi <zanussi@kernel.org>
-Subject: [PATCH RT 0/4] Linux v5.4.290-rt96-rc1
-Date: Mon,  3 Mar 2025 16:52:54 -0600
-Message-ID: <cover.1741042351.git.zanussi@kernel.org>
+Cc: Eric Dumazet <edumazet@google.com>,
+	"David S . Miller" <davem@davemloft.net>
+Subject: [PATCH RT 1/4] u64_stats: provide u64_stats_t type
+Date: Mon,  3 Mar 2025 16:52:55 -0600
+Message-ID: <4159ba68c4b989be05e493a0dd95e10310a30aea.1741042351.git.zanussi@kernel.org>
 X-Mailer: git-send-email 2.43.0
+In-Reply-To: <cover.1741042351.git.zanussi@kernel.org>
+References: <cover.1741042351.git.zanussi@kernel.org>
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
@@ -50,60 +55,113 @@ List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 
-From: Tom Zanussi <zanussi@kernel.org>
+From: Eric Dumazet <edumazet@google.com>
 
-Dear RT Folks,
+v5.4.290-rt96-rc1 stable review patch.
+If anyone has any objections, please let me know.
 
-This is the RT stable review cycle of patch 5.4.290-rt96-rc1.
-
-Please scream at me if I messed something up. Please test the patches
-too.
-
-The -rc release will be uploaded to kernel.org and will be deleted
-when the final release is out. This is just a review release (or
-release candidate).
-
-The pre-releases will not be pushed to the git repository, only the
-final release is.
-
-If all goes well, this patch will be converted to the next main
-release on 2025-03-06.
-
-To build 5.4.290-rt96-rc1 directly, the following patches should be applied:
-
-  https://www.kernel.org/pub/linux/kernel/v5.x/linux-5.4.tar.xz
-
-  https://www.kernel.org/pub/linux/kernel/v5.x/patch-5.4.290.xz
-
-  https://www.kernel.org/pub/linux/kernel/projects/rt/5.4/patch-5.4.290-rt96-rc1.patch.xz
-
-You can also build from 5.4.290-rt95 by applying the incremental patch:
-
-  https://www.kernel.org/pub/linux/kernel/projects/rt/5.4/incr/patch-5.4.290-rt95-rt96-rc1.patch.xz
+-----------
 
 
-Enjoy,
+[ Upstream commit 316580b69d0a7aeeee5063af47438b626bc47cbd ]
 
--- Tom
+On 64bit arches, struct u64_stats_sync is empty and provides
+no help against load/store tearing.
 
+Using READ_ONCE()/WRITE_ONCE() would be needed.
 
-Ahmed S. Darwish (1):
-  u64_stats: Introduce u64_stats_set()
+But the update side would be slightly more expensive.
 
-Eric Dumazet (1):
-  u64_stats: provide u64_stats_t type
+local64_t was defined so that we could use regular adds
+in a manner which is atomic wrt IRQs.
 
-Sebastian Andrzej Siewior (1):
-  netfilter: nft_counter: Use u64_stats_t for statistic.
+However the u64_stats infra means we do not have to use
+local64_t on 32bit arches since the syncp provides the needed
+protection.
 
-Tom Zanussi (1):
-  Linux 5.4.290-rt96-rc1
+Signed-off-by: Eric Dumazet <edumazet@google.com>
+Signed-off-by: David S. Miller <davem@davemloft.net>
+Signed-off-by: Tom Zanussi <zanussi@kernel.org>
+---
+ include/linux/u64_stats_sync.h | 51 +++++++++++++++++++++++++++++++---
+ 1 file changed, 47 insertions(+), 4 deletions(-)
 
- include/linux/u64_stats_sync.h | 61 ++++++++++++++++++++++++--
- localversion-rt                |  2 +-
- net/netfilter/nft_counter.c    | 78 +++++++++++++++++-----------------
- 3 files changed, 98 insertions(+), 43 deletions(-)
-
+diff --git a/include/linux/u64_stats_sync.h b/include/linux/u64_stats_sync.h
+index ca40163933e33..a1f656fc317e6 100644
+--- a/include/linux/u64_stats_sync.h
++++ b/include/linux/u64_stats_sync.h
+@@ -40,8 +40,8 @@
+  *   spin_lock_bh(...) or other synchronization to get exclusive access
+  *   ...
+  *   u64_stats_update_begin(&stats->syncp);
+- *   stats->bytes64 += len; // non atomic operation
+- *   stats->packets64++;    // non atomic operation
++ *   u64_stats_add(&stats->bytes64, len); // non atomic operation
++ *   u64_stats_inc(&stats->packets64);    // non atomic operation
+  *   u64_stats_update_end(&stats->syncp);
+  *
+  * While a consumer (reader) should use following template to get consistent
+@@ -52,8 +52,8 @@
+  *
+  * do {
+  *         start = u64_stats_fetch_begin(&stats->syncp);
+- *         tbytes = stats->bytes64; // non atomic operation
+- *         tpackets = stats->packets64; // non atomic operation
++ *         tbytes = u64_stats_read(&stats->bytes64); // non atomic operation
++ *         tpackets = u64_stats_read(&stats->packets64); // non atomic operation
+  * } while (u64_stats_fetch_retry(&stats->syncp, start));
+  *
+  *
+@@ -68,6 +68,49 @@ struct u64_stats_sync {
+ #endif
+ };
+ 
++#if BITS_PER_LONG == 64
++#include <asm/local64.h>
++
++typedef struct {
++	local64_t	v;
++} u64_stats_t ;
++
++static inline u64 u64_stats_read(const u64_stats_t *p)
++{
++	return local64_read(&p->v);
++}
++
++static inline void u64_stats_add(u64_stats_t *p, unsigned long val)
++{
++	local64_add(val, &p->v);
++}
++
++static inline void u64_stats_inc(u64_stats_t *p)
++{
++	local64_inc(&p->v);
++}
++
++#else
++
++typedef struct {
++	u64		v;
++} u64_stats_t;
++
++static inline u64 u64_stats_read(const u64_stats_t *p)
++{
++	return p->v;
++}
++
++static inline void u64_stats_add(u64_stats_t *p, unsigned long val)
++{
++	p->v += val;
++}
++
++static inline void u64_stats_inc(u64_stats_t *p)
++{
++	p->v++;
++}
++#endif
+ 
+ #if BITS_PER_LONG == 32 && defined(CONFIG_SMP)
+ #define u64_stats_init(syncp)				\
 -- 
 2.43.0
 
