@@ -1,60 +1,42 @@
-Received: from galois.linutronix.de (Galois.linutronix.de [193.142.43.55])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
-	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id E1D4220C499;
-	Wed,  5 Mar 2025 11:06:55 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=193.142.43.55
+Received: from foss.arm.com (foss.arm.com [217.140.110.172])
+	by smtp.subspace.kernel.org (Postfix) with ESMTP id 7CDC11EA7D8;
+	Wed,  5 Mar 2025 12:15:43 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=217.140.110.172
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1741172818; cv=none; b=Xa4wFtfa1npeOhbElFJEp56pMk3ne0C2A0Glqjk5UL6bJwYeaacxXhSbFVK6Quhpgj+C3M9ygvKGD+XRnXt62+10nqUKBS3oDeoPNtGVYIeMyZLY7FEd9zWxYQC0hnN2KYO2oqsyhvwKn9HT1MHUew6DbdgGejsGuCrzF2hlFPY=
+	t=1741176945; cv=none; b=oH1rNC76tJ6arpSCtGAhsuLJdxbz24Nuc2DKkwfWqkkyhQLpORs/bVhfM6lJGu86nAY9C+l9NLVPlkvJFnN+eNTQuXfayaHvcOigmESt7Lrkt0+qW1jM0OeRdXtMqiH6k/VTay71y+0Y+GBj0Mv+q0OKOdeo8gycfIhi3ucEht0=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1741172818; c=relaxed/simple;
-	bh=JKE1Po9EYSj06r8hdyzALVX80J+1kWHUeRpZ5TugQow=;
+	s=arc-20240116; t=1741176945; c=relaxed/simple;
+	bh=i+NqjR2sJOVESdPp7i4E+dVfKCVi5+aKNpYVQhq5/1w=;
 	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 Content-Type:Content-Disposition:In-Reply-To; b=jHFTDwagCqFiYsnz+rDmB3fXhiRrg8YPCNN9gTgLR76WaC17NgINe47DZ3uTW3kxx0fKPuFGAHo3bfFSTV/76f9w9W4DsS7dn2hNMzdlzOnpUHGkeCl7xhbYCWCtuhEEYtUgxgMFvnHs2kJg2A3dDlsS53S6ZICiBU6ca+K3Hh4=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linutronix.de; spf=pass smtp.mailfrom=linutronix.de; dkim=pass (2048-bit key) header.d=linutronix.de header.i=@linutronix.de header.b=FOrDYa7e; dkim=permerror (0-bit key) header.d=linutronix.de header.i=@linutronix.de header.b=DIlPIwOm; arc=none smtp.client-ip=193.142.43.55
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linutronix.de
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=linutronix.de
-Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="FOrDYa7e";
-	dkim=permerror (0-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="DIlPIwOm"
-Date: Wed, 5 Mar 2025 12:06:51 +0100
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
-	s=2020; t=1741172813;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 in-reply-to:in-reply-to:references:references;
-	bh=hRDDORjE6c+3nRL9vKLH4Ti8p7Y+SPyMQXlyJKMzRy0=;
-	b=FOrDYa7eQN2jlxC7ytKE6bZhjfO/OBUqgLqGbkrFA5fvTVCt2scQkvIpVo8XEzaGPVUqIW
-	ImijYvC//gJbvhgeN8kvEURLP/h/uOk5Dcp9Gx6cM7bfuRHTzaIB9hTgux+SDY9NeKWtXi
-	sBUHAtMZ1RiufG8mqzdHHmd1wm6G9xn1AiBdj0W5JrgmKjqvcCv92hRxrWBrXm5VLB/15m
-	+1mmCCJyIzlEgIwDdwmP3IlYcfUckjEV4+3yeAcQXWXuFzfA89Rp/HvLYn/ax/sLtQ/jtK
-	QQcZXkoLtUwTX9yl95joOSLvJfl/eEUc2gSpLu330aRnwkyFAIfa3VGdZPGz3g==
-DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
-	s=2020e; t=1741172813;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 in-reply-to:in-reply-to:references:references;
-	bh=hRDDORjE6c+3nRL9vKLH4Ti8p7Y+SPyMQXlyJKMzRy0=;
-	b=DIlPIwOmLWYvROvTLasNI3rDu4PycI1v0bprCTpjbEZIK4uMe5rJo/G29nDf/j3Fa05igb
-	QUSO4Nm56ZoZU9DQ==
-From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-To: Valentin Schneider <vschneid@redhat.com>
-Cc: linux-arm-kernel@lists.infradead.org, linux-kernel@vger.kernel.org,
-	linux-rt-users@vger.kernel.org, Mark Rutland <mark.rutland@arm.com>,
-	Mike Galbraith <efault@gmx.de>,
+	 Content-Type:Content-Disposition:In-Reply-To; b=T/onG2YhpopVVRbum0AvDcDZjp+LVJx4OxzY5+Yk2sc0nQTasogeHRG5Keeev8OG3z0ZU20txfimJZHAziAX0nWr6Qwd5uZat8aIR2Y2AmxbwL54xM7SJatV5HbYck0DWB+pVmFF41IRDTR8nCI5u5kUqmFsX0N/+PgmcPE4Fio=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=arm.com; spf=pass smtp.mailfrom=arm.com; arc=none smtp.client-ip=217.140.110.172
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=arm.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=arm.com
+Received: from usa-sjc-imap-foss1.foss.arm.com (unknown [10.121.207.14])
+	by usa-sjc-mx-foss1.foss.arm.com (Postfix) with ESMTP id B18F5FEC;
+	Wed,  5 Mar 2025 04:15:54 -0800 (PST)
+Received: from J2N7QTR9R3 (usa-sjc-imap-foss1.foss.arm.com [10.121.207.14])
+	by usa-sjc-imap-foss1.foss.arm.com (Postfix) with ESMTPSA id 7417A3F66E;
+	Wed,  5 Mar 2025 04:15:38 -0800 (PST)
+Date: Wed, 5 Mar 2025 12:15:35 +0000
+From: Mark Rutland <mark.rutland@arm.com>
+To: Valentin Schneider <vschneid@redhat.com>,
 	Catalin Marinas <catalin.marinas@arm.com>,
-	Will Deacon <will@kernel.org>, Peter Collingbourne <pcc@google.com>,
+	Will Deacon <will@kernel.org>
+Cc: linux-arm-kernel@lists.infradead.org, linux-kernel@vger.kernel.org,
+	linux-rt-users@vger.kernel.org, Mike Galbraith <efault@gmx.de>,
+	Peter Collingbourne <pcc@google.com>,
 	Thomas Gleixner <tglx@linutronix.de>,
 	Neeraj Upadhyay <neeraj.upadhyay@kernel.org>,
 	Thiago Jung Bauermann <thiago.bauermann@linaro.org>,
 	Mark Brown <broonie@kernel.org>,
 	Kristina Martsenko <kristina.martsenko@arm.com>,
+	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
 	Petr Tesarik <ptesarik@suse.com>,
 	Jinjie Ruan <ruanjinjie@huawei.com>,
-	Juri Lelli <juri.lelli@redhat.com>, Phil Auld <pauld@redhat.com>,
-	Clark Williams <williams@redhat.com>
+	Juri Lelli <juri.lelli@redhat.com>, Phil Auld <pauld@redhat.com>
 Subject: Re: [PATCH 1/1] arm64: enable PREEMPT_LAZY
-Message-ID: <20250305110651.6dpe0xQU@linutronix.de>
+Message-ID: <Z8hAZ09Q40fxLJSk@J2N7QTR9R3>
 References: <20250305104925.189198-1-vschneid@redhat.com>
  <20250305104925.189198-2-vschneid@redhat.com>
 Precedence: bulk
@@ -63,11 +45,11 @@ List-Id: <linux-rt-users.vger.kernel.org>
 List-Subscribe: <mailto:linux-rt-users+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=utf-8
+Content-Type: text/plain; charset=us-ascii
 Content-Disposition: inline
 In-Reply-To: <20250305104925.189198-2-vschneid@redhat.com>
 
-On 2025-03-05 11:49:25 [+0100], Valentin Schneider wrote:
+On Wed, Mar 05, 2025 at 11:49:25AM +0100, Valentin Schneider wrote:
 > From: Mark Rutland <mark.rutland@arm.com>
 > 
 > For an architecture to enable CONFIG_ARCH_HAS_RESCHED_LAZY, two things are
@@ -95,13 +77,92 @@ On 2025-03-05 11:49:25 [+0100], Valentin Schneider wrote:
 > Signed-off-by: Mike Galbraith <efault@gmx.de>
 > [Another round of testing; changelog faff]
 > Signed-off-by: Valentin Schneider <vschneid@redhat.com>
+> ---
+>  arch/arm64/Kconfig                   |  1 +
+>  arch/arm64/include/asm/thread_info.h | 16 +++++++++-------
+>  arch/arm64/kernel/entry-common.c     |  2 +-
+>  3 files changed, 11 insertions(+), 8 deletions(-)
 
-I somehow assumed it was already merged. For what it is worth, this
-looks like patch Mike posted in
-	https://lore.kernel.org/a198a7dd9076f97b89d8882bb249b3bf303564ef.camel@gmx.de
+Catalin, Will, given this is small and self-contained, I reckon it makes
+sense to pick this up ahead of Jinjie's series to move arm64 over to the
+generic entry library (which is on my queue of things to review). Even
+if we pick up both, it'll be easier to bisect and debug issues caused by
+this patch alone.
 
-and tested 
+The fixes/cleanups from Mike and Valentin look right to me, so FWIW:
 
-Reviewed-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Acked-by: Mark Rutland <mark.rutland@arm.com>
 
-Sebastian
+Mark.
+
+> diff --git a/arch/arm64/Kconfig b/arch/arm64/Kconfig
+> index fcdd0ed3eca89..7789d7fb6f191 100644
+> --- a/arch/arm64/Kconfig
+> +++ b/arch/arm64/Kconfig
+> @@ -41,6 +41,7 @@ config ARM64
+>  	select ARCH_HAS_NMI_SAFE_THIS_CPU_OPS
+>  	select ARCH_HAS_NON_OVERLAPPING_ADDRESS_SPACE
+>  	select ARCH_HAS_NONLEAF_PMD_YOUNG if ARM64_HAFT
+> +	select ARCH_HAS_PREEMPT_LAZY
+>  	select ARCH_HAS_PTE_DEVMAP
+>  	select ARCH_HAS_PTE_SPECIAL
+>  	select ARCH_HAS_HW_PTE_YOUNG
+> diff --git a/arch/arm64/include/asm/thread_info.h b/arch/arm64/include/asm/thread_info.h
+> index 1114c1c3300a1..4443ef2789758 100644
+> --- a/arch/arm64/include/asm/thread_info.h
+> +++ b/arch/arm64/include/asm/thread_info.h
+> @@ -59,11 +59,12 @@ void arch_setup_new_exec(void);
+>  
+>  #define TIF_SIGPENDING		0	/* signal pending */
+>  #define TIF_NEED_RESCHED	1	/* rescheduling necessary */
+> -#define TIF_NOTIFY_RESUME	2	/* callback before returning to user */
+> -#define TIF_FOREIGN_FPSTATE	3	/* CPU's FP state is not current's */
+> -#define TIF_UPROBE		4	/* uprobe breakpoint or singlestep */
+> -#define TIF_MTE_ASYNC_FAULT	5	/* MTE Asynchronous Tag Check Fault */
+> -#define TIF_NOTIFY_SIGNAL	6	/* signal notifications exist */
+> +#define TIF_NEED_RESCHED_LAZY	2	/* Lazy rescheduling needed */
+> +#define TIF_NOTIFY_RESUME	3	/* callback before returning to user */
+> +#define TIF_FOREIGN_FPSTATE	4	/* CPU's FP state is not current's */
+> +#define TIF_UPROBE		5	/* uprobe breakpoint or singlestep */
+> +#define TIF_MTE_ASYNC_FAULT	6	/* MTE Asynchronous Tag Check Fault */
+> +#define TIF_NOTIFY_SIGNAL	7	/* signal notifications exist */
+>  #define TIF_SYSCALL_TRACE	8	/* syscall trace active */
+>  #define TIF_SYSCALL_AUDIT	9	/* syscall auditing */
+>  #define TIF_SYSCALL_TRACEPOINT	10	/* syscall tracepoint for ftrace */
+> @@ -85,6 +86,7 @@ void arch_setup_new_exec(void);
+>  
+>  #define _TIF_SIGPENDING		(1 << TIF_SIGPENDING)
+>  #define _TIF_NEED_RESCHED	(1 << TIF_NEED_RESCHED)
+> +#define _TIF_NEED_RESCHED_LAZY	(1 << TIF_NEED_RESCHED_LAZY)
+>  #define _TIF_NOTIFY_RESUME	(1 << TIF_NOTIFY_RESUME)
+>  #define _TIF_FOREIGN_FPSTATE	(1 << TIF_FOREIGN_FPSTATE)
+>  #define _TIF_SYSCALL_TRACE	(1 << TIF_SYSCALL_TRACE)
+> @@ -100,10 +102,10 @@ void arch_setup_new_exec(void);
+>  #define _TIF_NOTIFY_SIGNAL	(1 << TIF_NOTIFY_SIGNAL)
+>  #define _TIF_TSC_SIGSEGV	(1 << TIF_TSC_SIGSEGV)
+>  
+> -#define _TIF_WORK_MASK		(_TIF_NEED_RESCHED | _TIF_SIGPENDING | \
+> +#define _TIF_WORK_MASK		(_TIF_NEED_RESCHED | _TIF_NEED_RESCHED_LAZY | \
+>  				 _TIF_NOTIFY_RESUME | _TIF_FOREIGN_FPSTATE | \
+>  				 _TIF_UPROBE | _TIF_MTE_ASYNC_FAULT | \
+> -				 _TIF_NOTIFY_SIGNAL)
+> +				 _TIF_NOTIFY_SIGNAL | _TIF_SIGPENDING)
+>  
+>  #define _TIF_SYSCALL_WORK	(_TIF_SYSCALL_TRACE | _TIF_SYSCALL_AUDIT | \
+>  				 _TIF_SYSCALL_TRACEPOINT | _TIF_SECCOMP | \
+> diff --git a/arch/arm64/kernel/entry-common.c b/arch/arm64/kernel/entry-common.c
+> index b260ddc4d3e9a..7993fab0cab4c 100644
+> --- a/arch/arm64/kernel/entry-common.c
+> +++ b/arch/arm64/kernel/entry-common.c
+> @@ -132,7 +132,7 @@ static void do_notify_resume(struct pt_regs *regs, unsigned long thread_flags)
+>  	do {
+>  		local_irq_enable();
+>  
+> -		if (thread_flags & _TIF_NEED_RESCHED)
+> +		if (thread_flags & (_TIF_NEED_RESCHED | _TIF_NEED_RESCHED_LAZY))
+>  			schedule();
+>  
+>  		if (thread_flags & _TIF_UPROBE)
+> -- 
+> 2.43.0
+> 
