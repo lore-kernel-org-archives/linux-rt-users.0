@@ -1,302 +1,90 @@
-Received: from mta-64-226.siemens.flowmailer.net (mta-64-226.siemens.flowmailer.net [185.136.64.226])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+Received: from mail-yw1-f169.google.com (mail-yw1-f169.google.com [209.85.128.169])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 1EEAE1DE8A0
-	for <linux-rt-users@vger.kernel.org>; Thu, 20 Mar 2025 12:41:29 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=185.136.64.226
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 57269AD2D
+	for <linux-rt-users@vger.kernel.org>; Fri, 21 Mar 2025 16:03:22 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.128.169
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1742474493; cv=none; b=gg0iD4+vw4Nq6KHjW7bsKBiyNJxQ600wKKoryybUAM7mbI3voCju5CgwLTwUowskj7crRV7J4X0183ttmtMYhPd+8OfH9pWuwgwzYO3ZiNoNSTXftuCeQNBsTsCiLGrLmp0/nhmrda4EVpVUyW8KGWoughmQu0C8nx6xyGOYqis=
+	t=1742573003; cv=none; b=mj/8FsHhY4Fi3TSUg29oyBxk391F6WrFiDHTdsupSgMZ9NYP0NESmQL1EqgG0ygh6DDqyLdTfMgyYW9/Uw62tszg30vxYwSd2Zw/2E7hEZrxxMQizAdj4G2obC5TSif2mVSgdNCbKXxPXJZNrK7STH+pWHXY39gjpKnUYLDa9s0=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1742474493; c=relaxed/simple;
-	bh=uJNgNdZDQ/2PC9hcIrOpRPEGx0wzupEKlnOR05eG9pg=;
-	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=GPY24Zs+0sH51TyGU7a4u5ds2gj9/U7vN3DjLWXLO8xnnigCZrkDNbaDnb9eJ0sSP6MTsIAd2U9YtzHVY1Qrq4oGBBlaBnzRHW8HDCNUat5+6UNmnCAVPvkCrEtLj54BkqEgNh0qfxqnWN63610eX1vgrIt9ti9HaAoF8k5O3Ac=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=siemens.com; spf=pass smtp.mailfrom=rts-flowmailer.siemens.com; dkim=pass (2048-bit key) header.d=siemens.com header.i=felix.moessbauer@siemens.com header.b=TpnsNzUk; arc=none smtp.client-ip=185.136.64.226
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=siemens.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=rts-flowmailer.siemens.com
+	s=arc-20240116; t=1742573003; c=relaxed/simple;
+	bh=EKleEB8VGdRNbVoCkLwP3gPHuWp/0OZS2UeLhEZAuy0=;
+	h=MIME-Version:From:Date:Message-ID:Subject:To:Content-Type; b=cQRRIQryC3QSsPZkXFxgPSzpWNoX2S+GQQVlJEKgAkqHWCI7UQgQR4JiwdURVLWSI/s050VkwMpbPvBnKC05i2syFpESoz53ALg2vc48bLtW86pigVrt3ZheT9rFnfTV8Kt1K5shfhJzU+h/UpMxgUm2i4azSK22iWlNchvNn1s=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=GfK2mC4d; arc=none smtp.client-ip=209.85.128.169
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=siemens.com header.i=felix.moessbauer@siemens.com header.b="TpnsNzUk"
-Received: by mta-64-226.siemens.flowmailer.net with ESMTPSA id 20250320124121961bb7f062f0a2577f
-        for <linux-rt-users@vger.kernel.org>;
-        Thu, 20 Mar 2025 13:41:21 +0100
-DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; s=fm1;
- d=siemens.com; i=felix.moessbauer@siemens.com;
- h=Date:From:Subject:To:Message-ID:MIME-Version:Content-Type:Content-Transfer-Encoding:Cc;
- bh=c0r9K1Oai3gyP+GjxoUNl2fOIbRrTnrWaZYsOLsZDrA=;
- b=TpnsNzUkkIAoVd4x7s9CvjzuD+tAhg7LpBA6ux7k6lj+suGNGWIl12pyXTS2uV057EwtB3
- XakJO5HyqgzA9UhHGivAMY8rgVLRECLGUN9ZXVGCK8RJ1oTbRqahVh1wOO/i2RX+Xpt5l7wQ
- ZKmaMWFgzrQ7PTTB6iTtV9dsn3myv7FCq/x5E05tmxTtUwskJaMnN2I6/2hLFvKDh7lz3gqL
- lBSvRwa/sLgTaS+d7hcu1Ii5PucocJPxzYebjo0oJ3V5YlBjeu29BYLsQLk2NTuxuQfTYeFJ
- 1oWoMHqZIpKXRqp4fG8vAIjxjj30lAj56X5DPSDS1ntKUEFgGl5fbKgQ==;
-From: Felix Moessbauer <felix.moessbauer@siemens.com>
-To: stable@vger.kernel.org
-Cc: Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-	williams@redhat.com,
-	pablo@netfilter.org,
-	kadlec@netfilter.org,
-	fw@strlen.de,
-	jan.kiszka@siemens.com,
-	netfilter-devel@vger.kernel.org,
-	linux-rt-users@vger.kernel.org,
-	linux-kernel@vger.kernel.org,
-	Eric Dumazet <edumazet@google.com>,
-	Felix Moessbauer <felix.moessbauer@siemens.com>
-Subject: [PATCH 6.1.y 6.6.y 1/1] netfilter: nft_counter: Use u64_stats_t for statistic.
-Date: Thu, 20 Mar 2025 13:41:08 +0100
-Message-ID: <20250320124108.338412-1-felix.moessbauer@siemens.com>
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="GfK2mC4d"
+Received: by mail-yw1-f169.google.com with SMTP id 00721157ae682-6ff37565154so20415307b3.3
+        for <linux-rt-users@vger.kernel.org>; Fri, 21 Mar 2025 09:03:22 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20230601; t=1742573001; x=1743177801; darn=vger.kernel.org;
+        h=to:subject:message-id:date:from:mime-version:from:to:cc:subject
+         :date:message-id:reply-to;
+        bh=glgBCnt1ee5lkpkIHHSBzwqX2Z21Um61dEIfuh+jAQQ=;
+        b=GfK2mC4dHUkzWe1uhtjUsXDGLKcEkDfDJzeNm0d6xy09N9Clux+MdNzJe7zVWyOEbE
+         UqwAgAF1TKBcfLgjGVrvs0HZX4Y9L2DLx5gUZg6hlik9eof5oXbGGkk+Qw5fa3f0sABh
+         PTowtXppWLzeNiGw4eMaiY6oAXeyZ5AEeS4anYshkDtaTBY66uLfndePBfRg9KD5p1/4
+         5pI55hhahFZSWP2U+C5Hmvh/HB/D0Q5KDik7JxH/yT9Cs3quyiGXF10GHrfpjvS1Y1y3
+         1/jMPu57TVFng7BhKhIVv8OlNyN1JZoEwHfCRWUBBS+iVdVzv6dUSC2Y8tJJ4G/X+Eyz
+         hDig==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20230601; t=1742573001; x=1743177801;
+        h=to:subject:message-id:date:from:mime-version:x-gm-message-state
+         :from:to:cc:subject:date:message-id:reply-to;
+        bh=glgBCnt1ee5lkpkIHHSBzwqX2Z21Um61dEIfuh+jAQQ=;
+        b=n5crOvolfPHGkZsNurSJFgwqzgrSKPzV/ZpPifq9ASQqfeL09RHbfyDEF2SnCgZOBU
+         sKuhrDcD/Gqb/7h/OG08dIxzluo9Gr79xQoBshkk+2bxRlR0Qrq9PH8jXoUC6tKmiC4e
+         dA7yXlX/8XS34S7UjQ+vNOCv+ZvEZBtucN0xuMoxyaOV/kZ0cVOs2l8B8rBwpXesOtQ4
+         26gJUHDbdFsEEVwYlq1uocugN4Ca4Ygo419WwCsbL8P6pwRjczUd0UaTJV/g0x4pWVrY
+         lob1TSTq4/NXaQCd5it7rDG1rcgNeKaSqD4ZQKOMRL6SvwEMeDTHq2B2BYcl2jHOCJp0
+         YchQ==
+X-Gm-Message-State: AOJu0YyG5WrL48B0wSG+EF2yLfMGApAGArniU0auBb9GiXcsfuZSJFuy
+	Z3x7eWhN/Z2KY4tObW5zGVJmEUPo1qs0qlj8D+KaxdEObjfga4NO5Zy99wzKEEWyKVhjcbM++kb
+	5lqng6WhB1GsZ6UmhPlnnPMZb6sl8BFal
+X-Gm-Gg: ASbGnctpqU7/c+QdhRhJRSWAZfuSJqiQrPj96ORxAEp7t2+Y8fEVFHOwGhnon8sgsrY
+	aAmH2B7yZJ2XxNJl5G2dG7qlJE4ABlP/urSYr7lMTl7ItQNnqaPTOwT5I1KkK/gGlHNtMwRn7i/
+	jWXIwEfDa4ldegVueQCBcYaC0Va+5BoGnATPFrKdIvW0Qt1v+NxOVOVju0HiegSBMjJ4C7RQ==
+X-Google-Smtp-Source: AGHT+IEvJejxVhrTmvZNA4lq1olYgrNqd8Uo4q4hw/WmDCvJlzrrkAjREAkBdV4n4JVSLixdO9RSxYOkJvCqECra2ko=
+X-Received: by 2002:a05:690c:4c0c:b0:6fb:5498:70fa with SMTP id
+ 00721157ae682-700bac79111mr55167017b3.18.1742573000770; Fri, 21 Mar 2025
+ 09:03:20 -0700 (PDT)
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
 List-Subscribe: <mailto:linux-rt-users+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
-X-Flowmailer-Platform: Siemens
-Feedback-ID: 519:519-1321639:519-21489:flowmailer
+From: Gautam Thaker <ghthaker@gmail.com>
+Date: Fri, 21 Mar 2025 12:03:10 -0400
+X-Gm-Features: AQ5f1JoDurxq3kvW99NOIE1lm6HQsaT6SMK0zMFWgcpeLUAamdvFXdac-o9Hqbk
+Message-ID: <CA+1+E3VC4LX5X8ANf5d1Wm7QjSJZUG=mei8E5cvBUyqcd5j3yA@mail.gmail.com>
+Subject: seeking best steps to go from Armbian 6.12.19 PREEMPT to PREEMPT_RT
+To: linux-rt-users@vger.kernel.org
+Content-Type: text/plain; charset="UTF-8"
 
-From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+I am currently running Armbian on rk3318 TV box. Runs great.
 
-commit 4a1d3acd6ea86075e77fcc1188c3fc372833ba73 upstream.
+rk3318-box> uname -a
+Linux rk3318-box 6.12.19-current-rockchip64 #2 SMP PREEMPT Thu Mar 13
+12:02:20 UTC 2025 aarch64 GNU/Linux
 
-The nft_counter uses two s64 counters for statistics. Those two are
-protected by a seqcount to ensure that the 64bit variable is always
-properly seen during updates even on 32bit architectures where the store
-is performed by two writes. A side effect is that the two counter (bytes
-and packet) are written and read together in the same window.
+My question: what is the quickest path to get FULL PREEMPT-RT kernel
+running on my box?
 
-This can be replaced with u64_stats_t. write_seqcount_begin()/ end() is
-replaced with u64_stats_update_begin()/ end() and behaves the same way
-as with seqcount_t on 32bit architectures. Additionally there is a
-preempt_disable on PREEMPT_RT to ensure that a reader does not preempt a
-writer.
-On 64bit architectures the macros are removed and the reads happen
-without any retries. This also means that the reader can observe one
-counter (bytes) from before the update and the other counter (packets)
-but that is okay since there is no requirement to have both counter from
-the same update window.
+I believe I have found the Armbian sources.
+(https://docs.armbian.com/Developer-Guide_Build-Preparation/)
 
-Convert the statistic to u64_stats_t. There is one optimisation:
-nft_counter_do_init() and nft_counter_clone() allocate a new per-CPU
-counter and assign a value to it. During this assignment preemption is
-disabled which is not needed because the counter is not yet exposed to
-the system so there can not be another writer or reader. Therefore
-disabling preemption is omitted and raw_cpu_ptr() is used to obtain a
-pointer to a counter for the assignment.
+Are there instructions to build a kernel w/ all the same parameters as
+a currently running kernel with only change to set FULL PREEMPT-RT ? I
+would like to make least changes to configuration so that I may
+continue to boot on my hardware.
 
-Cc: Eric Dumazet <edumazet@google.com>
-Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Signed-off-by: Pablo Neira Ayuso <pablo@netfilter.org>
-Signed-off-by: Felix Moessbauer <felix.moessbauer@siemens.com>
----
-I propose the backport, as this is a performance improvement. Note,
-that this is a bugfix on RT kernels.
+I used to make many RT kernels in the past, but not in the last 10
+years. I can't find current instructions. It was my understanding that
+with 6.12+ linux kernel one needs NO RT patches, but still have  to
+config FULL PREEMPT-RT and build a new kernel.
 
- net/netfilter/nft_counter.c | 90 +++++++++++++++++++------------------
- 1 file changed, 46 insertions(+), 44 deletions(-)
+Or can I change some grub option and simply reboot my current kernel?
 
-diff --git a/net/netfilter/nft_counter.c b/net/netfilter/nft_counter.c
-index 781d3a26f5df..8d19bd001277 100644
---- a/net/netfilter/nft_counter.c
-+++ b/net/netfilter/nft_counter.c
-@@ -8,7 +8,7 @@
- #include <linux/kernel.h>
- #include <linux/init.h>
- #include <linux/module.h>
--#include <linux/seqlock.h>
-+#include <linux/u64_stats_sync.h>
- #include <linux/netlink.h>
- #include <linux/netfilter.h>
- #include <linux/netfilter/nf_tables.h>
-@@ -17,6 +17,11 @@
- #include <net/netfilter/nf_tables_offload.h>
- 
- struct nft_counter {
-+	u64_stats_t	bytes;
-+	u64_stats_t	packets;
-+};
-+
-+struct nft_counter_tot {
- 	s64		bytes;
- 	s64		packets;
- };
-@@ -25,25 +30,24 @@ struct nft_counter_percpu_priv {
- 	struct nft_counter __percpu *counter;
- };
- 
--static DEFINE_PER_CPU(seqcount_t, nft_counter_seq);
-+static DEFINE_PER_CPU(struct u64_stats_sync, nft_counter_sync);
- 
- static inline void nft_counter_do_eval(struct nft_counter_percpu_priv *priv,
- 				       struct nft_regs *regs,
- 				       const struct nft_pktinfo *pkt)
- {
-+	struct u64_stats_sync *nft_sync;
- 	struct nft_counter *this_cpu;
--	seqcount_t *myseq;
- 
- 	local_bh_disable();
- 	this_cpu = this_cpu_ptr(priv->counter);
--	myseq = this_cpu_ptr(&nft_counter_seq);
--
--	write_seqcount_begin(myseq);
-+	nft_sync = this_cpu_ptr(&nft_counter_sync);
- 
--	this_cpu->bytes += pkt->skb->len;
--	this_cpu->packets++;
-+	u64_stats_update_begin(nft_sync);
-+	u64_stats_add(&this_cpu->bytes, pkt->skb->len);
-+	u64_stats_inc(&this_cpu->packets);
-+	u64_stats_update_end(nft_sync);
- 
--	write_seqcount_end(myseq);
- 	local_bh_enable();
- }
- 
-@@ -66,17 +70,16 @@ static int nft_counter_do_init(const struct nlattr * const tb[],
- 	if (cpu_stats == NULL)
- 		return -ENOMEM;
- 
--	preempt_disable();
--	this_cpu = this_cpu_ptr(cpu_stats);
-+	this_cpu = raw_cpu_ptr(cpu_stats);
- 	if (tb[NFTA_COUNTER_PACKETS]) {
--	        this_cpu->packets =
--			be64_to_cpu(nla_get_be64(tb[NFTA_COUNTER_PACKETS]));
-+		u64_stats_set(&this_cpu->packets,
-+			      be64_to_cpu(nla_get_be64(tb[NFTA_COUNTER_PACKETS])));
- 	}
- 	if (tb[NFTA_COUNTER_BYTES]) {
--		this_cpu->bytes =
--			be64_to_cpu(nla_get_be64(tb[NFTA_COUNTER_BYTES]));
-+		u64_stats_set(&this_cpu->bytes,
-+			      be64_to_cpu(nla_get_be64(tb[NFTA_COUNTER_BYTES])));
- 	}
--	preempt_enable();
-+
- 	priv->counter = cpu_stats;
- 	return 0;
- }
-@@ -104,40 +107,41 @@ static void nft_counter_obj_destroy(const struct nft_ctx *ctx,
- }
- 
- static void nft_counter_reset(struct nft_counter_percpu_priv *priv,
--			      struct nft_counter *total)
-+			      struct nft_counter_tot *total)
- {
-+	struct u64_stats_sync *nft_sync;
- 	struct nft_counter *this_cpu;
--	seqcount_t *myseq;
- 
- 	local_bh_disable();
- 	this_cpu = this_cpu_ptr(priv->counter);
--	myseq = this_cpu_ptr(&nft_counter_seq);
-+	nft_sync = this_cpu_ptr(&nft_counter_sync);
-+
-+	u64_stats_update_begin(nft_sync);
-+	u64_stats_add(&this_cpu->packets, -total->packets);
-+	u64_stats_add(&this_cpu->bytes, -total->bytes);
-+	u64_stats_update_end(nft_sync);
- 
--	write_seqcount_begin(myseq);
--	this_cpu->packets -= total->packets;
--	this_cpu->bytes -= total->bytes;
--	write_seqcount_end(myseq);
- 	local_bh_enable();
- }
- 
- static void nft_counter_fetch(struct nft_counter_percpu_priv *priv,
--			      struct nft_counter *total)
-+			      struct nft_counter_tot *total)
- {
- 	struct nft_counter *this_cpu;
--	const seqcount_t *myseq;
- 	u64 bytes, packets;
- 	unsigned int seq;
- 	int cpu;
- 
- 	memset(total, 0, sizeof(*total));
- 	for_each_possible_cpu(cpu) {
--		myseq = per_cpu_ptr(&nft_counter_seq, cpu);
-+		struct u64_stats_sync *nft_sync = per_cpu_ptr(&nft_counter_sync, cpu);
-+
- 		this_cpu = per_cpu_ptr(priv->counter, cpu);
- 		do {
--			seq	= read_seqcount_begin(myseq);
--			bytes	= this_cpu->bytes;
--			packets	= this_cpu->packets;
--		} while (read_seqcount_retry(myseq, seq));
-+			seq	= u64_stats_fetch_begin(nft_sync);
-+			bytes	= u64_stats_read(&this_cpu->bytes);
-+			packets	= u64_stats_read(&this_cpu->packets);
-+		} while (u64_stats_fetch_retry(nft_sync, seq));
- 
- 		total->bytes	+= bytes;
- 		total->packets	+= packets;
-@@ -148,7 +152,7 @@ static int nft_counter_do_dump(struct sk_buff *skb,
- 			       struct nft_counter_percpu_priv *priv,
- 			       bool reset)
- {
--	struct nft_counter total;
-+	struct nft_counter_tot total;
- 
- 	nft_counter_fetch(priv, &total);
- 
-@@ -236,7 +240,7 @@ static int nft_counter_clone(struct nft_expr *dst, const struct nft_expr *src, g
- 	struct nft_counter_percpu_priv *priv_clone = nft_expr_priv(dst);
- 	struct nft_counter __percpu *cpu_stats;
- 	struct nft_counter *this_cpu;
--	struct nft_counter total;
-+	struct nft_counter_tot total;
- 
- 	nft_counter_fetch(priv, &total);
- 
-@@ -244,11 +248,9 @@ static int nft_counter_clone(struct nft_expr *dst, const struct nft_expr *src, g
- 	if (cpu_stats == NULL)
- 		return -ENOMEM;
- 
--	preempt_disable();
--	this_cpu = this_cpu_ptr(cpu_stats);
--	this_cpu->packets = total.packets;
--	this_cpu->bytes = total.bytes;
--	preempt_enable();
-+	this_cpu = raw_cpu_ptr(cpu_stats);
-+	u64_stats_set(&this_cpu->packets, total.packets);
-+	u64_stats_set(&this_cpu->bytes, total.bytes);
- 
- 	priv_clone->counter = cpu_stats;
- 	return 0;
-@@ -266,17 +268,17 @@ static void nft_counter_offload_stats(struct nft_expr *expr,
- 				      const struct flow_stats *stats)
- {
- 	struct nft_counter_percpu_priv *priv = nft_expr_priv(expr);
-+	struct u64_stats_sync *nft_sync;
- 	struct nft_counter *this_cpu;
--	seqcount_t *myseq;
- 
- 	local_bh_disable();
- 	this_cpu = this_cpu_ptr(priv->counter);
--	myseq = this_cpu_ptr(&nft_counter_seq);
-+	nft_sync = this_cpu_ptr(&nft_counter_sync);
- 
--	write_seqcount_begin(myseq);
--	this_cpu->packets += stats->pkts;
--	this_cpu->bytes += stats->bytes;
--	write_seqcount_end(myseq);
-+	u64_stats_update_begin(nft_sync);
-+	u64_stats_add(&this_cpu->packets, stats->pkts);
-+	u64_stats_add(&this_cpu->bytes, stats->bytes);
-+	u64_stats_update_end(nft_sync);
- 	local_bh_enable();
- }
- 
-@@ -285,7 +287,7 @@ void nft_counter_init_seqcount(void)
- 	int cpu;
- 
- 	for_each_possible_cpu(cpu)
--		seqcount_init(per_cpu_ptr(&nft_counter_seq, cpu));
-+		u64_stats_init(per_cpu_ptr(&nft_counter_sync, cpu));
- }
- 
- struct nft_expr_type nft_counter_type;
--- 
-2.49.0
-
+Gautam
