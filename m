@@ -1,375 +1,143 @@
-Received: from galois.linutronix.de (Galois.linutronix.de [193.142.43.55])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 6BAE71D9A54;
-	Mon, 31 Mar 2025 09:56:13 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=193.142.43.55
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 33D60B673
+	for <linux-rt-users@vger.kernel.org>; Mon, 31 Mar 2025 19:48:21 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1743414976; cv=none; b=NIh8kFCtMDWHlEEpuqNrNMEjxsDKd7R5WOQbDwk1hIZF/tMaaTDuzUedrq50ExKEWRmDPuIQb0/SmUm67xTEUlz16zhjMIBcsRdo1nvYqNLAHIOaVy0edJKY99KKeb+tv6ST0NThBojuITsyTJB90zzfjcjwOHNKGM5/UZSJVBY=
+	t=1743450503; cv=none; b=B0sBJNar/l+JeMhyXu57grN4bKSKETOTN5v/8fozpV5B0ytXqH9dWL3KISut7/C/zPgSC7QFiqzeeOh958jp4GRBq/1NdqbhcyaURMKqK1//11rbPAq/0123yXK8vatjPmXiW3Wrs9y5UopIYkcVeX/Ju7kVlGYRO0Njf1NcyWc=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1743414976; c=relaxed/simple;
-	bh=YwvNzFm/MMPxxMnEMkNryYcNyy00siBirol1dspx+DM=;
-	h=Date:From:To:Cc:Subject:Message-ID:MIME-Version:Content-Type:
-	 Content-Disposition; b=VbJSvpiESpjJr5FWFECjPEuBSOjXqrwnHwLLqnsfBmL9dwNI2w6Sh52kvN2h/nW0qJ4G4cRUQ+oSwx0Bm05yaQApoVWXehkjeyg+ePfbsx6/s6oXnd7KKN8qF7Qc+Oa+yFvQzAjL4/2VPlzUCVgJ1S3J/qDP7nWnnArc1niLESs=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linutronix.de; spf=pass smtp.mailfrom=linutronix.de; dkim=pass (2048-bit key) header.d=linutronix.de header.i=@linutronix.de header.b=ZFQkh/3i; dkim=permerror (0-bit key) header.d=linutronix.de header.i=@linutronix.de header.b=VOJePznb; arc=none smtp.client-ip=193.142.43.55
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linutronix.de
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=linutronix.de
+	s=arc-20240116; t=1743450503; c=relaxed/simple;
+	bh=jx+kOVHSUKCbsRcFvKLazaf4NS5jfInnRrJa8Rwz4xE=;
+	h=Date:From:To:Subject:Message-ID:MIME-Version:Content-Type:
+	 Content-Disposition; b=pItzQ6TVmyIZRqhfHzwA8A2Ix33jliKfTJTNJttL453rdYUGNsj+0uQPbpfdI6u4ij47AhdBht3PFyKJgcszgNQ1pkOlJizXsE/uKHyJJ1VBSIZkJf1FX0OgaJ1lNNlYrtcTbwoaCwjUgsnrdcqUGMfO8giIDKBLuY9VgV8JIHM=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=AShaYhQd; arc=none smtp.client-ip=170.10.133.124
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="ZFQkh/3i";
-	dkim=permerror (0-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="VOJePznb"
-Date: Mon, 31 Mar 2025 11:56:10 +0200
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
-	s=2020; t=1743414971;
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="AShaYhQd"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1743450501;
 	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type;
-	bh=FOAGnLu8LO209nJAyUa26Xe9MxlyUuWUSQvb932sz94=;
-	b=ZFQkh/3ixpqFuQaIo+69FUnVM45ng/KiuV1CrdcsKw8vWDmsrDYK3vKHqPNUOY+AT2k9y4
-	NNiQFFYidWqB1/9sLsBlY9ECvRhkw+4wwY4B4d+9A68KS3SBE1tRzICfh1K7glJr5RWma3
-	FRJ3Ocv7NfoMPbMoZc9rO9PqJw4OmZ7AHTUa042OY0fPo3G/VjCZ9QAh9QKpPhE72kDcoV
-	0NbPa16p5xkteZignD3KCObXOWYBjJrmIll0bB5rvniQl3E/MowshUQ+e4isoURtmdBDs8
-	pBYrorKrgbBlnGsZri/tLNoaO+TTa1nb9wFYgm5H0fMnz4AfeE7xCwfT+lAn7A==
-DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
-	s=2020e; t=1743414971;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type;
-	bh=FOAGnLu8LO209nJAyUa26Xe9MxlyUuWUSQvb932sz94=;
-	b=VOJePznbUzWUTz83HCVMblUA8gNZwkCrPPSC0PBHFr7+oNEm60QlCQW9nZtrpOjWUTDL6Y
-	tXCbjudwLmaX6PDA==
-From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-To: Thomas Gleixner <tglx@linutronix.de>, linux-rt-devel@lists.linux.dev
-Cc: LKML <linux-kernel@vger.kernel.org>, linux-rt-users@vger.kernel.org,
-	Steven Rostedt <rostedt@goodmis.org>
-Subject: [ANNOUNCE] v6.14-rt3
-Message-ID: <20250331095610.ulLtPP2C@linutronix.de>
+	 to:to:cc:mime-version:mime-version:content-type:content-type;
+	bh=CZUl/W/3DHj1eibZ+TU4Ipkjrazfz2B71T5aEi4wVx4=;
+	b=AShaYhQdVOqoZ5SELAP6kumRN3ukHZqmGmTPkbQ/0ARhxw0xLtulbGwkcAb8h759LTu3e+
+	MsN122zCquUwl/pT9hHRcYSA3uJ4bZ9fDU+5aix7UsBtw3fsWehRAKhTIG+P97MjF93Dw4
+	NKyCIU9NTEb9BYFQpEQmtK4SdlTMMsw=
+Received: from mx-prod-mc-06.mail-002.prod.us-west-2.aws.redhat.com
+ (ec2-35-165-154-97.us-west-2.compute.amazonaws.com [35.165.154.97]) by
+ relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-654-qMpU8gAMOwOyyBQThh2qMg-1; Mon,
+ 31 Mar 2025 15:48:16 -0400
+X-MC-Unique: qMpU8gAMOwOyyBQThh2qMg-1
+X-Mimecast-MFC-AGG-ID: qMpU8gAMOwOyyBQThh2qMg_1743450494
+Received: from mx-prod-int-06.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-06.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.93])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
+	(No client certificate requested)
+	by mx-prod-mc-06.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 1E7351800349;
+	Mon, 31 Mar 2025 19:48:14 +0000 (UTC)
+Received: from localhost (unknown [10.22.65.234])
+	by mx-prod-int-06.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTP id F3E33180B488;
+	Mon, 31 Mar 2025 19:48:12 +0000 (UTC)
+Date: Mon, 31 Mar 2025 16:48:11 -0300
+From: "Luis Claudio R. Goncalves" <lgoncalv@redhat.com>
+To: LKML <linux-kernel@vger.kernel.org>,
+	linux-rt-users <linux-rt-users@vger.kernel.org>,
+	stable-rt <stable-rt@vger.kernel.org>,
+	Steven Rostedt <rostedt@goodmis.org>,
+	Thomas Gleixner <tglx@linutronix.de>,
+	Carsten Emde <C.Emde@osadl.org>,
+	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+	Daniel Wagner <daniel.wagner@suse.com>,
+	Tom Zanussi <tom.zanussi@linux.intel.com>,
+	Clark Williams <williams@redhat.com>,
+	Mark Gross <markgross@kernel.org>, Pavel Machek <pavel@denx.de>,
+	Jeff Brady <jeffreyjbrady@gmail.com>,
+	Jan Kiszka <jan.kiszka@siemens.com>,
+	Ben Hutchings <benh@debian.org>
+Subject: [ANNOUNCE] 5.10.235-rt129
+Message-ID: <Z-rxe2n4qOskrg2f@uudg.org>
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
 List-Subscribe: <mailto:linux-rt-users+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=utf-8
+Content-Type: text/plain; charset=us-ascii
 Content-Disposition: inline
+Signed-off-by: Luis Claudio R. Goncalves <lgoncalv@redhat.com>
+X-Scanned-By: MIMEDefang 3.4.1 on 10.30.177.93
 
-Dear RT folks!
+Hello RT-list!
 
-I'm pleased to announce the v6.14-rt3 patch set. 
+I'm pleased to announce the 5.10.235-rt129 stable release.
 
-Changes since v6.14-rt2:
-
-  - Update the "generic function for the preemption model" series has
-    been updated to v4.
-
-  - ARM64 gained preempt-lazy support. Patch by Mark Rutland.
-
-Known issues
-    - Yoann Congal reported a bit spinlock in dm_exception_table_lock().
-	https://lore.kernel.org/all/Z8GTjqgDe_5EkE3t@P-ASN-ECS-830T8C3.local
-
-The delta patch against v6.14-rt2 is appended below and can be found here:
- 
-     https://cdn.kernel.org/pub/linux/kernel/projects/rt/6.14/incr/patch-6.14-rt2-rt3.patch.xz
+While working on the stable update 5.10.235-rt128, a build problem
+on the be2net driver was discovered on RT. That inconvenience was
+fixed, hence the release of 5.10.235-rt129.
 
 You can get this release via the git tree at:
 
-    https://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-rt-devel.git v6.14-rt3
+  git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
 
-The RT patch against v6.14 can be found here:
+  branch: v5.10-rt
+  Head SHA1: d7dcda5ab69cd154e135797b8d116d5a0736eae2
 
-    https://cdn.kernel.org/pub/linux/kernel/projects/rt/6.14/older/patch-6.14-rt3.patch.xz
+Or to build 5.10.235-rt129 directly, the following patches should be applied:
 
-The split quilt queue is available at:
+  https://www.kernel.org/pub/linux/kernel/v5.x/linux-5.10.tar.xz
 
-    https://cdn.kernel.org/pub/linux/kernel/projects/rt/6.14/older/patches-6.14-rt3.tar.xz
+  https://www.kernel.org/pub/linux/kernel/v5.x/patch-5.10.235.xz
 
-Sebastian
+  https://www.kernel.org/pub/linux/kernel/projects/rt/5.10/older/patch-5.10.235-rt129.patch.xz
 
-diff --git a/arch/arm/kernel/traps.c b/arch/arm/kernel/traps.c
-index 1254992184d2e..afbd2ebe5c39d 100644
---- a/arch/arm/kernel/traps.c
-+++ b/arch/arm/kernel/traps.c
-@@ -275,8 +275,8 @@ static int __die(const char *str, int err, struct pt_regs *regs)
- 	static int die_counter;
- 	int ret;
- 
--	pr_emerg("Internal error: %s: %x [#%d] %s" S_SMP S_ISA "\n",
--		 str, err, ++die_counter, preempt_model_str());
-+	pr_emerg("Internal error: %s: %x [#%d]" S_SMP S_ISA "\n",
-+		 str, err, ++die_counter);
- 
- 	/* trap and error numbers are mostly meaningless on ARM */
- 	ret = notify_die(DIE_OOPS, str, regs, err, tsk->thread.trap_no, SIGSEGV);
-diff --git a/arch/arm64/Kconfig b/arch/arm64/Kconfig
-index 940343beb3d4c..ace21a07a00c7 100644
---- a/arch/arm64/Kconfig
-+++ b/arch/arm64/Kconfig
-@@ -41,6 +41,7 @@ config ARM64
- 	select ARCH_HAS_NMI_SAFE_THIS_CPU_OPS
- 	select ARCH_HAS_NON_OVERLAPPING_ADDRESS_SPACE
- 	select ARCH_HAS_NONLEAF_PMD_YOUNG if ARM64_HAFT
-+	select ARCH_HAS_PREEMPT_LAZY
- 	select ARCH_HAS_PTE_DEVMAP
- 	select ARCH_HAS_PTE_SPECIAL
- 	select ARCH_HAS_HW_PTE_YOUNG
-diff --git a/arch/arm64/include/asm/thread_info.h b/arch/arm64/include/asm/thread_info.h
-index 1114c1c3300a1..4443ef2789758 100644
---- a/arch/arm64/include/asm/thread_info.h
-+++ b/arch/arm64/include/asm/thread_info.h
-@@ -59,11 +59,12 @@ void arch_setup_new_exec(void);
- 
- #define TIF_SIGPENDING		0	/* signal pending */
- #define TIF_NEED_RESCHED	1	/* rescheduling necessary */
--#define TIF_NOTIFY_RESUME	2	/* callback before returning to user */
--#define TIF_FOREIGN_FPSTATE	3	/* CPU's FP state is not current's */
--#define TIF_UPROBE		4	/* uprobe breakpoint or singlestep */
--#define TIF_MTE_ASYNC_FAULT	5	/* MTE Asynchronous Tag Check Fault */
--#define TIF_NOTIFY_SIGNAL	6	/* signal notifications exist */
-+#define TIF_NEED_RESCHED_LAZY	2	/* Lazy rescheduling needed */
-+#define TIF_NOTIFY_RESUME	3	/* callback before returning to user */
-+#define TIF_FOREIGN_FPSTATE	4	/* CPU's FP state is not current's */
-+#define TIF_UPROBE		5	/* uprobe breakpoint or singlestep */
-+#define TIF_MTE_ASYNC_FAULT	6	/* MTE Asynchronous Tag Check Fault */
-+#define TIF_NOTIFY_SIGNAL	7	/* signal notifications exist */
- #define TIF_SYSCALL_TRACE	8	/* syscall trace active */
- #define TIF_SYSCALL_AUDIT	9	/* syscall auditing */
- #define TIF_SYSCALL_TRACEPOINT	10	/* syscall tracepoint for ftrace */
-@@ -85,6 +86,7 @@ void arch_setup_new_exec(void);
- 
- #define _TIF_SIGPENDING		(1 << TIF_SIGPENDING)
- #define _TIF_NEED_RESCHED	(1 << TIF_NEED_RESCHED)
-+#define _TIF_NEED_RESCHED_LAZY	(1 << TIF_NEED_RESCHED_LAZY)
- #define _TIF_NOTIFY_RESUME	(1 << TIF_NOTIFY_RESUME)
- #define _TIF_FOREIGN_FPSTATE	(1 << TIF_FOREIGN_FPSTATE)
- #define _TIF_SYSCALL_TRACE	(1 << TIF_SYSCALL_TRACE)
-@@ -100,10 +102,10 @@ void arch_setup_new_exec(void);
- #define _TIF_NOTIFY_SIGNAL	(1 << TIF_NOTIFY_SIGNAL)
- #define _TIF_TSC_SIGSEGV	(1 << TIF_TSC_SIGSEGV)
- 
--#define _TIF_WORK_MASK		(_TIF_NEED_RESCHED | _TIF_SIGPENDING | \
-+#define _TIF_WORK_MASK		(_TIF_NEED_RESCHED | _TIF_NEED_RESCHED_LAZY | \
- 				 _TIF_NOTIFY_RESUME | _TIF_FOREIGN_FPSTATE | \
- 				 _TIF_UPROBE | _TIF_MTE_ASYNC_FAULT | \
--				 _TIF_NOTIFY_SIGNAL)
-+				 _TIF_NOTIFY_SIGNAL | _TIF_SIGPENDING)
- 
- #define _TIF_SYSCALL_WORK	(_TIF_SYSCALL_TRACE | _TIF_SYSCALL_AUDIT | \
- 				 _TIF_SYSCALL_TRACEPOINT | _TIF_SECCOMP | \
-diff --git a/arch/arm64/kernel/entry-common.c b/arch/arm64/kernel/entry-common.c
-index b260ddc4d3e9a..7993fab0cab4c 100644
---- a/arch/arm64/kernel/entry-common.c
-+++ b/arch/arm64/kernel/entry-common.c
-@@ -132,7 +132,7 @@ static void do_notify_resume(struct pt_regs *regs, unsigned long thread_flags)
- 	do {
- 		local_irq_enable();
- 
--		if (thread_flags & _TIF_NEED_RESCHED)
-+		if (thread_flags & (_TIF_NEED_RESCHED | _TIF_NEED_RESCHED_LAZY))
- 			schedule();
- 
- 		if (thread_flags & _TIF_UPROBE)
-diff --git a/arch/arm64/kernel/traps.c b/arch/arm64/kernel/traps.c
-index 0b6f92fcdb304..529cff825531c 100644
---- a/arch/arm64/kernel/traps.c
-+++ b/arch/arm64/kernel/traps.c
-@@ -179,8 +179,8 @@ static int __die(const char *str, long err, struct pt_regs *regs)
- 	static int die_counter;
- 	int ret;
- 
--	pr_emerg("Internal error: %s: %016lx [#%d] %s" S_SMP "\n",
--		 str, err, ++die_counter, preempt_model_str());
-+	pr_emerg("Internal error: %s: %016lx [#%d] " S_SMP "\n",
-+		 str, err, ++die_counter);
- 
- 	/* trap and error numbers are mostly meaningless on ARM */
- 	ret = notify_die(DIE_OOPS, str, regs, err, 0, SIGSEGV);
-diff --git a/arch/powerpc/kernel/traps.c b/arch/powerpc/kernel/traps.c
-index d6d77d92b3358..cb8e9357383e9 100644
---- a/arch/powerpc/kernel/traps.c
-+++ b/arch/powerpc/kernel/traps.c
-@@ -263,10 +263,9 @@ static int __die(const char *str, struct pt_regs *regs, long err)
+Signing key fingerprint:
+
+  9354 0649 9972 8D31 D464  D140 F394 A423 F8E6 7C26
+
+All keys used for the above files and repositories can be found on the
+following git repository:
+
+   git://git.kernel.org/pub/scm/docs/kernel/pgpkeys.git
+
+Enjoy!
+Luis
+
+Changes from v5.10.235-rt128:
+---
+
+Luis Claudio R. Goncalves (2):
+      rt: fix build issue in be2net
+      Linux 5.10.235-rt129
+---
+drivers/net/ethernet/emulex/benet/be_cmds.c | 7 ++++---
+ localversion-rt                             | 2 +-
+ 2 files changed, 5 insertions(+), 4 deletions(-)
+---
+diff --git a/drivers/net/ethernet/emulex/benet/be_cmds.c b/drivers/net/ethernet/emulex/benet/be_cmds.c
+index 9812a9a5d033..3068ccd37034 100644
+--- a/drivers/net/ethernet/emulex/benet/be_cmds.c
++++ b/drivers/net/ethernet/emulex/benet/be_cmds.c
+@@ -875,9 +875,10 @@ static int be_cmd_lock(struct be_adapter *adapter)
+ /* Must be used only in process context */
+ static void be_cmd_unlock(struct be_adapter *adapter)
  {
- 	printk("Oops: %s, sig: %ld [#%d]\n", str, err, ++die_counter);
- 
--	printk("%s PAGE_SIZE=%luK%s %s %s%s%s%s %s\n",
-+	printk("%s PAGE_SIZE=%luK%s %s%s%s%s %s\n",
- 	       IS_ENABLED(CONFIG_CPU_LITTLE_ENDIAN) ? "LE" : "BE",
- 	       PAGE_SIZE / 1024, get_mmu_str(),
--	       preempt_model_str(),
- 	       IS_ENABLED(CONFIG_SMP) ? " SMP" : "",
- 	       IS_ENABLED(CONFIG_SMP) ? (" NR_CPUS=" __stringify(NR_CPUS)) : "",
- 	       debug_pagealloc_enabled() ? " DEBUG_PAGEALLOC" : "",
-diff --git a/arch/s390/kernel/dumpstack.c b/arch/s390/kernel/dumpstack.c
-index 7930fbab69dbb..911b95cd57e58 100644
---- a/arch/s390/kernel/dumpstack.c
-+++ b/arch/s390/kernel/dumpstack.c
-@@ -198,8 +198,8 @@ void __noreturn die(struct pt_regs *regs, const char *str)
- 	console_verbose();
- 	spin_lock_irq(&die_lock);
- 	bust_spinlocks(1);
--	printk("%s: %04x ilc:%d [#%d] %s", str, regs->int_code & 0xffff,
--	       regs->int_code >> 17, ++die_counter, preempt_model_str());
-+	printk("%s: %04x ilc:%d [#%d]", str, regs->int_code & 0xffff,
-+	       regs->int_code >> 17, ++die_counter);
- 	pr_cont("SMP ");
- 	if (debug_pagealloc_enabled())
- 		pr_cont("DEBUG_PAGEALLOC");
-diff --git a/arch/x86/kernel/dumpstack.c b/arch/x86/kernel/dumpstack.c
-index 064b23a93c6fe..91639d1e4ec2c 100644
---- a/arch/x86/kernel/dumpstack.c
-+++ b/arch/x86/kernel/dumpstack.c
-@@ -400,8 +400,8 @@ static void __die_header(const char *str, struct pt_regs *regs, long err)
- 		exec_summary_regs = *regs;
- 
- 	printk(KERN_DEFAULT
--	       "Oops: %s: %04lx [#%d]%s%s%s%s%s\n", str, err & 0xffff,
--	       ++die_counter, preempt_model_str(),
-+	       "Oops: %s: %04lx [#%d]%s%s%s%s\n", str, err & 0xffff,
-+	       ++die_counter,
- 	       IS_ENABLED(CONFIG_SMP)     ? " SMP"             : "",
- 	       debug_pagealloc_enabled()  ? " DEBUG_PAGEALLOC" : "",
- 	       IS_ENABLED(CONFIG_KASAN)   ? " KASAN"           : "",
-diff --git a/arch/xtensa/kernel/traps.c b/arch/xtensa/kernel/traps.c
-index 0edba7d8df8c7..44c07c4e0833a 100644
---- a/arch/xtensa/kernel/traps.c
-+++ b/arch/xtensa/kernel/traps.c
-@@ -633,7 +633,7 @@ void __noreturn die(const char * str, struct pt_regs * regs, long err)
- 	console_verbose();
- 	spin_lock_irq(&die_lock);
- 
--	pr_info("%s: sig: %ld [#%d]%s\n", str, err, ++die_counter, preempt_model_str());
-+	pr_info("%s: sig: %ld [#%d]\n", str, err, ++die_counter);
- 	show_regs(regs);
- 	if (!user_mode(regs))
- 		show_stack(NULL, (unsigned long *)regs->areg[1], KERN_INFO);
-diff --git a/kernel/sched/core.c b/kernel/sched/core.c
-index 694ece3870a54..f6557863e694e 100644
---- a/kernel/sched/core.c
-+++ b/kernel/sched/core.c
-@@ -7647,32 +7647,55 @@ PREEMPT_MODEL_ACCESSOR(lazy);
- 
- #else /* !CONFIG_PREEMPT_DYNAMIC: */
- 
-+#define preempt_dynamic_mode -1
-+
- static inline void preempt_dynamic_init(void) { }
- 
- #endif /* CONFIG_PREEMPT_DYNAMIC */
- 
-+const char *preempt_modes[] = {
-+	"none", "voluntary", "full", "lazy", NULL,
-+};
-+
- const char *preempt_model_str(void)
- {
--	if (IS_ENABLED(CONFIG_ARCH_HAS_PREEMPT_LAZY) && preempt_model_lazy()) {
--		if (preempt_model_rt())
--			return "PREEMPT_RT+LAZY";
--		if (preempt_model_full())
--			return "PREEMPT+LAZY";
--		if (preempt_model_voluntary())
--			return "VOLUNTARY+LAZY";
--		if (preempt_model_none())
--			return "NONE+LAZY";
--	} else {
--		if (preempt_model_rt())
--			return "PREEMPT_RT";
--		if (preempt_model_full())
--			return "PREEMPT";
--		if (preempt_model_voluntary())
--			return "VOLUNTARY";
--		if (preempt_model_none())
--			return "NONE";
-+	bool brace = IS_ENABLED(CONFIG_PREEMPT_RT) &&
-+		(IS_ENABLED(CONFIG_PREEMPT_DYNAMIC) ||
-+		 IS_ENABLED(CONFIG_PREEMPT_LAZY));
-+	static char buf[128];
-+
-+	if (IS_ENABLED(CONFIG_PREEMPT_BUILD)) {
-+		struct seq_buf s;
-+
-+		seq_buf_init(&s, buf, sizeof(buf));
-+		seq_buf_puts(&s, "PREEMPT");
-+
-+		if (IS_ENABLED(CONFIG_PREEMPT_RT))
-+			seq_buf_printf(&s, "%sRT%s",
-+				       brace ? "_{" : "_",
-+				       brace ? "," : "");
-+
-+		if (IS_ENABLED(CONFIG_PREEMPT_DYNAMIC)) {
-+			seq_buf_printf(&s, "(%s)%s",
-+				       preempt_dynamic_mode > 0 ?
-+				       preempt_modes[preempt_dynamic_mode] : "undef",
-+				       brace ? "}" : "");
-+			return seq_buf_str(&s);
-+		}
-+
-+		if (IS_ENABLED(CONFIG_PREEMPT_LAZY)) {
-+			seq_buf_printf(&s, "LAZY%s",
-+				       brace ? "}" : "");
-+			return seq_buf_str(&s);
-+		}
-+
-+		return seq_buf_str(&s);
- 	}
--	return "UNKNOWN-PREEMPT";
-+
-+	if (IS_ENABLED(CONFIG_PREEMPT_VOLUNTARY_BUILD))
-+		return "VOLUNTARY";
-+
-+	return "NONE";
+-	if (use_mcc(adapter))
+-		return spin_unlock_bh(&adapter->mcc_lock);
+-	else
++	if (use_mcc(adapter)) {
++		spin_unlock_bh(&adapter->mcc_lock);
++		return;
++	} else
+ 		return mutex_unlock(&adapter->mbox_lock);
  }
  
- int io_schedule_prepare(void)
-diff --git a/kernel/sched/debug.c b/kernel/sched/debug.c
-index ef047add7f9e6..39be73969d284 100644
---- a/kernel/sched/debug.c
-+++ b/kernel/sched/debug.c
-@@ -244,11 +244,13 @@ static ssize_t sched_dynamic_write(struct file *filp, const char __user *ubuf,
- 
- static int sched_dynamic_show(struct seq_file *m, void *v)
- {
--	static const char * preempt_modes[] = {
--		"none", "voluntary", "full", "lazy",
--	};
--	int j = ARRAY_SIZE(preempt_modes) - !IS_ENABLED(CONFIG_ARCH_HAS_PREEMPT_LAZY);
- 	int i = IS_ENABLED(CONFIG_PREEMPT_RT) * 2;
-+	int j;
-+
-+	/* Count entries in NULL terminated preempt_modes */
-+	for (j = 0; preempt_modes[j]; j++)
-+		;
-+	j -= !IS_ENABLED(CONFIG_ARCH_HAS_PREEMPT_LAZY);
- 
- 	for (; i < j; i++) {
- 		if (preempt_dynamic_mode == i)
-diff --git a/kernel/sched/sched.h b/kernel/sched/sched.h
-index 023b844159c94..1287c5789b7ec 100644
---- a/kernel/sched/sched.h
-+++ b/kernel/sched/sched.h
-@@ -3619,6 +3619,7 @@ extern int preempt_dynamic_mode;
- extern int sched_dynamic_mode(const char *str);
- extern void sched_dynamic_update(int mode);
- #endif
-+extern const char *preempt_modes[];
- 
- #ifdef CONFIG_SCHED_MM_CID
- 
-diff --git a/lib/dump_stack.c b/lib/dump_stack.c
-index c3e59f8992279..b3a85fe8b673e 100644
---- a/lib/dump_stack.c
-+++ b/lib/dump_stack.c
-@@ -54,7 +54,7 @@ void __init dump_stack_set_arch_desc(const char *fmt, ...)
-  */
- void dump_stack_print_info(const char *log_lvl)
- {
--	printk("%sCPU: %d UID: %u PID: %d Comm: %.20s %s%s %s %.*s %s" BUILD_ID_FMT "\n",
-+	printk("%sCPU: %d UID: %u PID: %d Comm: %.20s %s%s %s %.*s %s " BUILD_ID_FMT "\n",
- 	       log_lvl, raw_smp_processor_id(),
- 	       __kuid_val(current_real_cred()->euid),
- 	       current->pid, current->comm,
 diff --git a/localversion-rt b/localversion-rt
-index c3054d08a1129..1445cd65885cd 100644
+index 6d2a676e2033..90303f5aabcf 100644
 --- a/localversion-rt
 +++ b/localversion-rt
 @@ -1 +1 @@
---rt2
-+-rt3
+--rt128
++-rt129
+
