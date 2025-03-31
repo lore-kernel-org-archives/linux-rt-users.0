@@ -1,63 +1,51 @@
 Received: from galois.linutronix.de (Galois.linutronix.de [193.142.43.55])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 014D4AD23;
-	Mon, 31 Mar 2025 09:07:59 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 93FB01DC98C
+	for <linux-rt-users@vger.kernel.org>; Mon, 31 Mar 2025 09:38:47 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=193.142.43.55
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1743412081; cv=none; b=QHgN0avs4HBr2BwGgLQXmCzUEKUJgEQ/zU7xbZZOZgZwHWlVGAlHmvyX2EuGa+2j11+flayc0hqL53yrZCBN92n4mDY1/xnOgBSN3p+4U86QT9DtOpJS9pQ9Ye+HmYZ8o8an5eQtxYRnqLziCpJ/fwk8gIVteyIAExlmadjgZ+I=
+	t=1743413929; cv=none; b=dHR1qOfJ/HUx/kFLFG6BYLn3IPUMOtDVR4WQB72xJmzINGU0rEMQkKxfioBbXfemfW2S7RA3QjTKAj0gf9OVSXUZzBgLuS4XJN3NQFtv9hic6I6WYfTGfRWnU+KMVNEy4DIoPj4PULwzjiuWj0KCzgxH6qXE3ZwHYrppZk0jK6M=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1743412081; c=relaxed/simple;
-	bh=cJpsG0NuVPyTrNtoLgQWDGGd++w5Px7qO6TwmxaM6KA=;
+	s=arc-20240116; t=1743413929; c=relaxed/simple;
+	bh=F2fXcyrlZZszs7UkFqBOeIDNh61kMgn5lcG8bZgx5DA=;
 	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 Content-Type:Content-Disposition:In-Reply-To; b=V4HFzwnQ7jeg/7y4+AU+WAjix9pdM204nspRRLC3Ei4eSsM9gEgcCR6vPrb40mXJ/iP/goWEISxNQrxfztWKosH1pxzwyq79SMe2HyVQzpPGkJW7d5cMj88y+mhTYoUuF2NZiTzOEQo3ZFfgpEbsHaX0H6JIuzySoDsdixECt0s=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linutronix.de; spf=pass smtp.mailfrom=linutronix.de; dkim=pass (2048-bit key) header.d=linutronix.de header.i=@linutronix.de header.b=ljapDT1U; dkim=permerror (0-bit key) header.d=linutronix.de header.i=@linutronix.de header.b=Q66gDQxo; arc=none smtp.client-ip=193.142.43.55
+	 Content-Type:Content-Disposition:In-Reply-To; b=Ln37WwWxbpcGxhpiOajQIF3NyMrv6ptb4BR3jyUzUR86lRkjRgq6JDsHMyYC86sJ/8+bwtAjQCwNpuZhnjGPa8pTT8totUTKFpAeBFjrswpU8TqAeDic3+WnXyyj8Uhrg3tCGIVAdiuEAwLXtAteiOhjETYT9t2qHoSaZ2hp1nI=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linutronix.de; spf=pass smtp.mailfrom=linutronix.de; dkim=pass (2048-bit key) header.d=linutronix.de header.i=@linutronix.de header.b=fa6Y4b6i; dkim=permerror (0-bit key) header.d=linutronix.de header.i=@linutronix.de header.b=e+xKbBEj; arc=none smtp.client-ip=193.142.43.55
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linutronix.de
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=linutronix.de
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="ljapDT1U";
-	dkim=permerror (0-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="Q66gDQxo"
-Date: Mon, 31 Mar 2025 11:07:56 +0200
+	dkim=pass (2048-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="fa6Y4b6i";
+	dkim=permerror (0-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="e+xKbBEj"
+Date: Mon, 31 Mar 2025 11:38:44 +0200
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
-	s=2020; t=1743412077;
+	s=2020; t=1743413925;
 	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
 	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references;
-	bh=cJpsG0NuVPyTrNtoLgQWDGGd++w5Px7qO6TwmxaM6KA=;
-	b=ljapDT1U59tqFPqTNSUBYDGOV93YFhboQJkTd95+tbNoESkCXOr+YiUuFn/HZRdQ+7GZeg
-	HapYHJNVe9jzE2X5qk9aUdQAB2X1im997mh73gLD+XelCoPFM35X/WsbzfSK8K6JzkQtwX
-	IRiT9Ks+43+UXItNNPFdbvMp8l8od3ikZI0p8+9vkrgt5AyjsUxcSu6SnOYwHIO92wITeC
-	x9SI+r5n4EHS4/O6qmXbem1GgMXoZmpMvWgUMOfFkGCed5jnAcf25yN2QOeYC8SvPdguw1
-	r3HbnhdPv4GLMkRygqm7XSGKOsP9f1XPm4UI6lD4vR1Kqm8uKffUfriEgIORvQ==
+	bh=G/GTemmLic3X2KD59bsEfGn5zx36IH7iuPDHwa+cPNQ=;
+	b=fa6Y4b6iTigamt8w8L9YYTiVsq2Pa+ozDta6p9EfXv0W7E3Q9XCpUuLprkuBgNyaYvhlwY
+	RZYbMSgsVFWEg7N/105kpN7MQ46RYYGVOzQkVP2yXcS1dRpXdeYrqGGsIoK32igILBZ5gd
+	rhTNGFC+WpIAHBo6yUSPMQRy+y2VyRR2lMwlhctBZLUp2EAXPo/GekR0WkBYAEXS5s3I7r
+	okwJYBVq89wbo3BinzHpde1CObSqavLBB2KBZFmQZ1tf84+RAVo5xkyQR3KR1eF0Oy6yY3
+	FCmjl8uioq2DKt2KP10kUyesLv8LBRRd3ZDVJhEMqdkcFjy4NVwWgKZ3oVhfyA==
 DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
-	s=2020e; t=1743412077;
+	s=2020e; t=1743413925;
 	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
 	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references;
-	bh=cJpsG0NuVPyTrNtoLgQWDGGd++w5Px7qO6TwmxaM6KA=;
-	b=Q66gDQxoAFrIFRlfBtupn6o7SJo99Hdz2bxCh9rlU+qsBsGft9E9GEVtc1hjd8p3pXzf+T
-	M/ISyYGZwoFeOQAA==
+	bh=G/GTemmLic3X2KD59bsEfGn5zx36IH7iuPDHwa+cPNQ=;
+	b=e+xKbBEj5aW12EdHETzGrYLcdV4nWn7WsHHsh4/Z7e39EvFKVxXD0NRLoiihKiKuAJ0cvw
+	wgAS01PrvTI3fqDw==
 From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-To: Mark Rutland <mark.rutland@arm.com>
-Cc: Valentin Schneider <vschneid@redhat.com>,
-	Catalin Marinas <catalin.marinas@arm.com>,
-	Will Deacon <will@kernel.org>, linux-arm-kernel@lists.infradead.org,
-	linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org,
-	Mike Galbraith <efault@gmx.de>,
-	Peter Collingbourne <pcc@google.com>,
-	Thomas Gleixner <tglx@linutronix.de>,
-	Neeraj Upadhyay <neeraj.upadhyay@kernel.org>,
-	Thiago Jung Bauermann <thiago.bauermann@linaro.org>,
-	Mark Brown <broonie@kernel.org>,
-	Kristina Martsenko <kristina.martsenko@arm.com>,
-	Petr Tesarik <ptesarik@suse.com>,
-	Jinjie Ruan <ruanjinjie@huawei.com>,
-	Juri Lelli <juri.lelli@redhat.com>, Phil Auld <pauld@redhat.com>
-Subject: Re: [PATCH 1/1] arm64: enable PREEMPT_LAZY
-Message-ID: <20250331090756.L7iXi1Ee@linutronix.de>
-References: <20250305104925.189198-1-vschneid@redhat.com>
- <20250305104925.189198-2-vschneid@redhat.com>
- <Z8hAZ09Q40fxLJSk@J2N7QTR9R3>
+To: Ben Hutchings <benh@debian.org>
+Cc: "Luis Claudio R. Goncalves" <lgoncalv@redhat.com>,
+	linux-rt-users@vger.kernel.org
+Subject: Re: [PATCH 5.10] rt: Fix buid issue in be2net
+Message-ID: <20250331093844.B9DjnmBS@linutronix.de>
+References: <Z-cGnAlIvThsPiH8@decadent.org.uk>
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
@@ -66,20 +54,16 @@ List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
 Content-Type: text/plain; charset=utf-8
 Content-Disposition: inline
-In-Reply-To: <Z8hAZ09Q40fxLJSk@J2N7QTR9R3>
+Content-Transfer-Encoding: quoted-printable
+In-Reply-To: <Z-cGnAlIvThsPiH8@decadent.org.uk>
 
-On 2025-03-05 12:15:35 [+0000], Mark Rutland wrote:
-> Catalin, Will, given this is small and self-contained, I reckon it makes
-> sense to pick this up ahead of Jinjie's series to move arm64 over to the
-> generic entry library (which is on my queue of things to review). Even
-> if we pick up both, it'll be easier to bisect and debug issues caused by
-> this patch alone.
+On 2025-03-28 21:29:16 [+0100], Ben Hutchings wrote:
+> The problem described here is specific to v5.10-rt.
+=E2=80=A6
 
-Any updates here? I know it is the merge window but I don't know if
-upstream considers this or wants to sit on it until the generic entry
-gets in.
-In the meantime I stuff it into my RT tree so it does not get lost.
+Thank you for the report.
 
-> Mark.
+Luis is aware of it and handling it
+	https://lore.kernel.org/all/Z9yuIpi8zjrTCkoB@uudg.org/
 
 Sebastian
