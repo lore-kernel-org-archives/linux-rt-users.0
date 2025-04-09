@@ -1,289 +1,262 @@
-Received: from EUR05-DB8-obe.outbound.protection.outlook.com (mail-db8eur05on2045.outbound.protection.outlook.com [40.107.20.45])
+Received: from NAM12-BN8-obe.outbound.protection.outlook.com (mail-bn8nam12on2069.outbound.protection.outlook.com [40.107.237.69])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 3D2A81DF26F;
-	Wed,  9 Apr 2025 06:41:47 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=fail smtp.client-ip=40.107.20.45
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 7741712CDAE;
+	Wed,  9 Apr 2025 09:29:28 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=fail smtp.client-ip=40.107.237.69
 ARC-Seal:i=2; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1744180911; cv=fail; b=NKDXq3hOX9g0qR+W4Q2naStf9PgQLp+qxgjdmE6qpIzq3QlhD0cZLt6fY4qWDLS32TQ+21R9CDC1DYtAOhqP1LoO+t4o+bF4uZG8lSwz6I5cnhHLg/ELUeSMHjQTtthtbHKjxlZepLDEtSIk6UhzqC7rHR+6gluJ4LtCveqQlVY=
+	t=1744190970; cv=fail; b=iejBCmHhpBGBnr5HrQveRb9yTcpOj+ijDeN0wp2PZf1DLyRyoRHcgLvR3Vhu+XcbzqSwHXgJ5YMUBt59i0jWcKV2rxGPGpDcoUIMf6kN9wmPSmkiyYl9bcEoxy3OlkoseG1nTc7KlsWRSCnpXleO+FihALl1dPokde52t29oP+A=
 ARC-Message-Signature:i=2; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1744180911; c=relaxed/simple;
-	bh=TjW+irL1jPnK1rfBsMnd8rbZAOU3UGDMYs+V6ZECnFs=;
-	h=Message-ID:Date:Subject:To:Cc:References:From:In-Reply-To:
-	 Content-Type:MIME-Version; b=sYUKCcOhs13hKUB6CbM6n+1isQvfDDwEDzO9OWffdjyzB98jz5UaaD2oF+TAgJevgdcmUjVLX4QyXA3t+zNBSj4Eu59HHDZkNAfjkMmIN1WDTdX7QkCYEd321OhJV7AyQ6mogCM8CSAxx5dx8kEwxR2nCpraRA3YdjkkBsO6ygc=
-ARC-Authentication-Results:i=2; smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=siemens.com; spf=pass smtp.mailfrom=siemens.com; dkim=pass (2048-bit key) header.d=siemens.com header.i=@siemens.com header.b=fv20wHrD; arc=fail smtp.client-ip=40.107.20.45
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=siemens.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=siemens.com
+	s=arc-20240116; t=1744190970; c=relaxed/simple;
+	bh=BTIu1j71MWmi36wS+3KHNMK63mYglbizmK7+ErVpQpw=;
+	h=Message-ID:Date:MIME-Version:Subject:To:CC:References:From:
+	 In-Reply-To:Content-Type; b=XQycq/NtxenYn2pbYPoV9LbGFAYmk9jj66We3NY/abPGpgsa3ubXjyfdo0522hIW+dH8xYNQMMS6RObzVG1uymm9DhITmnxnHVglC5iMBTQFsO3frZsJemU8S6qBGSbPhV2QzmIkTrQSELODv9f1xb55D5aUQOAZ79OCaqJc6M8=
+ARC-Authentication-Results:i=2; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=amd.com; spf=fail smtp.mailfrom=amd.com; dkim=pass (1024-bit key) header.d=amd.com header.i=@amd.com header.b=BEO5Il4P; arc=fail smtp.client-ip=40.107.237.69
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=amd.com
+Authentication-Results: smtp.subspace.kernel.org; spf=fail smtp.mailfrom=amd.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=siemens.com header.i=@siemens.com header.b="fv20wHrD"
+	dkim=pass (1024-bit key) header.d=amd.com header.i=@amd.com header.b="BEO5Il4P"
 ARC-Seal: i=1; a=rsa-sha256; s=arcselector10001; d=microsoft.com; cv=none;
- b=W5WayNf1xIfhEKdZoMXrIovHiTn/8UYTKCJGINhGdqH8R8YFV7IHnRGT9dyodeGFQ7JqmX85Aprwa4myKZtZDlEkp9J1w1Z8dUkefNP3yqISs75LFQYNeLGvh4mj8aICQWroDUrKzEMifdAxXn7v6iNt4LMZxREHTp9dLPiaQCkvhtGutcnWrKHhC+i/d99z3HO+txz++sKAz4ODeSF7SKC7hqTHfygELUBMBvwK73ewa9lElCn8619DeuC5RbXUCR72ZW3bF4mZaUzUlq110iYdcSHsB/jD1ct9GrSRt86De5IlyDU9SeXO5MvDP15ap63+FpGrJEsteVSugAJk5w==
+ b=uflWFpP3q4SdURNxSGxRcPcuxHD7Mjc4SGqN7Sb+Si9zhGvvy/+PQxh8U0h56ptWyEX1iNlM1/SZapUuSzdWIqi1EBKI5DvcUTwDgEplwLhjOgsGlIsf5VjYoglbS8yMuytxcju6EKn9/7lCXDWfkZ5HeYX9WuqZc9j39fGCR0F3FzZ4an7d4h2MRd+qD0kYqnwcLoh2mZuVo2Wofd7x7wFzQcYSBGzNoF1hy4efmddH7wc5koPPkyy40S/aSYierwaRgXzBOt0eNFAZqSyT4Qwvq/hB60sa6ihrZmNb6w/6LfUwfRHr0Bue7PP2/PUG9mt3yJ7XD/FTGs1Jj960SA==
 ARC-Message-Signature: i=1; a=rsa-sha256; c=relaxed/relaxed; d=microsoft.com;
  s=arcselector10001;
  h=From:Date:Subject:Message-ID:Content-Type:MIME-Version:X-MS-Exchange-AntiSpam-MessageData-ChunkCount:X-MS-Exchange-AntiSpam-MessageData-0:X-MS-Exchange-AntiSpam-MessageData-1;
- bh=tK+pCrP5vAOps+i1Te7kR90r21i/M6mso8g37Wp7WTQ=;
- b=eaOxca7CbgIn2xBapy48rnMeT43lWgLPFK/ZD5i2Xf93OFco70qdUOHozjzBepUqlqktqRc+WOF4e+Q4733D3J8DqN7eS/B2GycIb6v7WiR14G6b3CxmPK2fCAx8gUi1mlcG6+cZ1gQklyGwIUgDpG6q78LlgW0hiIDvDeFtSZzzypbUluvEgA+ZyTNhfevmsQqSQlyI5azr8PA+yTQccCIyYwDesjAmk3rSbmJdcLp5C8ylqqbiTG2EpvTQq8fuyxAnkXNQmT/zwdDnT6EkqYdNUUxMaz/CP2EAmzBCxk50FRhnijf22DjG2anGad+gTic5BafW/5s39+yRe/xqgQ==
-ARC-Authentication-Results: i=1; mx.microsoft.com 1; spf=pass
- smtp.mailfrom=siemens.com; dmarc=pass action=none header.from=siemens.com;
- dkim=pass header.d=siemens.com; arc=none
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=siemens.com;
- s=selector2;
+ bh=tFg7BpnQEror9BFiteStlG5DkKH+7+JFA4LQ1bji1lQ=;
+ b=t6DpBKlTwlKzKSAlnmFhzvziAjy6MBU9gywHerDRd1Xy++Wm472HKVDT5x4dgXjowwL69Tq3UCvDbpIZhbkBjzTUHfN16WmvXYdNzHfNDiFaI74o5a51TaTKqFV0KXr7Dis9cpjLBPuu4IbTAxIrPteD7E97zT45VhotzCXwY9tRDSsnY+uhPQ3NcCEsegEsVZ8Al7AxIKRT/0rqocEDjyY80Ex1OOKHQ9vlHbOHfvArktuM97QuQtM+tAVJYeLSh0OznpSkdJCqKeI5jx7uUuorDaCkX5gKUbsMVzUkHBny42rsQ7xhdjxkB02bgR/MqVA1EQk0fhXC2LetsO1g9A==
+ARC-Authentication-Results: i=1; mx.microsoft.com 1; spf=pass (sender ip is
+ 165.204.84.17) smtp.rcpttodomain=siemens.com smtp.mailfrom=amd.com;
+ dmarc=pass (p=quarantine sp=quarantine pct=100) action=none
+ header.from=amd.com; dkim=none (message not signed); arc=none (0)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=amd.com; s=selector1;
  h=From:Date:Subject:Message-ID:Content-Type:MIME-Version:X-MS-Exchange-SenderADCheck;
- bh=tK+pCrP5vAOps+i1Te7kR90r21i/M6mso8g37Wp7WTQ=;
- b=fv20wHrD1a7DHfjKbzz5nE8TpUC5BaBM7ZLBNbdSaYbl7LdKLQfXy7Z7MeHE4uem6JFAS9/oqtnR9NMxYcHa3uS+Ac7WIKrxHGO++M1xcc7taZex3ImxJMj5zkV+2qvlASGyLEZd/IPckRYuA0BkeiHD98am0CqZKOtgS+VvMV5pjLvZU+8CUvyPoANlCUH6sYxuytPBywausqnaP1/QHSGDEEpJRYllRM9rOA6Tf8gUbSMRIElap8knSkBQZsxjFoGqKFbEbBqMyTUeo8J+2aLNihTlr7Z5SR3gp5xjsUMxdvytVKYpM0dwHyDvyhSmDP0fy3fh23XoPzq53oZRsA==
-Authentication-Results: dkim=none (message not signed)
- header.d=none;dmarc=none action=none header.from=siemens.com;
-Received: from AS4PR10MB6181.EURPRD10.PROD.OUTLOOK.COM (2603:10a6:20b:588::19)
- by DU4PR10MB8573.EURPRD10.PROD.OUTLOOK.COM (2603:10a6:10:55a::18) with
+ bh=tFg7BpnQEror9BFiteStlG5DkKH+7+JFA4LQ1bji1lQ=;
+ b=BEO5Il4PavLe8Ko0YvWR7cBdBdy0594CVf7UWySoteMFil3zyCDYdgFqOKofqo8v8GOfH/P6douzkk1KvgVlKUgAwXQer95gg0U3Kfd1whGDFaeioE31p8mw4W+N2s/b4fL/vue/Ogs9xN1RAi41pFG6WM7QPenprWvDhoq+0IE=
+Received: from BL1PR13CA0367.namprd13.prod.outlook.com (2603:10b6:208:2c0::12)
+ by MN2PR12MB4111.namprd12.prod.outlook.com (2603:10b6:208:1de::22) with
  Microsoft SMTP Server (version=TLS1_2,
- cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.20.8606.35; Wed, 9 Apr
- 2025 06:41:45 +0000
-Received: from AS4PR10MB6181.EURPRD10.PROD.OUTLOOK.COM
- ([fe80::8fe1:7e71:cf4a:7408]) by AS4PR10MB6181.EURPRD10.PROD.OUTLOOK.COM
- ([fe80::8fe1:7e71:cf4a:7408%4]) with mapi id 15.20.8606.029; Wed, 9 Apr 2025
- 06:41:45 +0000
-Message-ID: <3f7b7ce1-6dd4-4a4e-9789-4c0cbde057bd@siemens.com>
-Date: Wed, 9 Apr 2025 08:41:44 +0200
-User-Agent: Mozilla Thunderbird
-Subject: Re: [RT BUG] Stall caused by eventpoll, rwlocks and CFS bandwidth
- controller
-To: Valentin Schneider <vschneid@redhat.com>, linux-rt-users@vger.kernel.org,
- Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
- linux-kernel@vger.kernel.org, kprateek.nayak@amd.com
-Cc: Thomas Gleixner <tglx@linutronix.de>, Juri Lelli <juri.lelli@redhat.com>,
- Clark Williams <williams@redhat.com>,
- "Luis Claudio R. Goncalves" <lgoncalv@redhat.com>,
- Andreas Ziegler <ziegler.andreas@siemens.com>,
- Felix Moessbauer <felix.moessbauer@siemens.com>,
- Florian Bezdeka <florian.bezdeka@siemens.com>
-References: <xhsmhttqvnall.mognet@vschneid.remote.csb>
-From: Jan Kiszka <jan.kiszka@siemens.com>
-Content-Language: en-US
-Autocrypt: addr=jan.kiszka@siemens.com; keydata=
- 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
-In-Reply-To: <xhsmhttqvnall.mognet@vschneid.remote.csb>
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: 7bit
-X-ClientProxiedBy: FR4P281CA0308.DEUP281.PROD.OUTLOOK.COM
- (2603:10a6:d10:f6::12) To AS4PR10MB6181.EURPRD10.PROD.OUTLOOK.COM
- (2603:10a6:20b:588::19)
+ cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.20.8632.21; Wed, 9 Apr
+ 2025 09:29:24 +0000
+Received: from BN1PEPF00005FFE.namprd05.prod.outlook.com
+ (2603:10b6:208:2c0:cafe::90) by BL1PR13CA0367.outlook.office365.com
+ (2603:10b6:208:2c0::12) with Microsoft SMTP Server (version=TLS1_3,
+ cipher=TLS_AES_256_GCM_SHA384) id 15.20.8632.22 via Frontend Transport; Wed,
+ 9 Apr 2025 09:29:24 +0000
+X-MS-Exchange-Authentication-Results: spf=pass (sender IP is 165.204.84.17)
+ smtp.mailfrom=amd.com; dkim=none (message not signed)
+ header.d=none;dmarc=pass action=none header.from=amd.com;
+Received-SPF: Pass (protection.outlook.com: domain of amd.com designates
+ 165.204.84.17 as permitted sender) receiver=protection.outlook.com;
+ client-ip=165.204.84.17; helo=SATLEXMB04.amd.com; pr=C
+Received: from SATLEXMB04.amd.com (165.204.84.17) by
+ BN1PEPF00005FFE.mail.protection.outlook.com (10.167.243.230) with Microsoft
+ SMTP Server (version=TLS1_2, cipher=TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256) id
+ 15.20.8632.13 via Frontend Transport; Wed, 9 Apr 2025 09:29:24 +0000
+Received: from [10.85.39.27] (10.180.168.240) by SATLEXMB04.amd.com
+ (10.181.40.145) with Microsoft SMTP Server (version=TLS1_2,
+ cipher=TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256) id 15.1.2507.39; Wed, 9 Apr
+ 2025 04:29:20 -0500
+Message-ID: <c92290e0-f5db-49bd-ac51-d429133a224b@amd.com>
+Date: Wed, 9 Apr 2025 14:59:18 +0530
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
 List-Subscribe: <mailto:linux-rt-users+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
+User-Agent: Mozilla Thunderbird
+Subject: Re: [RT BUG] Stall caused by eventpoll, rwlocks and CFS bandwidth
+ controller
+To: Jan Kiszka <jan.kiszka@siemens.com>, Valentin Schneider
+	<vschneid@redhat.com>, <linux-rt-users@vger.kernel.org>, Sebastian Andrzej
+ Siewior <bigeasy@linutronix.de>, <linux-kernel@vger.kernel.org>, Aaron Lu
+	<ziqianlu@bytedance.com>
+CC: Thomas Gleixner <tglx@linutronix.de>, Juri Lelli <juri.lelli@redhat.com>,
+	Clark Williams <williams@redhat.com>, "Luis Claudio R. Goncalves"
+	<lgoncalv@redhat.com>, Andreas Ziegler <ziegler.andreas@siemens.com>, Felix
+ Moessbauer <felix.moessbauer@siemens.com>, Florian Bezdeka
+	<florian.bezdeka@siemens.com>
+References: <xhsmhttqvnall.mognet@vschneid.remote.csb>
+ <3f7b7ce1-6dd4-4a4e-9789-4c0cbde057bd@siemens.com>
+Content-Language: en-US
+From: K Prateek Nayak <kprateek.nayak@amd.com>
+In-Reply-To: <3f7b7ce1-6dd4-4a4e-9789-4c0cbde057bd@siemens.com>
+Content-Type: text/plain; charset="UTF-8"; format=flowed
+Content-Transfer-Encoding: 7bit
+X-ClientProxiedBy: SATLEXMB04.amd.com (10.181.40.145) To SATLEXMB04.amd.com
+ (10.181.40.145)
+X-EOPAttributedMessage: 0
 X-MS-PublicTrafficType: Email
-X-MS-TrafficTypeDiagnostic: AS4PR10MB6181:EE_|DU4PR10MB8573:EE_
-X-MS-Office365-Filtering-Correlation-Id: 5046b486-46f4-4a0b-8197-08dd773198b2
-X-MS-Exchange-AtpMessageProperties: SA
+X-MS-TrafficTypeDiagnostic: BN1PEPF00005FFE:EE_|MN2PR12MB4111:EE_
+X-MS-Office365-Filtering-Correlation-Id: 2f094e16-fe08-43bf-a2d3-08dd7749045d
 X-MS-Exchange-SenderADCheck: 1
 X-MS-Exchange-AntiSpam-Relay: 0
-X-Microsoft-Antispam: BCL:0;ARA:13230040|366016|1800799024|376014;
+X-Microsoft-Antispam:
+	BCL:0;ARA:13230040|7416014|1800799024|82310400026|376014|36860700013|13003099007;
 X-Microsoft-Antispam-Message-Info:
-	=?utf-8?B?SGIwK0RDSGJWVjRtSnpraXdiUnAxYlFEamhMQ0VqZFI0WktIc3MyN2g2TXAr?=
- =?utf-8?B?TjcxNE9wKzg0cWVxcVBSemVkbjRKSks4WmYzTEYrRUFzbC9CYzNuQ09IMEdi?=
- =?utf-8?B?THJ3VmRUWThIeDM2ci8vNnRJeUlib3pMOHp0UkZ3S1lLd1RiMnRGTU9hVFA4?=
- =?utf-8?B?NUJ2enp3Y05oaThRL3VvRVJIdFo1NHc1N0ViOE5kUUVFbzVtQlVLS2ZobndB?=
- =?utf-8?B?ZThnRmxyVmRZUGJxQ1BWckZjNWJ4VWkrQWNGUURzTzJUdE53bFN3VUNyb3VV?=
- =?utf-8?B?VCsvODMzc213MGRKa1ljaW9SNnpvbEFTazhxMHhnZUtsQVRXV1JzOHhmRWJZ?=
- =?utf-8?B?dzhqT3prSldwM3Flc0dqbFN2NTlqRTM4T2lDU1VCN1JiWjNDc2hsNjFuOURw?=
- =?utf-8?B?MUswcnpRYnRTUHJZZitnVFEyenlUaVZmWXRHdUNnSGhQazZlWjQvSGdQMTVN?=
- =?utf-8?B?bkFTb0V5VFp5SElQRkJUNWxEa3ZPN0dsU3hBM3RGUmtMdUo2M3dFQ1FPaTFa?=
- =?utf-8?B?NWkyMW1qMGhnMk04K09NN2psTWIyMkdWRUE3M0VxNUxOMHZlSVBNaDBQOE9D?=
- =?utf-8?B?RjM5bE9TWGRJUGg5bkZPdzFyREE4dHJ5aTBVdHM4WC9jcjA0ZEdId1crM3Bi?=
- =?utf-8?B?NG1xMWxES25sUDRqNW1jSytUSEFNMXVWYnFKQ2ZEQjdKNW5jMkI2WmN2TkNv?=
- =?utf-8?B?d2ZmU2ZzNzk3VFNVZDRJWXRPMk83N3F2VEVNMXFDV0FJK1pOVmJJcnFVYWhs?=
- =?utf-8?B?dDlNWlpPTHhaRDl2Wk1wUkhST0hpZTJWNGw5bmdnVkJoVGlNNWlPTjB0LzV5?=
- =?utf-8?B?U0FZRElpcTVBWVdrZ0kwV1RIbWZUOVdxeUJaT0EvRHhsODl2R3FLaE1jNDBB?=
- =?utf-8?B?OE1CWXo2NmlvcGdPaUQ0RDBwWXpaSzd3VVk5RkoxY2NhY0owQjc1SzEwbXp1?=
- =?utf-8?B?MnpCRTIxS3gxVnkvcmRlTDBuVjJhbG9IM2dqN0xMZDVmdUhwbTkyWjRaZjg5?=
- =?utf-8?B?ZnFNTXdYTWYreG5QN1FIZUczU2NHb1FqU0FJVkRNekhSaVFmbE82RWRaWDMz?=
- =?utf-8?B?L2pxK0xYS1FrM2N1R2RNTXJIbGxZd3ZOcjM0Q1FmcFNwekJkL0JTNzM3T0hn?=
- =?utf-8?B?dGRWMmdmSnEycXJtbG0rYkowR1ZmeXFMb24wdTlIUzNNVEZNeVF3RnBUQk55?=
- =?utf-8?B?d0ZONVJMQ1pncE81YktXZ2pQQ3NoOWJOdkFRbWtvdDVENm94YlZCenJ6Y2Iw?=
- =?utf-8?B?dzBwNmlYanVJcHNmd3hESG1QQXhiV0RncktvQkg5UENlOE14OFZsZGVRUllS?=
- =?utf-8?B?OTFUMzlWZFh2R29GOFJUZ3Fnc1ZQUklublJLd3gxcHY0VWtKbWt5UkhoR3Rj?=
- =?utf-8?B?U2RrRmRBQ3dHMVQvd2lTMEl3Tzc0RWtrTFlxWmZLeFhFM1JRTnlYL3JpY0pV?=
- =?utf-8?B?S1lMUHJHa2RvdlZqb3k4SkpvUG95OG1HOUNRNTdhQkcxVHN1Q0VjQ3d3YUNq?=
- =?utf-8?B?LzIvVzN5OVVrUjV3TkljMGFZM3F1Z2pnRlA3SkVaTkxxQjZ1N2FvUVhiQ2dS?=
- =?utf-8?B?NC85NnZNRWdJMlBwRllTS3ZjTWVuMU9SVEJnRWVnYlF1NEp5VWFzOXdyQ2w2?=
- =?utf-8?B?UmUwcnNYUUsrYmVib1crYTRwWXRVL1ZOWE1sZDlwSUk1dVRIL1RKYlovcVFK?=
- =?utf-8?B?OVJZYjFHems4SVloOHgrZGRZUDBGbEtrbDlnV0tFMlllUkVvZ3hkMktJRUdn?=
- =?utf-8?B?T0ZzK3J0a2c2UkZjVnErVVBHb25EUkVxSzFOZmNweHpYVW5XYVdVWWxySXVJ?=
- =?utf-8?B?cEs3U0xCR1ozTzB4RGRrb1JjM3FJQm83QlJiZVZLcDJmdzkrL0o2eVpzTkZY?=
- =?utf-8?B?VWdEa0lodWsyQmcvQVRvdm5kYjZqZ1kyTHBqSW4rTTk5c25FVGJzOGI4SHQ4?=
- =?utf-8?Q?QyCV0/FqmqM=3D?=
+	=?utf-8?B?UmhjV1ZodFRjN0pacGU3ckJFakUyWi9oVnd2TmZlMy8xdGNYeVNSVnZtME1X?=
+ =?utf-8?B?K0hZU3E3M2lORkNSQlFhV0VrV0FZZWdlMjhSSzBUdTh2REJZVVExVitjU0Nl?=
+ =?utf-8?B?dDZ5S0Z6RjAraXNCUlZFS1ltcXBSMUFPMmVIWDc2c3NLTFR3Qm5zRHZXZ2NM?=
+ =?utf-8?B?SFU3ajBUYzJ3eEtkelVaQU8wT1IvMTZUWkZJTTFhaHJkV0g5UTFhZ3hrdFcr?=
+ =?utf-8?B?TDZzR0RsTWwwQm92bjhOcXFncnJJRUVXWnpzd0xBejJGOEJYejA5Zkk3d1Qy?=
+ =?utf-8?B?Q1pOd1BXRGlmR0tMMHNsNk1rd0VyRkVMcDV3c3VrVlhOYWxsNFl5N1JVTmY2?=
+ =?utf-8?B?M1Q5U05vOVRFbGFTQUZqc05GV05BaHYyWitRY2NOamdZVHFSb1VwV2FjMzBi?=
+ =?utf-8?B?QXJKd0xIb2hGSUtwZi9JTTRkdzlTUzl0c1U2eEdhcFVxZE5iV0ltYzIySVJD?=
+ =?utf-8?B?OWR4emNIeDQyVzBMUzRFQnBpM0hDWG5JRHVHeHJlQlIvNkQzYzh4U0d5RUxr?=
+ =?utf-8?B?WG15aEx5dnIzQTNpNHpOMkJwRFFMMDRFakhpeVplUjRaU3duZnFyZmlIR2hF?=
+ =?utf-8?B?My9ncUhxUnF2QUluU1hCTGQ5aEFaVUg0cHozMDIyNEtvYkovektJeElKYmJP?=
+ =?utf-8?B?Y0ZIUmd6alQya0N1andFM1JHcXJqTVdVdVJQZEZIanh0bjNWaFBaNS9oWk5h?=
+ =?utf-8?B?RHowTEsrbHVQT21xaXJYR0lnaHhTcGsxWm5ja2RSZGdDTDd0dkR1NFJvbFFx?=
+ =?utf-8?B?Z1lvSjkweDVMdTZOTEt5NzRFVzV4Z3I3T3FYaUhBa3QxZHR3aC9vTTVhWnQy?=
+ =?utf-8?B?cVlFTFRVZWpyNTB2MnUwbE5XNXVubWlBeVVYbnZFZTQzMjg5cDhLQ1lONEsw?=
+ =?utf-8?B?VUNBcDZrMmk5WkJNZkN1V3Nwc09aSW84NUFNbjR3dVowZmtjZnVYVjEwUXZz?=
+ =?utf-8?B?YUJrbHcyS1dYK0VyNzU1R3RGZk5kVkdhWUJ1MysyUVd3NWd5bW9GbDduZjZI?=
+ =?utf-8?B?R2ExU0FtVW1Ec3FmSk14eWZja3MyNXVCOVliZHVOTGU1aEp3UXB6c3MrU25i?=
+ =?utf-8?B?OWdPSHBCbnJ0RzdmamJrTDY3K21iY09xQ3JKNHptWUpzYVBXTXRwalIzUDFi?=
+ =?utf-8?B?eE1qc2JtL3pDM004UVZQT05SbkRvYko0ZzJ0RUUwM1ozSnZzNUxkcmxiOFho?=
+ =?utf-8?B?alVPQlRxU01rTGdCZlYzeitNUy93WkRZYkxRVTRHVVIwSkx3N2puRkRrekdu?=
+ =?utf-8?B?MzF2WEJST2JLcUNFdGl4LzJLS29mcEtIVTFKcjhONFZQcFVneFFkb05JVDNS?=
+ =?utf-8?B?Skp3WWJVSGM1UEZyN2Y1RVlOdW9MSnhPZXlNU0Rua0ZhM1pqRzgxWXNOanZI?=
+ =?utf-8?B?Z242OHhpTlJTWTBZK3ovS0Yyd0FqdmNLWUxBRmg5Q0hFS0VSMDV3MFlYcWJ6?=
+ =?utf-8?B?M0ZHVWFlNG93dUUvV0krYXY2cU55NnJKVTNPV1AwRVVrV1RVb2pMR3NBWCty?=
+ =?utf-8?B?VUd0NWxpOWkzeU1HM2dSaXdSS0YzR25UcDJLSjdkbC9qQVdMOWVmWUdQL0la?=
+ =?utf-8?B?YVQ0Y1JTVzBYb3htbTlsbm0yWGJqY0tZTFB0SmZjanMyT3prZURmT1ZIb2Z0?=
+ =?utf-8?B?R1gwT2VlUUJYeUc2d1ZyWVFNZ0gvSUY4NWNkcmFoV1VRZUdpUkR5SGZLUFpG?=
+ =?utf-8?B?RnQ3SCtWL3U1SHlqV2MxZmpYUGQ3VzFSaTNHMFJEVmhkZmFrN2NYYUNjS0xM?=
+ =?utf-8?B?bXJwTlp5dVFZempxUGNtZllWWWlmOUVMTDZhQURta2w0ajNWc3FJN3BzazVH?=
+ =?utf-8?B?bjhjdWR0alBDbUJWeVhvKy82V2Q5ZlZ0akhkeUZoU1l3MjNVQXIwdExseVk4?=
+ =?utf-8?B?VlhjaTlTYlR3R0VmelRHWVIyOTIvVWNKN1p4R3BWcjRHUFJyQ0NLNnFQS2ZV?=
+ =?utf-8?B?QWxEV25IR3JCSUFnZ3VNSFo3MEZoKzdNOWRYNHRKZDhJQkI4bEpDSUlIODdu?=
+ =?utf-8?B?ek5xSWNraHZIYWs0MlZtNm5zWEtUQnlMQXlHTnVrTnhKSjVSOXA1V3V2OTd1?=
+ =?utf-8?B?bGFYS1Y4YUUxOFN1T1ovNVlEVWFVMDhHYjg2QT09?=
 X-Forefront-Antispam-Report:
-	CIP:255.255.255.255;CTRY:;LANG:en;SCL:1;SRV:;IPV:NLI;SFV:NSPM;H:AS4PR10MB6181.EURPRD10.PROD.OUTLOOK.COM;PTR:;CAT:NONE;SFS:(13230040)(366016)(1800799024)(376014);DIR:OUT;SFP:1101;
-X-MS-Exchange-AntiSpam-MessageData-ChunkCount: 1
-X-MS-Exchange-AntiSpam-MessageData-0:
-	=?utf-8?B?QzVkNkY2ei9JZXhrUTI1MlIwWmhRN215ZjFwZXQ0WkwvNnBaNDBTYVdZS3F2?=
- =?utf-8?B?OEx1SGM1ck9ON3M5QXlNYUUzUXV0ZXlFVWVyMUJxTHp2ek0zamNYSENCNlRE?=
- =?utf-8?B?SlRHZVpCcC9NTXR5ZkExSEtiNnhIRDY5UWpqZ3NkVndERUNsMUNoS3NZL0ox?=
- =?utf-8?B?SUR4WERxT1hvbUNYMk1aTzhMUFlVU3JTRCtBUmFCRkE0d2NUU1RJN2N3ei9h?=
- =?utf-8?B?cFJVVTZPeVFlUDFGM3YybDNQTHQ4MUJqMzlURnJzVE5jcHpTNnRaTVB2cmU0?=
- =?utf-8?B?Wld6bHJwQnRZcXdIVFdGb0hQRndMbkdhMkp0cEVKWStUbE5sSGlhY0ludUFO?=
- =?utf-8?B?T0hoZTV3Lyt0aC9tVERtSXFUaVF5K3NlUkxGcEJNVmpOQVRpUHh3UThOOFk3?=
- =?utf-8?B?VkhJa0F6TzByWTRxR1VjNlhvcllIa2JvODh3Um9HMUwyRnFUbEE3MmlLdEhU?=
- =?utf-8?B?Ym5haG9aRTFIOHlqdklvYllLTkxYRDA2TGVHZkRWekgvZkgyY2NjTSt0cUNX?=
- =?utf-8?B?TysvNUNnTHZrdTUyYUpacmF1SUh2N2wxMTFWMUszRHpNZzU0b3laR0I2UVhP?=
- =?utf-8?B?aExoeEN0QjZ2NVh0Z0RIbU9YcVJxQ3NwaXh3YXA3SDNBUnMwNHhUdWhUUXFP?=
- =?utf-8?B?S3RPMitjRkJ5ejBzSDAzQnZBWGE3Q044YS9nY1JxTEFzeDJaOWs5UEh4UnBz?=
- =?utf-8?B?VWZWenRabnhSRlhPbGFKUHcvNXplMVUwTk91ZkZ0ckp6MERFcEFvTHZUUFhi?=
- =?utf-8?B?ZnBCZlVDNzRRSzdRVHF1MGp2d1ZaR0FoMXJ5QVU1MlJrVko2NVpTUkgwNy9r?=
- =?utf-8?B?ZlBtR2NxREFTaHRTWFNOd0NBWS8wd09CWUIxM216Tjc1bVJwa01WQy9QOGsw?=
- =?utf-8?B?RlUzUytCMEVMWTY0SGF6WUdVZGo2MTVrUkVuQ2UxY3FNMU91bTgwa1orSnVs?=
- =?utf-8?B?Umh4d3h5SUd6RWV3aHBPa2tEcVVSZ2VLQ0ZiSFc3bjc3dzI3cjZDUVlCMFEw?=
- =?utf-8?B?LzFlTVRoRUNENmRTMHpZYjhqL0xiekM5R2YxZFp3blA0ZDduanY0MWI4K3E0?=
- =?utf-8?B?L3VKdnFtdjdxQkNoT2RSSXlWYU1LazhtdVNSVURIYlBJYWtIeTlIMlA1MEI1?=
- =?utf-8?B?NGVrTndyMTFycGFuSUdteE9pc253dFZMSC9IZUJRZk9lWk53Q3drdXk4U1c3?=
- =?utf-8?B?Uno2bFN3UnVlcklBWU5DbmEwSU45WjNUdVZQMUp4L0ppRWpLZUFYQjZTRzkx?=
- =?utf-8?B?bXA5L256aUZZQUk0WHdYWVc3Z0pNUXRFSkVvUnVZdW5GdTJXblJUMGFySlhZ?=
- =?utf-8?B?RTVXa2lJSmt0bkVJakc5akRDYzVaejVxYVFUZ3pEVCtLMGw2WkFQM3cvU3hY?=
- =?utf-8?B?elhYQ2xQclM5aDVORWJZZWU5bTZ2TTZyY0hNK2Vta1dSQytocGZWUk4zR2FL?=
- =?utf-8?B?ME02ZkJ6QkFBMStHZXB5VlJCRmNWRy9uMmZGSURSUTNUMWVBd3pUVGFHTmdS?=
- =?utf-8?B?WUgyalpxYXl2SDgzT05OWkJ2aDNrRFRUaTJlRUl0NEdsaXMvTkFqOXRvZHQ0?=
- =?utf-8?B?QytXM285U0x6UU9PcFMxZWs4N2VlWGFmWFNsWUdFLzAvRzZaMjh4dDNDMFdi?=
- =?utf-8?B?K3pmUXQ5ak11WWliTGdsaE5yMVNBL1JQZmZxMDRoejgvakZMRkY0WFFibkJV?=
- =?utf-8?B?c0tHVFZNb210SnN1K0VseC8rTWJZYi96TUxhclVlUnpzdHNQaElXNW1nNkk2?=
- =?utf-8?B?dWF6T3lkMUIwWlJmUFcrU0hnNUJVcWhyLzFySkVSK1ZDMXdnWEpUcjhXanhp?=
- =?utf-8?B?NG56RjBwYW9tTkJGM0lWbDZrZkZrNXBWNEJSOFRtSDlQcnp5WHMvbXB4UTlO?=
- =?utf-8?B?c3hwWFVnTlpBUmN0bW5UdjVnMEtMVjZtMTc5OTZaUFQ3YTZIZDVMaHNNY0xN?=
- =?utf-8?B?OEVGaU9iUjkzVUdqRFVUblkvWkROUXErVE0wWmRaSVdxNHFUMW95bmlrSFEy?=
- =?utf-8?B?U1BsaVNiMUcvME40dFhIVGFsVXFycmg1RTAxaHI5azVLZ1dJVUUySmxpNEJ3?=
- =?utf-8?B?Q2xJTnJ3N1VhTFA2QXNuRWJidUMyQUtVbjNhQ2Y2Sk9mM1ZPL05NUEt6Umor?=
- =?utf-8?Q?7wTOT/5BbyrP5MtfQknkjE4/H?=
-X-OriginatorOrg: siemens.com
-X-MS-Exchange-CrossTenant-Network-Message-Id: 5046b486-46f4-4a0b-8197-08dd773198b2
-X-MS-Exchange-CrossTenant-AuthSource: AS4PR10MB6181.EURPRD10.PROD.OUTLOOK.COM
-X-MS-Exchange-CrossTenant-AuthAs: Internal
-X-MS-Exchange-CrossTenant-OriginalArrivalTime: 09 Apr 2025 06:41:45.7062
+	CIP:165.204.84.17;CTRY:US;LANG:en;SCL:1;SRV:;IPV:CAL;SFV:NSPM;H:SATLEXMB04.amd.com;PTR:InfoDomainNonexistent;CAT:NONE;SFS:(13230040)(7416014)(1800799024)(82310400026)(376014)(36860700013)(13003099007);DIR:OUT;SFP:1101;
+X-OriginatorOrg: amd.com
+X-MS-Exchange-CrossTenant-OriginalArrivalTime: 09 Apr 2025 09:29:24.5573
  (UTC)
-X-MS-Exchange-CrossTenant-FromEntityHeader: Hosted
-X-MS-Exchange-CrossTenant-Id: 38ae3bcd-9579-4fd4-adda-b42e1495d55a
-X-MS-Exchange-CrossTenant-MailboxType: HOSTED
-X-MS-Exchange-CrossTenant-UserPrincipalName: H2AqezsA+YpZvnfR3bokV7d9P3l5Ke59Ykw1Di76DiKg1THIZzm3oDGSPL5Pz5kJzRLjwuTGr6RHzdOMGQ32SA==
-X-MS-Exchange-Transport-CrossTenantHeadersStamped: DU4PR10MB8573
+X-MS-Exchange-CrossTenant-Network-Message-Id: 2f094e16-fe08-43bf-a2d3-08dd7749045d
+X-MS-Exchange-CrossTenant-Id: 3dd8961f-e488-4e60-8e11-a82d994e183d
+X-MS-Exchange-CrossTenant-OriginalAttributedTenantConnectingIp: TenantId=3dd8961f-e488-4e60-8e11-a82d994e183d;Ip=[165.204.84.17];Helo=[SATLEXMB04.amd.com]
+X-MS-Exchange-CrossTenant-AuthSource:
+	BN1PEPF00005FFE.namprd05.prod.outlook.com
+X-MS-Exchange-CrossTenant-AuthAs: Anonymous
+X-MS-Exchange-CrossTenant-FromEntityHeader: HybridOnPrem
+X-MS-Exchange-Transport-CrossTenantHeadersStamped: MN2PR12MB4111
 
-On 12.10.23 17:07, Valentin Schneider wrote:
-> Hi folks,
-> 
-> We've had reports of stalls happening on our v6.0-ish frankenkernels, and while
-> we haven't been able to come out with a reproducer (yet), I don't see anything
-> upstream that would prevent them from happening. 
-> 
-> The setup involves eventpoll, CFS bandwidth controller and timer
-> expiry, and the sequence looks as follows (time-ordered):
-> 
-> p_read (on CPUn, CFS with bandwidth controller active)
-> ======
-> 
-> ep_poll_callback()
->   read_lock_irqsave()
->   ...
->   try_to_wake_up() <- enqueue causes an update_curr() + sets need_resched
->                       due to having no more runtime
->     preempt_enable()
->       preempt_schedule() <- switch out due to p_read being now throttled
-> 
-> p_write
-> =======
-> 
-> ep_poll()
->   write_lock_irq() <- blocks due to having active readers (p_read)
-> 
-> ktimers/n
-> =========
-> 
-> timerfd_tmrproc()
-> `\
->   ep_poll_callback()
->   `\
->     read_lock_irqsave() <- blocks due to having active writer (p_write)
-> 
-> 
-> From this point we have a circular dependency:
-> 
->   p_read -> ktimers/n (to replenish runtime of p_read)
->   ktimers/n -> p_write (to let ktimers/n acquire the readlock)
->   p_write -> p_read (to let p_write acquire the writelock)
-> 
-> IIUC reverting
->   286deb7ec03d ("locking/rwbase: Mitigate indefinite writer starvation")
-> should unblock this as the ktimers/n thread wouldn't block, but then we're back
-> to having the indefinite starvation so I wouldn't necessarily call this a win.
-> 
-> Two options I'm seeing:
-> - Prevent p_read from being preempted when it's doing the wakeups under the
->   readlock (icky)
-> - Prevent ktimers / ksoftirqd (*) from running the wakeups that have
->   ep_poll_callback() as a wait_queue_entry callback. Punting that to e.g. a
->   kworker /should/ do.
-> 
-> (*) It's not just timerfd, I've also seen it via net::sock_def_readable -
-> it should be anything that's pollable.
-> 
-> I'm still scratching my head on this, so any suggestions/comments welcome!
-> 
+(+ Aaron)
 
-We are hunting for quite some time sporadic lock-ups or RT systems, 
-first only in the field (sigh), now finally also in the lab. Those have 
-a fairly high overlap with what was described here. Our baselines so 
-far: 6.1-rt, Debian and vanilla. We are currently preparing experiments 
-with latest mainline.
+Hello Jan,
 
-While this thread remained silent afterwards, we have found [1][2][3] as 
-apparently related. But this means we are still with this RT bug, even 
-in latest 6.15-rc1?
+On 4/9/2025 12:11 PM, Jan Kiszka wrote:
+> On 12.10.23 17:07, Valentin Schneider wrote:
+>> Hi folks,
+>>
+>> We've had reports of stalls happening on our v6.0-ish frankenkernels, and while
+>> we haven't been able to come out with a reproducer (yet), I don't see anything
+>> upstream that would prevent them from happening.
+>>
+>> The setup involves eventpoll, CFS bandwidth controller and timer
+>> expiry, and the sequence looks as follows (time-ordered):
+>>
+>> p_read (on CPUn, CFS with bandwidth controller active)
+>> ======
+>>
+>> ep_poll_callback()
+>>    read_lock_irqsave()
+>>    ...
+>>    try_to_wake_up() <- enqueue causes an update_curr() + sets need_resched
+>>                        due to having no more runtime
+>>      preempt_enable()
+>>        preempt_schedule() <- switch out due to p_read being now throttled
+>>
+>> p_write
+>> =======
+>>
+>> ep_poll()
+>>    write_lock_irq() <- blocks due to having active readers (p_read)
+>>
+>> ktimers/n
+>> =========
+>>
+>> timerfd_tmrproc()
+>> `\
+>>    ep_poll_callback()
+>>    `\
+>>      read_lock_irqsave() <- blocks due to having active writer (p_write)
+>>
+>>
+>>  From this point we have a circular dependency:
+>>
+>>    p_read -> ktimers/n (to replenish runtime of p_read)
+>>    ktimers/n -> p_write (to let ktimers/n acquire the readlock)
+>>    p_write -> p_read (to let p_write acquire the writelock)
+>>
+>> IIUC reverting
+>>    286deb7ec03d ("locking/rwbase: Mitigate indefinite writer starvation")
+>> should unblock this as the ktimers/n thread wouldn't block, but then we're back
+>> to having the indefinite starvation so I wouldn't necessarily call this a win.
+>>
+>> Two options I'm seeing:
+>> - Prevent p_read from being preempted when it's doing the wakeups under the
+>>    readlock (icky)
+>> - Prevent ktimers / ksoftirqd (*) from running the wakeups that have
+>>    ep_poll_callback() as a wait_queue_entry callback. Punting that to e.g. a
+>>    kworker /should/ do.
+>>
+>> (*) It's not just timerfd, I've also seen it via net::sock_def_readable -
+>> it should be anything that's pollable.
+>>
+>> I'm still scratching my head on this, so any suggestions/comments welcome!
+>>
+> 
+> We are hunting for quite some time sporadic lock-ups or RT systems,
+> first only in the field (sigh), now finally also in the lab. Those have
+> a fairly high overlap with what was described here. Our baselines so
+> far: 6.1-rt, Debian and vanilla. We are currently preparing experiments
+> with latest mainline.
 
-Jan
+Do the backtrace from these lockups show tasks (specifically ktimerd)
+waiting on a rwsem? Throttle deferral helps if cfs bandwidth throttling
+becomes the reason for long delay / circular dependency. Is cfs bandwidth
+throttling being used on these systems that run into these lockups?
+Otherwise, your issue might be completely different.
 
-[1] https://lore.kernel.org/lkml/20231030145104.4107573-1-vschneid@redhat.com/
-[2] https://lore.kernel.org/lkml/20240202080920.3337862-1-vschneid@redhat.com/
-[3] https://lore.kernel.org/lkml/20250220093257.9380-1-kprateek.nayak@amd.com/
+> 
+> While this thread remained silent afterwards, we have found [1][2][3] as
+> apparently related. But this means we are still with this RT bug, even
+> in latest 6.15-rc1?
+
+I'm pretty sure a bunch of locking related stuff has been reworked to
+accommodate PREEMPT_RT since v6.1. Many rwsem based locking patterns
+have been replaced with alternatives like RCU. Recently introduced
+dl_server infrastructure also helps prevent starvation of fair tasks
+which can allow progress and prevent lockups. I would recommend
+checking if the most recent -rt release can still reproduce your
+issue:
+https://lore.kernel.org/lkml/20250331095610.ulLtPP2C@linutronix.de/
+
+Note: Aaron Lu is working on Valentin's approach of deferring cfs
+throttling to exit to user mode boundary
+https://lore.kernel.org/lkml/20250313072030.1032893-1-ziqianlu@bytedance.com/
+
+If you still run into the issue of a lockup / long latencies on latest
+-rt release and your system is using cfs bandwidth controls, you can
+perhaps try running with Valentin's or Aaron's series to check if
+throttle deferral helps your scenario.
+
+> 
+> Jan
+> 
+> [1] https://lore.kernel.org/lkml/20231030145104.4107573-1-vschneid@redhat.com/
+> [2] https://lore.kernel.org/lkml/20240202080920.3337862-1-vschneid@redhat.com/
+> [3] https://lore.kernel.org/lkml/20250220093257.9380-1-kprateek.nayak@amd.com/
+
+I'm mostly testing and reviewing Aaron's series now since per-task
+throttling seems to be the way forward based on discussions in the
+community.
+
+> 
 
 -- 
-Siemens AG, Foundational Technologies
-Linux Expert Center
+Thanks and Regards,
+Prateek
+
