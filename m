@@ -1,48 +1,97 @@
-Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
+Received: from galois.linutronix.de (Galois.linutronix.de [193.142.43.55])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id A99F023314C;
-	Tue, 15 Apr 2025 20:34:28 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 40C0C219A76
+	for <linux-rt-users@vger.kernel.org>; Thu, 17 Apr 2025 07:41:02 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=193.142.43.55
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1744749268; cv=none; b=ZVKXAhh0CHzqAdxABAWMi0LqBeWNOftJAjNXtmSddrH+dLFZmFTe7fAck7kORzm2CwQ9dd2LD02vU7AzWN/Kl2Qj0OQoq7iQWCXqkgrtfFYqUtDQdNrgCFdB3UTsgKboX+4SEYMKxbOgzWmlRyf/nh89zdd5eZnmiSHDlhMm1fE=
+	t=1744875669; cv=none; b=P3PHUI34A181NojLMCuWKziCC4KjBmGDn/yuEX6NhMkw/zUqeylmWuRkAKOPaK5H5TTDmObWLlr2jPdtGo7syrvjs6xExIztJQEEcraWR7qon/NtoqJEncRNO1O6t7hfcf5sN9nk2G+rbVt8Yq1J3IK7StIsGBOC8fo6GT1pAV8=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1744749268; c=relaxed/simple;
-	bh=MIasZrF3UtR3+z1lYM3oDtx/o5hENb/zfMI07Pi9DG8=;
-	h=From:Subject:Date:Message-ID:To; b=hmS5vNkarscbjQsy1Ea3GFs6avcL4qQjsg1tg93/qUT8rHsh8+DaUGUMtZ6J/6AsyjKNYvEsYM9jv+FXSIwWwYeZJhqs9SYcA6mVE8b3jww0Bfgm/12j5AniRwSHHMfs9W7TYcXoii4p4BP2qf7BzVybV1/IwbDLfE4tCtolokA=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id E89F4C4CEE7;
-	Tue, 15 Apr 2025 20:34:27 +0000 (UTC)
-From: Clark Williams <williams@redhat.com>
-Subject: [ANNOUNCE] 6.1.134-rt51
-Date: Tue, 15 Apr 2025 20:33:36 -0000
-Message-ID: <174474921610.752411.17029418176777381996@demetrius>
-To: LKML <linux-kernel@vger.kernel.org>,linux-rt-users <linux-rt-users@vger.kernel.org>,Steven Rostedt <rostedt@goodmis.org>,Thomas Gleixner <tglx@linutronix.de>,Carsten Emde <C.Emde@osadl.org>,John Kacur <jkacur@redhat.com>,Sebastian Andrzej Siewior <bigeasy@linutronix.de>,Daniel Wagner <daniel.wagner@suse.com>,Tom Zanussi <tom.zanussi@linux.intel.com>,Clark Williams <williams@redhat.com>,Pavel Machek <pavel@denx.de>,Joseph Salisbury <joseph.salisbury@oracle.com>,Luis Claudio R. Goncalves <lgoncalv@redhat.com>
+	s=arc-20240116; t=1744875669; c=relaxed/simple;
+	bh=h/onBgarZjooA/+rgcntDf5m/QqKU9szvu1ijizQin0=;
+	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
+	 Content-Type:Content-Disposition:In-Reply-To; b=R/Ql651HFpXLAeJUnXcbg4LNMxhkLAJJFYEfj7lIautCsig9oSxnmmjLYs3HkXgDtNzLlZWL+4L11NsYZimUc5Xpmvap5T8RxzWyXtZ3KOYxorv3ruCKsFVAS2E5wLaMFVE3cZhVKeSjMjcZU/m5koGiu9T1EKIelKcN+wfKpww=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linutronix.de; spf=pass smtp.mailfrom=linutronix.de; dkim=pass (2048-bit key) header.d=linutronix.de header.i=@linutronix.de header.b=bUlz1i/K; dkim=permerror (0-bit key) header.d=linutronix.de header.i=@linutronix.de header.b=hiDIkHAi; arc=none smtp.client-ip=193.142.43.55
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linutronix.de
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=linutronix.de
+Authentication-Results: smtp.subspace.kernel.org;
+	dkim=pass (2048-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="bUlz1i/K";
+	dkim=permerror (0-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="hiDIkHAi"
+Date: Thu, 17 Apr 2025 09:40:59 +0200
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
+	s=2020; t=1744875661;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 in-reply-to:in-reply-to:references:references;
+	bh=w91usc76ApbfsFfJ/vhKufOGKKUR/1HuPyoh/L9bisQ=;
+	b=bUlz1i/KfSJlTYrRhpxlwLVco333esOQSfwuVA87PNtq6q9lDT2h9K+p50iSAcKoRElS7v
+	Uw3fE5HRJVOvAI6Q3AxJSPO4ymW8OZiNgLOhnQmvYuRqRU9swOVu60SF/HOx3dl9BSjqCh
+	jJAHKZul9SPvPAFBNm4EuPWz+vLdzjPI0lkqkcuicJL7YyhdW20TUGqQJvfFJVZRmWmWPg
+	sKO4IJmcuR4hAH7dlbrvaVs8y/oC8Q+fftdMlbsGL1UIxAwEPLwkg8L0ugN0WTRVbRivC0
+	UuIhAXXbMF7q9YcbXxJu6j4iElaY78hMzlqr7cO0axdu/4jPkDTIgCQMWpZLRg==
+DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
+	s=2020e; t=1744875661;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 in-reply-to:in-reply-to:references:references;
+	bh=w91usc76ApbfsFfJ/vhKufOGKKUR/1HuPyoh/L9bisQ=;
+	b=hiDIkHAi8bbIke47tgcj/nYSZAY/Nqq4Lmk800DcDxDIhkU1GfXSmOzRvSf/IODdWMhByv
+	2EzuPnK9AQWgo3Dg==
+From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+To: Gautam Thaker <ghthaker@gmail.com>
+Cc: linux-rt-users@vger.kernel.org
+Subject: Re: seeking best steps to go from Armbian 6.12.19 PREEMPT to
+ PREEMPT_RT
+Message-ID: <20250417074059.1B0DxVpU@linutronix.de>
+References: <CA+1+E3VC4LX5X8ANf5d1Wm7QjSJZUG=mei8E5cvBUyqcd5j3yA@mail.gmail.com>
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
 List-Subscribe: <mailto:linux-rt-users+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
+MIME-Version: 1.0
+Content-Type: text/plain; charset=utf-8
+Content-Disposition: inline
+In-Reply-To: <CA+1+E3VC4LX5X8ANf5d1Wm7QjSJZUG=mei8E5cvBUyqcd5j3yA@mail.gmail.com>
 
-Hello RT-list!
+On 2025-03-21 12:03:10 [-0400], Gautam Thaker wrote:
+> I am currently running Armbian on rk3318 TV box. Runs great.
+> 
+> rk3318-box> uname -a
+> Linux rk3318-box 6.12.19-current-rockchip64 #2 SMP PREEMPT Thu Mar 13
+> 12:02:20 UTC 2025 aarch64 GNU/Linux
+> 
+> My question: what is the quickest path to get FULL PREEMPT-RT kernel
+> running on my box?
 
-I'm pleased to announce the 6.1.134-rt51 stable release.
+The easiest way should be simply enabling PREEMPT_RT on that kernel.
 
-You can get this release via the git tree at:
+> I believe I have found the Armbian sources.
+> (https://docs.armbian.com/Developer-Guide_Build-Preparation/)
+> 
+> Are there instructions to build a kernel w/ all the same parameters as
+> a currently running kernel with only change to set FULL PREEMPT-RT ? I
+> would like to make least changes to configuration so that I may
+> continue to boot on my hardware.
 
-  git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
+It is enough to just enable PREEMPT_RT. I would recommend to enable 
+at least CONFIG_PROVE_LOCKING and CONFIG_DEBUG_ATOMIC_SLEEP in the
+beginning that there is nothing wrong in the kernel that nobody saw
+before. Once nothing pops up in the kernel log, then it could be turned
+off.
 
-  branch: v6.1-rt
-  Head SHA1: cb9238b4ed330e15dda26ac38ac933ec2394bd67
+> I used to make many RT kernels in the past, but not in the last 10
+> years. I can't find current instructions. It was my understanding that
+> with 6.12+ linux kernel one needs NO RT patches, but still have  to
+> config FULL PREEMPT-RT and build a new kernel.
 
-Or to build 6.1.134-rt51 directly, the following patches should be applied:
+That is correct.
 
-  https://www.kernel.org/pub/linux/kernel/v6.x/linux-6.1.tar.xz
+> Or can I change some grub option and simply reboot my current kernel?
 
-  https://www.kernel.org/pub/linux/kernel/v6.x/patch-6.1.134.xz
+No, that does not work.
 
-  https://www.kernel.org/pub/linux/kernel/projects/rt/6.1/patch-6.1.134-rt51.patch.xz
+> Gautam
+> 
 
-
-Enjoy!
-Clark
+Sebastian
