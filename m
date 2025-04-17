@@ -1,49 +1,58 @@
 Received: from galois.linutronix.de (Galois.linutronix.de [193.142.43.55])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 40C0C219A76
-	for <linux-rt-users@vger.kernel.org>; Thu, 17 Apr 2025 07:41:02 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 133E322E40E;
+	Thu, 17 Apr 2025 08:12:57 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=193.142.43.55
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1744875669; cv=none; b=P3PHUI34A181NojLMCuWKziCC4KjBmGDn/yuEX6NhMkw/zUqeylmWuRkAKOPaK5H5TTDmObWLlr2jPdtGo7syrvjs6xExIztJQEEcraWR7qon/NtoqJEncRNO1O6t7hfcf5sN9nk2G+rbVt8Yq1J3IK7StIsGBOC8fo6GT1pAV8=
+	t=1744877579; cv=none; b=q9DMSTwW7+lGENAfjfr6wMghRWPfCOR/Bk/GpqQSdl+oLmKYFjgfxfVwnqCnDI+QYLOzmAypKPa2wmGSkd5thm7mF+nqwuJ8kb6trDsY1waj2xTTfvfUZrBmLWFxmNGo477v1RSGjnrXL/pC8xmV/Lg100UiWHbBSZcyrAWyP0E=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1744875669; c=relaxed/simple;
-	bh=h/onBgarZjooA/+rgcntDf5m/QqKU9szvu1ijizQin0=;
+	s=arc-20240116; t=1744877579; c=relaxed/simple;
+	bh=hp1b0XAcOQxXusMH+OhsL1oXc8BSXxDZGW5TGs0PlXg=;
 	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 Content-Type:Content-Disposition:In-Reply-To; b=R/Ql651HFpXLAeJUnXcbg4LNMxhkLAJJFYEfj7lIautCsig9oSxnmmjLYs3HkXgDtNzLlZWL+4L11NsYZimUc5Xpmvap5T8RxzWyXtZ3KOYxorv3ruCKsFVAS2E5wLaMFVE3cZhVKeSjMjcZU/m5koGiu9T1EKIelKcN+wfKpww=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linutronix.de; spf=pass smtp.mailfrom=linutronix.de; dkim=pass (2048-bit key) header.d=linutronix.de header.i=@linutronix.de header.b=bUlz1i/K; dkim=permerror (0-bit key) header.d=linutronix.de header.i=@linutronix.de header.b=hiDIkHAi; arc=none smtp.client-ip=193.142.43.55
+	 Content-Type:Content-Disposition:In-Reply-To; b=ABpiFzg6s5VEd6TyhKA6jWSVTuiP3dA5f+/Z/fhtq4V75Ia3KKhhC0rmMTVJjW83hlUojSXhCbzJpGBYrKfZD965XHdSn6AFCRh/NN0YNHghJ00J+pHMwSCCpZjcQZwhVYz4B0kGnYmGDJLhnsz8rxuRyc3QW/PrdZyHzfPs+Cg=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linutronix.de; spf=pass smtp.mailfrom=linutronix.de; dkim=pass (2048-bit key) header.d=linutronix.de header.i=@linutronix.de header.b=PsYn4Mzm; dkim=permerror (0-bit key) header.d=linutronix.de header.i=@linutronix.de header.b=5klyDE8M; arc=none smtp.client-ip=193.142.43.55
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linutronix.de
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=linutronix.de
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="bUlz1i/K";
-	dkim=permerror (0-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="hiDIkHAi"
-Date: Thu, 17 Apr 2025 09:40:59 +0200
+	dkim=pass (2048-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="PsYn4Mzm";
+	dkim=permerror (0-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="5klyDE8M"
+Date: Thu, 17 Apr 2025 10:12:54 +0200
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
-	s=2020; t=1744875661;
+	s=2020; t=1744877576;
 	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
 	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references;
-	bh=w91usc76ApbfsFfJ/vhKufOGKKUR/1HuPyoh/L9bisQ=;
-	b=bUlz1i/KfSJlTYrRhpxlwLVco333esOQSfwuVA87PNtq6q9lDT2h9K+p50iSAcKoRElS7v
-	Uw3fE5HRJVOvAI6Q3AxJSPO4ymW8OZiNgLOhnQmvYuRqRU9swOVu60SF/HOx3dl9BSjqCh
-	jJAHKZul9SPvPAFBNm4EuPWz+vLdzjPI0lkqkcuicJL7YyhdW20TUGqQJvfFJVZRmWmWPg
-	sKO4IJmcuR4hAH7dlbrvaVs8y/oC8Q+fftdMlbsGL1UIxAwEPLwkg8L0ugN0WTRVbRivC0
-	UuIhAXXbMF7q9YcbXxJu6j4iElaY78hMzlqr7cO0axdu/4jPkDTIgCQMWpZLRg==
+	bh=3FoTXXwrik+HMQzOAbeM6m9MlAGRLYeknXwGoF5uV+U=;
+	b=PsYn4MzmTOOJBYV9DatvTtv5m9YXIlEGYCfVaX2ri6IGJm3DVi44d4vaSXJheuxnh2jXgS
+	xPHi0dV6wLMQzIf5IPGC0KIzl3YEBPkfeb8x0hBRxxs9g58arvnvjN7KgSKevMQYrxNVfd
+	PmFgd7eorqlh+79kK7rsd395I3XOsze6g+LGnTXND30+EwvL97uk1xWqT9XSZh2kibwKtw
+	swVvHcb7osxaN72L7jSWnETfE8Ovmdj8vTpREkhT/jsqxnZVsYXW/fiIK8UFqhZhbY9m4F
+	tBcyFLLyEJI7/CG51bmvfwaNAqZJ7j5R4BMYr2GXfB34rcIful95wwnJNOg7tw==
 DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
-	s=2020e; t=1744875661;
+	s=2020e; t=1744877576;
 	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
 	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references;
-	bh=w91usc76ApbfsFfJ/vhKufOGKKUR/1HuPyoh/L9bisQ=;
-	b=hiDIkHAi8bbIke47tgcj/nYSZAY/Nqq4Lmk800DcDxDIhkU1GfXSmOzRvSf/IODdWMhByv
-	2EzuPnK9AQWgo3Dg==
+	bh=3FoTXXwrik+HMQzOAbeM6m9MlAGRLYeknXwGoF5uV+U=;
+	b=5klyDE8MR3aA1DxL2Ct77nzYyz7blhWHCu7HrWv+St/3PwWDKbYG+w0cW7/7h1uoXavPAj
+	kOE8q0rGdepGD/AA==
 From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-To: Gautam Thaker <ghthaker@gmail.com>
-Cc: linux-rt-users@vger.kernel.org
-Subject: Re: seeking best steps to go from Armbian 6.12.19 PREEMPT to
- PREEMPT_RT
-Message-ID: <20250417074059.1B0DxVpU@linutronix.de>
-References: <CA+1+E3VC4LX5X8ANf5d1Wm7QjSJZUG=mei8E5cvBUyqcd5j3yA@mail.gmail.com>
+To: Pavel Pisa <pisa@fel.cvut.cz>
+Cc: Marc Kleine-Budde <mkl@pengutronix.de>, linux-rt-users@vger.kernel.org,
+	Carsten Emde <c.emde@osadl.org>, linux-can@vger.kernel.org,
+	Oliver Hartkopp <socketcan@hartkopp.net>,
+	Jan Altenberg <Jan.Altenberg@osadl.org>,
+	Pavel Hronek <hronepa1@fel.cvut.cz>
+Subject: Re: CAN latency measuremet on AMD/Xilinx Zynq with PREEMP_RT - added
+ threaded NAPI configuration
+Message-ID: <20250417081254.EUqrBagT@linutronix.de>
+References: <202501281629.27139.pisa@fel.cvut.cz>
+ <20250129101709.XQuo8Jle@linutronix.de>
+ <202501291304.15901.pisa@fel.cvut.cz>
+ <202503281304.47808.pisa@fel.cvut.cz>
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
@@ -52,46 +61,39 @@ List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
 Content-Type: text/plain; charset=utf-8
 Content-Disposition: inline
-In-Reply-To: <CA+1+E3VC4LX5X8ANf5d1Wm7QjSJZUG=mei8E5cvBUyqcd5j3yA@mail.gmail.com>
+Content-Transfer-Encoding: quoted-printable
+In-Reply-To: <202503281304.47808.pisa@fel.cvut.cz>
 
-On 2025-03-21 12:03:10 [-0400], Gautam Thaker wrote:
-> I am currently running Armbian on rk3318 TV box. Runs great.
-> 
-> rk3318-box> uname -a
-> Linux rk3318-box 6.12.19-current-rockchip64 #2 SMP PREEMPT Thu Mar 13
-> 12:02:20 UTC 2025 aarch64 GNU/Linux
-> 
-> My question: what is the quickest path to get FULL PREEMPT-RT kernel
-> running on my box?
+On 2025-03-28 13:04:47 [+0100], Pavel Pisa wrote:
+> Hello Marc and Sebastian,
+>=20
+Hi Pavel,
 
-The easiest way should be simply enabling PREEMPT_RT on that kernel.
+=E2=80=A6
+> #!/bin/bash
+>=20
+> NAPI_PRIO=3D80
+>=20
+> if (( $# !=3D 1 )); then
+>   echo "Need 1 argument (value 0 or 1)" >&2
+>   exit 1
+> fi
+=E2=80=A6
+> for ifc in can2 can3 can4 can5 ; do
+>   echo $1 > /sys/class/net/$ifc/threaded
+> done
+>=20
+> if [ $1 -eq 1 ] ; then
+>   PIDS=3D$(ps -e | grep -E napi/can[0-9]+-[0-9] | tr -s ' ' | cut -d ' ' =
+-f2)
+>   for pid in $PIDS ; do
+>     echo "Setting RT priority $NAPI_PRIO for $pid"
+>     chrt -f --pid $NAPI_PRIO $pid
+>   done
+> fi
 
-> I believe I have found the Armbian sources.
-> (https://docs.armbian.com/Developer-Guide_Build-Preparation/)
-> 
-> Are there instructions to build a kernel w/ all the same parameters as
-> a currently running kernel with only change to set FULL PREEMPT-RT ? I
-> would like to make least changes to configuration so that I may
-> continue to boot on my hardware.
-
-It is enough to just enable PREEMPT_RT. I would recommend to enable 
-at least CONFIG_PROVE_LOCKING and CONFIG_DEBUG_ATOMIC_SLEEP in the
-beginning that there is nothing wrong in the kernel that nobody saw
-before. Once nothing pops up in the kernel log, then it could be turned
-off.
-
-> I used to make many RT kernels in the past, but not in the last 10
-> years. I can't find current instructions. It was my understanding that
-> with 6.12+ linux kernel one needs NO RT patches, but still have  to
-> config FULL PREEMPT-RT and build a new kernel.
-
-That is correct.
-
-> Or can I change some grub option and simply reboot my current kernel?
-
-No, that does not work.
-
-> Gautam
-> 
+The IRQ thread should be limited to one CPU which is the same where the
+IRQ it itself is set to. I don't think that this done the NAPI thread
+automatically so it is probably free floating in the system.
 
 Sebastian
