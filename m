@@ -1,69 +1,69 @@
-Received: from mail-qk1-f169.google.com (mail-qk1-f169.google.com [209.85.222.169])
+Received: from mail-qk1-f181.google.com (mail-qk1-f181.google.com [209.85.222.181])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 7923C27FD4D
-	for <linux-rt-users@vger.kernel.org>; Thu, 24 Apr 2025 20:48:56 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.222.169
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 6DEA9281501
+	for <linux-rt-users@vger.kernel.org>; Thu, 24 Apr 2025 20:48:57 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.222.181
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1745527738; cv=none; b=COOjK5THaOvb3qWpIbiIASoOuSn3IAsVToIFdrZnXTlSu7gl91tDYNbFeR4kLHr/ifUbCDTU1OCuBMmTCGfoL5mF6FM/l3EJss3dTOvHgD8gGLA2ITW76vhv1Pco/L2T7MyHGJTOXUPTZJbprtxoaF03idzBUUzgi84qz9bLNX4=
+	t=1745527738; cv=none; b=MePQVNwWjNdHF9nmzSbfP0yft/nc6My2G7IlK7FO1e7kZ1tNRDaA9Q0bW3g8jxE+4e+acMBhavxssuFJxJGfFOLrZqfBfCNUMpJLLtzUhJSbkjuXh7VFus/hISHy5RYA1+AHTWsW5jcPpykocKreozatdPU0igsy3WutqZuJabA=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
 	s=arc-20240116; t=1745527738; c=relaxed/simple;
-	bh=F6dZdCWe5XHYSt+hHTarZrLISFMJsKCI5dAVlhmOu90=;
+	bh=t4M8AuZVbcZAFfAtYLYy713r2sckgmEACXuvLg+kkGs=;
 	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=rwGe6pllKbMfBc/FQOaEb6BwU/oQ+gqSJlXRP61zkQoxETrP3RhlRCvTTL55V5K5xygwBrrWkRzLX1Vk85pafWJZ95qc+V6PgR02Wu3tTYpHII2slAvIlEHJ50BX5sWjVhzrkVdzSsCJ6jy2Tn9c6kP2WRXXnH40MY1+FhtvQGE=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=fail (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=aIcG/eKP; arc=none smtp.client-ip=209.85.222.169
+	 MIME-Version; b=jSqmJXccO8cZEEDPvhEzkm0LLX2t2/r9fCZP+CKuyCGxrgYFT+BePmG8K27VJYdJm2HLxLVuY8ka3wBXMwwWpPUgr42ftK1OfhJcISs2STrf5qnGP6Qndm6l0Fg1q5o0VoYlsS5pSDFIDFoAR0TO7S1CFHVkbZM46myHSmVuywE=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=fail (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=PbgZ7Zn9; arc=none smtp.client-ip=209.85.222.181
 Authentication-Results: smtp.subspace.kernel.org; dmarc=fail (p=quarantine dis=none) header.from=redhat.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="aIcG/eKP"
-Received: by mail-qk1-f169.google.com with SMTP id af79cd13be357-7c546334bdeso139655985a.2
-        for <linux-rt-users@vger.kernel.org>; Thu, 24 Apr 2025 13:48:56 -0700 (PDT)
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="PbgZ7Zn9"
+Received: by mail-qk1-f181.google.com with SMTP id af79cd13be357-7c9376c4bddso172310785a.3
+        for <linux-rt-users@vger.kernel.org>; Thu, 24 Apr 2025 13:48:57 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1745527735; x=1746132535; darn=vger.kernel.org;
+        d=gmail.com; s=20230601; t=1745527736; x=1746132536; darn=vger.kernel.org;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:sender:from:to:cc:subject:date
          :message-id:reply-to;
-        bh=9TlrxpIUCqXGrsdVLF8+ODCIOkly/68Y5+itALcf+E4=;
-        b=aIcG/eKPSsEhyzjbBor7WguPk7Z4g4vvoHQjICnFYTuy/pgjNunFNmJ902ZKxQP33b
-         bP86cCJs3Hd8+9zihTsvmLGjkVcTtyn+7PbBbqVTFOagmoqGQnZklzp2tRmsSt5cPPZ1
-         mhxWrvysVFm0LVjg9QVe0zvl8dXOpuhiC/TuGS+24VMz+0H6JaIyZSZJhfpCObuXihTN
-         sQ1aRctpMWlCY/RyCIA6w+qlnWiy1mxVRC+mHY/CAL/oBuUSqU0wG5f7RCH4hTTVUvRh
-         vrsMk5MBAZ1DGO5dsLBuylh8vT7sykyFb2hfgOlvBSgsVODI9NxicqhHvORGmFJ8NVum
-         U6bw==
+        bh=lf1wIc83Y1Y4d0i8JkTes446GX1WtJ3porzHp8xmEf0=;
+        b=PbgZ7Zn9R8rpzntZC77hy5TA3uuXoU1+dC8sZyklz1w+ZAceX5mb6an3IE1M4TXMnK
+         XYtSJsT27GC9vDxmYXyRhYXy08IFtnEw5ZBzLQ4U9XGn2Rdul6cbS0uD5fxRqTGAjss3
+         xiImjL0WR1ZjqJO40W8BHol1TYpvyAykP/oiS02U57qOyWUNvsVDOmuvyLwbH0W2ck9c
+         syTPYXBSWXldF0dBbMnZDWwkLNaMtvywB1Y+dtzB7Z372+Mxv4CFnICchDRldq1S5ANG
+         oF+fDp6xv4rWJzOFfBI1kfpX9TdCk8DheF2Lnyvvlrj9hi2nM1lbJU2XzrxVzi+TAIer
+         X5nw==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1745527735; x=1746132535;
+        d=1e100.net; s=20230601; t=1745527736; x=1746132536;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:sender:x-gm-message-state:from
          :to:cc:subject:date:message-id:reply-to;
-        bh=9TlrxpIUCqXGrsdVLF8+ODCIOkly/68Y5+itALcf+E4=;
-        b=IB26BiURp986DEV91buQqe+MmN6E//J6otpd8mork+iI4bILJS7NICHf80+8rqaX+9
-         NwvIQm3CBCIu3fF7HNh63lrPmEDVe4oNhbtvygLKS2p5/Ns2Cb0qQFmnHUWNGGpTYGU6
-         3l8Kp9wpYxWwS/FBx1sBS33u8cwNE/4loMW20M3XvOyKxn03dlh3jGpXX0B7pZfqpn9f
-         4QQsk01ao3mCzxMkcOgJKaKUtsFCuBNZWU/5h8IG0nUczeyY7N699KFHw9oCAGv6vyt5
-         WPoBsqEtLfy//+jRtMlToZhoHvMazdyHFLIUqRPGQeSWv1id+LvytCTncFhw8WUVWVUe
-         Jvzw==
-X-Gm-Message-State: AOJu0YzX3iP102VE9lTuhZHor9vEsRQlitGbk/n4bQVhT7yclnUYkr3/
-	Su9bYKt6JRc4/QK2t+euhlzvq8oh+rVEA1K6GOYol2kTnNBm59e3JTgqXw==
-X-Gm-Gg: ASbGncvSgDKHFx+dOe32kGIEbaRBPZzOvNzhzAxt4z4yoSDvo/P2xaz0oB7O+EFC8GO
-	Nx7PgAQmx+fgKS8vbbAaqLncF3ndhxXv8pM73QvRdhXAbVBnGrzhrflS/eT8ocyy9PjbHU4OHLI
-	/w6juwgG/0yc1JWGb7vqwYQ2ZZCy/kUaBtu5vmxMb28Y8iy7Nwklk1++8r6u2AYwYEE/K+huKBG
-	OZAsmB6rJesohlT2g3ZKlTDgj4o9WhJXNb+VCOatUYbLWccXqacgMTdMmpCJPdBnEp//cbnsWp8
-	t2BiHzPqXcs9lT6JmoXHVoYUED+dGnMfFLCYIK8J89El2g==
-X-Google-Smtp-Source: AGHT+IF3wXR/8xbgUgdTSwazIbzkyu/e7eOHC1woYIuDd1M5l62IMoAbokondr7snQ5hY8ULPfC/AA==
-X-Received: by 2002:a05:620a:1712:b0:7c9:443b:84e9 with SMTP id af79cd13be357-7c95eee6857mr129561085a.3.1745527734906;
-        Thu, 24 Apr 2025 13:48:54 -0700 (PDT)
+        bh=lf1wIc83Y1Y4d0i8JkTes446GX1WtJ3porzHp8xmEf0=;
+        b=pUSxSCloJxh6/EbmV1Jzk/PGLGsy9iQ0RhUbEatKmLaPhBPQ5AUeIfXsq6oFcyDm8S
+         cchW+7lfDuKOPF0Mo/zkpWlpTB0iRZB062A3AJveBTsJeW9ihTbsEYoyNtl914b4it08
+         8d2kGHQ7h70ms7slULXBgFNVpA0Q4QDogQJY9BNf72RgwPKSszvueIYsSeFQX5XyOuau
+         8a6dcWpQwuencAJQ7khM7f1fHBj2YbmwfT3dX8fp7BXrnad932lSaQDbp4N8VwAwIu+Z
+         hlUZIE+x/GC6KXk5rl80cDRpARI4b1MUp5SlQR56FTq/j7iJJBB3ElNXOrAcHY3XCPBG
+         QX4A==
+X-Gm-Message-State: AOJu0YxUvNkMVj5ot/uZpmVqJ39QkNDJaEzrpWx+xUFu2e4BgmfQqC77
+	qZNc4tDPhqYzcBR9CB75/bjEexYQuYxAZ1rE05ewcge9D5q9FoeoYDJ8cw==
+X-Gm-Gg: ASbGncs2srQXFyB04ugVCaKwWO3Grmyw6vmvAlfR2BysBSAKVghYsZ5T7qDMvVePYlo
+	HkMMDnywS644f9N+n2i+ZT6CXNsTDNmWOE7WhwY5g1aAPsrNV221HQ/C8VzIy/KZfIbwodIdaFh
+	wyxl0W/oRs1E5ub2rVd+B4uW1a6tgn3kgKXGdfi5bWMT8aLWeQXn65DqHegYLf5YaiVOubIYc+A
+	KdzNPfxc+RZZ6iVa4LWtqndRO1sKxbUb5TTjcmDKzVSzwDv02PhkDrVUfCOeVTbT/ZNTYNrKUyd
+	C0d0788ZSM4UxbE+HwnVct+mrwy1j+1HWYaMzqar3GLbKw==
+X-Google-Smtp-Source: AGHT+IG4BXzL37WpB2JyEcppeaODO74q4c0Yqs2tZVqmiXwL69PjMqkNrkIBcwgYeCzALfhvRAG4Rw==
+X-Received: by 2002:a05:620a:2986:b0:7c5:d1b3:d9b with SMTP id af79cd13be357-7c95eed4880mr126333785a.10.1745527735883;
+        Thu, 24 Apr 2025 13:48:55 -0700 (PDT)
 Received: from fionn.redhat.com ([142.189.102.216])
-        by smtp.gmail.com with ESMTPSA id af79cd13be357-7c958d86c19sm130932785a.85.2025.04.24.13.48.53
+        by smtp.gmail.com with ESMTPSA id af79cd13be357-7c958d86c19sm130932785a.85.2025.04.24.13.48.55
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Thu, 24 Apr 2025 13:48:54 -0700 (PDT)
+        Thu, 24 Apr 2025 13:48:55 -0700 (PDT)
 Sender: John Kacur <jkacur@gmail.com>
 From: John Kacur <jkacur@redhat.com>
 To: RT <linux-rt-users@vger.kernel.org>
 Cc: Clark Williams <williams@redhat.com>,
 	John Kacur <jkacur@redhat.com>
-Subject: [PATCH 4/5] rteval: pi_stress: Change PRIu64 to llu to match upstream sched_attr
-Date: Thu, 24 Apr 2025 16:48:42 -0400
-Message-ID: <20250424204843.79193-4-jkacur@redhat.com>
+Subject: [PATCH 5/5] Makefile: Use -Wno-error=format-truncation=
+Date: Thu, 24 Apr 2025 16:48:43 -0400
+Message-ID: <20250424204843.79193-5-jkacur@redhat.com>
 X-Mailer: git-send-email 2.49.0
 In-Reply-To: <20250424204843.79193-1-jkacur@redhat.com>
 References: <20250424204843.79193-1-jkacur@redhat.com>
@@ -75,50 +75,28 @@ List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 
-- Change from PRIu64 to llu to match upstream glibc sched_attr.
-This change is for when we are getting the definitions from upstream
-glibc
-
-- Change our definition in rt-sched.h to match upstream glibc
-  This change is for when we are using our own definition of struct
-sched_attr
+Since compile warnings are now errors, use -Wno-error=format-truncation=
+at least until we can sort out MAXPATH MAX_PATH, PATH_MAX and determine
+what is needed.
 
 Signed-off-by: John Kacur <jkacur@redhat.com>
 ---
- src/include/rt-sched.h   | 6 +++---
- src/pi_tests/pi_stress.c | 2 +-
- 2 files changed, 4 insertions(+), 4 deletions(-)
+ Makefile | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/src/include/rt-sched.h b/src/include/rt-sched.h
-index 9cf0e3a937e5..767b1d8df485 100644
---- a/src/include/rt-sched.h
-+++ b/src/include/rt-sched.h
-@@ -56,9 +56,9 @@ struct sched_attr {
- 	uint32_t sched_priority;
+diff --git a/Makefile b/Makefile
+index 26acffed8114..6215541d2eb1 100644
+--- a/Makefile
++++ b/Makefile
+@@ -33,7 +33,7 @@ prefix  ?= /usr/local
+ bindir  ?= $(prefix)/bin
+ mandir	?= $(prefix)/share/man
  
- 	/* SCHED_DEADLINE */
--	uint64_t sched_runtime;
--	uint64_t sched_deadline;
--	uint64_t sched_period;
-+	unsigned long long sched_runtime;
-+	unsigned long long sched_deadline;
-+	unsigned long long sched_period;
- };
+-CFLAGS ?= -Wall -Werror -Wno-nonnull -Wextra -Wno-sign-compare -Wno-unused-parameter
++CFLAGS ?= -Wall -Werror -Wno-nonnull -Wextra -Wno-sign-compare -Wno-unused-parameter -Wno-error=format-truncation=
+ CPPFLAGS += -D_GNU_SOURCE -Isrc/include
+ LDFLAGS ?=
  
- int sched_setattr(pid_t pid,
-diff --git a/src/pi_tests/pi_stress.c b/src/pi_tests/pi_stress.c
-index 6f8c5632bdd7..74e7bde0c21f 100644
---- a/src/pi_tests/pi_stress.c
-+++ b/src/pi_tests/pi_stress.c
-@@ -1294,7 +1294,7 @@ void print_sched_attr(const char *name, struct sched_attr *sa)
- 		printf(" priority %d\n", sa->sched_priority);
- 		break;
- 	case SCHED_DEADLINE:
--		printf(" runtime %" PRIu64 " deadline %" PRIu64 " period %" PRIu64 "\n",
-+		printf(" runtime %llu deadline %llu period %llu\n",
- 			sa->sched_runtime, sa->sched_deadline,
- 			sa->sched_period);
- 		break;
 -- 
 2.49.0
 
