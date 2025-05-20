@@ -1,128 +1,104 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 091262F2E
-	for <linux-rt-users@vger.kernel.org>; Tue, 20 May 2025 14:30:48 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 9D2A72517B5
+	for <linux-rt-users@vger.kernel.org>; Tue, 20 May 2025 15:15:02 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1747751450; cv=none; b=MUAFpE724xKrRNXp6766oKKqCDbqHocA1+DYYnkRvLYyIvwyZ+uuL4voY79rbaDhSa3HJyOcjfGPmeWy00bGXwJTDsdpOXmHhfjgm2fixfSUH0NJqJsPuYxwQLOsKNd0mPjMbJ8DAgCkp01p0WueTzJZWWBFPJzgMcM+2pEnbPY=
+	t=1747754104; cv=none; b=CLuiM+Uzp/I/wZSmwmyjO7P7o8ydMct+BYKL03/D7l2CimW//sLTSx3qV+oLfTY1kU6bJqEU0P1eBWod2ZNsYUq3oYIoldfRGmrHVKyTbYH1krthRNEzOopljpwzYnwGACCN69fZwnFqOvNUURxmsTz7kP4prP6nFcirDOYgvsY=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1747751450; c=relaxed/simple;
-	bh=vvg5bf2eD9fU8+FGc5yw3Yd5Gh+vy9fi1Az4yIABAPY=;
+	s=arc-20240116; t=1747754104; c=relaxed/simple;
+	bh=plkQ1oLf12TQao6cf+ZTupncVTjT4NspZca49nOGMYg=;
 	h=MIME-Version:References:In-Reply-To:From:Date:Message-ID:Subject:
-	 To:Cc:Content-Type; b=twcnixIQuT5zoZpUtmPia8dHA3rb4y3GTzSY2tZv9dzc/HMusDSUaT4+Vonfmo1uK2hhWHQ9xYQa6qvggXcRQibi40zagarguDSZifjV1hd3PhJK8uhCMeEZoDEZVBxQW3Qes6wFfElIzSzuirH//PzoBH2+xiaJwH+41ds6zLc=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=WXlM7Voe; arc=none smtp.client-ip=170.10.133.124
+	 To:Cc:Content-Type; b=WBXY4rjAruG1aCxCPjLrjJIZayOdiQHT6VHsa+tdrmPNRTW8n+2HVc5NGsYcreXz+O8e8U8QNoTcrxEKeIkBKVMvzjjqIt34x+9OOT0KnW4Eu1URizxnjDFbz4s1uQNqjh8rKxmlhaM3aYx/krLxyEqkLghZBKFlsjgYo1hRMeM=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=CcLWEd7/; arc=none smtp.client-ip=170.10.129.124
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="WXlM7Voe"
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="CcLWEd7/"
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1747751447;
+	s=mimecast20190719; t=1747754101;
 	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
 	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references;
-	bh=vvg5bf2eD9fU8+FGc5yw3Yd5Gh+vy9fi1Az4yIABAPY=;
-	b=WXlM7Voe8GdOuuMysNKLqnE8z91BOwbnwKippJPt1OypQnoay8pGVglI2KcG1h1JYO/0Kb
-	CyFT+bxtY0gaYEieHFTKRIKvg5c+aH27wfl42ukjRNsyV8rhN1Rz2H0waEE/FHW88nGEqK
-	GngBUT+J/OhK1BXaOMg+SizXn7BxQJI=
-Received: from mail-yw1-f199.google.com (mail-yw1-f199.google.com
- [209.85.128.199]) by relay.mimecast.com with ESMTP with STARTTLS
+	bh=brRxnNIasiIXZmdeBP4fqwyq/I/KBlv62gvCYwL5UMM=;
+	b=CcLWEd7/7xrimanDsZGhYqoPW/zAvIW5efhmDzaAO8DjqfHkJS9DaKNIjDqgr6ml5k/pWN
+	4nnWqBjySJKBuDU4L+QvvVMCLm1uSyaQtuCAoBdr/cboLRBdNro/G9St/LPOTwLt95bG5G
+	n6V8QHIrS0RF10Ki54znqCeyeKZHYgY=
+Received: from mail-yw1-f198.google.com (mail-yw1-f198.google.com
+ [209.85.128.198]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
- us-mta-298-Kx__SANePHKB2XZlVfyYSA-1; Tue, 20 May 2025 10:30:43 -0400
-X-MC-Unique: Kx__SANePHKB2XZlVfyYSA-1
-X-Mimecast-MFC-AGG-ID: Kx__SANePHKB2XZlVfyYSA_1747751442
-Received: by mail-yw1-f199.google.com with SMTP id 00721157ae682-70cc94b91b3so41287677b3.1
-        for <linux-rt-users@vger.kernel.org>; Tue, 20 May 2025 07:30:42 -0700 (PDT)
+ us-mta-245-40-JPDDUPzOwvCIJ1iV75Q-1; Tue, 20 May 2025 11:15:00 -0400
+X-MC-Unique: 40-JPDDUPzOwvCIJ1iV75Q-1
+X-Mimecast-MFC-AGG-ID: 40-JPDDUPzOwvCIJ1iV75Q_1747754099
+Received: by mail-yw1-f198.google.com with SMTP id 00721157ae682-703d7a66d77so86315607b3.0
+        for <linux-rt-users@vger.kernel.org>; Tue, 20 May 2025 08:15:00 -0700 (PDT)
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1747751442; x=1748356242;
+        d=1e100.net; s=20230601; t=1747754099; x=1748358899;
         h=content-transfer-encoding:cc:to:subject:message-id:date:from
          :in-reply-to:references:mime-version:x-gm-message-state:from:to:cc
          :subject:date:message-id:reply-to;
-        bh=vvg5bf2eD9fU8+FGc5yw3Yd5Gh+vy9fi1Az4yIABAPY=;
-        b=wsIFzli5kHEzpiWMPdpdnBqCpC3ePCeK9W7SSnKZIDrbECJ10Ix1OT10ESeeVTp/2P
-         Qz2UxHPTBG6UWs69C+VvmfVcp4976ygNsE5exnQPk/QGodeAbfxPH2Qxgsoa5BZnOTVr
-         iu6Mz/NqiMiyYxvPPjDim+aOM8U1SK3jhBEq8N/VTyGbEsxsaVTTakg3oPhv+2LQVxyQ
-         /HK2KreK6Twu1dGx/TyShiNICMlhIAEfwTISTrR6faFcBX2kVSgt7yYjdUObKdPkjTDX
-         MX+Nnl3zgwxcoReuzX4onidQmExGzRKd+tx3OXKJc84h0Tm0U6EUoA1IYEtstVR+vbqD
-         Y2FA==
-X-Forwarded-Encrypted: i=1; AJvYcCX5OIeqre8F2Lxri0+yVR0nd6X1ZpnjdqqN2xu2/m4n80qSWIV1k8qjB07g4T6QnfEkgCBasCw6IeReqkBvfg==@vger.kernel.org
-X-Gm-Message-State: AOJu0YyqXZGzXQdyx2nXZH9UhUfgc+ENYXPTciNf3K3YGVDuvJhtkNRA
-	UZ/h2fVg8g2bp+UEhx6YyTxTv4jjtCY61dlwxdL9NiPOhivmiJoYBqHJCXaVMlPYf6cTtm6U3Px
-	U9kuB8qJyk+sKxEooPDHQoHvFaOPjxoRNMyegEpVqW58Bgfb/GuEZ5SMelk/muOuGfmFnbsbafm
-	anBLb9cUMVf9XEnqW0AUd0tYFn58oQI7tW8Mb0GVbDDHo=
-X-Gm-Gg: ASbGncsle1VYx1GbJ3VOFUz84v3OTNTvwE/zuvGXFiYeM5WINCM9Vh6sgUCuJF8vHoH
-	kJB08mIFTfTVI82fHMhgHzlG10JqTcqWtssnQ7D8P3zJEyqJ7XuhYHW4X1MOCUinYqDdo49pVxm
-	1BTpmN2zqiCRpadiWWzuTrjV1m
-X-Received: by 2002:a05:690c:6203:b0:705:750d:c359 with SMTP id 00721157ae682-70ca7c54e00mr255934017b3.32.1747751441488;
-        Tue, 20 May 2025 07:30:41 -0700 (PDT)
-X-Google-Smtp-Source: AGHT+IGyb/+kCgQHXAaXi/OyodhVUZYLYoKdLP+7Y0zVQhc/pyvyjSSbsxkDs+hxKidbhEZDN99oNE38G0t7TnJVNpQ=
-X-Received: by 2002:a05:690c:6203:b0:705:750d:c359 with SMTP id
- 00721157ae682-70ca7c54e00mr255933567b3.32.1747751441002; Tue, 20 May 2025
- 07:30:41 -0700 (PDT)
+        bh=brRxnNIasiIXZmdeBP4fqwyq/I/KBlv62gvCYwL5UMM=;
+        b=u6NYmmD43wQqguLARxkJu0yCdCVYq1kj60Bnuneso3S3HvJ/jRwZf+ORk0Y5uCc0N7
+         MYDmz+nA2ZkQLYpVtdfQrGZtVkGIVLiXFi0WVEnS425xU+XQe1mD3hn4zHHk9INalhH5
+         9yPCJf3qXpePeoBOzCeo0pIw1YL+vidQjC/tO2rLm6xnfVNtosh9Ps6QlyZMkhNFAx5V
+         Yr2yntMkKYnnCfHm5Fl5CPfNO5hPQta25amFVt/9JC7LrUGZartjCgIk2F8NP7/4occr
+         /KMZSaLGJ/7dPySq/Qi4DxTClyZd/wVqLgmdvkrL6iKzE1Uw0LS9gEH2jfmMTZB3uVvM
+         3VgQ==
+X-Gm-Message-State: AOJu0YzmyqWOazf5nlijmmGcT4t72Q6pvcnSb2AdS3PUNiuiz0CNjkut
+	FGB/b9LGjMZsexmtOrgw+3LW5qB/A35qjTlgDfXv4GTKci+Pv5X0p01uJ+Co6kwhbELf08+Jtul
+	Ywm17XPDlZ2EV9RyjOGS1+z63ON9w/mtn9hKg8p7kwywxXfmPr3dR0X4JRUNF5yKWvMoa7tpqHu
+	Yfz/dNSt+Nhg7waYdi3jJkrp1bD7BQPXvOHkP/nYiAxMI=
+X-Gm-Gg: ASbGncvdw5WMF2F8uzgvBsXyI796CngKfRWGOjM0s2gU3LwLhabReHTvCDfmdlr3zAw
+	lWFmbfRQLSmtCn2im04pwAl1gISA0wPrE8n+yi4MOVW6yFYp1xthXTHkw9MUo1UUNSeh0Kj+hIP
+	suf8LeuSpMZWSkrwbMfou6kTkf
+X-Received: by 2002:a05:690c:6e06:b0:70a:5298:a8cb with SMTP id 00721157ae682-70ca8a35c55mr240143447b3.17.1747754099575;
+        Tue, 20 May 2025 08:14:59 -0700 (PDT)
+X-Google-Smtp-Source: AGHT+IGpkL1ABCNWxa1HrPFWn+zx3HnO5jycF9NJtj0lNxxyFncOgZ9EI7M6mdDQfIOQjrR6DUZYlbkVcaaow5kTIBM=
+X-Received: by 2002:a05:690c:6e06:b0:70a:5298:a8cb with SMTP id
+ 00721157ae682-70ca8a35c55mr240143027b3.17.1747754099157; Tue, 20 May 2025
+ 08:14:59 -0700 (PDT)
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
 List-Subscribe: <mailto:linux-rt-users+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-References: <20250520035641.533706-1-leobras@redhat.com> <84msb7g2sr.fsf@jogness.linutronix.de>
-In-Reply-To: <84msb7g2sr.fsf@jogness.linutronix.de>
+References: <20250520035641.533706-1-leobras@redhat.com>
+In-Reply-To: <20250520035641.533706-1-leobras@redhat.com>
 From: Leonardo Bras Soares Passos <leobras@redhat.com>
-Date: Tue, 20 May 2025 11:30:29 -0300
-X-Gm-Features: AX0GCFsjG8lD-XbeoOQ7S0hxObU9tQ8zk_F0amKxyOWIjnKf2vstspSG1AUAc1s
-Message-ID: <CAJ6HWG7d-1SqOh=H62Ycrx_owziO_CzEvPKMNgsqeWC5b139Bg@mail.gmail.com>
+Date: Tue, 20 May 2025 12:14:47 -0300
+X-Gm-Features: AX0GCFveLYUJYXqlRkzUd2BSBl7dTXbNoT0B43iWXp65IsU5MSAo46Yad1Jg3iI
+Message-ID: <CAJ6HWG52+JjRp2OPg6Zf1XMdmHBonDiu-rbWAMUiTOxiuUUWOA@mail.gmail.com>
 Subject: Re: [RFC PATCH] cyclictest: Add skip_sec option
-To: John Ogness <john.ogness@linutronix.de>
-Cc: Clark Williams <williams@redhat.com>, John Kacur <jkacur@redhat.com>, 
-	rt-users <linux-rt-users@vger.kernel.org>, Sana Sharma <sansshar@redhat.com>, 
-	Marcelo Tosatti <mtosatti@redhat.com>
+To: Clark Williams <williams@redhat.com>, John Kacur <jkacur@redhat.com>
+Cc: rt-users <linux-rt-users@vger.kernel.org>, Sana Sharma <sansshar@redhat.com>
 Content-Type: text/plain; charset="UTF-8"
 Content-Transfer-Encoding: quoted-printable
 
-On Tue, May 20, 2025 at 4:35=E2=80=AFAM John Ogness <john.ogness@linutronix=
-.de> wrote:
+On Tue, May 20, 2025 at 12:56=E2=80=AFAM Leonardo Bras <leobras@redhat.com>=
+ wrote:
+> @@ -637,20 +638,21 @@ static void *timerthread(void *param)
+>         sigset_t sigset;
+>         timer_t timer;
+>         struct timespec now, next, interval, stop =3D { 0 };
+>         struct itimerval itimer;
+>         struct itimerspec tspec;
+>         struct thread_stat *stat =3D par->stats;
+>         int stopped =3D 0;
+>         cpu_set_t mask;
+>         pthread_t thread;
+>         unsigned long smi_now, smi_old =3D 0;
+> +       unsigned long skip_cycles =3D skip_sec * USEC_PER_SEC / par->inte=
+rval;
 >
-> On 2025-05-20, Leonardo Bras <leobras@redhat.com> wrote:
-> > When running cyclictest with break trace (-b) option, wait for skip_sec
-> > seconds before issuing the break.
-> >
-> > Cyclictest may present high latency on the initial cycles, which can be
-> > caused by initial resource allocations, and may not represent the
-> > expected latency for the running workload.
->
-> If cyclictest is programmed correctly, this will not happen. Can you
-> provide a technical explanation for high latencies on initial cycles?
 
-Hi John,
+BTW, I noticed this is not the best approach: in case cycles take
+longer than the interval, we may be skipping longer than the
+parameter. Will send a rfc v2 for taking time into account instead of
+cycles.
 
-We are currently investigating the source of this latency, but I heard
-from other team members it's also happening on Intel Secure VMs as
-well.
-
-Scenario:
-Host: ARM64, kernel-rt, 120 out of 128 cpu isolated, hugepages for guest
-KVM Guest: kernel-rt, 120 vcpus pinned on above isolated cpus, 116
-vcpus isolated on guest
-
-Cyclictest runs with trace-cmd attaching to a guest agent:
-
-trace-cmd record --poll -m 1000 -e csd -e sched/sched_switch -e timer
--e irq_handler_entry -e irq_handler_exit -e tick_stop -e
-ipi_send_cpumask -e ipi_send_cpu -A 3 -e csd -e sched/sched_switch -e
-timer -e irq_handler_entry -e irq_handler_exit -e tick_stop -e
-ipi_send_cpumask -e ipi_send_cpu bash -c "ssh $my_guest 'cyclictest -m
--q -p95 --policy=3Dfifo -D 2h -i 200 -h60 -t 116 -a 4-119 -b 50
---mainaffinity 0,1,2,3 --tracemark'"
-
-What we see is a peak of >50us in the first couple cycles, and then a
-max peak of 15 in our tests.
-We also tested a sleep before the above cyclictest command, in order
-to remove any trace-cmd setup that might have been in progress, but it
-did not help.
-
-If you have any idea on why this might happen, or suggest a debugging
-setup, it would be appreciated.
 
 Thanks!
 Leo
