@@ -1,364 +1,646 @@
-Received: from MRWPR03CU001.outbound.protection.outlook.com (mail-francesouthazon11011013.outbound.protection.outlook.com [40.107.130.13])
+Received: from mout.web.de (mout.web.de [212.227.15.14])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 479C9566A;
-	Thu,  5 Jun 2025 09:03:06 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=fail smtp.client-ip=40.107.130.13
-ARC-Seal:i=2; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1749114190; cv=fail; b=VfLVbTYZ1A6znkNCKy47dTEhzA4tD/MzDrlVlsA3mRgiVTKL8j5sJK9JhCtbtTifeGElU3BnRDKP2hiEUQF6Ne69rZSv4aPJh+xA5nUMTzAQUj+pS2oopfMgsX0yPidyUHdW1yyhAYYV+CmInLRnv/zT+dzeRLh8AfmmBGu01WA=
-ARC-Message-Signature:i=2; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1749114190; c=relaxed/simple;
-	bh=mAgrnguLU4lqicFOSD1JrYxh0F1zVge67+mM1kpkdj0=;
-	h=From:To:CC:Subject:Date:Message-ID:Content-Type:MIME-Version; b=EUG9a9JqDZfZUXmnQAYzAO5yNCAeVMpkKs8V7rBxVoyZlXb4HM2o6RZSWqXgC/JOifBI3Hmqd+rmBZTfGi+J5VMioHtocyNuc4B0O5QSVa0dLviZsDWLO9k8HJzW+E4vOpnNaArivcXYqHBsoGF/vlefdOX6Hgn173QgZ6knT4Q=
-ARC-Authentication-Results:i=2; smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=siemens.com; spf=pass smtp.mailfrom=siemens.com; dkim=pass (2048-bit key) header.d=siemens.com header.i=@siemens.com header.b=MdVgEqhk; arc=fail smtp.client-ip=40.107.130.13
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=siemens.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=siemens.com
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id BB0DE40855;
+	Thu,  5 Jun 2025 09:19:13 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=212.227.15.14
+ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
+	t=1749115157; cv=none; b=JagjdMLJrSVX0pqrK/80CVx/29tyDIDcAk17bzW4svgQqwXWsdqqbNICLszcWbiQxUnL9/vv9W7JkNvQnGfojAQ5TXXWghFXwpeJlHYiQHl1Yfb1lXttNlf/iT4Yqanp6E9Mnkvf4u0bWuBUoyQzmVDfflZUkfrW//S8W1qCSZI=
+ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
+	s=arc-20240116; t=1749115157; c=relaxed/simple;
+	bh=2W/yaBdYiYtL1sMWCv66ZTUE5HFtBggpB8LxmphQP3o=;
+	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
+	 MIME-Version; b=Y3fzM/OSivKN327yl4cFd+4YPfmHeADqq1BtOEOER0JYPj7NdOsabZIwd3mrynGfjcu205mpC02Bxhwbp3jMWsUWnPU8KYT0Oq+sdnuuCPZQNeFwDnpG1VIILtCgI/tleSf/Bjt7PdU7XhfXjcIDYfYy+obFv5LskoF9FSyN5zY=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=web.de; spf=pass smtp.mailfrom=web.de; dkim=pass (2048-bit key) header.d=web.de header.i=spasswolf@web.de header.b=QjzLtYpO; arc=none smtp.client-ip=212.227.15.14
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=web.de
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=web.de
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=siemens.com header.i=@siemens.com header.b="MdVgEqhk"
-ARC-Seal: i=1; a=rsa-sha256; s=arcselector10001; d=microsoft.com; cv=none;
- b=FUXYYyq3JJkW+nAUHto/AqTiIpTY1/ZFvCpXGmllflGe+ivK78gtmOpvGkZCeKHEXP+icjsZNI8k5nSTe4CRekrZ1TKBaMb6CZ5JY5hqORkgpaK+h4eN8wZb79QDuUqY55/EO3iohWF3Lb8NpukAwmCCKzgRSJ2E6uOyXMYhy52t4w8zuWionH7V7Mij/M+rZL8gkj8Rkv+2dgCk5wUpnVy9eIDDexHybe31ytapL4uKDShT++Egv6atyiMLQqG5ZecTAsrwMU5bm2E3/QrLY+NEKaOCUYmOCHbuPYUIVDwz0HVRffg1BbPbOT32iwQU3IX7plt8U3qQZVVr7FVyIw==
-ARC-Message-Signature: i=1; a=rsa-sha256; c=relaxed/relaxed; d=microsoft.com;
- s=arcselector10001;
- h=From:Date:Subject:Message-ID:Content-Type:MIME-Version:X-MS-Exchange-AntiSpam-MessageData-ChunkCount:X-MS-Exchange-AntiSpam-MessageData-0:X-MS-Exchange-AntiSpam-MessageData-1;
- bh=mAgrnguLU4lqicFOSD1JrYxh0F1zVge67+mM1kpkdj0=;
- b=pMRNmHeI2/L37spdqOdzHdPK9BhLy0xPQ9RwceBKHcV7KhGKbAkON15SecsPKOJA9sGCyB4CE+T5iFGGh76Xf+wpPe2Tu3xRe2WK4q0Us+8C0tJNxTk+8IzQflhXBn4e6GId6rs9L/ATHmmmFVI9KYqqSPYoMgtVRjqv8QkkcyrGKF3yWVhRnCVG5szkRVwy+Z4GP2j+BURDaxbtrrgLiqNlgu9im/gglsgGYbydwrKECtlU9JcQWtdUqwOsaQMGoD1IDEZyEuf5fmP3J2lFk3Kff4W5gu/nqNYq2REjSuoXgoQuKIdTeYF2FIzC5JOgqTDZoXWVeyt8nBNctwX38A==
-ARC-Authentication-Results: i=1; mx.microsoft.com 1; spf=pass
- smtp.mailfrom=siemens.com; dmarc=pass action=none header.from=siemens.com;
- dkim=pass header.d=siemens.com; arc=none
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=siemens.com;
- s=selector2;
- h=From:Date:Subject:Message-ID:Content-Type:MIME-Version:X-MS-Exchange-SenderADCheck;
- bh=mAgrnguLU4lqicFOSD1JrYxh0F1zVge67+mM1kpkdj0=;
- b=MdVgEqhk2SOQx62gSB7JMVPwnT3xrJ/Gk1VokMXGD92VKeIuM4PpxzGRv+0Oghc/CSIebb5FruVx85Kuxt3yyytR/EAPeBRWyUg0Ags9W/ulxVkXEB40k1o3zmToyTjzmgtyCtXSLHy0pTwBS3xCkt0gpR/iWb8nnsBEcnC9Uz9ryF/QDQ2zQE2LeSvZ+FArySVXku9YPeE+vskGSxdtMr5jh2H1TBsOOeuvh/oBkq/VddgdF1E1lQbehDGC+odBuNjppJoJs16th3vqajE9rrhd7qrGUgfXbudoRWUxH4ZGy8E5PV253ggs/VxaUOatASTpLx29Dy5777a32Jw4GA==
-Received: from PAXPR10MB5541.EURPRD10.PROD.OUTLOOK.COM (2603:10a6:102:23f::20)
- by PA1PR10MB8932.EURPRD10.PROD.OUTLOOK.COM (2603:10a6:102:453::12) with
- Microsoft SMTP Server (version=TLS1_2,
- cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.20.8813.21; Thu, 5 Jun
- 2025 09:03:04 +0000
-Received: from PAXPR10MB5541.EURPRD10.PROD.OUTLOOK.COM
- ([fe80::102d:f539:7c01:f07d]) by PAXPR10MB5541.EURPRD10.PROD.OUTLOOK.COM
- ([fe80::102d:f539:7c01:f07d%3]) with mapi id 15.20.8792.034; Thu, 5 Jun 2025
- 09:03:03 +0000
-From: "Flot, Julien" <julien.flot@siemens.com>
-To: "mathieu.desnoyers@efficios.com" <mathieu.desnoyers@efficios.com>
-CC: "Schmidt, Adriaan" <adriaan.schmidt@siemens.com>, "Ziegler, Andreas"
-	<ziegler.andreas@siemens.com>, "Kiszka, Jan" <jan.kiszka@siemens.com>,
-	"linux-trace-kernel@vger.kernel.org" <linux-trace-kernel@vger.kernel.org>,
-	"MOESSBAUER, Felix" <felix.moessbauer@siemens.com>,
-	"linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>
-Subject: ftrace regression with PREEMPT_RT kernels
-Thread-Topic: ftrace regression with PREEMPT_RT kernels
-Thread-Index: AQHb1fikfPRE6ZFei0qJvAAWQ1AHBQ==
-Date: Thu, 5 Jun 2025 09:03:03 +0000
-Message-ID: <240017f656631c7dd4017aa93d91f41f653788ea.camel@siemens.com>
-Accept-Language: en-US
-Content-Language: en-US
-X-MS-Has-Attach:
-X-MS-TNEF-Correlator:
-authentication-results: dkim=none (message not signed)
- header.d=none;dmarc=none action=none header.from=siemens.com;
-x-ms-publictraffictype: Email
-x-ms-traffictypediagnostic: PAXPR10MB5541:EE_|PA1PR10MB8932:EE_
-x-ms-office365-filtering-correlation-id: ad9d4aa6-a190-4c91-9686-08dda40fc74d
-x-ms-exchange-atpmessageproperties: SA
-x-ms-exchange-senderadcheck: 1
-x-ms-exchange-antispam-relay: 0
-x-microsoft-antispam:
- BCL:0;ARA:13230040|376014|366016|1800799024|13003099007|38070700018;
-x-microsoft-antispam-message-info:
- =?utf-8?B?VVBrZ2MxcjhrZDBydkxBb3JOL1VTN21zYnRLTHJxNGJPY2E4aEdJei9vVHVm?=
- =?utf-8?B?MjlleWJ5SWd2WnBBVjh6ckpxeFNMaGttRmU3OHh1NEY0R1kxMElURHcwa0Vq?=
- =?utf-8?B?WlZZS2NrVVNmQ21hd05ReWl6bkMvNXBFWDB5Rytlb2VCYjlQRUR6WlcvQnk2?=
- =?utf-8?B?S1JIazlpOWVFUlRoRXdTMkZiQ1RpTmQrK0QwQmtXL1FibkhPUmUxdXBabEEr?=
- =?utf-8?B?a0tYcGppMCtJWlNuL0pWaEwzY0kvdXdpcmw1TzByWEFxNTdOZlNlVlZ1TXFx?=
- =?utf-8?B?eXh2UTdWeStEaHFEd2I3MWpYc0NsV0wyK3pUNGlLMXVadmlSMEVuU3NxZEpK?=
- =?utf-8?B?RllLdlNjVVZscTQzaGd5c3ZCODZEcjh5WlNzdU5CTlU0NkJPLzRkZDVRZith?=
- =?utf-8?B?M2ZuSjVlQXhqYlNoR0FRL2VWSURWVXhiZzFWQ2svS0VKaTRPNDcycHljVzNU?=
- =?utf-8?B?cVB2UElYaXhhZ2NLNmNyeDAwSDZKWHRwUXB2djZJWXRrc3oyK0dJL3BzOEx2?=
- =?utf-8?B?cGtvbTJGYXFidjYzb25CMCsyaUhKdGw0QTBhVEJUMm5seHl3Nys3clhYZWNz?=
- =?utf-8?B?RHFLdGZ5d28rNUhaQ1JBemVRNjF4Uyswd0V1cWFPQ2hwUHpNWFJPZkl0NUla?=
- =?utf-8?B?QlRIZVo2RU5oTXVldFR2OW1uWFlyZ0pBRklUbXFRUDBvUW81dm1RcWxkejlo?=
- =?utf-8?B?Vk94REcrVzkvZm5obFZyWWdteWg2MEQ0OGJQbEk5SE5tejlCTWh0cEhIOEFC?=
- =?utf-8?B?SzY0R2xXOHc5N0Frd1NwN1RpWGcxU1FkbjMwRnBqVDUydzRoVTZzYWlZRGtq?=
- =?utf-8?B?ZllIWm5JWnN0L1lpTWJiV0ZRRHYxTnczSUl6QjUvYjNhWXdqQjZibkVXcnlW?=
- =?utf-8?B?RHdCSjFDdkZCMGgxRm5DaE03TnRSUTEwdzhqQW9JZTVDelNSVXNkN1lCYUt4?=
- =?utf-8?B?UUNpVGZxem4vUjB0bTdmaWhRNUdMbGhtWCtjdnV4NzJtM3JrN3hzclRJcm1E?=
- =?utf-8?B?a0N4N3hEdWNsbDdzbUF4cmRmRUVZWklFdEhJanF6TVlBM2wrSWJ5cjI3Qk1v?=
- =?utf-8?B?eEJZY3VObi9FeWEzZ2Y1TktscEhmQVdUQzNpZWs1K3ZpTTRvRE9hRmVVUnFK?=
- =?utf-8?B?MExnNzdLeHVuSitCdzdhZTdCRUJFeHlUc0NiWkIvQ01iWS9uZXdEbExtRk1x?=
- =?utf-8?B?M2lqUDU0RmVaNm0vU3NvcWpTWkI0U0dDOEdmT0dSenBYWVp5b3cvd0JvNW4x?=
- =?utf-8?B?ekZ6bzhoQmd3MEFzZGRHZmEwbkNmODhaUjc4YVBJQkIwQ1JTVTVySW5GbXVJ?=
- =?utf-8?B?QUVweExIVkdybHBqZjdhS2lmRW1ZenhkaTBKREdraVo5d0FVOUlSNHFWTWFp?=
- =?utf-8?B?WVVSSmQ2OU1DZVduRVQ3VEtwbGIzTHZGQThZQXlnajNpaEEzR3ViT3ZWL2d1?=
- =?utf-8?B?aE5kMFpxTGhaQmlWakYxcnVRN0VVYy9wSnFJVXQvaGM4enNQUXlvazlybmFr?=
- =?utf-8?B?OFV3OFkwUnpVODVZU2QzWCt0M0lzZkVXTHphbUVWQVZEUWlmUmhwaGJQKzhW?=
- =?utf-8?B?Vk0vZkx5bDBNdTJYa2VxZnZEMThPMDF1aHlNcDRGRFZ0bHJ3SjVkQno2QVFU?=
- =?utf-8?B?anBWbGZ3OFl2UC9GVmdGUldLcWgxL2p0bG5nY1RhNDh3WjBmK0tFWWFpQ3lE?=
- =?utf-8?B?c2xGWVdTMWhRRE85ZENOdjlqWVVETXVEOE1aSXBOaUVVUGNYZ1p3VThnbllE?=
- =?utf-8?B?czZBb1N4WDRvRTZ0N1dBRHJIQzdrM2Q3RW1WSG16dFcvUjlHTUtKNjVrcWhh?=
- =?utf-8?B?aWNXSFdYc2tvakY1MVhBYWc4RW1DMW5DTW0zNHYrazIyZkg5dERJY3hJa2hY?=
- =?utf-8?B?MHJ1RkpLVkVvNkFWSndoRmphTU94aTBHQVlqWWFxRnh1TVM0L2dBSUVzVHpU?=
- =?utf-8?Q?kKv3ISgTov0=3D?=
-x-forefront-antispam-report:
- CIP:255.255.255.255;CTRY:;LANG:en;SCL:1;SRV:;IPV:NLI;SFV:NSPM;H:PAXPR10MB5541.EURPRD10.PROD.OUTLOOK.COM;PTR:;CAT:NONE;SFS:(13230040)(376014)(366016)(1800799024)(13003099007)(38070700018);DIR:OUT;SFP:1101;
-x-ms-exchange-antispam-messagedata-chunkcount: 1
-x-ms-exchange-antispam-messagedata-0:
- =?utf-8?B?dU43RXNjUUhlMUZ4ekNsNk1ILzIzMVZSUkw5Z2cvZnN2ZUtWTE56eGlOa0FV?=
- =?utf-8?B?M1hjNmZ6aHZ2TjdLaEw4TjhUTTJWSDBkZnJWd1ViVlRIU3pWeHFHc0Mwd0RS?=
- =?utf-8?B?ZTNjRDloNUxMOFJjV0RrdjNPWE1TVmxKMy93WVRBZnJyR1dNMmVtSm9uazlu?=
- =?utf-8?B?azlIZE9jQ2tuUGRmVzdvZnpPcUQyYUowWEhZNncxblU3NitiN0k5eEFYNUEz?=
- =?utf-8?B?UzBrc0lSOHp1TXFqZGpxam9GZ2dBUkZCZCtEMEhJbGtxZ0dKRzc3L2paajdC?=
- =?utf-8?B?SGl5TDNEeG5NMHpXTFBUbTNmT1BUdFNqbkZaamNUTHk0TkgyNktSd1NmUUlV?=
- =?utf-8?B?NVFvekJXbmY4VmNnQTVsQXpVaTh4LytwWkdVU0J6bUtKc2dyZW9WUjlIRWZ2?=
- =?utf-8?B?d05BcUhPZUxUR09COTBTUDVHSW53Y0FlTkJmOENLTkdPRUFLUkpLSVZxVUM5?=
- =?utf-8?B?b3ZjWWdiVjEweVJBT2tiZDJKeFlsVG8vZGtUSTFoT2pQSXRDc296TGpSQ0Uy?=
- =?utf-8?B?Z1o1VHZPeWRHaUMrclk1ZVdTeWNNU3BxRXlwRUFjVXIwZzc1TU8wUVNsSmxs?=
- =?utf-8?B?Ni9SRWh1K2NITTVSZ2hmTEFNWTBqVU01WkpDNVE3eFdpR0U3UHh5VytPa3Uv?=
- =?utf-8?B?bTZhUDA1dWlpdld4NnFVQjJqYnh1WjVEOFpid25TOEdOdWlsSmRsaUppY3o1?=
- =?utf-8?B?R1NOUlhBSHcveEtyNERleE9SUzZjc0VqdjBJUElvVDIvMzAvVTVkOEQ5akpj?=
- =?utf-8?B?cGFvcEVSY3BvVGh2QjZ1RU9DRElwMjJ1VzRMY1dMREtJZ2N0NVBobkhDT3BQ?=
- =?utf-8?B?UlFHbUV2RFdydU5PczFjMlk3NHErOWpyYTFneTEvYWlWNjB2WGM1QmFmSWV2?=
- =?utf-8?B?eGdqdDJqR2d4eEpJNzlEanJxNFJXSnNXUEkwdVZNTDBuZ0d1dm1pY2Izam1W?=
- =?utf-8?B?S0JrWXpFVGRFdWJqUC9KUXRaeGJoMGEzQjdQYUhCUkVJeWlzcE1TN1kvVzVX?=
- =?utf-8?B?eGpKQ08zN0w0V25nVGk2OVVyK1VrZzVhV1JiTzZzbVZSYnV3alVrT1F3b3FQ?=
- =?utf-8?B?RVNURml4MWxtUXY0OG92WHVqbGR4S1UxOUtRZ2ZpWDQ2K1NpbHhFTHZLU05Z?=
- =?utf-8?B?T1A1Qk5JRTBsMEkzcG14eUFZQWE5aFVhQWM0ZmpCVXlMTVZoWndxV0hOQm1B?=
- =?utf-8?B?NlRMQ2xQQnZmdk10bkQ1UlJBQ1ZzUGJlNERtQmxuOUtIZTg0V3RJa0d6cHBC?=
- =?utf-8?B?dWJFb1JrdkpuVEU1Z1czNzR2L0tJdzcxR05sNHFLalBFczQzMUc4bEpNMGQx?=
- =?utf-8?B?MkdhSmwrclkvYkc1cW1sVElhS0s2VDRGSjFlSE1ZS3ZESU9IQmJWbWxDa05B?=
- =?utf-8?B?aDNtKzhZV0hCYllXaDgrUVRVbVJ0Z3psSEVycGhJNVBoQmdUSEordnZqY1RG?=
- =?utf-8?B?MEJTbEFnM0NjRFRGSWl5TEF5Y09QU1NlM0NxaSs1VmVoYWNCRGRwWTJmc2c1?=
- =?utf-8?B?UXdINHNvcTJmaVo5L2NtbExvWDY4TnVNK0NJcDVzQVdUNnZncUZnWExiTjBm?=
- =?utf-8?B?ZGZqdEUvc0JiVC83cVowL1ZpK0dqVG1wVkVrUzN0SXptR0c5Y2EvYUZQS1Yv?=
- =?utf-8?B?MnBsKy9MMUVXNUF3aEdDMndXZHR4aW0zZ1gvdHRiVmN5SWlvOUNWWE1HaDha?=
- =?utf-8?B?VVFuV1owL3RPWVk3TmZ2YytGM05vTDNSQUYyMTVKTTVBbVVuUUptZ2lhWE1K?=
- =?utf-8?B?M0VtQXR1d2tEN1ZCOTd4M1hoa1BBTCs3anVhL2tmRCtGM3UrNHZuOFB5ZkFv?=
- =?utf-8?B?d1l4WHdCTzNhSlMyZVF6ZEhtaG9pY1VzVWZmeHZrbFBRU0RGb1dxYVUyalpa?=
- =?utf-8?B?UVhCQ0dPbk1IaG1RWW1NdnhRTHphTzR0NnVaWmF2SjdMM1AwT3lnR0Y3eXRW?=
- =?utf-8?B?WG9kaWhBMUlIMzM0ZXgzSVVwSm94bkRhemJvZWVmNW42ZXNWNG1LY3hxK1Nq?=
- =?utf-8?B?S2JSVElGcDB2MGlsZG5JK0FaN0RvREpIUVdUcHFTVGJlQll6a3k3ckFSM2Z6?=
- =?utf-8?B?VzllSUQrYy9Jb2pXRzdLRzF0a3FHdWhMSmNqR1dGNktSNWhvK0ZWS0pLK1FF?=
- =?utf-8?B?b2ZPTVJWd3owdC83Wnp4YTB1UHBrNXhXbzNvcFRxbWZibFpKKzVpRnJLSjF6?=
- =?utf-8?B?QlE9PQ==?=
-Content-Type: text/plain; charset="utf-8"
-Content-ID: <23263A6AA8FAA64081784D2641AA354A@EURPRD10.PROD.OUTLOOK.COM>
-Content-Transfer-Encoding: base64
+	dkim=pass (2048-bit key) header.d=web.de header.i=spasswolf@web.de header.b="QjzLtYpO"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=web.de;
+	s=s29768273; t=1749115146; x=1749719946; i=spasswolf@web.de;
+	bh=fWTPL72czF0TW5VEu3Yv0WdxuWfZkzKVmXftYNM50kM=;
+	h=X-UI-Sender-Class:From:To:Cc:Subject:Date:Message-ID:In-Reply-To:
+	 References:MIME-Version:Content-Transfer-Encoding:cc:
+	 content-transfer-encoding:content-type:date:from:message-id:
+	 mime-version:reply-to:subject:to;
+	b=QjzLtYpO4cmn5dkzRYGoJ4z3fwwHKo05zah+1R2kUgMl08jNYVcgBsqq0dZNAO3r
+	 GM3x5F03T7h77C1/KRvA2Lj/03UXgQOhSuzcM3VKWfUjooza4XqnCxtndlWbYkR+L
+	 YUf/dLxNcxiqSkYDvV3Si8oFV2l8wseoif7uOkUnNaCCGkS06O9kqjlbajQlgjZJb
+	 EUSEgLa+nvmm1UaLCqcRfsTjH1N2wwJ/s8TmxZLyJfGqYJeWdOWLB+RgU+T+2lfoL
+	 5OY36VYUima+6Ykyv44Y7ZziFJK4MLu8CxywG8VI3Ok+XpkgHC04JmhILjEvDwvu2
+	 N9I0lZyiDLsRw3PGPg==
+X-UI-Sender-Class: 814a7b36-bfc1-4dae-8640-3722d8ec6cd6
+Received: from localhost.localdomain ([95.223.134.88]) by smtp.web.de
+ (mrweb005 [213.165.67.108]) with ESMTPSA (Nemesis) id
+ 1MfKxj-1v3LST0kWZ-00bJWn; Thu, 05 Jun 2025 11:19:06 +0200
+From: Bert Karwatzki <spasswolf@web.de>
+To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Cc: Bert Karwatzki <spasswolf@web.de>,
+	linux-kernel@vger.kernel.org,
+	linux-next@vger.kernel.org,
+	bpf@vger.kernel.org,
+	linux-rt-users@vger.kernel.org,
+	linux-rt-devel@lists.linux.dev,
+	Thomas Gleixner <tglx@linutronix.de>,
+	Alexei Starovoitov <alexei.starovoitov@gmail.com>
+Subject: Re: BUG: scheduling while atomic with PREEMPT_RT=y and bpf selftests
+Date: Thu,  5 Jun 2025 11:19:03 +0200
+Message-ID: <20250605091904.5853-1-spasswolf@web.de>
+X-Mailer: git-send-email 2.49.0
+In-Reply-To: 20250527071922.tMPqxpsB@linutronix.de
+References: 
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
 List-Subscribe: <mailto:linux-rt-users+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-X-OriginatorOrg: siemens.com
-X-MS-Exchange-CrossTenant-AuthAs: Internal
-X-MS-Exchange-CrossTenant-AuthSource: PAXPR10MB5541.EURPRD10.PROD.OUTLOOK.COM
-X-MS-Exchange-CrossTenant-Network-Message-Id: ad9d4aa6-a190-4c91-9686-08dda40fc74d
-X-MS-Exchange-CrossTenant-originalarrivaltime: 05 Jun 2025 09:03:03.1630
- (UTC)
-X-MS-Exchange-CrossTenant-fromentityheader: Hosted
-X-MS-Exchange-CrossTenant-id: 38ae3bcd-9579-4fd4-adda-b42e1495d55a
-X-MS-Exchange-CrossTenant-mailboxtype: HOSTED
-X-MS-Exchange-CrossTenant-userprincipalname: gDn/+SMJ1hGtbZ7duFLpAINmYsy3C1S9sazegwnTi0YF28jvXS8mzJlIluMFYXu38NQBHrXw9hxWLt1SzFSNxg==
-X-MS-Exchange-Transport-CrossTenantHeadersStamped: PA1PR10MB8932
+Content-Transfer-Encoding: quoted-printable
+X-Provags-ID: V03:K1:0DsXGMXu/ZBCfZrq9krjKhbSSTXGi96GQI8Oy7AJsT36/+CkblZ
+ gNH+i7uuLLz74iSM4AG1UbQRxNWcog3VpOBpf6E9nefO0OOexqfOszmDCBVPoiTTpJt7lew
+ TC9x8mD/df9clrGkf/J+KJ0Sd+riZQA9jKmloU0JNgCxJhPxVPCmj/EwDYWV/PZ0flI9K5U
+ m0FjWWMNDxm0Q3vZ+Kh8w==
+X-Spam-Flag: NO
+UI-OutboundReport: notjunk:1;M01:P0:eDtkaZx7P/s=;12U/wfgNlK0JBWTkB+P2lz/ns/y
+ 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
+ zT21XLvq/uS141pZEgGgci9BbMMyYmY7bqN1CQ==
 
-SGksDQoNClNvcnJ5IHRvIGNyZWF0ZSB0aGlzIGR1cGxpY2F0ZSBtZXNzYWdlLCB0aGUgcHJldmlv
-dXMgb25lIHdhcyBub3QNCmZvcm1hdHRlZCBhcyBwbGFpbiB0ZXh0IC4uLg0KDQpXaXRoIHJlY2Vu
-dCB2ZXJzaW9ucyBvZiB0aGUga2VybmVsLCBmdHJhY2Ugc2VlbXMgdG8gZXhwZXJpZW5jZSBzb21l
-DQpsYXRlbmNpZXMgd2hlbiB3cml0aW5nIGV2ZW50cyBmaWx0ZXIgZmlsZXMgb24gYSByZWFsIHRp
-bWUga2VybmVsLiAgDQpMYXRlbmNpZXMgZXhwZXJpZW5jZWQgYWRkIGEgZXh0cmEgbWludXRlIG9m
-IHJ1bnRpbWUgd2l0aCB0cmFjZS1jbWQNCmNvbXBhcmUgdG8gYSByZWd1bGFyIGV4ZWN1dGlvbiBh
-bmQgc29tZXRpbWVzIGB0cmFjZS1jbWRgIGp1c3QgaGFuZ3MgZm9yDQptdWx0aXBsZXMgbWludXRl
-cy4NCg0KVGhlIGJ1ZyBoYXMgYmVlbiB0ZXN0ZWQgYW5kIHJlcHJvZHVjZWQgd2l0aCB0aGVzZSB2
-ZXJzaW9uIG9mIHRoZSBrZXJuZWwNCihhbGwgd2l0aCByZWFsIHRpbWUgZW5hYmxlKSA6IDYuMTIu
-MTksIDYuMTQtcmM3LCA2LjE1IGFuZCBjdXJyZW50DQp1cHN0cmVhbS4gIA0KVGhlIGJ1ZyBoYXMg
-YWxzbyBiZWVuIHJlcHJvZHVjZWQgb24gdHdvIG1hY2hpbmVzLCBib3RoIHJ1bm5pbmcgVWJ1bnR1
-DQoyNC4wNCB3aXRoIGFuIHVwc3RyZWFtIGtlcm5lbCwgb25lIHJ1bm5pbmcgd2l0aCBhbiBJTlRF
-TChSKSBYRU9OKFIpDQpHT0xEIDU1MTJVLCB0aGUgb3RoZXIgYSBJbnRlbChSKSBYZW9uKFIpIEUt
-MjI3OEdFLiBUaGUgYnVnIGFsc28gYXBwZWFycw0KaXMgdmlydHVhbGlzZWQgZW52aXJvbm1lbnRz
-IChLVk0vUUVNVSkuICANCkkgaGF2ZSBydW4gYGdpdC1iaXNlY3RgIGJldHdlZW4gdjYuMTIgYW5k
-IHY2LjE1LCB0aGUgZmF1bHR5IGNvbW1pdA0Kc2VlbXMgdG8gYmUgdGhpcyBvbmUgOiBhMzYzZDI3
-Y2RiYzJiYzJkMTg5OWI1YTE1MjBiNjRlMzU5MGZjZDlhDQoNClRvIHJlcHJvZHVjZSB0aGUgYnVn
-IEkgdXNlZCB0aGlzIHNjcmlwdCA6ICANCmBgYCAgDQp3aGlsZSByZWFkIGZpbGU7IGRvICANCmVj
-aG8gIjAiID4gJGZpbGUgIA0KZG9uZSAgDQpgYGAgIA0KQW5kIHJhbiBpdCBsaWtlIHRoaXMgOiAg
-DQpgYGAgIA0Kc3VkbyB0aW1lIC4vcmVwcm9kdWNlLnNoIDwgZXZlbnRzLnR4dCAgDQpgYGANCg0K
-V2hlbiBtZWFzdXJpbmcgZXhlY3V0aW9uIHRpbWUgd2l0aCBgL3Vzci9iaW4vdGltZWAsIEkgaGF2
-ZSB0aGVzZQ0KcmVzdWx0cyA6ICANCk5vbiBSVCBrZXJuZWwgdjYuMTUgOiAgDQpgYGAgIA0KMC4w
-NnVzZXIgMC4wMnN5c3RlbSAwOjA4Ljc3ZWxhcHNlZCAxJUNQVSAoMGF2Z3RleHQrMGF2Z2RhdGEN
-CjIyOTI4bWF4cmVzaWRlbnQpayAgDQoyMDE2aW5wdXRzKzBvdXRwdXRzICg5bWFqb3IrODgzNW1p
-bm9yKXBhZ2VmYXVsdHMgMHN3YXBzICANCmBgYCAgDQpSVCBrZXJuZWwgdjYuMTUgOiAgDQpgYGAg
-IA0KMC4wMHVzZXIgMC4wMHN5c3RlbSAxOjA2Ljk2ZWxhcHNlZCAwJUNQVSAoMGF2Z3RleHQrMGF2
-Z2RhdGENCjY4ODhtYXhyZXNpZGVudClrICANCjBpbnB1dHMrMG91dHB1dHMgKDBtYWpvcis1OTVt
-aW5vcilwYWdlZmF1bHRzIDBzd2FwcyAgDQpgYGAgIA0KUlQga2VybmVsIG9uIGEzNjNkMjdjZGJj
-MmJjMmQxODk5YjVhMTUyMGI2NGUzNTkwZmNkOWEgOiAgDQpgYGAgIA0KMC4wMHVzZXIgMC4wMHN5
-c3RlbSAwOjQzLjIxZWxhcHNlZCAwJUNQVSAoMGF2Z3RleHQrMGF2Z2RhdGENCjY3NjBtYXhyZXNp
-ZGVudClrICANCjBpbnB1dHMrMG91dHB1dHMgKDBtYWpvcis1OTZtaW5vcilwYWdlZmF1bHRzIDBz
-d2FwcyAgDQpgYGAgIA0KUlQga2VybmVsIG9uIDRhYWRkZTg5ZDgxZmJmNGNmMzEwNWE2MWRiYzQ4
-ODg4YjgxOWVjZmIgOiAgDQpgYGAgIA0KMC4wMHVzZXIgMC4wMHN5c3RlbSAwOjAxLjI1ZWxhcHNl
-ZCAwJUNQVSAoMGF2Z3RleHQrMGF2Z2RhdGENCjY4MjhtYXhyZXNpZGVudClrICANCjBpbnB1dHMr
-MG91dHB1dHMgKDBtYWpvcis2MDJtaW5vcilwYWdlZmF1bHRzIDBzd2FwcyAgDQpgYGANCg0KUHJv
-YmxlbWF0aWMgZmlsZXMgd2VyZSBpZGVudGlmaWVkIHdpdGggcnVubmluZyB0aGUgZm9sbG93aW5n
-IGNvbW1hbmQgOg0KYHN1ZG8gc3RyYWNlIC10dCB0cmFjZS1jbWQgcmVjb3JkIC1wIGZ1bmN0aW9u
-IHNsZWVwIDFgLiBIZXJlIGlzIGENCmV4dHJhY3Qgb2YgdGhlIG91dHB1dCBwcm9kdWNlZCBieSBz
-dHJhY2UgKG9uIHY2LjE1KSA6ICANCmBgYCAgDQouLi4gIA0KMDc6NTY6MzQuODY4MjczIG9wZW5h
-dChBVF9GRENXRCwNCiIvc3lzL2tlcm5lbC90cmFjaW5nL2V2ZW50cy9vc25vaXNlL2ZpbHRlciIs
-IE9fV1JPTkxZKSA9IDQgIA0KMDc6NTY6MzQuODY4NDAxIHdyaXRlKDQsICIwIiwgMSkgICAgICAg
-ID0gMSAgDQowNzo1NjozNS40ODUxNDggY2xvc2UoNCkgICAgICAgICAgICAgICAgPSAwICANCjA3
-OjU2OjM1LjQ4NTI1MSBvcGVuYXQoQVRfRkRDV0QsDQoiL3N5cy9rZXJuZWwvdHJhY2luZy9ldmVu
-dHMvcGFnZV9pc29sYXRpb24vZmlsdGVyIiwgT19XUk9OTFkpID0gNCAgDQowNzo1NjozNS40ODUz
-NzUgd3JpdGUoNCwgIjAiLCAxKSAgICAgICAgPSAxICANCjA3OjU2OjM2LjM5NzE3MiBjbG9zZSg0
-KSAgICAgICAgICAgICAgICA9IDAgIA0KMDc6NTY6MzYuMzk3MzI4IG9wZW5hdChBVF9GRENXRCwN
-CiIvc3lzL2tlcm5lbC90cmFjaW5nL2V2ZW50cy9wYWdlX3Bvb2wvZmlsdGVyIiwgT19XUk9OTFkp
-ID0gNCAgDQowNzo1NjozNi4zOTc0NjUgd3JpdGUoNCwgIjAiLCAxKSAgICAgICAgPSAxICANCjA3
-OjU2OjM2Ljc4NjE1NyBjbG9zZSg0KSAgICAgICAgICAgICAgICA9IDAgIA0KMDc6NTY6MzYuNzg2
-MjU2IG9wZW5hdChBVF9GRENXRCwNCiIvc3lzL2tlcm5lbC90cmFjaW5nL2V2ZW50cy9wYWdlbWFw
-L2ZpbHRlciIsIE9fV1JPTkxZKSA9IDQgIA0KMDc6NTY6MzYuNzg2Mzc5IHdyaXRlKDQsICIwIiwg
-MSkgICAgICAgID0gMSAgDQowNzo1NjozNy40NDYxODggY2xvc2UoNCkgICAgICAgICAgICAgICAg
-PSAwICANCjA3OjU2OjM3LjQ0NjI4NiBvcGVuYXQoQVRfRkRDV0QsDQoiL3N5cy9rZXJuZWwvdHJh
-Y2luZy9ldmVudHMvcGVyY3B1L2ZpbHRlciIsIE9fV1JPTkxZKSA9IDQgIA0KMDc6NTY6MzcuNDQ2
-NDAzIHdyaXRlKDQsICIwIiwgMSkgICAgICAgID0gMSAgDQowNzo1NjozNy43MzgxNDIgY2xvc2Uo
-NCkgICAgICAgICAgICAgICAgPSAwICANCi4uLiAgDQpgYGANCg0KSWYgeW91IGhhdmUgYW4gaWRl
-YSBvbiBob3cgdG8gZml4IHRoaXMgaXNzdWUsIEkgYW0gdmVyeSBncmF0ZWZ1bC4NCg0KLS0gIA0K
-SnVsaWVuIEZsb3QgIA0KU2llbWVucyBBRyAgDQpbd3d3LnNpZW1lbnMuY29tXShodHRwczovL3d3
-dy5zaWVtZW5zLmNvbSkNCg0KDQoNCkFwcGVuZGl4DQoNCkZhdWx0eSBjb21taXQgbWVzc2FnZSA6
-ICANCmBgYCAgDQpjb21taXQgYTM2M2QyN2NkYmMyYmMyZDE4OTliNWExNTIwYjY0ZTM1OTBmY2Q5
-YSAgDQpBdXRob3I6IE1hdGhpZXUgRGVzbm95ZXJzDQo8W21hdGhpZXUuZGVzbm95ZXJzQGVmZmlj
-aW9zLmNvbV0obWFpbHRvOm1hdGhpZXUuZGVzbm95ZXJzQGVmZmljaW9zLmNvbQ0KKT4gIA0KRGF0
-ZTogICBUdWUgT2N0IDggMjE6MDc6MTUgMjAyNCAtMDQwMCAgDQpmaXggIA0KdHJhY2luZzogQWxs
-b3cgc3lzdGVtIGNhbGwgdHJhY2Vwb2ludHMgdG8gaGFuZGxlIHBhZ2UgZmF1bHRzDQoNClVzZSBU
-YXNrcyBUcmFjZSBSQ1UgdG8gcHJvdGVjdCBpdGVyYXRpb24gb2Ygc3lzdGVtIGNhbGwgZW50ZXIv
-ZXhpdCAgDQp0cmFjZXBvaW50IHByb2JlcyB0byBhbGxvdyB0aG9zZSBwcm9iZXMgdG8gaGFuZGxl
-IHBhZ2UgZmF1bHRzLg0KDQpJbiBwcmVwYXJhdGlvbiBmb3IgdGhpcyBjaGFuZ2UsIGFsbCB0cmFj
-ZXJzIHJlZ2lzdGVyaW5nIHRvIHN5c3RlbSBjYWxsDQplbnRlci9leGl0IHRyYWNlcG9pbnRzIHNo
-b3VsZCBleHBlY3QgdGhvc2UgdG8gYmUgY2FsbGVkIHdpdGggcHJlZW1wdGlvbg0KZW5hYmxlZC4N
-Cg0KVGhpcyBhbGxvd3MgdHJhY2VycyB0byBmYXVsdC1pbiB1c2Vyc3BhY2Ugc3lzdGVtIGNhbGwg
-YXJndW1lbnRzIHN1Y2ggYXMNCnBhdGggc3RyaW5ncyB3aXRoaW4gdGhlaXIgcHJvYmUgY2FsbGJh
-Y2tzLg0KDQpDYzogTWljaGFlbCBKZWFuc29uDQo8W21qZWFuc29uQGVmZmljaW9zLmNvbV0obWFp
-bHRvOm1qZWFuc29uQGVmZmljaW9zLmNvbSk+ICANCkNjOiBNYXNhbWkgSGlyYW1hdHN1DQo8W21o
-aXJhbWF0QGtlcm5lbC5vcmddKG1haWx0bzptaGlyYW1hdEBrZXJuZWwub3JnKT4gIA0KQ2M6IFBl
-dGVyIFppamxzdHJhIDxbcGV0ZXJ6QGluZnJhZGVhLm9yZ10obWFpbHRvOnBldGVyekBpbmZyYWRl
-YS5vcmcpPg0KQ2M6IEFsZXhlaSBTdGFyb3ZvaXRvdiA8W2FzdEBrZXJuZWwub3JnXShtYWlsdG86
-YXN0QGtlcm5lbC5vcmcpPiAgDQpDYzogWW9uZ2hvbmcgU29uZyA8W3loc0BmYi5jb21dKG1haWx0
-bzp5aHNAZmIuY29tKT4gIA0KQ2M6IFBhdWwgRS4gTWNLZW5uZXkgPFtwYXVsbWNrQGtlcm5lbC5v
-cmddKG1haWx0bzpwYXVsbWNrQGtlcm5lbC5vcmcpPg0KQ2M6IEluZ28gTW9sbmFyIDxbbWluZ29A
-cmVkaGF0LmNvbV0obWFpbHRvOm1pbmdvQHJlZGhhdC5jb20pPiAgDQpDYzogQXJuYWxkbyBDYXJ2
-YWxobyBkZSBNZWxvDQo8W2FjbWVAa2VybmVsLm9yZ10obWFpbHRvOmFjbWVAa2VybmVsLm9yZyk+
-ICANCkNjOiBNYXJrIFJ1dGxhbmQgPFttYXJrLnJ1dGxhbmRAYXJtLmNvbV0obWFpbHRvOm1hcmsu
-cnV0bGFuZEBhcm0uY29tKT4NCkNjOiBBbGV4YW5kZXIgU2hpc2hraW4NCjxbYWxleGFuZGVyLnNo
-aXNoa2luQGxpbnV4LmludGVsLmNvbV0obWFpbHRvOmFsZXhhbmRlci5zaGlzaGtpbkBsaW51eC5p
-bnRlbC5jb20NCik+ICANCkNjOiBOYW1oeXVuZyBLaW0gPFtuYW1oeXVuZ0BrZXJuZWwub3JnXSht
-YWlsdG86bmFtaHl1bmdAa2VybmVsLm9yZyk+ICANCkNjOiBBbmRyaWkgTmFrcnlpa28NCjxbYW5k
-cmlpLm5ha3J5aWtvQGdtYWlsLmNvbV0obWFpbHRvOmFuZHJpaS5uYWtyeWlrb0BnbWFpbC5jb20p
-PiAgDQpDYzogW2JwZkB2Z2VyLmtlcm5lbC5vcmddKG1haWx0bzpicGZAdmdlci5rZXJuZWwub3Jn
-KSAgDQpDYzogSm9lbCBGZXJuYW5kZXMNCjxbam9lbEBqb2VsZmVybmFuZGVzLm9yZ10obWFpbHRv
-OmpvZWxAam9lbGZlcm5hbmRlcy5vcmcpPiAgDQpMaW5rOg0KW2h0dHBzOi8vbG9yZS5rZXJuZWwu
-b3JnLzIwMjQxMDA5MDEwNzE4LjIwNTAxODItNi1tYXRoaWV1LmRlc25veWVyc0BlZmZpY2lvcy5j
-b21dKGh0dHBzOi8vbG9yZS5rZXJuZWwub3JnLzIwMjQxMDA5MDEwNzE4LjIwNTAxODItNi1tYXRo
-aWV1LmRlc25veWVyc0BlZmZpY2lvcy5jb20pDQogDQpTaWduZWQtb2ZmLWJ5OiBNYXRoaWV1IERl
-c25veWVycw0KPFttYXRoaWV1LmRlc25veWVyc0BlZmZpY2lvcy5jb21dKG1haWx0bzptYXRoaWV1
-LmRlc25veWVyc0BlZmZpY2lvcy5jb20NCik+ICANClNpZ25lZC1vZmYtYnk6IFN0ZXZlbiBSb3N0
-ZWR0IChHb29nbGUpDQo8W3Jvc3RlZHRAZ29vZG1pcy5vcmddKG1haWx0bzpyb3N0ZWR0QGdvb2Rt
-aXMub3JnKT4NCg0KaW5jbHVkZS9saW51eC90cmFjZXBvaW50LmggfCAxOCArKysrKysrKysrKysr
-KysrLS0gIA0KaW5pdC9LY29uZmlnICAgICAgICAgICAgICAgfCAgMSArICANCjIgZmlsZXMgY2hh
-bmdlZCwgMTcgaW5zZXJ0aW9ucygrKSwgMiBkZWxldGlvbnMoLSkgIA0KYGBgDQoNCkxpc3Qgb2Yg
-ZmlsZXMgaWRlbnRpZmllZCBhcyBwcm9ibGVtYXRpYyAob24gdjYuMTUpIDogIA0KYGBgICANCi9z
-eXMva2VybmVsL3RyYWNpbmcvZXZlbnRzL2FsYXJtdGltZXIvZmlsdGVyICANCi9zeXMva2VybmVs
-L3RyYWNpbmcvZXZlbnRzL2FtZF9jcHUvZmlsdGVyICANCi9zeXMva2VybmVsL3RyYWNpbmcvZXZl
-bnRzL2F2Yy9maWx0ZXIgIA0KL3N5cy9rZXJuZWwvdHJhY2luZy9ldmVudHMvYmxvY2svZmlsdGVy
-ICANCi9zeXMva2VybmVsL3RyYWNpbmcvZXZlbnRzL2JwZl90ZXN0X3J1bi9maWx0ZXIgIA0KL3N5
-cy9rZXJuZWwvdHJhY2luZy9ldmVudHMvYnBmX3RyYWNlL2ZpbHRlciAgDQovc3lzL2tlcm5lbC90
-cmFjaW5nL2V2ZW50cy9icmlkZ2UvZmlsdGVyICANCi9zeXMva2VybmVsL3RyYWNpbmcvZXZlbnRz
-L2J0cmZzL2ZpbHRlciAgDQovc3lzL2tlcm5lbC90cmFjaW5nL2V2ZW50cy9jYXBhYmlsaXR5L2Zp
-bHRlciAgDQovc3lzL2tlcm5lbC90cmFjaW5nL2V2ZW50cy9jZmc4MDIxMS9maWx0ZXIgIA0KL3N5
-cy9rZXJuZWwvdHJhY2luZy9ldmVudHMvY2dyb3VwL2ZpbHRlciAgDQovc3lzL2tlcm5lbC90cmFj
-aW5nL2V2ZW50cy9jbGsvZmlsdGVyICANCi9zeXMva2VybmVsL3RyYWNpbmcvZXZlbnRzL2NvbXBh
-Y3Rpb24vZmlsdGVyICANCi9zeXMva2VybmVsL3RyYWNpbmcvZXZlbnRzL2NvbnRleHRfdHJhY2tp
-bmcvZmlsdGVyICANCi9zeXMva2VybmVsL3RyYWNpbmcvZXZlbnRzL2NwdWhwL2ZpbHRlciAgDQov
-c3lzL2tlcm5lbC90cmFjaW5nL2V2ZW50cy9jcm9zX2VjL2ZpbHRlciAgDQovc3lzL2tlcm5lbC90
-cmFjaW5nL2V2ZW50cy9jc2QvZmlsdGVyICANCi9zeXMva2VybmVsL3RyYWNpbmcvZXZlbnRzL2N4
-bC9maWx0ZXIgIA0KL3N5cy9rZXJuZWwvdHJhY2luZy9ldmVudHMvZGV2L2ZpbHRlciAgDQovc3lz
-L2tlcm5lbC90cmFjaW5nL2V2ZW50cy9kZXZmcmVxL2ZpbHRlciAgDQovc3lzL2tlcm5lbC90cmFj
-aW5nL2V2ZW50cy9kZXZsaW5rL2ZpbHRlciAgDQovc3lzL2tlcm5lbC90cmFjaW5nL2V2ZW50cy9k
-bWEvZmlsdGVyICANCi9zeXMva2VybmVsL3RyYWNpbmcvZXZlbnRzL2RtYV9mZW5jZS9maWx0ZXIg
-IA0KL3N5cy9rZXJuZWwvdHJhY2luZy9ldmVudHMvZHJtL2ZpbHRlciAgDQovc3lzL2tlcm5lbC90
-cmFjaW5nL2V2ZW50cy9lcnJvcl9yZXBvcnQvZmlsdGVyICANCi9zeXMva2VybmVsL3RyYWNpbmcv
-ZXZlbnRzL2V4Y2VwdGlvbnMvZmlsdGVyICANCi9zeXMva2VybmVsL3RyYWNpbmcvZXZlbnRzL2V4
-dDQvZmlsdGVyICANCi9zeXMva2VybmVsL3RyYWNpbmcvZXZlbnRzL2ZpYi9maWx0ZXIgIA0KL3N5
-cy9rZXJuZWwvdHJhY2luZy9ldmVudHMvZmliNi9maWx0ZXIgIA0KL3N5cy9rZXJuZWwvdHJhY2lu
-Zy9ldmVudHMvZmlsZWxvY2svZmlsdGVyICANCi9zeXMva2VybmVsL3RyYWNpbmcvZXZlbnRzL2Zp
-bGVtYXAvZmlsdGVyICANCi9zeXMva2VybmVsL3RyYWNpbmcvZXZlbnRzL2ZzX2RheC9maWx0ZXIg
-IA0KL3N5cy9rZXJuZWwvdHJhY2luZy9ldmVudHMvZnVzZS9maWx0ZXIgIA0KL3N5cy9rZXJuZWwv
-dHJhY2luZy9ldmVudHMvZ3Bpby9maWx0ZXIgIA0KL3N5cy9rZXJuZWwvdHJhY2luZy9ldmVudHMv
-aGFuZHNoYWtlL2ZpbHRlciAgDQovc3lzL2tlcm5lbC90cmFjaW5nL2V2ZW50cy9odWdldGxiZnMv
-ZmlsdGVyICANCi9zeXMva2VybmVsL3RyYWNpbmcvZXZlbnRzL2h3bW9uL2ZpbHRlciAgDQovc3lz
-L2tlcm5lbC90cmFjaW5nL2V2ZW50cy9oeXBlcnYvZmlsdGVyICANCi9zeXMva2VybmVsL3RyYWNp
-bmcvZXZlbnRzL2kyYy9maWx0ZXIgIA0KL3N5cy9rZXJuZWwvdHJhY2luZy9ldmVudHMvaWNtcC9m
-aWx0ZXIgIA0KL3N5cy9rZXJuZWwvdHJhY2luZy9ldmVudHMvaW5pdGNhbGwvZmlsdGVyICANCi9z
-eXMva2VybmVsL3RyYWNpbmcvZXZlbnRzL2ludGVsX2lmcy9maWx0ZXIgIA0KL3N5cy9rZXJuZWwv
-dHJhY2luZy9ldmVudHMvaW50ZWxfaW9tbXUvZmlsdGVyICANCi9zeXMva2VybmVsL3RyYWNpbmcv
-ZXZlbnRzL2ludGVyY29ubmVjdC9maWx0ZXIgIA0KL3N5cy9rZXJuZWwvdHJhY2luZy9ldmVudHMv
-aW9fdXJpbmcvZmlsdGVyICANCi9zeXMva2VybmVsL3RyYWNpbmcvZXZlbnRzL2lvY29zdC9maWx0
-ZXIgIA0KL3N5cy9rZXJuZWwvdHJhY2luZy9ldmVudHMvaW9tYXAvZmlsdGVyICANCi9zeXMva2Vy
-bmVsL3RyYWNpbmcvZXZlbnRzL2lvbW11L2ZpbHRlciAgDQovc3lzL2tlcm5lbC90cmFjaW5nL2V2
-ZW50cy9pcGkvZmlsdGVyICANCi9zeXMva2VybmVsL3RyYWNpbmcvZXZlbnRzL2lycS9maWx0ZXIg
-IA0KL3N5cy9rZXJuZWwvdHJhY2luZy9ldmVudHMvaXJxX21hdHJpeC9maWx0ZXIgIA0KL3N5cy9r
-ZXJuZWwvdHJhY2luZy9ldmVudHMvaXJxX3ZlY3RvcnMvZmlsdGVyICANCi9zeXMva2VybmVsL3Ry
-YWNpbmcvZXZlbnRzL2piZDIvZmlsdGVyICANCi9zeXMva2VybmVsL3RyYWNpbmcvZXZlbnRzL2tt
-ZW0vZmlsdGVyICANCi9zeXMva2VybmVsL3RyYWNpbmcvZXZlbnRzL2t2bS9maWx0ZXIgIA0KL3N5
-cy9rZXJuZWwvdHJhY2luZy9ldmVudHMva3ZtbW11L2ZpbHRlciAgDQovc3lzL2tlcm5lbC90cmFj
-aW5nL2V2ZW50cy9saWJhdGEvZmlsdGVyICANCi9zeXMva2VybmVsL3RyYWNpbmcvZXZlbnRzL2xv
-Y2svZmlsdGVyICANCi9zeXMva2VybmVsL3RyYWNpbmcvZXZlbnRzL21hcGxlX3RyZWUvZmlsdGVy
-ICANCi9zeXMva2VybmVsL3RyYWNpbmcvZXZlbnRzL21jZS9maWx0ZXIgIA0KL3N5cy9rZXJuZWwv
-dHJhY2luZy9ldmVudHMvbWN0cC9maWx0ZXIgIA0KL3N5cy9rZXJuZWwvdHJhY2luZy9ldmVudHMv
-bWRpby9maWx0ZXIgIA0KL3N5cy9rZXJuZWwvdHJhY2luZy9ldmVudHMvbWVpL2ZpbHRlciAgDQov
-c3lzL2tlcm5lbC90cmFjaW5nL2V2ZW50cy9tZW1jZy9maWx0ZXIgIA0KL3N5cy9rZXJuZWwvdHJh
-Y2luZy9ldmVudHMvbWlncmF0ZS9maWx0ZXIgIA0KL3N5cy9rZXJuZWwvdHJhY2luZy9ldmVudHMv
-bW1hcC9maWx0ZXIgIA0KL3N5cy9rZXJuZWwvdHJhY2luZy9ldmVudHMvbW1hcF9sb2NrL2ZpbHRl
-ciAgDQovc3lzL2tlcm5lbC90cmFjaW5nL2V2ZW50cy9tbWMvZmlsdGVyICANCi9zeXMva2VybmVs
-L3RyYWNpbmcvZXZlbnRzL21vZHVsZS9maWx0ZXIgIA0KL3N5cy9rZXJuZWwvdHJhY2luZy9ldmVu
-dHMvbXB0Y3AvZmlsdGVyICANCi9zeXMva2VybmVsL3RyYWNpbmcvZXZlbnRzL21zci9maWx0ZXIg
-IA0KL3N5cy9rZXJuZWwvdHJhY2luZy9ldmVudHMvbmFwaS9maWx0ZXIgIA0KL3N5cy9rZXJuZWwv
-dHJhY2luZy9ldmVudHMvbmVpZ2gvZmlsdGVyICANCi9zeXMva2VybmVsL3RyYWNpbmcvZXZlbnRz
-L25ldC9maWx0ZXIgIA0KL3N5cy9rZXJuZWwvdHJhY2luZy9ldmVudHMvbmV0bGluay9maWx0ZXIg
-IA0KL3N5cy9rZXJuZWwvdHJhY2luZy9ldmVudHMvbm1pL2ZpbHRlciAgDQovc3lzL2tlcm5lbC90
-cmFjaW5nL2V2ZW50cy9ub3RpZmllci9maWx0ZXIgIA0KL3N5cy9rZXJuZWwvdHJhY2luZy9ldmVu
-dHMvb29tL2ZpbHRlciAgDQovc3lzL2tlcm5lbC90cmFjaW5nL2V2ZW50cy9vc25vaXNlL2ZpbHRl
-ciAgDQovc3lzL2tlcm5lbC90cmFjaW5nL2V2ZW50cy9wYWdlX2lzb2xhdGlvbi9maWx0ZXIgIA0K
-L3N5cy9rZXJuZWwvdHJhY2luZy9ldmVudHMvcGFnZV9wb29sL2ZpbHRlciAgDQovc3lzL2tlcm5l
-bC90cmFjaW5nL2V2ZW50cy9wYWdlbWFwL2ZpbHRlciAgDQovc3lzL2tlcm5lbC90cmFjaW5nL2V2
-ZW50cy9wZXJjcHUvZmlsdGVyICANCi9zeXMva2VybmVsL3RyYWNpbmcvZXZlbnRzL3Bvd2VyL2Zp
-bHRlciAgDQovc3lzL2tlcm5lbC90cmFjaW5nL2V2ZW50cy9wcmludGsvZmlsdGVyICANCi9zeXMv
-a2VybmVsL3RyYWNpbmcvZXZlbnRzL3B3bS9maWx0ZXIgIA0KL3N5cy9rZXJuZWwvdHJhY2luZy9l
-dmVudHMvcWRpc2MvZmlsdGVyICANCi9zeXMva2VybmVsL3RyYWNpbmcvZXZlbnRzL3FydHIvZmls
-dGVyICANCi9zeXMva2VybmVsL3RyYWNpbmcvZXZlbnRzL3Jhcy9maWx0ZXIgIA0KL3N5cy9rZXJu
-ZWwvdHJhY2luZy9ldmVudHMvcmF3X3N5c2NhbGxzL2ZpbHRlciAgDQovc3lzL2tlcm5lbC90cmFj
-aW5nL2V2ZW50cy9yY3UvZmlsdGVyICANCi9zeXMva2VybmVsL3RyYWNpbmcvZXZlbnRzL3JlZ21h
-cC9maWx0ZXIgIA0KL3N5cy9rZXJuZWwvdHJhY2luZy9ldmVudHMvcmVndWxhdG9yL2ZpbHRlciAg
-DQovc3lzL2tlcm5lbC90cmFjaW5nL2V2ZW50cy9yZXNjdHJsL2ZpbHRlciAgDQovc3lzL2tlcm5l
-bC90cmFjaW5nL2V2ZW50cy9ycG0vZmlsdGVyICANCi9zeXMva2VybmVsL3RyYWNpbmcvZXZlbnRz
-L3JzZXEvZmlsdGVyICANCi9zeXMva2VybmVsL3RyYWNpbmcvZXZlbnRzL3J0Yy9maWx0ZXIgIA0K
-L3N5cy9rZXJuZWwvdHJhY2luZy9ldmVudHMvcnYvZmlsdGVyICANCi9zeXMva2VybmVsL3RyYWNp
-bmcvZXZlbnRzL3NjaGVkL2ZpbHRlciAgDQovc3lzL2tlcm5lbC90cmFjaW5nL2V2ZW50cy9zY3Np
-L2ZpbHRlciAgDQovc3lzL2tlcm5lbC90cmFjaW5nL2V2ZW50cy9zZC9maWx0ZXIgIA0KL3N5cy9r
-ZXJuZWwvdHJhY2luZy9ldmVudHMvc2lnbmFsL2ZpbHRlciAgDQovc3lzL2tlcm5lbC90cmFjaW5n
-L2V2ZW50cy9za2IvZmlsdGVyICANCi9zeXMva2VybmVsL3RyYWNpbmcvZXZlbnRzL3NtYnVzL2Zp
-bHRlciAgDQovc3lzL2tlcm5lbC90cmFjaW5nL2V2ZW50cy9zb2NrL2ZpbHRlciAgDQovc3lzL2tl
-cm5lbC90cmFjaW5nL2V2ZW50cy9zcGkvZmlsdGVyICANCi9zeXMva2VybmVsL3RyYWNpbmcvZXZl
-bnRzL3N3aW90bGIvZmlsdGVyICANCi9zeXMva2VybmVsL3RyYWNpbmcvZXZlbnRzL3N5bmNfdHJh
-Y2UvZmlsdGVyICANCi9zeXMva2VybmVsL3RyYWNpbmcvZXZlbnRzL3N5c2NhbGxzL2ZpbHRlciAg
-DQovc3lzL2tlcm5lbC90cmFjaW5nL2V2ZW50cy90YXNrL2ZpbHRlciAgDQovc3lzL2tlcm5lbC90
-cmFjaW5nL2V2ZW50cy90Y3AvZmlsdGVyICANCi9zeXMva2VybmVsL3RyYWNpbmcvZXZlbnRzL3Ro
-ZXJtYWwvZmlsdGVyICANCi9zeXMva2VybmVsL3RyYWNpbmcvZXZlbnRzL3RoZXJtYWxfcG93ZXJf
-YWxsb2NhdG9yL2ZpbHRlciAgDQovc3lzL2tlcm5lbC90cmFjaW5nL2V2ZW50cy90aW1lci9maWx0
-ZXIgIA0KL3N5cy9rZXJuZWwvdHJhY2luZy9ldmVudHMvdGltZXJfbWlncmF0aW9uL2ZpbHRlciAg
-DQovc3lzL2tlcm5lbC90cmFjaW5nL2V2ZW50cy90aW1lc3RhbXAvZmlsdGVyICANCi9zeXMva2Vy
-bmVsL3RyYWNpbmcvZXZlbnRzL3RsYi9maWx0ZXIgIA0KL3N5cy9rZXJuZWwvdHJhY2luZy9ldmVu
-dHMvdWRwL2ZpbHRlciAgDQovc3lzL2tlcm5lbC90cmFjaW5nL2V2ZW50cy92bWFsbG9jL2ZpbHRl
-ciAgDQovc3lzL2tlcm5lbC90cmFjaW5nL2V2ZW50cy92bXNjYW4vZmlsdGVyICANCi9zeXMva2Vy
-bmVsL3RyYWNpbmcvZXZlbnRzL3Zzb2NrL2ZpbHRlciAgDQovc3lzL2tlcm5lbC90cmFjaW5nL2V2
-ZW50cy92c3lzY2FsbC9maWx0ZXIgIA0KL3N5cy9rZXJuZWwvdHJhY2luZy9ldmVudHMvd2F0Y2hk
-b2cvZmlsdGVyICANCi9zeXMva2VybmVsL3RyYWNpbmcvZXZlbnRzL3didC9maWx0ZXIgIA0KL3N5
-cy9rZXJuZWwvdHJhY2luZy9ldmVudHMvd29ya3F1ZXVlL2ZpbHRlciAgDQovc3lzL2tlcm5lbC90
-cmFjaW5nL2V2ZW50cy93cml0ZWJhY2svZmlsdGVyICANCi9zeXMva2VybmVsL3RyYWNpbmcvZXZl
-bnRzL3g4Nl9mcHUvZmlsdGVyICANCi9zeXMva2VybmVsL3RyYWNpbmcvZXZlbnRzL3hkcC9maWx0
-ZXIgIA0KL3N5cy9rZXJuZWwvdHJhY2luZy9ldmVudHMveGVuL2ZpbHRlciAgDQovc3lzL2tlcm5l
-bC90cmFjaW5nL2V2ZW50cy94aGNpLWhjZC9maWx0ZXIgIA0KYGBgDQoNCg==
+To debug the issue I've created a patch that monitors preempt_count_{sub,a=
+dd}
+(except those used by printk to avoid infinite recursion).
+
+diff --git a/include/linux/bpf.h b/include/linux/bpf.h
+index 5b25d278409b..37992b164282 100644
+=2D-- a/include/linux/bpf.h
++++ b/include/linux/bpf.h
+@@ -2219,6 +2219,8 @@ bpf_prog_run_array(const struct bpf_prog_array *arra=
+y,
+ 	struct bpf_run_ctx *old_run_ctx;
+ 	struct bpf_trace_run_ctx run_ctx;
+ 	u32 ret =3D 1;
++	if (!strcmp(get_current()->comm, "test_progs"))
++		pr_err("%s: ctx =3D %px preempt_count =3D %u\n", __func__, ctx, preempt=
+_count());
+=20
+ 	RCU_LOCKDEP_WARN(!rcu_read_lock_held(), "no rcu lock held");
+=20
+diff --git a/include/linux/filter.h b/include/linux/filter.h
+index f5cf4d35d83e..ac9ddd1b9bac 100644
+=2D-- a/include/linux/filter.h
++++ b/include/linux/filter.h
+@@ -699,6 +699,8 @@ static __always_inline u32 __bpf_prog_run(const struct=
+ bpf_prog *prog,
+ 					  bpf_dispatcher_fn dfunc)
+ {
+ 	u32 ret;
++	if (!strcmp(get_current()->comm, "test_progs"))
++		pr_err("%s: preempt_count =3D %u\n", __func__, preempt_count());
+=20
+ 	cant_migrate();
+ 	if (static_branch_unlikely(&bpf_stats_enabled_key)) {
+diff --git a/include/linux/preempt.h b/include/linux/preempt.h
+index b0af8d4ef6e6..e1d5d1e00860 100644
+=2D-- a/include/linux/preempt.h
++++ b/include/linux/preempt.h
+@@ -194,12 +194,17 @@ static __always_inline unsigned char interrupt_conte=
+xt_level(void)
+ #if defined(CONFIG_DEBUG_PREEMPT) || defined(CONFIG_TRACE_PREEMPT_TOGGLE)
+ extern void preempt_count_add(int val);
+ extern void preempt_count_sub(int val);
++extern void preempt_count_add_printk(int val);
++extern void preempt_count_sub_printk(int val);
+ #define preempt_count_dec_and_test() \
+ 	({ preempt_count_sub(1); should_resched(0); })
++#define preempt_count_dec_and_test_printk() \
++	({ preempt_count_sub_printk(1); should_resched(0); })
+ #else
+ #define preempt_count_add(val)	__preempt_count_add(val)
+ #define preempt_count_sub(val)	__preempt_count_sub(val)
+ #define preempt_count_dec_and_test() __preempt_count_dec_and_test()
++#define preempt_count_dec_and_test_printk() __preempt_count_dec_and_test_=
+printk()
+ #endif
+=20
+ #define __preempt_count_inc() __preempt_count_add(1)
+@@ -208,8 +213,20 @@ extern void preempt_count_sub(int val);
+ #define preempt_count_inc() preempt_count_add(1)
+ #define preempt_count_dec() preempt_count_sub(1)
+=20
++#define preempt_count_inc_printk() preempt_count_add_printk(1)
++#define preempt_count_dec_printk() preempt_count_sub_printk(1)
++
+ #ifdef CONFIG_PREEMPT_COUNT
+=20
++/* We can't monitor preempt_count changes in printk or we go into
++ * an infinte recursion loop!
++ * */
++#define preempt_disable_printk() \
++do { \
++	preempt_count_inc_printk(); \
++	barrier(); \
++} while (0)
++
+ #define preempt_disable() \
+ do { \
+ 	preempt_count_inc(); \
+@@ -227,6 +244,13 @@ do { \
+ #define preemptible()	(preempt_count() =3D=3D 0 && !irqs_disabled())
+=20
+ #ifdef CONFIG_PREEMPTION
++#define preempt_enable_printk() \
++do { \
++	barrier(); \
++	if (unlikely(preempt_count_dec_and_test_printk())) \
++		__preempt_schedule(); \
++} while (0)
++
+ #define preempt_enable() \
+ do { \
+ 	barrier(); \
+diff --git a/kernel/bpf/helpers.c b/kernel/bpf/helpers.c
+index c1113b74e1e2..555c01c7f983 100644
+=2D-- a/kernel/bpf/helpers.c
++++ b/kernel/bpf/helpers.c
+@@ -25,6 +25,8 @@
+ #include <linux/kasan.h>
+ #include <linux/bpf_verifier.h>
+=20
++#include <asm/preempt.h>
++
+ #include "../../lib/kstrtox.h"
+=20
+ /* If kernel subsystem is allowing eBPF programs to call this function,
+@@ -2596,6 +2598,9 @@ const struct bpf_func_proto bpf_current_task_under_c=
+group_proto =3D {
+ __bpf_kfunc struct cgroup *
+ bpf_task_get_cgroup1(struct task_struct *task, int hierarchy_id)
+ {
++	if (!strcmp(get_current()->comm, "test_progs"))
++		pr_err("%s: calling task_get_cgroup1 preempt_count =3D 0x%x\n", __func_=
+_, preempt_count());
++
+ 	struct cgroup *cgrp =3D task_get_cgroup1(task, hierarchy_id);
+=20
+ 	if (IS_ERR(cgrp))
+diff --git a/kernel/bpf/syscall.c b/kernel/bpf/syscall.c
+index dd5304c6ac3c..137478a0b8f6 100644
+=2D-- a/kernel/bpf/syscall.c
++++ b/kernel/bpf/syscall.c
+@@ -3339,6 +3339,8 @@ int bpf_link_settle(struct bpf_link_primer *primer)
+ 	primer->link->id =3D primer->id;
+ 	spin_unlock_bh(&link_idr_lock);
+ 	/* make bpf_link fetchable by FD */
++	if (!strcmp(get_current()->comm, "test_progs"))
++		pr_err("%s calling fd_install() preemt_count =3D %u\n", __func__, preem=
+pt_count());
+ 	fd_install(primer->fd, primer->file);
+ 	/* pass through installed FD */
+ 	return primer->fd;
+@@ -5798,6 +5800,8 @@ static int __sys_bpf(enum bpf_cmd cmd, bpfptr_t uatt=
+r, unsigned int size)
+ {
+ 	union bpf_attr attr;
+ 	int err;
++	if (!strcmp(get_current()->comm, "test_progs"))
++		pr_err("%s: preempt_count =3D %u\n", __func__, preempt_count());
+=20
+ 	err =3D bpf_check_uarg_tail_zero(uattr, sizeof(attr), size);
+ 	if (err)
+@@ -5986,6 +5990,8 @@ int kern_sys_bpf(int cmd, union bpf_attr *attr, unsi=
+gned int size)
+ {
+ 	struct bpf_prog * __maybe_unused prog;
+ 	struct bpf_tramp_run_ctx __maybe_unused run_ctx;
++	if (!strcmp(get_current()->comm, "test_progs"))
++		pr_err("%s: preempt_count =3D %u\n", __func__, preempt_count());
+=20
+ 	switch (cmd) {
+ #ifdef CONFIG_BPF_JIT /* __bpf_prog_enter_sleepable used by trampoline an=
+d JIT */
+diff --git a/kernel/cgroup/cgroup-v1.c b/kernel/cgroup/cgroup-v1.c
+index fa24c032ed6f..001632155bfe 100644
+=2D-- a/kernel/cgroup/cgroup-v1.c
++++ b/kernel/cgroup/cgroup-v1.c
+@@ -1295,6 +1295,8 @@ struct cgroup *task_get_cgroup1(struct task_struct *=
+tsk, int hierarchy_id)
+ 	struct cgroup *cgrp =3D ERR_PTR(-ENOENT);
+ 	struct cgroup_root *root;
+ 	unsigned long flags;
++	if (!strcmp(get_current()->comm, "test_progs"))
++		pr_err("%s: preempt_count =3D 0x%x\n", __func__, preempt_count());
+=20
+ 	rcu_read_lock();
+ 	for_each_root(root) {
+diff --git a/kernel/printk/nbcon.c b/kernel/printk/nbcon.c
+index fd12efcc4aed..cce689bc6280 100644
+=2D-- a/kernel/printk/nbcon.c
++++ b/kernel/printk/nbcon.c
+@@ -1634,7 +1634,7 @@ void nbcon_cpu_emergency_enter(void)
+ {
+ 	unsigned int *cpu_emergency_nesting;
+=20
+-	preempt_disable();
++	preempt_disable_printk();
+=20
+ 	cpu_emergency_nesting =3D nbcon_get_cpu_emergency_nesting();
+ 	(*cpu_emergency_nesting)++;
+@@ -1654,7 +1654,7 @@ void nbcon_cpu_emergency_exit(void)
+ 	if (!WARN_ON_ONCE(*cpu_emergency_nesting =3D=3D 0))
+ 		(*cpu_emergency_nesting)--;
+=20
+-	preempt_enable();
++	preempt_enable_printk();
+ }
+=20
+ /**
+diff --git a/kernel/printk/printk.c b/kernel/printk/printk.c
+index 1eea80d0648e..d070220a817b 100644
+=2D-- a/kernel/printk/printk.c
++++ b/kernel/printk/printk.c
+@@ -2439,7 +2439,7 @@ asmlinkage int vprintk_emit(int facility, int level,
+ 		 * this context can return as soon as possible. Hopefully
+ 		 * another printk() caller will take over the printing.
+ 		 */
+-		preempt_disable();
++		preempt_disable_printk();
+ 		/*
+ 		 * Try to acquire and then immediately release the console
+ 		 * semaphore. The release will print out buffers. With the
+@@ -2448,7 +2448,7 @@ asmlinkage int vprintk_emit(int facility, int level,
+ 		 */
+ 		if (console_trylock_spinning())
+ 			console_unlock();
+-		preempt_enable();
++		preempt_enable_printk();
+ 	}
+=20
+ 	if (ft.legacy_offload)
+@@ -4536,7 +4536,7 @@ static void __wake_up_klogd(int val)
+ 	if (!printk_percpu_data_ready())
+ 		return;
+=20
+-	preempt_disable();
++	preempt_disable_printk();
+ 	/*
+ 	 * Guarantee any new records can be seen by tasks preparing to wait
+ 	 * before this context checks if the wait queue is empty.
+@@ -4553,7 +4553,7 @@ static void __wake_up_klogd(int val)
+ 		this_cpu_or(printk_pending, val);
+ 		irq_work_queue(this_cpu_ptr(&wake_up_klogd_work));
+ 	}
+-	preempt_enable();
++	preempt_enable_printk();
+ }
+=20
+ /**
+diff --git a/kernel/sched/core.c b/kernel/sched/core.c
+index dce50fa57471..41426f8f806f 100644
+=2D-- a/kernel/sched/core.c
++++ b/kernel/sched/core.c
+@@ -5857,7 +5857,9 @@ static inline void preempt_latency_start(int val)
+ 	}
+ }
+=20
+-void preempt_count_add(int val)
++/* non printing version of preempt_count_add for use in
++ * printk to avoid infinite recursion */
++void preempt_count_add_printk(int val)
+ {
+ #ifdef CONFIG_DEBUG_PREEMPT
+ 	/*
+@@ -5876,6 +5878,34 @@ void preempt_count_add(int val)
+ #endif
+ 	preempt_latency_start(val);
+ }
++EXPORT_SYMBOL(preempt_count_add_printk);
++NOKPROBE_SYMBOL(preempt_count_add_printk);
++
++void preempt_count_add(int val)
++{
++#ifdef CONFIG_DEBUG_PREEMPT
++	/*
++	 * Underflow?
++	 */
++	if (DEBUG_LOCKS_WARN_ON((preempt_count() < 0)))
++		return;
++#endif
++	if (!strcmp(get_current()->comm, "test_progs")) {
++		pr_err("%s %d: preempt_count =3D 0x%x", __func__, __LINE__, preempt_cou=
+nt());
++		__preempt_count_add(val);
++		pr_err("%s %d: preempt_count =3D 0x%x", __func__, __LINE__, preempt_cou=
+nt());
++	} else {
++		__preempt_count_add(val);
++	}
++#ifdef CONFIG_DEBUG_PREEMPT
++	/*
++	 * Spinlock count overflowing soon?
++	 */
++	DEBUG_LOCKS_WARN_ON((preempt_count() & PREEMPT_MASK) >=3D
++				PREEMPT_MASK - 10);
++#endif
++	preempt_latency_start(val);
++}
+ EXPORT_SYMBOL(preempt_count_add);
+ NOKPROBE_SYMBOL(preempt_count_add);
+=20
+@@ -5889,7 +5919,7 @@ static inline void preempt_latency_stop(int val)
+ 		trace_preempt_on(CALLER_ADDR0, get_lock_parent_ip());
+ }
+=20
+-void preempt_count_sub(int val)
++void preempt_count_sub_printk(int val)
+ {
+ #ifdef CONFIG_DEBUG_PREEMPT
+ 	/*
+@@ -5908,6 +5938,34 @@ void preempt_count_sub(int val)
+ 	preempt_latency_stop(val);
+ 	__preempt_count_sub(val);
+ }
++EXPORT_SYMBOL(preempt_count_sub_printk);
++NOKPROBE_SYMBOL(preempt_count_sub_printk);
++
++void preempt_count_sub(int val)
++{
++#ifdef CONFIG_DEBUG_PREEMPT
++	/*
++	 * Underflow?
++	 */
++	if (DEBUG_LOCKS_WARN_ON(val > preempt_count()))
++		return;
++	/*
++	 * Is the spinlock portion underflowing?
++	 */
++	if (DEBUG_LOCKS_WARN_ON((val < PREEMPT_MASK) &&
++			!(preempt_count() & PREEMPT_MASK)))
++		return;
++#endif
++
++	preempt_latency_stop(val);
++	if (!strcmp(get_current()->comm, "test_progs")) {
++		pr_err("%s %d: preempt_count =3D 0x%x", __func__, __LINE__, preempt_cou=
+nt());
++		__preempt_count_sub(val);
++		pr_err("%s %d: preempt_count =3D 0x%x", __func__, __LINE__, preempt_cou=
+nt());
++	} else {
++		__preempt_count_sub(val);
++	}
++}
+ EXPORT_SYMBOL(preempt_count_sub);
+ NOKPROBE_SYMBOL(preempt_count_sub);
+=20
+diff --git a/kernel/trace/bpf_trace.c b/kernel/trace/bpf_trace.c
+index b0eb721fcfb5..762f8b429af3 100644
+=2D-- a/kernel/trace/bpf_trace.c
++++ b/kernel/trace/bpf_trace.c
+@@ -35,6 +35,9 @@
+ #include "trace_probe.h"
+ #include "trace.h"
+=20
++#include <asm/preempt.h>
++#include <linux/sched.h>
++
+ #define CREATE_TRACE_POINTS
+ #include "bpf_trace.h"
+=20
+@@ -110,6 +113,8 @@ static u64 bpf_uprobe_multi_entry_ip(struct bpf_run_ct=
+x *ctx);
+ unsigned int trace_call_bpf(struct trace_event_call *call, void *ctx)
+ {
+ 	unsigned int ret;
++	if (!strcmp(get_current()->comm, "test_progs"))
++		pr_err("%s: call =3D %px ctx =3D %px preempt_count =3D %u\n", __func__,=
+ call, ctx, preempt_count());
+=20
+ 	cant_sleep();
+=20
+@@ -766,6 +771,8 @@ const struct bpf_func_proto bpf_get_current_task_proto=
+ =3D {
+=20
+ BPF_CALL_0(bpf_get_current_task_btf)
+ {
++	if (!strcmp(get_current()->comm, "test_progs"))
++		pr_err("%s: preempt_count =3D 0x%x", __func__, preempt_count());
+ 	return (unsigned long) current;
+ }
+=20
+@@ -2244,6 +2251,8 @@ void __bpf_trace_run(struct bpf_raw_tp_link *link, u=
+64 *args)
+ 	struct bpf_prog *prog =3D link->link.prog;
+ 	struct bpf_run_ctx *old_run_ctx;
+ 	struct bpf_trace_run_ctx run_ctx;
++	if (!strcmp(get_current()->comm, "test_progs"))
++		pr_err("%s: preempt_count =3D %u\n", __func__, preempt_count());
+=20
+ 	cant_sleep();
+ 	if (unlikely(this_cpu_inc_return(*(prog->active)) !=3D 1)) {
+diff --git a/tools/testing/selftests/bpf/progs/dynptr_success.c b/tools/te=
+sting/selftests/bpf/progs/dynptr_success.c
+index a0391f9da2d4..0d179a1192ca 100644
+=2D-- a/tools/testing/selftests/bpf/progs/dynptr_success.c
++++ b/tools/testing/selftests/bpf/progs/dynptr_success.c
+@@ -7,6 +7,7 @@
+ #include <bpf/bpf_helpers.h>
+ #include <bpf/bpf_tracing.h>
+ #include "bpf_misc.h"
++#include "bpf_kfuncs.h"
+ #include "errno.h"
+=20
+ char _license[] SEC("license") =3D "GPL";
+diff --git a/tools/testing/selftests/bpf/test_kmods/bpf_testmod.c b/tools/=
+testing/selftests/bpf/test_kmods/bpf_testmod.c
+index e6c248e3ae54..e9e918cdf31f 100644
+=2D-- a/tools/testing/selftests/bpf/test_kmods/bpf_testmod.c
++++ b/tools/testing/selftests/bpf/test_kmods/bpf_testmod.c
+@@ -385,7 +385,7 @@ int bpf_testmod_fentry_ok;
+=20
+ noinline ssize_t
+ bpf_testmod_test_read(struct file *file, struct kobject *kobj,
+-		      struct bin_attribute *bin_attr,
++		      const struct bin_attribute *bin_attr,
+ 		      char *buf, loff_t off, size_t len)
+ {
+ 	struct bpf_testmod_test_read_ctx ctx =3D {
+@@ -465,7 +465,7 @@ ALLOW_ERROR_INJECTION(bpf_testmod_test_read, ERRNO);
+=20
+ noinline ssize_t
+ bpf_testmod_test_write(struct file *file, struct kobject *kobj,
+-		      struct bin_attribute *bin_attr,
++		      const struct bin_attribute *bin_attr,
+ 		      char *buf, loff_t off, size_t len)
+ {
+ 	struct bpf_testmod_test_write_ctx ctx =3D {
+@@ -567,7 +567,7 @@ static void testmod_unregister_uprobe(void)
+=20
+ static ssize_t
+ bpf_testmod_uprobe_write(struct file *file, struct kobject *kobj,
+-			 struct bin_attribute *bin_attr,
++			 const struct bin_attribute *bin_attr,
+ 			 char *buf, loff_t off, size_t len)
+ {
+ 	unsigned long offset =3D 0;
+
+This patch seems to create so much output that the orginal error message a=
+nd
+backtrace often get lost, so I needed several runs to get a meaningful mes=
+sage
+when running
+
+$ ./test_progs -a cgrp_local_storage/cgrp1_tp_btf
+
+Here's the crucial part of the message which show an unexplained increase=
+=20
+in preempt_count:
+
+[   99.467001] [   T2857] bpf_link_settle calling fd_install() preemt_coun=
+t =3D 0
+
+The next two message are from fd install calling rcu_read_lock_sched() (I =
+know
+that from an earlier version of the debug patch which also monitored fd_in=
+stall()):
+
+[   99.467003] [   T2857] preempt_count_add 5894: preempt_count =3D 0x0
+[   99.467004] [   T2857] preempt_count_add 5896: preempt_count =3D 0x1
+
+The next two message are from fd install calling rcu_read_unlock_sched():
+
+[   99.467006] [   T2857] preempt_count_sub 5962: preempt_count =3D 0x1
+[   99.467007] [   T2857] preempt_count_sub 5964: preempt_count =3D 0x0
+
+Here we are after fd_install which exited with preempt_count =3D 0, but
+when entering __bpf_trace_run we have preempt_count =3D 1 anyway without
+a call to preempt_count_add(). So who or what is increasing preempt_count =
+here?
+
+[   99.467014] [   T2857] __bpf_trace_run: preempt_count =3D 1
+[   99.467015] [   T2857] __bpf_prog_run: preempt_count =3D 1
+[   99.467017] [   T2857] ____bpf_get_current_task_btf: preempt_count =3D =
+0x1
+[   99.467018] [   T2857] bpf_task_get_cgroup1: calling task_get_cgroup1 p=
+reempt_count =3D 0x1
+[   99.467019] [   T2857] task_get_cgroup1: preempt_count =3D 0x1
+[   99.467022] [   T2857] BUG: sleeping function called from invalid conte=
+xt at kernel/locking/spinlock_rt.c:48
+[   99.467024] [   T2857] in_atomic(): 1, irqs_disabled(): 0, non_block: 0=
+, pid: 2857, name: test_progs
+[   99.467025] [   T2857] preempt_count: 1, expected: 0
+[   99.467027] [   T2857] RCU nest depth: 2, expected: 2
+[   99.467028] [   T2857] 4 locks held by test_progs/2857:
+[   99.467029] [   T2857]  #0: ffffffffa6932de0 (rcu_read_lock_trace){....=
+}-{0:0}, at: syscall_trace_enter+0x18e/0x260
+[   99.467040] [   T2857]  #1: ffffffffa6933880 (rcu_read_lock){....}-{1:3=
+}, at: bpf_trace_run2+0xa6/0x2a0
+[   99.467048] [   T2857]  #2: ffffffffa6933880 (rcu_read_lock){....}-{1:3=
+}, at: task_get_cgroup1+0x4c/0x360
+[   99.467054] [   T2857]  #3: ffffffffa6956878 (css_set_lock){+.+.}-{3:3}=
+, at: task_get_cgroup1+0x109/0x360
+
+The "Preemption disabled at:" message is not useful here because it just c=
+omes
+from printk() (which enables preemption again). In the usual case (no moni=
+toring)
+we get fd_install as the "Preemption disable at:" message, but as can be s=
+een above
+fd_install exits with preempt_count =3D 0.
+
+[   99.467060] [   T2857] Preemption disabled at:
+[   99.467060] [   T2857] [<ffffffffa503a823>] __wake_up_klogd.part.0+0x13=
+/0xa0
+[   99.467066] [   T2857] CPU: 13 UID: 0 PID: 2857 Comm: test_progs Tainte=
+d: G           O        6.15.0-rc7-next-20250523-cgroupbpfbug-00024-gc1d60=
+c8159da #66 PREEMPT_{RT,(full)}=20
+[   99.467070] [   T2857] Tainted: [O]=3DOOT_MODULE
+[   99.467071] [   T2857] Hardware name: Micro-Star International Co., Ltd=
+. Alpha 15 B5EEK/MS-158L, BIOS E158LAMS.10F 11/11/2024
+[   99.467072] [   T2857] Call Trace:
+[   99.467075] [   T2857]  <TASK>
+[   99.467077] [   T2857]  dump_stack_lvl+0x6d/0xb0
+[   99.467083] [   T2857]  __might_resched.cold+0xfa/0x135
+[   99.467089] [   T2857]  rt_spin_lock+0x5f/0x190
+[   99.467092] [   T2857]  ? task_get_cgroup1+0x109/0x360
+[   99.467098] [   T2857]  task_get_cgroup1+0x109/0x360
+[   99.467102] [   T2857]  bpf_task_get_cgroup1+0x3d/0x50
+[   99.467109] [   T2857]  bpf_prog_8d22669ef1ee8049_on_enter+0x62/0x1d4
+[   99.467115] [   T2857]  bpf_trace_run2+0x108/0x2a0
+[   99.467119] [   T2857]  ? srso_alias_return_thunk+0x5/0xfbef5
+[   99.467126] [   T2857]  __bpf_trace_sys_enter+0x37/0x60
+[   99.467131] [   T2857]  syscall_trace_enter+0x1c7/0x260
+[   99.467136] [   T2857]  do_syscall_64+0x395/0xfa0
+[   99.467139] [   T2857]  ? srso_alias_return_thunk+0x5/0xfbef5
+[   99.467142] [   T2857]  entry_SYSCALL_64_after_hwframe+0x76/0x7e
+[   99.467142] [   T2857] preempt_count_add 5894: preempt_count =3D 0x1
+[   99.467142] [   T2857] preempt_count_add 5896: preempt_count =3D 0x2
+[   99.467142] [   T2857] preempt_count_sub 5962: preempt_count =3D 0x2
+[   99.467142] [   T2857] preempt_count_sub 5964: preempt_count =3D 0x1
+[   99.467142] [   T2857] RIP: 0033:0x7f23eb72c779
+[   99.467142] [   T2857] preempt_count_add 5894: preempt_count =3D 0x1
+[   99.467142] [   T2857] preempt_count_add 5896: preempt_count =3D 0x2
+[   99.467142] [   T2857] preempt_count_sub 5962: preempt_count =3D 0x2
+[   99.467142] [   T2857] preempt_count_sub 5964: preempt_count =3D 0x1
+[   99.467142] [   T2857] Code: ff c3 66 2e 0f 1f 84 00 00 00 00 00 0f 1f =
+44 00 00 48 89 f8 48 89 f7 48 89 d6 48 89 ca 4d 89 c2 4d 89 c8 4c 8b 4c 24=
+ 08 0f 05 <48> 3d 01 f0 ff ff 73 01 c3 48 8b 0d 4f 86 0d 00 f7 d8 64 89 01=
+ 48
+[   99.467142] [   T2857] RSP: 002b:00007ffd8b5d7f38 EFLAGS: 00000202 ORIG=
+_RAX: 0000000000000141
+[   99.467142] [   T2857] RAX: ffffffffffffffda RBX: 00007ffd8b5d86c8 RCX:=
+ 00007f23eb72c779
+[   99.467142] [   T2857] RDX: 0000000000000040 RSI: 00007ffd8b5d7fb0 RDI:=
+ 000000000000001c
+[   99.467142] [   T2857] RBP: 00007ffd8b5d7f50 R08: 0000000000000001 R09:=
+ 00007ffd8b5d7fb0
+[   99.467142] [   T2857] R10: 00007f23eb805ac0 R11: 0000000000000202 R12:=
+ 0000000000000000
+[   99.467142] [   T2857] R13: 00007ffd8b5d86e8 R14: 00007f23ebd61000 R15:=
+ 0000563e4fd2d890
+[   99.467142] [   T2857]  </TASK>
+
+
+Bert Karwatzki
