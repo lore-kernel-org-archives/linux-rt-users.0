@@ -1,100 +1,115 @@
-Received: from galois.linutronix.de (Galois.linutronix.de [193.142.43.55])
+Received: from smtprelay04.ispgateway.de (smtprelay04.ispgateway.de [80.67.18.16])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 9594E1DE2BD;
-	Mon, 16 Jun 2025 06:29:02 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=193.142.43.55
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 07C9620487E;
+	Tue, 17 Jun 2025 02:14:53 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=80.67.18.16
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1750055345; cv=none; b=LqgU6hFqzV+CMWds9p4ZQrV56V1kE8xgv4tNcZytbC0NmTaA1J5aVeYXrXvp6a1rBmiJlykPR11z235KILhoSsd68SO+QBFP20rJojVxstQKZmPYCgU3QLDq5nDkcgqt5jUWRpbPvVDYNvHiiO/VxhMkvFkbPFEyCebY2kL6Y/w=
+	t=1750126497; cv=none; b=WlOAkDrujywtitrrUxsi+L0rvQcxsim5/YH2w2QLorijU58C2U5KHfBe/N3/3RFZqqXxfMCRD+idpScPi59DarRs/KsEPH+IAdaf5teQw7wXb2G0kMuVkmm0acNrV92IPLgGqeG0zdwILXksM3ourM4weGeWqVx3jLNY54QI1jU=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1750055345; c=relaxed/simple;
-	bh=9JJEZwJcy718D1DrMK8Hs+ZKn8NzsTjuogMc/xnMV6w=;
-	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 Content-Type:Content-Disposition:In-Reply-To; b=VuarvnaHEObucf1xLZ+CMJglbn3Xhq20U0c0NV+R4BZyFewGZm43tW0d2hErq0J9BtM+WjZCbS/3HC5n9sEKIoLlYLJtMosHFiZkFyz/sRDpqL+8IjVa0rKnKnRprJtJDRNRrAEPNJAFgKM/lyAPmT816urr32QvEvP0UXCr6KU=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linutronix.de; spf=pass smtp.mailfrom=linutronix.de; dkim=pass (2048-bit key) header.d=linutronix.de header.i=@linutronix.de header.b=QXm5+uxr; dkim=permerror (0-bit key) header.d=linutronix.de header.i=@linutronix.de header.b=0cTukvmU; arc=none smtp.client-ip=193.142.43.55
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linutronix.de
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=linutronix.de
-Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="QXm5+uxr";
-	dkim=permerror (0-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="0cTukvmU"
-Date: Mon, 16 Jun 2025 08:28:53 +0200
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
-	s=2020; t=1750055335;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references;
-	bh=+LICzzU5v3SFqwCiAXYPpdpUgYqySOSePsKj/xJRbx4=;
-	b=QXm5+uxrJxDXN6WaP4aDXprPGZDiQmKTUXTpwed9hi+VP7xu8ZzQs1J7nmeTwua3lso/J1
-	kPN9kBLJREooVryRBDPOgiSssvgNcENdcdySSAb3oI+jKzpo1tMtUbBYYzXDwD4j3ro2+d
-	/XT3mrWzRh2oSGRcvGnxN8wqJZAPXVYIXOP6LjRlrAwminD+to6chtUP0q7QUHBFqhzIih
-	yWpeRQQnl1k5sJvJIgClncO/plKBTXVOrxLJLRoQPXYVxrQ3OTGmfTMlZAR16RJvrC063y
-	5sYzD8yTDxhcm+ueiBdzR4SphqHUj7n/u7GLAVFGbdrasVpIS3amxua7J4t/ZQ==
-DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
-	s=2020e; t=1750055335;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references;
-	bh=+LICzzU5v3SFqwCiAXYPpdpUgYqySOSePsKj/xJRbx4=;
-	b=0cTukvmUiSNPCOcrLgwcOuURn2EirANnSFbj9MA2OrOylAaL0PRh2ro8v1A0szyqq8xSST
-	X+gLHtnggF3lBrBg==
-From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-To: Bert Karwatzki <spasswolf@web.de>
-Cc: linux-kernel@vger.kernel.org, linux-next@vger.kernel.org,
-	bpf@vger.kernel.org, linux-rt-users@vger.kernel.org,
-	linux-rt-devel@lists.linux.dev,
-	Thomas Gleixner <tglx@linutronix.de>,
-	Alexei Starovoitov <alexei.starovoitov@gmail.com>,
-	Steven Rostedt <rostedt@goodmis.org>
-Subject: Re: BUG: scheduling while atomic with PREEMPT_RT=y and bpf selftests
-Message-ID: <20250616062853.G6JxYeK1@linutronix.de>
-References: <20250605091904.5853-1-spasswolf@web.de>
- <20250605084816.3e5d1af1@gandalf.local.home>
- <20250605125133.RSTingmi@linutronix.de>
- <0b1f48ba715a16c4d4874ae65bc01914de4d5a90.camel@web.de>
- <727212f9d3c324787ddd9ede9e2d800a02b629b2.camel@web.de>
- <0c0b2385452292d6b1df3066b7223b420066f0a1.camel@web.de>
- <aa28ef09763eeefd54d4c26fb01599fd5197b265.camel@web.de>
- <7937d287a3ff24ce7c7e3eb2cd18788521975511.camel@web.de>
+	s=arc-20240116; t=1750126497; c=relaxed/simple;
+	bh=Q1A8J6tIZQqQmeNjPYf+1EQTardLiNg1Qdfg4G9Msg0=;
+	h=Message-ID:Date:MIME-Version:Subject:From:To:Cc:References:
+	 In-Reply-To:Content-Type; b=OoEMlEZcdH5aNnRcMcUiWweiWFHC4qEObL9OEBVE1OTzGmt5c8FFRwkHPsSBP9DHfsFoeC1i8K1fVFAFkNIIu4EEDAnh+w6PZt0RcMrO7nI3lUqZNhfaLOke4NCb0q9FBrAZ7h7RO9iRKhOo0p9zy53CK8HM5wMOemouhGbKjlQ=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=eltropuls.de; spf=pass smtp.mailfrom=eltropuls.de; arc=none smtp.client-ip=80.67.18.16
+Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=eltropuls.de
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=eltropuls.de
+Received: from [87.79.10.98] (helo=mail.eltropuls.de)
+	by smtprelay04.ispgateway.de with esmtpa (Exim 4.98)
+	(envelope-from <marc.straemke@eltropuls.de>)
+	id 1uRBTp-000000005bF-2pH6;
+	Mon, 16 Jun 2025 17:10:37 +0200
+Received: from [172.16.0.75] (unknown [172.16.0.75])
+	by mail.eltropuls.de (Postfix) with ESMTPSA id 2D42110043C;
+	Mon, 16 Jun 2025 17:10:34 +0200 (CEST)
+Message-ID: <d72bc0b1-7898-4513-9b50-60b56112c8e1@eltropuls.de>
+Date: Mon, 16 Jun 2025 17:10:33 +0200
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
 List-Subscribe: <mailto:linux-rt-users+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Disposition: inline
-Content-Transfer-Encoding: quoted-printable
-In-Reply-To: <7937d287a3ff24ce7c7e3eb2cd18788521975511.camel@web.de>
+User-Agent: Mozilla Thunderbird
+Subject: Re: Latency spikes on V6.15.1 Preempt RT and maybe related to intel?
+ IGB
+From: =?UTF-8?Q?Marc_Str=C3=A4mke?= <marc.straemke@eltropuls.de>
+To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Cc: linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org
+References: <20250613145434.T2x2ML8_@linutronix.de>
+ <E1uQ6I0-000000003aa-37uJ@smtprelay05.ispgateway.de>
+ <20250613195838.0-gZ6bqS@linutronix.de>
+ <97638b0b-cd96-40e2-9dc2-5e6f767b90a4@eltropuls.de>
+Content-Language: de-DE, en-US
+In-Reply-To: <97638b0b-cd96-40e2-9dc2-5e6f767b90a4@eltropuls.de>
+Content-Type: text/plain; charset=UTF-8; format=flowed
+Content-Transfer-Encoding: 8bit
+X-Df-Sender: Y2F0Y2hhbGxfbWFpbEBlbHRyb3B1bHMuZXU=
 
-On 2025-06-16 00:12:49 [+0200], Bert Karwatzki wrote:
-> These three patches fixes all the dmesg warning (with CONFIG_LOCKDEP) iss=
-ues when running the
-> bpf test_progs and does not cause deadlocks without CONFIG_LOCKDEP.
->=20
-=E2=80=A6
-> is fixed by this:
->=20
-> diff --git a/include/trace/bpf_probe.h b/include/trace/bpf_probe.h
-> index 183fa2aa2935..49257cb90209 100644
-> --- a/include/trace/bpf_probe.h
-> +++ b/include/trace/bpf_probe.h
-> @@ -58,9 +58,9 @@ static notrace void \
->  __bpf_trace_##call(void *__data, proto) \
->  { \
->  might_fault(); \
-> - preempt_disable_notrace(); \
-> + migrate_disable(); \
->  CONCATENATE(bpf_trace_run, COUNT_ARGS(args))(__data, CAST_TO_U64(args));=
- \
-> - preempt_enable_notrace(); \
-> + migrate_enable(); \
->  }
+Hi Sebastian,
 
-I doubt this can be fixed that way. I sent a series out
-	https://lore.kernel.org/all/20250613152218.1924093-1-bigeasy@linutronix.de/
+On 14.06.25 10:52, Marc Strämke wrote:
+>
+> I do not really understand where the IRQ/Preemption disabling is 
+> happening. What would the next thing be to do? Function (graph?) 
+> tracing on all the functions visible in the backtrace?
+>
+>
+> I tried to look at the event race output starting with the call to 
+> igb_set_rx_mode. I have attached the trace with all events and a 
+> function filter on igb on only the cpu executing ip.  I cannot 
+> understand what is happening between timestasmp 700.149995 and the IRQ 
+> disable event on 700.150795....
+>
+>
+> Thanks for your help,
+>
+> Marc
+>
+>
+I am still trying to figure that puzzle out: Please see the following 
+function trace snippet:
 
-which is the first the step towards fixing this properly.
+ip-690530  [000] ..... 178636.460435: rtnl_is_locked <-__dev_change_flags
+ip-690530  [000] ..... 178636.460435: __local_bh_disable_ip 
+<-__dev_change_flags
+ip-690530  [000] ..... 178636.460435: migrate_disable 
+<-__local_bh_disable_ip
+ip-690530  [000] ...1. 178636.460435: preempt_disable: 
+caller=__local_bh_disable_ip+0x76/0xe0 
+parent=__local_bh_disable_ip+0x76/0xe0
+ip-690530  [000] ...11 178636.460435: preempt_enable: 
+caller=__local_bh_disable_ip+0x76/0xe0 
+parent=__local_bh_disable_ip+0x76/0xe0
+ip-690530  [000] ....1 178636.460435: rt_spin_lock <-__local_bh_disable_ip
+ip-690530  [000] ....1 178636.460436: __rcu_read_lock <-rt_spin_lock
+ip-690530  [000] ....1 178636.460436: migrate_disable 
+<-__local_bh_disable_ip
+ip-690530  [000] ....2 178636.460436: __rcu_read_lock 
+<-__local_bh_disable_ip
+ip-690530  [000] b...2 178636.460436: rt_spin_lock <-__dev_change_flags
+ip-690530  [000] b...2 178636.460436: __rcu_read_lock <-rt_spin_lock
+ip-690530  [000] b...2 178636.460436: migrate_disable <-__dev_change_flags
+ip-690530  [000] b...3 178636.460436: __dev_set_rx_mode <-__dev_change_flags
+ip-690530  [000] b...3 178636.460437: igb_set_rx_mode <-__dev_change_flags
 
-Sebastian
+It is my understanding that __local_bh_disable_ip called from 
+netif_addr_lock_bh seems to be the origin of my latency.
+
+What i do not understand is, even if the bottom halves are disabled. 
+Shouldn't I see the interrupt arriving in the trace?
+
+If i understood it correctly, your talk "Unblocking the softirq lock for 
+PREEMPT_RT" during the plumbers conference 2023 is exactly about that 
+case, right?
+
+Probably fixing this issue is out of my abilities for now ;-) The wast 
+variety of locking concepts inside the kernel is quite intimidating for 
+a newcomer in kernel land...
+
+
+Regards,
+
+
+Marc
+
