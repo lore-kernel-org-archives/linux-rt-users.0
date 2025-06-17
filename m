@@ -1,49 +1,49 @@
 Received: from galois.linutronix.de (Galois.linutronix.de [193.142.43.55])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 7550F21C9FF;
-	Tue, 17 Jun 2025 10:54:57 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id C3E75269CF0;
+	Tue, 17 Jun 2025 13:35:07 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=193.142.43.55
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1750157699; cv=none; b=sQAbnLY8ziP47BDWVo/8hpFF2sz6wvL3XGDRnGpkPN3Pg8k1IG+O0C0bLb2/9budp0fdumA3csxjQOKj0xhV+Zot9OiQZfyj3woUwQLNS27TtUSBKiM3GfKbWUiYG8RXgOFlgsFQFYjeLCzIgxpHph7sQLIvuU1LQjXP3XcSPPo=
+	t=1750167309; cv=none; b=sBtqWVNGxvy8r38zIWKgWGBtwk9KEU49WdK1dPtOs3LWApSAVMiFDEyWSqb5OSnu+nDXaQlMFcWZaJ6KEl4uFtzbXuEr4txM/AyOTEU3fNX9SOTii3/6IGG7FIQEwOOETK/YOSS+ejD+wsgl8RKWCvvKF7xm5++No5RDPG6tE/s=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1750157699; c=relaxed/simple;
-	bh=x3JRQH8niRtAFZyeQUyetaHm46/MXx+Fttu75P73mkQ=;
+	s=arc-20240116; t=1750167309; c=relaxed/simple;
+	bh=4GnMChYZ859nCJCN1piCqEZeHco0KjO/v6zHU+fvsTk=;
 	h=From:To:Cc:Subject:In-Reply-To:References:Date:Message-ID:
-	 MIME-Version:Content-Type; b=Gymap9piT3yaa1iQ0z5wk0aqdJfROz6m5447+62uKKaQikS1f60bodmftgwZ84rWqHV9iUx1uR3yV25arWO/1uMQGvzD/STEywO0fJGjeMwrLyhiLY8hOJd1e+Q6s6ASQqiAIy/nOGAzSpmRbPzbQmX2Q3dmc7264sIvigoeBck=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linutronix.de; spf=pass smtp.mailfrom=linutronix.de; dkim=pass (2048-bit key) header.d=linutronix.de header.i=@linutronix.de header.b=eBUhnSz1; dkim=permerror (0-bit key) header.d=linutronix.de header.i=@linutronix.de header.b=iFe6w24G; arc=none smtp.client-ip=193.142.43.55
+	 MIME-Version:Content-Type; b=CzNoArlNz1EhZfgTkiPV9H90S1VJ1Y9rKFZY+DofM/QbUoRw+X28HVz+svA/fQl51FOt8i3kw1zBMuuK71GxXyrHoywTL6HGQQaE5DDxIvyF13UXxjfSrbDrsCkqk+/r+2uAGZSKOIUILMGhlPBFMEDfxGk3WVfHFn6RtX+DeI4=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linutronix.de; spf=pass smtp.mailfrom=linutronix.de; dkim=pass (2048-bit key) header.d=linutronix.de header.i=@linutronix.de header.b=mwWc+jtO; dkim=permerror (0-bit key) header.d=linutronix.de header.i=@linutronix.de header.b=7JpNvPqt; arc=none smtp.client-ip=193.142.43.55
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linutronix.de
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=linutronix.de
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="eBUhnSz1";
-	dkim=permerror (0-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="iFe6w24G"
+	dkim=pass (2048-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="mwWc+jtO";
+	dkim=permerror (0-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="7JpNvPqt"
 From: Kurt Kanzenbach <kurt@linutronix.de>
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
-	s=2020; t=1750157695;
+	s=2020; t=1750167305;
 	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
 	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
 	 in-reply-to:in-reply-to:references:references;
-	bh=x3JRQH8niRtAFZyeQUyetaHm46/MXx+Fttu75P73mkQ=;
-	b=eBUhnSz1A1tVqLrAOT/WARW2n885Lw/tG3tdwYIAEe3SsGHKaS7fHwCPWW/ICf3GUfHk0R
-	SLKrbHQUitLfGt1mQmCPhDcowQbassMjf+IBdCPAk4sDiWkUEtqG2mUyuP+w2+zaeL29Jm
-	Iv7kzOjKETEc2Ka5WVX9U26HUyE1FMJYhDAi1ZkC4HpBxVz/dl65JzYVxcrt+2uAMKM7pz
-	YbNVIRLvrAdSGJmu4zliN50NqU7jXXaBd7SE2o2/bvFlTjuKURAx/a+qXBqqbZh+oKFVyx
-	G5YkYCMlmJDzowKqw87lUKBby/IfqG7uSiadTRnj7nICsQ2TYrYeR9gdE5fS9g==
+	bh=4GnMChYZ859nCJCN1piCqEZeHco0KjO/v6zHU+fvsTk=;
+	b=mwWc+jtO0EL+s3NZP9Z52AznBBTIoMuNIF5GhIJMZE7V2sJx749KMcKZvdfB4wP43lVDq8
+	84v97VmC2EGwHxXg2Cy6vBADl+pMim9SaHH3j5mMlmGm/iCFjz486pBtLsqT9HR+nBjze5
+	4DQIjVMyEkymXmo1Nu4AnUGGDGXVLImdVF3LkFFhZnWoZl1W/Iez5ofVrAJfvwN65dx0oI
+	R6ZRfMB1iD6JjYxE0wXKrh8JaRqguoRZaXXMA9aHBnfgNznRoWsvlJZ+bZ037t70hva16K
+	ip3VaPaZG30rLR1BfwOfLAZLJQZRIw+NPmAxokU6+9lslAVVPV7nVmeymoZlfw==
 DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
-	s=2020e; t=1750157695;
+	s=2020e; t=1750167305;
 	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
 	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
 	 in-reply-to:in-reply-to:references:references;
-	bh=x3JRQH8niRtAFZyeQUyetaHm46/MXx+Fttu75P73mkQ=;
-	b=iFe6w24GtplauDSfHxnh+rUFXKSO0nj6s0ef4xpiNqm6gbgiiUNbrc9oByMjHT4bq2BFMc
-	QsGftWU8StJud8CA==
-To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>, Marc =?utf-8?Q?Str?=
- =?utf-8?Q?=C3=A4mke?=
- <marc.straemke@eltropuls.de>
+	bh=4GnMChYZ859nCJCN1piCqEZeHco0KjO/v6zHU+fvsTk=;
+	b=7JpNvPqtL1cK8IuFdiKGRKLO2h+WW24bZEhSFTssxtq2UTYXNUnx89ED7pBHeUaqTbsE/+
+	L/HBD5y6pJ7Ht+CA==
+To: Marc =?utf-8?Q?Str=C3=A4mke?= <marc.straemke@eltropuls.de>, Sebastian
+ Andrzej Siewior
+ <bigeasy@linutronix.de>
 Cc: linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org
 Subject: Re: Latency spikes on V6.15.1 Preempt RT and maybe related to
  intel? IGB
-In-Reply-To: <20250617101507.jU00mupE@linutronix.de>
+In-Reply-To: <19a46896-3d26-415b-9820-730a42b0702e@eltropuls.de>
 References: <20250613145434.T2x2ML8_@linutronix.de>
  <E1uQ6I0-000000003aa-37uJ@smtprelay05.ispgateway.de>
  <20250613195838.0-gZ6bqS@linutronix.de>
@@ -52,9 +52,10 @@ References: <20250613145434.T2x2ML8_@linutronix.de>
  <bb74b5b6-bc23-4aa4-83df-449dc7c9006b@eltropuls.de>
  <20250617100013.1o5lsPLq@linutronix.de>
  <b7179ac8-c64b-44dd-b25a-62b34eb49c24@eltropuls.de>
- <20250617101507.jU00mupE@linutronix.de>
-Date: Tue, 17 Jun 2025 12:54:53 +0200
-Message-ID: <87v7ou7i4i.fsf@jax.kurt.home>
+ <20250617101507.jU00mupE@linutronix.de> <87v7ou7i4i.fsf@jax.kurt.home>
+ <19a46896-3d26-415b-9820-730a42b0702e@eltropuls.de>
+Date: Tue, 17 Jun 2025 15:35:03 +0200
+Message-ID: <87plf27apk.fsf@jax.kurt.home>
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
@@ -68,43 +69,42 @@ Content-Type: multipart/signed; boundary="=-=-=";
 Content-Type: text/plain; charset=utf-8
 Content-Transfer-Encoding: quoted-printable
 
-On Tue Jun 17 2025, Sebastian Andrzej Siewior wrote:
-> On 2025-06-17 12:03:31 [+0200], Marc Str=C3=A4mke wrote:
->> Anyway: Thanks for your help Sebastian! I can probably live well with th=
-ese
->> spikes in latency. I was more concerned that there is a deeper issue wit=
-h my
->> config and the response time could be unbounded.
+On Tue Jun 17 2025, Marc Str=C3=A4mke wrote:
+> Hi Kurt,
+> On 17.06.25 12:54, Kurt Kanzenbach wrote:
+>>> You don't have to live with it. You could add a read after the writes in
+>>> the loop (wrfl()). This should help.
+>> Something like this, which was done for Intel e1000?
+>>
+>> https://lore.kernel.org/intel-wired-lan/20241219192743.4499-1-gerhard@en=
+gleder-embedded.com/
+>>
+>> Thanks,
+>> Kurt
 >
-> You don't have to live with it. You could add a read after the writes in
-> the loop (wrfl()). This should help.
+> This works wonders (Latency spike down to 120 us from 700) ! I will=20
+> prepare a patch and submit it to LKML.
 
-Something like this, which was done for Intel e1000?
-
-https://lore.kernel.org/intel-wired-lan/20241219192743.4499-1-gerhard@engle=
-der-embedded.com/
-
-Thanks,
-Kurt
+Great :-)
 
 --=-=-=
 Content-Type: application/pgp-signature; name="signature.asc"
 
 -----BEGIN PGP SIGNATURE-----
 
-iQJHBAEBCgAxFiEEvLm/ssjDfdPf21mSwZPR8qpGc4IFAmhRSX0THGt1cnRAbGlu
-dXRyb25peC5kZQAKCRDBk9HyqkZzgvMPEACWgIzrHO4Cph0hIe7lPJdWBqZJ9xVO
-qeZa/IcH4J/HexhqRwutvevUK3z8PHNE9I9+CtxzsuLBpbTIJkw9yD28/EmskpkW
-bIwolohpUHrmkqGD28sH5eB/g287SNOFAyQ+HmavjW6Qv5890j/xXKFziz80EtoU
-f6pzyuayc+Up7fCwRhPt7beWwZ4YJ2JMSaVMiFtrdXpgiaeB2FJNBkXWiQtu8dRd
-U9aiOoBnP8OnTz9HZMtloKlEf+JUVSNfo8Det/6f1TEs2Tbmp/BbN3RpjPdsBTeU
-5xyqQWnSB9P+WHsU7hEonU26Wky1LYjzdTQOHmOnmv3a89p2aebncZ5CR38LmggA
-UrJ2QyYU2zUPjx76qnh6LqDRF/w3vab/FHgnEu4VO62dIm2K++C+KTwpqT3nIVkn
-dhZ05bXKOtGo5tUzIUzFnyhzxqeec/B6/qPRDIDV3CwUB0EtU01ilx1a0DtvDqqW
-HiCWT36TPP8TPcl6j9IZqpG+LtkmN91rwnAZvi1oO4VYl2SJy7Z+MAsFkAfBkRjI
-dYPPS3SGv/UXUeepx2o588tSKSx/VdhhyX5zuSQnMZLCw0QpDM1KSjhuknxCPE+U
-pNIIZA4FDFhWWfJcosa315IvhrcSHBoQYnjfHgGrIyQQoOQRQlWN4lYSPdDAIfeg
-T+wYDtIb2qc5VQ==
-=CsxQ
+iQJHBAEBCgAxFiEEvLm/ssjDfdPf21mSwZPR8qpGc4IFAmhRbwcTHGt1cnRAbGlu
+dXRyb25peC5kZQAKCRDBk9HyqkZzgh7iD/9AhKQvwYw7NbR2KFo0qxCOmiopk+C1
+pi7nFjIGbwEVhTR5MykXg7wbsgq6H/CB1UEQj6GLCfEs4t0gg1pSso2gbcDmJucS
+Co2TSy3NTSy25P7Gz9WcklCS5H7p1xH78Ih7oMtI0AZF829f74OL0HUo65EwdJaq
+zYk6plJFQu0L0wG42unWZbhySgTP+jAkx3EYIOlc/k1gTU4yslhgFcGqqCxtaR+4
+J/zkzF8WQ8U1tcFjwkE2z3YdDppZ+IFU/R3/IyMCo9C7FzcpoxJak0QeowUQiiPP
+ULlgvDhaoXXQcwAhLuf1kLS08UxCJPw4gj9sxAJA6aWazP2fQquzByjQbsHCV5WL
+ldT6bsSQxGorpHMWD0UyyQeOIegJOJSWPppfDi0XZCIW+1B1iXKRLhRgr5P/B4Ca
+r81pLACZ81EBsVJA1PUzfSRmbMa5rXVWbPkGRfXgwMdIrGdlpWVd//7EAI0aBXP+
+MFT7hqE5CB4dzmrEPt2Zv8lHZ1n+ZXa9pS2UDy4+xwRnnSRqGvxkLKs0awJH1Fmc
+P7PFoOgD35fgJCQEkik0CV0mvHSE3lFNvpD6a6J/NTN5O/+d16RL2oeirqrbPVbh
+bQuDIpYmlnef5m9xn4S9LZls7V6Ot3WIBgoQcyrHej8YXph5YTDPoMrD5F8t6NZm
+1+rf8IF1PJyffA==
+=sHup
 -----END PGP SIGNATURE-----
 --=-=-=--
