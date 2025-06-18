@@ -1,105 +1,104 @@
-Received: from mail-pl1-f169.google.com (mail-pl1-f169.google.com [209.85.214.169])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id D724D1D9A54
-	for <linux-rt-users@vger.kernel.org>; Wed, 18 Jun 2025 20:17:47 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.214.169
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 4253E21C19E
+	for <linux-rt-users@vger.kernel.org>; Wed, 18 Jun 2025 21:12:01 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1750277869; cv=none; b=TzIkuyV2nRWuqaqZkYw9HFmXMCzX9lanEifIfUg7cEEDK5EwufmoVUwplZi21UxwbaBAAXLWRmeX6LWqPmTtnKtpBShU9MNTvEvvF4Rjzg531Mfar7vn9vnK2EsoUkVS9f/eWPgxZsUsqpV8rX/BBlvnxl/raoDx3H0VFaVZ+8c=
+	t=1750281123; cv=none; b=b3teAPVApKSDwGIEb1AWJSJnkCYo7sNQjJJx1rwifonCfTxxok2lPFa/mlXnUE0HhvEazCinW7rt4pMIQu8uo2vJC/U+L/VbnMncqcfYza3K/FREP77jCt021im98oIaJ7ClrssQTvjy3ik7U/m/xmd5UEzqUDTYzEWo5KyE/3c=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1750277869; c=relaxed/simple;
-	bh=qvNk0i3VnyiAOQkYcK0qQACswSfvLL0QRE1r5G0AVD0=;
-	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=GzpOXSFhXpzZYquv/oIWN2g47ve8wXUWHUTuLHQ+1SSEgNq43poxtoX/o1Nj5DruNqvj9mVlNvtugPqlJ3E8xkmzOEgiFOzKc4Vn9YgnlN9jUbX9fjSgNstA00foCJae3NU4QSbgSPQmHSzqS0T4CoNfMu+bQWuBqo4BXFgWxkc=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=J/uUPnvJ; arc=none smtp.client-ip=209.85.214.169
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
+	s=arc-20240116; t=1750281123; c=relaxed/simple;
+	bh=hU6LrB4u6zHdEtjzLO2tMhBFuBmhLxFRILKm9QhJrOA=;
+	h=Date:From:To:Subject:Message-ID:MIME-Version:Content-Type:
+	 Content-Disposition; b=tizSEBWR1xr/ohEymj+OOuCwvS8Z5FaLfbVGWrLaUY2gXYbSxS04wWtQJX6Of4tNPDM8SQtn0cfBd4e2TeGcx5ti1xWt2P5EC2HXOdG8dlmYJZbWVOsUxjxqjMlU4Qaq+swG3ya+2QgRnh9c3L9iQ0oc+Ph3aT/anXEQWwGWJwo=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=YUbdTcmX; arc=none smtp.client-ip=170.10.133.124
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="J/uUPnvJ"
-Received: by mail-pl1-f169.google.com with SMTP id d9443c01a7336-236192f8770so476955ad.0
-        for <linux-rt-users@vger.kernel.org>; Wed, 18 Jun 2025 13:17:47 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1750277867; x=1750882667; darn=vger.kernel.org;
-        h=content-transfer-encoding:mime-version:references:in-reply-to
-         :message-id:date:subject:cc:to:from:from:to:cc:subject:date
-         :message-id:reply-to;
-        bh=rsOl+Jp0rRtn0CeRVK7sb3ud7N59lbCEyefXjb6Y7PU=;
-        b=J/uUPnvJfUT4GxuO7oNrSxvBuMgaESaEbAncmiVYHntyIHX9FBeztHpha4eNbuN3K1
-         djF9BbQ/tD2bTvVKWNBlzgalo/N0L/oj+E3lZvpCoJsu4ONj/bCxKUAfYttWGYjPo3DK
-         CQBbV4YSeQR1V6/4LwFzyOMMzPXDsD10L9AaRKDirwg0X/JHZg5CO1S9YqXBCWc0l/tz
-         z4b3Ew/b2GGARTJCtNadcRFbMPkF577PiDO9F465noS9PTKGAia9t9ej4DyBADWsks9x
-         QbXL3O8n1LCRMb04VMUMd539Shp2qTsJ96rJwc6uLhwA6Bil2Tbie4MbYqkKoaNTPVhJ
-         HmKw==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1750277867; x=1750882667;
-        h=content-transfer-encoding:mime-version:references:in-reply-to
-         :message-id:date:subject:cc:to:from:x-gm-message-state:from:to:cc
-         :subject:date:message-id:reply-to;
-        bh=rsOl+Jp0rRtn0CeRVK7sb3ud7N59lbCEyefXjb6Y7PU=;
-        b=d6st4jJqQLD4NqKgTEIWGzecmcxGcSkGH7zqVFG7N4BZ4jpzEBMEnXCnS4xfkgE4L3
-         ADHAQB4o84pp+VxccVyWzw/AHh0OYJDQqn0/nw03AUIkQTpEjhJG/fNwvFlZal55PfK7
-         1nhpHTKvSHPfTzQkQyYxqjAKAGJjWDHQkl3YtLRknY+CwXyCw8ZqMpJCnm77ynuzB7ul
-         SurFzukCsRO14RmPYLczibHYMK20532bxhsJEdgnq8rZr9G08D+o7Dywy4tcDt4imMSE
-         lFvYDfRsnIK+flLtFQiUI8pi+5nsjG29eTIU9OmIPQAFnu1Bd+ewjC5W6ab4a8lAf2L0
-         68xA==
-X-Gm-Message-State: AOJu0YzaDu4v8o9C956z3gKGj0HzxEAq5vCdZY78UXYtPoZXIxMAbPMx
-	jCGYpH8OvYan6hUbXHTmM63kPTksmk7OOClm7dStp6cQJzsJODSYglbx
-X-Gm-Gg: ASbGncvHCLLXIbBzmpL5bLaox6aBM8XR6wajN/1wGwiavSaZZZnepV/e7dUv2q9gEKJ
-	KO1iUfxZuYJnKurizi3A3ZX6kKyXzwHfcXEBmUnnVUSPZNO/8uTUirP9v8RCYRcLko1z0rfCioE
-	Oii0c+Du2VrNtCcFjgUR/jj1EDQhecIaxA+ZXBYovYzNSFk3Dk5pXtAJSQnso/z5f2iLHiyx/3k
-	YX4b971TztKzSn9CACuL9hjeKWnzUJz0go/zFaamBc2TdrQRj8/2OvxX5EMnYgncfF2Sg4SFm6O
-	dUXEheccRD4spYirzFFYsSsMvaRU8/i3YgS3GFT756N7eXhU/gFLtcdKGYRXYnGLozmk+fGnDzy
-	GDix6VyqJe1J953Bu2sAofZWKqIA=
-X-Google-Smtp-Source: AGHT+IF63LL8jpS9oHF/oz5nDJe+A82WpjJClF0uF8g9qveaVEUHfwWJbLUAOyNravP5bbQv49thdg==
-X-Received: by 2002:a17:903:1105:b0:236:6f43:7053 with SMTP id d9443c01a7336-237cbe9b5b3mr13860665ad.2.1750277866869;
-        Wed, 18 Jun 2025 13:17:46 -0700 (PDT)
-Received: from eric-wcnlab.tail151456.ts.net ([2001:288:7001:1099:920f:fb70:f9dc:d1ca])
-        by smtp.gmail.com with ESMTPSA id d9443c01a7336-2365deca0f8sm105358695ad.196.2025.06.18.13.17.45
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Wed, 18 Jun 2025 13:17:46 -0700 (PDT)
-From: Cheng-Yang Chou <yphbchou0911@gmail.com>
-To: williams@redhat.com,
-	jkacur@redhat.com
-Cc: linux-rt-users@vger.kernel.org,
-	jserv@ccns.ncku.edu.tw,
-	yphbchou0911@gmail.com
-Subject: [PATCH 1/1] Makefile: Use -Wno-error=unused-result
-Date: Thu, 19 Jun 2025 04:17:38 +0800
-Message-ID: <20250618201738.635735-2-yphbchou0911@gmail.com>
-X-Mailer: git-send-email 2.48.1
-In-Reply-To: <20250618201738.635735-1-yphbchou0911@gmail.com>
-References: <20250618201738.635735-1-yphbchou0911@gmail.com>
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="YUbdTcmX"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1750281120;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:mime-version:mime-version:content-type:content-type;
+	bh=si2yMjR7q7rjBdseCBAaci15mleBdg607YB98sx0/R0=;
+	b=YUbdTcmXoLSyhGsmGnGdviL9IIJ8RJgtlwXD42Vt1rh3uXBZF+OfT03qOgehtJ2DOCrCHI
+	A1ilQcpuW21Z50ahH80dKCbc6RcDKxyDa44iZPobY559joUSFp0uMD79L/V7VfrKk7aKQc
+	1QNkHx6n53nTZJ3NZVmcyopEb2XBNCg=
+Received: from mx-prod-mc-06.mail-002.prod.us-west-2.aws.redhat.com
+ (ec2-35-165-154-97.us-west-2.compute.amazonaws.com [35.165.154.97]) by
+ relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-398-MWzXy6CtO96X_crPo8LXfw-1; Wed,
+ 18 Jun 2025 17:11:54 -0400
+X-MC-Unique: MWzXy6CtO96X_crPo8LXfw-1
+X-Mimecast-MFC-AGG-ID: MWzXy6CtO96X_crPo8LXfw_1750281112
+Received: from mx-prod-int-02.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-02.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.15])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
+	(No client certificate requested)
+	by mx-prod-mc-06.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 2ABDB180028C;
+	Wed, 18 Jun 2025 21:11:52 +0000 (UTC)
+Received: from localhost (unknown [10.22.89.94])
+	by mx-prod-int-02.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTP id 021611956094;
+	Wed, 18 Jun 2025 21:11:50 +0000 (UTC)
+Date: Wed, 18 Jun 2025 18:11:49 -0300
+From: "Luis Claudio R. Goncalves" <lgoncalv@redhat.com>
+To: LKML <linux-kernel@vger.kernel.org>,
+	linux-rt-users <linux-rt-users@vger.kernel.org>,
+	stable-rt <stable-rt@vger.kernel.org>,
+	Steven Rostedt <rostedt@goodmis.org>,
+	Thomas Gleixner <tglx@linutronix.de>,
+	Carsten Emde <C.Emde@osadl.org>,
+	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+	Daniel Wagner <daniel.wagner@suse.com>,
+	Tom Zanussi <tom.zanussi@linux.intel.com>,
+	Clark Williams <williams@redhat.com>,
+	Mark Gross <markgross@kernel.org>, Pavel Machek <pavel@denx.de>,
+	Jeff Brady <jeffreyjbrady@gmail.com>,
+	Jan Kiszka <jan.kiszka@siemens.com>,
+	Luis Goncalves <lgoncalv@redhat.com>
+Subject: [ANNOUNCE] 5.10.238-rt132
+Message-ID: <aFMrlTjdVnfGJBEI@uudg.org>
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
 List-Subscribe: <mailto:linux-rt-users+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+X-Scanned-By: MIMEDefang 3.0 on 10.30.177.15
 
-Since compile warnings are treated as errors, use -Wno-error=unused-result
-to avoid build failures caused by ignored return values from functions
-like write(), system(), and ftruncate(). This allows the build to succeed
-until proper error handling can be added where appropriate.
+Hello RT-list!
 
-Signed-off-by: Cheng-Yang Chou <yphbchou0911@gmail.com>
----
- Makefile | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+I'm pleased to announce the 5.10.238-rt132 stable release.
 
-diff --git a/Makefile b/Makefile
-index 6215541..e3d02cd 100644
---- a/Makefile
-+++ b/Makefile
-@@ -33,7 +33,7 @@ prefix  ?= /usr/local
- bindir  ?= $(prefix)/bin
- mandir	?= $(prefix)/share/man
- 
--CFLAGS ?= -Wall -Werror -Wno-nonnull -Wextra -Wno-sign-compare -Wno-unused-parameter -Wno-error=format-truncation=
-+CFLAGS ?= -Wall -Werror -Wno-nonnull -Wextra -Wno-sign-compare -Wno-unused-parameter -Wno-error=format-truncation= -Wno-error=unused-result
- CPPFLAGS += -D_GNU_SOURCE -Isrc/include
- LDFLAGS ?=
- 
--- 
-2.48.1
+This release is just an update to the new stable 5.10.238 version and
+no RT specific changes have been made.
+
+You can get this release via the git tree at:
+
+  git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
+
+  branch: v5.10-rt
+  Head SHA1: e14e2866718ae8b8a52ebcc0ed567a0964001c55
+
+Or to build 5.10.238-rt132 directly, the following patches should be applied:
+
+  https://www.kernel.org/pub/linux/kernel/v5.x/linux-5.10.tar.xz
+
+  https://www.kernel.org/pub/linux/kernel/v5.x/patch-5.10.238.xz
+
+  https://www.kernel.org/pub/linux/kernel/projects/rt/5.10/older/patch-5.10.238-rt132.patch.xz
+
+Signing key fingerprint:
+
+  9354 0649 9972 8D31 D464  D140 F394 A423 F8E6 7C26
+
+All keys used for the above files and repositories can be found on the
+following git repository:
+
+   git://git.kernel.org/pub/scm/docs/kernel/pgpkeys.git
+
+Enjoy!
+Luis
 
