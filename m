@@ -1,104 +1,112 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+Received: from mail-wr1-f42.google.com (mail-wr1-f42.google.com [209.85.221.42])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 4253E21C19E
-	for <linux-rt-users@vger.kernel.org>; Wed, 18 Jun 2025 21:12:01 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 513E321FF24
+	for <linux-rt-users@vger.kernel.org>; Thu, 19 Jun 2025 11:19:34 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.221.42
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1750281123; cv=none; b=b3teAPVApKSDwGIEb1AWJSJnkCYo7sNQjJJx1rwifonCfTxxok2lPFa/mlXnUE0HhvEazCinW7rt4pMIQu8uo2vJC/U+L/VbnMncqcfYza3K/FREP77jCt021im98oIaJ7ClrssQTvjy3ik7U/m/xmd5UEzqUDTYzEWo5KyE/3c=
+	t=1750331975; cv=none; b=gmMoUyf3ZILzaT1ZKaJPQxjVirmbeXBRyp89lD/xR48HJHLUfbdcBOX5MCPmXafaPSI3xzGXD5fE/6PMXgVl+UCJPlEz8oEAAcZ031800wUepf4k3c0Olb9SVLgtc/rbfYQ6Th/fxud1LOnuEC8SPAKuntGHGHHDVsgP5ayLZkY=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1750281123; c=relaxed/simple;
-	bh=hU6LrB4u6zHdEtjzLO2tMhBFuBmhLxFRILKm9QhJrOA=;
-	h=Date:From:To:Subject:Message-ID:MIME-Version:Content-Type:
-	 Content-Disposition; b=tizSEBWR1xr/ohEymj+OOuCwvS8Z5FaLfbVGWrLaUY2gXYbSxS04wWtQJX6Of4tNPDM8SQtn0cfBd4e2TeGcx5ti1xWt2P5EC2HXOdG8dlmYJZbWVOsUxjxqjMlU4Qaq+swG3ya+2QgRnh9c3L9iQ0oc+Ph3aT/anXEQWwGWJwo=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=YUbdTcmX; arc=none smtp.client-ip=170.10.133.124
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
+	s=arc-20240116; t=1750331975; c=relaxed/simple;
+	bh=HpOYdabnRAy4NFx530kxe2z6yuiZJXft2UHwEBkMNFw=;
+	h=MIME-Version:References:In-Reply-To:From:Date:Message-ID:Subject:
+	 To:Cc:Content-Type; b=MPCV7isg1F2Skrjm7Ws7RcyhuzL3gDjtq5rnU4TfVpFfZq8D4MPjW/SgcnQ3IkdnO2j301wUKCqv4iJsGpbcXeD1otKJGQlonLTfJPU+9ObXFTVNk/ktZsEJ6yyLsGVix7Js7hLG2qtTPvsiAHXulFPfMtYA+6Bncbaj0SfHsFI=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=m01o4zdI; arc=none smtp.client-ip=209.85.221.42
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="YUbdTcmX"
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1750281120;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:mime-version:mime-version:content-type:content-type;
-	bh=si2yMjR7q7rjBdseCBAaci15mleBdg607YB98sx0/R0=;
-	b=YUbdTcmXoLSyhGsmGnGdviL9IIJ8RJgtlwXD42Vt1rh3uXBZF+OfT03qOgehtJ2DOCrCHI
-	A1ilQcpuW21Z50ahH80dKCbc6RcDKxyDa44iZPobY559joUSFp0uMD79L/V7VfrKk7aKQc
-	1QNkHx6n53nTZJ3NZVmcyopEb2XBNCg=
-Received: from mx-prod-mc-06.mail-002.prod.us-west-2.aws.redhat.com
- (ec2-35-165-154-97.us-west-2.compute.amazonaws.com [35.165.154.97]) by
- relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-398-MWzXy6CtO96X_crPo8LXfw-1; Wed,
- 18 Jun 2025 17:11:54 -0400
-X-MC-Unique: MWzXy6CtO96X_crPo8LXfw-1
-X-Mimecast-MFC-AGG-ID: MWzXy6CtO96X_crPo8LXfw_1750281112
-Received: from mx-prod-int-02.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-02.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.15])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
-	(No client certificate requested)
-	by mx-prod-mc-06.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 2ABDB180028C;
-	Wed, 18 Jun 2025 21:11:52 +0000 (UTC)
-Received: from localhost (unknown [10.22.89.94])
-	by mx-prod-int-02.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTP id 021611956094;
-	Wed, 18 Jun 2025 21:11:50 +0000 (UTC)
-Date: Wed, 18 Jun 2025 18:11:49 -0300
-From: "Luis Claudio R. Goncalves" <lgoncalv@redhat.com>
-To: LKML <linux-kernel@vger.kernel.org>,
-	linux-rt-users <linux-rt-users@vger.kernel.org>,
-	stable-rt <stable-rt@vger.kernel.org>,
-	Steven Rostedt <rostedt@goodmis.org>,
-	Thomas Gleixner <tglx@linutronix.de>,
-	Carsten Emde <C.Emde@osadl.org>,
-	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-	Daniel Wagner <daniel.wagner@suse.com>,
-	Tom Zanussi <tom.zanussi@linux.intel.com>,
-	Clark Williams <williams@redhat.com>,
-	Mark Gross <markgross@kernel.org>, Pavel Machek <pavel@denx.de>,
-	Jeff Brady <jeffreyjbrady@gmail.com>,
-	Jan Kiszka <jan.kiszka@siemens.com>,
-	Luis Goncalves <lgoncalv@redhat.com>
-Subject: [ANNOUNCE] 5.10.238-rt132
-Message-ID: <aFMrlTjdVnfGJBEI@uudg.org>
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="m01o4zdI"
+Received: by mail-wr1-f42.google.com with SMTP id ffacd0b85a97d-3a365a6804eso442464f8f.3
+        for <linux-rt-users@vger.kernel.org>; Thu, 19 Jun 2025 04:19:34 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20230601; t=1750331973; x=1750936773; darn=vger.kernel.org;
+        h=content-transfer-encoding:cc:to:subject:message-id:date:from
+         :in-reply-to:references:mime-version:from:to:cc:subject:date
+         :message-id:reply-to;
+        bh=4UyV2KmHDhR3+LKSinMUBIA77mraLozwZvJHSD3NOqI=;
+        b=m01o4zdIG4S93u0wjNg1SAJU2SPNGZxQjpR3c3dElbKeKE2QKKZPQKVT864dwUIbZB
+         g3T87oMyviscGLreM3MDCLUPD6YSbCsF51Gnmv0eJayePQcuz3n2JZ22SYV0FI+wGBa7
+         y14yMhsBLpO0L/pk7G//PSkEdA7lmEy4R4nl8MmmWa9Jnhr2TkBBr7eLAzss88P+FLzE
+         TjD51lg/negRdCoC5j5+eXQ7A4A0onBrUbBnZHCH4uNpbFnTvV62YKd1SCRV6JhyGAL1
+         eROLYkBrv6UgyBjbeOnsAWQa/rncqZC/INytCRjN4jRr8uSfnYZK5F9QhXgHZ18Rp8PX
+         NhLQ==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20230601; t=1750331973; x=1750936773;
+        h=content-transfer-encoding:cc:to:subject:message-id:date:from
+         :in-reply-to:references:mime-version:x-gm-message-state:from:to:cc
+         :subject:date:message-id:reply-to;
+        bh=4UyV2KmHDhR3+LKSinMUBIA77mraLozwZvJHSD3NOqI=;
+        b=EBo8TZTzwxkB4g4CTEL1bk1SOz5lQfMgIUsgEdNWrI3NUpUnYv7zNkm3rZE7l+N8pF
+         t4rE79RQ0sBgmEoWOw7eeIOy0xPNQOaFH3jfE+/gP4DyNDZpDqKRXj4rhdvbvEsptAXy
+         xuy88pmxqfxymF9mQjnrJzqKFQEqVwkWfE/YwfI+hrzP8Ehx79iNVemlClqo+83UsCSj
+         ZJl2AfmCFuUVf843LLL6T23eFAIOBkuZLd639HDVhSaIHfFkU4UQQzXUDGVmAIMo3I76
+         w20wDI1zxhgjJdMHTl0aZtdwMeU+WpsxzlR947MOVrlZJJdeUBBtVr4GZFnR8rUz7ZbX
+         lTDw==
+X-Gm-Message-State: AOJu0Yw4RowYhd7ycxi8xThshwvV8GX817uNqV+5Fg6W/7U24UWLYI7W
+	s/2F/chPo8i+Sg2xUBNkbB3Xz3L77ZslPOYyb6wKja2TF6Blz9qGdrouEwaJB4UhuHKrPH6rpYg
+	RByaQ0fv//asNMhpxI2YnuT8xo3A/quOyaoZCnhM=
+X-Gm-Gg: ASbGncuoSgFwYtZB+gMJ0gtwusFNnMCExC1trqck6UrOuOLnj6ZiWbf4pRY1AAzoWk4
+	BUA9MjO/zuaspsJLGYmtZqJZbhZ/H9mnFXlZUyQwfsdb8F5OwbKjswweBWQcQaGk6O16Qdka2qz
+	fKO0Vm2OEIfRBYMs9C6zY/WjHrV1stdOHQZPtJ8M/L8YXU68KsnBsi8z968kxVFW6Xgr9ieYZkW
+	UHa8g==
+X-Google-Smtp-Source: AGHT+IHOrLpuHARZS5o+Bw/hYSaA98JkDofILaHn6rlqDBdpcQ4uwJ+uD/Vf9vORGH+B0ZvykxU0SIwDEh1yWNP/488=
+X-Received: by 2002:a05:6000:4304:b0:3a5:1f2:68f3 with SMTP id
+ ffacd0b85a97d-3a572e2e049mr18716299f8f.46.1750331972412; Thu, 19 Jun 2025
+ 04:19:32 -0700 (PDT)
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
 List-Subscribe: <mailto:linux-rt-users+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-X-Scanned-By: MIMEDefang 3.0 on 10.30.177.15
+References: <CAC_kJhQcdP5=0fcWAuXaJ=3Hxx1TwX5WR-UgS=EHuQeqckhZmg@mail.gmail.com>
+ <20250617100521.6EW6IWXh@linutronix.de> <CAC_kJhQZpZoUjavRsSVHuXL5k3-3u6+wdL9=h8Pbv3qWvzeOiw@mail.gmail.com>
+ <20250618121656.wjpoNGAT@linutronix.de>
+In-Reply-To: <20250618121656.wjpoNGAT@linutronix.de>
+From: Michael Schanne <michael.schanne@gmail.com>
+Date: Thu, 19 Jun 2025 07:19:23 -0400
+X-Gm-Features: Ac12FXzR7O81_Iz7p5zfehlX7Zn1Z-1z4YI3enNjlUWGlaU9BF3f8WhRG87j-Pg
+Message-ID: <CAC_kJhTQ635vwtj6c7UpvM3BwNb+baMASbeo8t2zT5m5UfEYHw@mail.gmail.com>
+Subject: Re: liveloock using PREEMPT_RT with i915 driver
+To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Cc: linux-rt-users@vger.kernel.org
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
 
-Hello RT-list!
+> So you are not using clock_nanosleep() but something like a POSIX timer?
 
-I'm pleased to announce the 5.10.238-rt132 stable release.
+No, I was using timerfd_create() and then calling read() in a loop in
+my timer thread.  Is it recommended to use clock_nanosleep() instead?
 
-This release is just an update to the new stable 5.10.238 version and
-no RT specific changes have been made.
+-Mike
 
-You can get this release via the git tree at:
 
-  git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
-
-  branch: v5.10-rt
-  Head SHA1: e14e2866718ae8b8a52ebcc0ed567a0964001c55
-
-Or to build 5.10.238-rt132 directly, the following patches should be applied:
-
-  https://www.kernel.org/pub/linux/kernel/v5.x/linux-5.10.tar.xz
-
-  https://www.kernel.org/pub/linux/kernel/v5.x/patch-5.10.238.xz
-
-  https://www.kernel.org/pub/linux/kernel/projects/rt/5.10/older/patch-5.10.238-rt132.patch.xz
-
-Signing key fingerprint:
-
-  9354 0649 9972 8D31 D464  D140 F394 A423 F8E6 7C26
-
-All keys used for the above files and repositories can be found on the
-following git repository:
-
-   git://git.kernel.org/pub/scm/docs/kernel/pgpkeys.git
-
-Enjoy!
-Luis
-
+On Wed, Jun 18, 2025 at 8:16=E2=80=AFAM Sebastian Andrzej Siewior
+<bigeasy@linutronix.de> wrote:
+>
+> On 2025-06-18 07:34:25 [-0400], Michael Schanne wrote:
+> > I found my issue, I am using several SCHED_FIFO threads, one was spinni=
+ng
+> > waiting on a timer to update, another thread which was supposed to upda=
+te
+> > the timer count is higher priority, but with the RT patch applied there=
+ is
+> > also a ktimers thread set to RT priority 1, so it was never getting a
+> > chance to run and my timer would never fire.  I adjusted the ktimers th=
+read
+> > to a higher priority and things started working again.  This thread doe=
+s
+> > not exist in the vanilla kernel even with CONFIG_PREEMPT_RT enabled, so
+> > that is why I wasn't seeing it there.  The i915 driver was a red herrin=
+g.
+>
+> Okay not the i915.
+> The ktimers thread wakes only SCHED_OTHER tasks. The SCHED_FIFO/RR
+> threads should be woken up directly (without the need of the ktimers
+> thread).
+> So you are not using clock_nanosleep() but something like a POSIX timer?
+>
+> > Thanks,
+> > Mike
+>
+> Sebastian
