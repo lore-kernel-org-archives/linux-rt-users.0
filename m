@@ -1,117 +1,78 @@
-Received: from mail-wr1-f51.google.com (mail-wr1-f51.google.com [209.85.221.51])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from galois.linutronix.de (Galois.linutronix.de [193.142.43.55])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id EC12C1ACEA6
-	for <linux-rt-users@vger.kernel.org>; Thu, 19 Jun 2025 15:04:06 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.221.51
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 0137220C02D
+	for <linux-rt-users@vger.kernel.org>; Fri, 20 Jun 2025 08:16:54 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=193.142.43.55
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1750345448; cv=none; b=P43fYmF36nuwkBMieR849p5tLkc3Xxga8V0f07ZD8AkS2o544rLHLFLoXO/j7dNbaiV876b1++cIBGKDCzKCuRkeOCT0yJUKybQ1gUzWy4MwEVNDDr5rnN3mvQXuB1ES00TlqXYkREE0A3ud0Hbr+zqIGb72TXvRurU4ouDNLJA=
+	t=1750407416; cv=none; b=SA6JcvEkTb0GPHxkcNUNco8BGH8KxB0gGM3caCygPC5iLT6MI+iIS4/LsfgUX4NvI1xyqR69q/ewK+ICgK+RI6y06fbneQi6dM+SZFr4SZ+FvLLE7CacGm39NRdNB+gqo12ltlgnCkj/x4iJklwry7CfVIv6s4DXDGcobxaIQS0=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1750345448; c=relaxed/simple;
-	bh=qCZ7A9j2+IFURQd6vW2zSWJOQ/V84OZ/Ie+U4pfijRI=;
-	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=HDJwNDVk8YfwCrsZ7QB8LTzv7AGsA4YGJyeEXbhrxr2HPCDWH114XfcmJpWOADkC/u8uETvFSOpHnjmQL3WUKB0Os6+37mfnZk4Pph/3N6mT/u1YgBlCDpEYjBBTtqMGkU3CFpxqQlYTJs7BOHAsJjCgj9n/up/jSKXCqyL1LyU=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=fail (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=gmail.com; arc=none smtp.client-ip=209.85.221.51
-Authentication-Results: smtp.subspace.kernel.org; dmarc=fail (p=quarantine dis=none) header.from=redhat.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
-Received: by mail-wr1-f51.google.com with SMTP id ffacd0b85a97d-3a4fd1ba177so560036f8f.0
-        for <linux-rt-users@vger.kernel.org>; Thu, 19 Jun 2025 08:04:06 -0700 (PDT)
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1750345445; x=1750950245;
-        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
-         :to:from:x-gm-message-state:from:to:cc:subject:date:message-id
-         :reply-to;
-        bh=odnpmaVs0hna/ddceXfA6Xlsag/wWDKf9XOXzxZn4+s=;
-        b=viRjyK1DkQ5G5TDiADD9WgOpNagFScuVjdXcXa6f1iyj/jdW67yTB7q46C3gKDGIQz
-         Sb71Vl/z4Qntmy1ms3V1REu/Hovq1DAu77GUX0/TVWas0cnrDL//R6sgaYEYPH7vGYxt
-         GvSS5XgHLQOIBkdXadNgR0e69akdy92HZmFsgYTeb9icdQuI9t9J6wq+pKphOhLc896X
-         X0NREXzvY9ikmAIioM1CRXJLU0mbesq0jKMi0O1fXRqT9DEEGhcL4LVu0bePkrjt+C8O
-         P8j+vW+j1vp3317IIJ0hq0I5/Low5qfaHWxkXlw1ZiojAKESWaFNXlmrdBS7pYwKrbvf
-         uoag==
-X-Forwarded-Encrypted: i=1; AJvYcCWWgd7TvVJBL+xdjryqYEVsETg7wbi16pn8p8jZJH6w/b/rVS6KnVu52SYS9GW9s7i7t7LCeDYp5CHMPGinGg==@vger.kernel.org
-X-Gm-Message-State: AOJu0YyyyAEOnAOeCSZnElgpj79+r/p1TAwsTPro5wkvLqduqPzUnfBt
-	XVnY3C7vHGBmI5OfwTjfgiD32KqYMp9jq9jIKs5MaYqek5SGk/absYiWf8GhO2TR
-X-Gm-Gg: ASbGnctkUTs1Cqh0dJtJuBlYDHLzudgpiFPsT+zhKYfnXrES6nKLRAuT+BMJMcQWJIG
-	RO2LDZM/93UYPVzDrr9gdwdcqgiCopYdgwt7II5i6XEYHP1vrCpQemp0EXFrmLjJRalxm5mYTlQ
-	N2JP2HXU7sAgfA6hvNo3QU+KK5vPhOSnoNaREQqVu1hDAxH9eqyYXmhpo1V85xqKTRzJfqHni2N
-	3b8btAEY/VrsFxgivH9vnsc0fJByJa7sZbDDHNvWescfFrSccgP5q31si5irJDaXBzG1L7VDSCU
-	YXZfDP0GmxSFUyxJhmGrbwY0zZBEXWsQbOO4PMe8i/teb7kY3mTmhKQGF+faomF2GWXxGN56Zve
-	SvR4=
-X-Google-Smtp-Source: AGHT+IEYM8uFXbuiT6qtBH5R22eorGIOwsfcuQo11ob6cA3O5P+SXdB/m4fFJ+F8uDMdya4QlJAtCQ==
-X-Received: by 2002:a05:6000:1448:b0:3a5:1388:9a55 with SMTP id ffacd0b85a97d-3a6c9693a22mr2742625f8f.5.1750345443413;
-        Thu, 19 Jun 2025 08:04:03 -0700 (PDT)
-Received: from costa-tp.redhat.com ([2a00:a041:e280:5300:9068:704e:a31a:c135])
-        by smtp.gmail.com with ESMTPSA id ffacd0b85a97d-3a568b2371bsm19862046f8f.70.2025.06.19.08.04.02
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Thu, 19 Jun 2025 08:04:02 -0700 (PDT)
-From: Costa Shulyupin <costa.shul@redhat.com>
-To: Costa Shulyupin <costa.shul@redhat.com>,
-	linux-rt-users <linux-rt-users@vger.kernel.org>
-Cc: John Kacur <jkacur@redhat.com>,
-	Clark Williams <williams@redhat.com>,
-	Tomas Glozar <tglozar@redhat.com>
-Subject: [PATCH v3] rt-tests: hwlatdetect: Add a grouping separator to tracing_cpumask
-Date: Thu, 19 Jun 2025 18:03:31 +0300
-Message-ID: <20250619150331.989973-1-costa.shul@redhat.com>
-X-Mailer: git-send-email 2.48.1
+	s=arc-20240116; t=1750407416; c=relaxed/simple;
+	bh=d8Mgbq+tlXgiOCvUUJ1CQ/wErcy/a1QcdjM8cScxgsc=;
+	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
+	 Content-Type:Content-Disposition:In-Reply-To; b=tOwjYC1oMohkJ2YOjSUVBy3v8gKPaiJNQJagPpJ5pg6WYYAMh/eXQDqe59Xdo9e0/rzU0wDC7QpS8sT7EQzXaBYHhMpdjflwHza9qGVFoEbWb4zJScq/4KTNaIr452wYQuTNcOWHS2+dZga3FHp0AWRBQ8dTGxTIPCn5b3zrFxA=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linutronix.de; spf=pass smtp.mailfrom=linutronix.de; dkim=pass (2048-bit key) header.d=linutronix.de header.i=@linutronix.de header.b=KWrW7OVM; dkim=permerror (0-bit key) header.d=linutronix.de header.i=@linutronix.de header.b=CY4sn07G; arc=none smtp.client-ip=193.142.43.55
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linutronix.de
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=linutronix.de
+Authentication-Results: smtp.subspace.kernel.org;
+	dkim=pass (2048-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="KWrW7OVM";
+	dkim=permerror (0-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="CY4sn07G"
+Date: Fri, 20 Jun 2025 10:16:52 +0200
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
+	s=2020; t=1750407413;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 in-reply-to:in-reply-to:references:references;
+	bh=MmmBlduHwPkdN/f1kH6ThEp5OdF66BfvSJIyhyA+ixM=;
+	b=KWrW7OVMxzpjCPLJkoMm6/hBtWWY5ux8pkQkdP5DR8PMfbSJqMezAbffMY++R/NIAVe64Y
+	NRUMzMITxm5eMhmxhFYyI7t6v+1OI2g4L5x+9r3DfPLr4nm0XQtADePx3w1liAOr9nNP7n
+	Gd0KlxvxGWbM8LRne/kOfrBpcmWCjsWZG3HYWFi00SQVo7R4Qcl99B9t39l1mGGWAqN6Hw
+	qwk/sw7gfUneT0uA9MZDGe+GBnuAdxPd05oxd82bFDDYOz9/CWMhPV/ApSSvJP8FNP8Fvx
+	gayPLI3WNP2g8If49cZGcQTr4mSlQAPVqGuNdUW0J1NTGkZ3FFe0VWr0vIyi0Q==
+DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
+	s=2020e; t=1750407413;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 in-reply-to:in-reply-to:references:references;
+	bh=MmmBlduHwPkdN/f1kH6ThEp5OdF66BfvSJIyhyA+ixM=;
+	b=CY4sn07GhZiAkp4AyV+4QduDZWTJKJmkvkFoP+Gpfrr0wyyHJzf2Z6S3nNAlnNwI/gUc2q
+	Fn1tViZ0VOm7PcDw==
+From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+To: Michael Schanne <michael.schanne@gmail.com>
+Cc: linux-rt-users@vger.kernel.org
+Subject: Re: liveloock using PREEMPT_RT with i915 driver
+Message-ID: <20250620081652.gUUPOkOh@linutronix.de>
+References: <CAC_kJhQcdP5=0fcWAuXaJ=3Hxx1TwX5WR-UgS=EHuQeqckhZmg@mail.gmail.com>
+ <20250617100521.6EW6IWXh@linutronix.de>
+ <CAC_kJhQZpZoUjavRsSVHuXL5k3-3u6+wdL9=h8Pbv3qWvzeOiw@mail.gmail.com>
+ <20250618121656.wjpoNGAT@linutronix.de>
+ <CAC_kJhTQ635vwtj6c7UpvM3BwNb+baMASbeo8t2zT5m5UfEYHw@mail.gmail.com>
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
 List-Subscribe: <mailto:linux-rt-users+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
+Content-Type: text/plain; charset=utf-8
+Content-Disposition: inline
+In-Reply-To: <CAC_kJhTQ635vwtj6c7UpvM3BwNb+baMASbeo8t2zT5m5UfEYHw@mail.gmail.com>
 
-Writing values longer than 32 bits without a comma results in an error:
+On 2025-06-19 07:19:23 [-0400], Michael Schanne wrote:
+> > So you are not using clock_nanosleep() but something like a POSIX timer?
+> 
+> No, I was using timerfd_create() and then calling read() in a loop in
+> my timer thread.  Is it recommended to use clock_nanosleep() instead?
 
-  echo 100000000 > /sys/kernel/debug/tracing/tracing_cpumask
-  bash: echo: write error: Value too large for defined data type
+clock_nanosleep() based delays allow a "direct" wakeup. So yes.
 
-The bitmap_pars() kernel function specification:
-"Commas group hex digits into chunks.
-Each chunk defines exactly 32 bits of the resultant bitmask.
-No chunk may specify a value larger than 32 bits (%-EOVERFLOW)"
+Because of how it is implemented, timerfd based wakeup need to be
+performed by a thread which is ktimersd. If you busy-poll the timer from
+your application then ktimersd needs to have a higher priority than your
+application so that it can preempt it.
+ktimersd is also responsible the wakeups of non-RT applications. So if
+multiple SCHED_OTHER applications ask for a wakeup then this wake up
+will preempt your realtime task.
 
-Add a comma as a grouping separator every 32 bits to a hexadecimal number,
-as expected by the bitmap_pars() kernel function.
+> -Mike
 
-Signed-off-by: Costa Shulyupin <costa.shul@redhat.com>
-
----
-Changes in v3:
-- rename hex to num_hex
-Changes in v2:
-- rebased
-
-Signed-off-by: Costa Shulyupin <costa.shul@redhat.com>
----
- src/hwlatdetect/hwlatdetect.py | 7 ++++++-
- 1 file changed, 6 insertions(+), 1 deletion(-)
-
-diff --git a/src/hwlatdetect/hwlatdetect.py b/src/hwlatdetect/hwlatdetect.py
-index dc28f38b751a..68f312db639f 100755
---- a/src/hwlatdetect/hwlatdetect.py
-+++ b/src/hwlatdetect/hwlatdetect.py
-@@ -33,6 +33,11 @@ def info(istr):
-         print(istr)
- 
- 
-+def group_sep(num_hex):
-+    """ Add a comma as a grouping separator every 32 bits to a hexadecimal number. """
-+    return ','.join([num_hex[max(i - 8, 0):i] for i in range(len(num_hex), 0, -8)][::-1])
-+
-+
- #
- # Class used to manage mounting and umounting the debugfs
- # filesystem. Note that if an instance of this class mounts
-@@ -494,7 +499,7 @@ def microseconds(sval):
-             for i in range(l, r + 1):
-                 cpumask |= (1 << i)
-         debug(f"set tracing_cpumask to {cpumask:x}")
--        detect.set("cpumask", f"{cpumask:x}")
-+        detect.set("cpumask", group_sep(f"{cpumask:x}"))
- 
-     info(f"hwlatdetect:  test duration {detect.testduration} seconds")
-     info(f"   detector: {detect.type}")
--- 
-2.48.1
-
+Sebastian
