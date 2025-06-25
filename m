@@ -1,48 +1,46 @@
 Received: from galois.linutronix.de (Galois.linutronix.de [193.142.43.55])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 7E36428135D;
-	Wed, 25 Jun 2025 15:35:22 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id A9CE62BE7AA;
+	Wed, 25 Jun 2025 15:57:19 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=193.142.43.55
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1750865724; cv=none; b=oERoOo4++EsWUHGdX6TmisGWw3cA5wWMLO0+oot8rCQ/2uR0W5WB7xrqLKyGj378cmeUTxsy/PWG1Z+PmVrM/oaZ0XXi/7AM60j/Po03RyUmDSFqqFqyozhG628X35YbQcRFLdYC3MqvzyfiDOG7qhRlRzOEa0Jq+pTbxuERpGs=
+	t=1750867041; cv=none; b=Dc17vIpaII4qr564XK+Z5v/xnWmIC+P6EMsjMkYwVNeL9J+W8YumLAtEblWm5OiJUck3hmpWXF/2vRelDHREfZpCk9looUhPZnsHxZrdQgOiQUbbq7ydWVJSDfDUaxKbTyLwg7btQag7ao80JuTAo3J5awHewSV6fNMWTgLOjWY=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1750865724; c=relaxed/simple;
-	bh=A7peNm87DC5TWGCaAQCUpCehByKhPLHY9RR8v7Wgq2A=;
+	s=arc-20240116; t=1750867041; c=relaxed/simple;
+	bh=E5uqucEcM/mKn6EztccekkvQtFRto2xMKL0P3StcGmI=;
 	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 Content-Type:Content-Disposition:In-Reply-To; b=A2ptxMu95qOCyPNvPwwOKquQst3D0Ve5PWz/Fs0CFp0ooreEkmN07whX97O8DvEnBea/2qoTmL16EpqKskvarfgDPjQpEoKKJAx/8g+iJl5Zyj0E44kgdCbM+Hic3jWpxPDTkMsnf7wXXrRIneeFbSV5rGzp/qUDvS4P2xHfeF4=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linutronix.de; spf=pass smtp.mailfrom=linutronix.de; dkim=pass (2048-bit key) header.d=linutronix.de header.i=@linutronix.de header.b=Bsq6nEfH; dkim=permerror (0-bit key) header.d=linutronix.de header.i=@linutronix.de header.b=2glSEkW6; arc=none smtp.client-ip=193.142.43.55
+	 Content-Type:Content-Disposition:In-Reply-To; b=HvrgxUmhCcCtvT6rAOnnSFoYyvicrATnxZyCTC3xpJkQGLRPUdWUY2KzljwYhCPfgXS4bhQUYngQfcu62bhTPqSsvj/SxEuVL81yFNUK1iY1Lz89I9axVb86HAlGrCTjsmPiS+x3+pa+SWiXM4k+7fLI/8QRWZjD4CZNS8Jr9ko=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linutronix.de; spf=pass smtp.mailfrom=linutronix.de; dkim=pass (2048-bit key) header.d=linutronix.de header.i=@linutronix.de header.b=UTPLqWGW; dkim=permerror (0-bit key) header.d=linutronix.de header.i=@linutronix.de header.b=2z60Z06n; arc=none smtp.client-ip=193.142.43.55
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linutronix.de
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=linutronix.de
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="Bsq6nEfH";
-	dkim=permerror (0-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="2glSEkW6"
-Date: Wed, 25 Jun 2025 17:35:19 +0200
+	dkim=pass (2048-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="UTPLqWGW";
+	dkim=permerror (0-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="2z60Z06n"
+Date: Wed, 25 Jun 2025 17:57:13 +0200
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
-	s=2020; t=1750865721;
+	s=2020; t=1750867038;
 	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
 	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
 	 in-reply-to:in-reply-to:references:references;
-	bh=A7peNm87DC5TWGCaAQCUpCehByKhPLHY9RR8v7Wgq2A=;
-	b=Bsq6nEfHqc19FS6upOBGBibsuS+k6GzDOdrfNqa7TeOFYX/lPbRvsPzmhSuwL024AOZR9Z
-	p4nuMMAx9elVUpHL6HF75p7ejHk4w/usF+FnG+ObSFNbqDaw+H1h9RJGwqQrJfxhlRe+dz
-	M1Zn3Qj8sXnkRwHmBEAF/IrIMap6Fiyb5t0p4dghkAnF40kz12QlNBzu5aoyg62DVyo7yy
-	RBGy8K/0KzHT0ZTSM+nY5oHDN6WQsgfRmGrhCzTGm+5MqvaRSAjlqa12mYTUbJHanIthic
-	+vFVxcoyyfzosM+MTIf2ntEyEvdUq1MhGtyM0IaR5BjNUF8VS/POolgnBXwH0A==
+	bh=CfjwWrD5XKW/BysMkuSVW+dt/gVl5mSe4HCW3w5BYuU=;
+	b=UTPLqWGWembTwGM1I/YUgZo4X/TUmmRzpL5RjQlkxjSQAX8mSoiH1S881swoIMJ+d6miOb
+	kVV8R1iW6jSLzQpMd65GwdIIX+P/ejWPkCPEcQn9+rcJw44H01J8c0FqrrfJLAfZONwI1F
+	4vvVpQ3SCo6DAIU69OJ1xr/1Ggx8BpQ+77ATNEJ3V3/mNyyH+2q3YY/FXs0vQsXhv2/qwL
+	sPatIYxsz03GvfZN4DzhenQFfHGpgX5DpGtrxbUFxINOx3sg3SSKtXmkyU9sA6wlmaoEIF
+	/r1J4q7gh1O5JqWopj8qNOCBbNerEWHdUBUW2mx6EtCOk0hQsgtKnE5eZCzU1A==
 DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
-	s=2020e; t=1750865721;
+	s=2020e; t=1750867038;
 	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
 	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
 	 in-reply-to:in-reply-to:references:references;
-	bh=A7peNm87DC5TWGCaAQCUpCehByKhPLHY9RR8v7Wgq2A=;
-	b=2glSEkW6BpBVoD5pTGsoLpd9hNX43zV8NPC6WL5qaoV8qR9wFQYEf3hTsLUM3FblbsyeiW
-	KCkHkjBVFJ/4L3BA==
-From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-To: Christian Brauner <brauner@kernel.org>,
-	Frederic Weisbecker <frederic@kernel.org>
-Cc: Nam Cao <namcao@linutronix.de>,
-	Frederic Weisbecker <frederic@kernel.org>,
-	Alexander Viro <viro@zeniv.linux.org.uk>, Jan Kara <jack@suse.cz>,
+	bh=CfjwWrD5XKW/BysMkuSVW+dt/gVl5mSe4HCW3w5BYuU=;
+	b=2z60Z06nBhUZVxBM6oxgQ3PZgvvFA8ivzh/kRDzxuBwWuBlnDpNa6XDz+vnlONDs8uyNZI
+	1Ye7EO0EF0GRprCQ==
+From: Nam Cao <namcao@linutronix.de>
+To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Cc: Alexander Viro <viro@zeniv.linux.org.uk>,
+	Christian Brauner <brauner@kernel.org>, Jan Kara <jack@suse.cz>,
 	John Ogness <john.ogness@linutronix.de>,
 	Clark Williams <clrkwllms@kernel.org>,
 	Steven Rostedt <rostedt@goodmis.org>, linux-fsdevel@vger.kernel.org,
@@ -50,24 +48,84 @@ Cc: Nam Cao <namcao@linutronix.de>,
 	linux-rt-users@vger.kernel.org, Joe Damato <jdamato@fastly.com>,
 	Martin Karsten <mkarsten@uwaterloo.ca>,
 	Jens Axboe <axboe@kernel.dk>,
+	Frederic Weisbecker <frederic@kernel.org>,
 	Valentin Schneider <vschneid@redhat.com>
 Subject: Re: [PATCH v3] eventpoll: Fix priority inversion problem
-Message-ID: <20250625153519.4QpnajiI@linutronix.de>
+Message-ID: <20250625155713.lckVkmJH@linutronix.de>
 References: <20250527090836.1290532-1-namcao@linutronix.de>
- <20250530-definieren-minze-7be7a10b4354@brauner>
+ <20250625145031.GQ4Bnc4K@linutronix.de>
+ <20250625152702.JiI8qdk-@linutronix.de>
+ <20250625153354.0cgh85EQ@linutronix.de>
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
 List-Subscribe: <mailto:linux-rt-users+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=utf-8
+Content-Type: text/plain; charset=us-ascii
 Content-Disposition: inline
-In-Reply-To: <20250530-definieren-minze-7be7a10b4354@brauner>
+In-Reply-To: <20250625153354.0cgh85EQ@linutronix.de>
 
-On 2025-05-30 07:08:45 [+0200], Christian Brauner wrote:
-> Care to review this, Frederic?
+On Wed, Jun 25, 2025 at 05:33:54PM +0200, Sebastian Andrzej Siewior wrote:
+> On 2025-06-25 17:27:02 [+0200], Nam Cao wrote:
+> > > > @@ -1896,21 +1732,30 @@ static int ep_send_events(struct eventpoll *ep,
+> > > >  			__pm_relax(ws);
+> > > >  		}
+> > > >  
+> > > > -		list_del_init(&epi->rdllink);
+> > > > -
+> > > >  		/*
+> > > >  		 * If the event mask intersect the caller-requested one,
+> > > >  		 * deliver the event to userspace. Again, we are holding ep->mtx,
+> > > >  		 * so no operations coming from userspace can change the item.
+> > > >  		 */
+> > > >  		revents = ep_item_poll(epi, &pt, 1);
+> > > > -		if (!revents)
+> > > > +		if (!revents) {
+> > > > +			init_llist_node(n);
+> > > > +
+> > > > +			/*
+> > > > +			 * Just in case epi becomes ready after ep_item_poll() above, but before
+> > > > +			 * init_llist_node(). Make sure to add it to the ready list, otherwise an
+> > > > +			 * event may be lost.
+> > > > +			 */
+> > > 
+> > > So why not llist_del_first_init() at the top? Wouldn't this avoid the
+> > > add below? 
+> > 
+> > Look at that function:
+> > 	static inline struct llist_node *llist_del_first_init(struct llist_head *head)
+> > 	{
+> > 		struct llist_node *n = llist_del_first(head);
+> > 
+> > 		// BROKEN: another task does llist_add() here for the same node
+> > 
+> > 		if (n)
+> > 			init_llist_node(n);
+> > 		return n;
+> > 	}
+> > 
+> > It is not atomic to another task doing llist_add() to the same node.
+> > init_llist_node() would then put the list in an inconsistent state.
+> 
+> Okay, I wasn't expecting another llist_add() from somewhere else. Makes
+> sense.
 
-Frederic, may I summon you?
+Sorry, it's been a few weeks and I misremembered. But that wasn't the
+reason. epitem_ready() is atomic to llist_del_first_init().
 
-Sebastian
+The actual reason is that, llist_del_first_init() would allow another
+llist_add() to happen. So in the future loop iterations, we could see the
+same item again, and we would incorrectly report more events than actually
+available.
+
+Thus, init_llist_node() doesn't happen until we are done looping.
+
+> > To be sure, I tried your suggestion. Systemd sometimes failed to boot, and
+> > my stress test crashed instantly.
+> 
+> I had a trace_printk() there while testing and it never triggered.
+
+This code path is only executed for broken userspace.
+
+Nam
