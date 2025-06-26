@@ -1,34 +1,44 @@
-Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
+Received: from galois.linutronix.de (Galois.linutronix.de [193.142.43.55])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id AE6962E54AF;
-	Thu, 26 Jun 2025 13:35:50 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id E9FAF28DEE0;
+	Thu, 26 Jun 2025 13:51:16 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=193.142.43.55
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1750944950; cv=none; b=Lh3xUH1IM5HgeneTpuFzwu/7LtdsgLsE63VLUPzXBheeRHBSaJZYsSHihHWQDUIxgcFJ457j35NG6GFTPcXR2MBjEQTDcinM4nS3sFFSDikWW8MO1iBogFh+i2hK0foqwQSyFvg/0XoE9oW1uJ7ksFWLJbAXoXxB1xj/7tohNcs=
+	t=1750945878; cv=none; b=ChAzHov07o/WOvDa7Dgiv3T/p1nc6momaIqDKZKkye5PDrXU3TBzTaAe8NKGJ+JWtiKIKbNhDGVCRS6AzqYeyCh9G6CJQjPWqtvDJs/U2SWOi51U9kO7njxvBWbqZsMDTh57WbLAv60hMuSZ6BCx3WEsx1BeqHbAlC5PJhapYwg=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1750944950; c=relaxed/simple;
-	bh=rdIz5xXm5ngXP00Ob9tXBkL/GKcoEcsNS9qsuE+RcA4=;
+	s=arc-20240116; t=1750945878; c=relaxed/simple;
+	bh=k1CAUGAJRYPQoAtPAgzLX5jSVsTFw/26Ie8qsMvtFIk=;
 	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 Content-Type:Content-Disposition:In-Reply-To; b=eH8BV7METuGsUknhBZpU5Cvu3Trp/vkETK1AcOAQQXFpOfo8abdQLbe4MJylWCMgeMFhHmF3aj0GELjvP53/hN+nViuOVq5/C9yIpD/r6/9ytkpPkIGz1ZZmvqcJk+6nhCQiiVIQ92VLwLRW/k4gj7svQ+iC2cdYurcZj+a7Xo4=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=k1ZAJ98E; arc=none smtp.client-ip=10.30.226.201
+	 Content-Type:Content-Disposition:In-Reply-To; b=XZ38yTbHLSTZE5avgIf9OwV5+ikKozhWU1buKIlstZW6gpedxSDsBx3sat9jeWfYv0TGItodNqtewBkjiGOy7y1IPwP8ktWBdPdsE7x9CTRrAuK7oUX5c/nGK/r464BLYbzygU1MCmaAm2Vx5tw+Mc11BPaazLyZeDjX5la0WCY=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linutronix.de; spf=pass smtp.mailfrom=linutronix.de; dkim=pass (2048-bit key) header.d=linutronix.de header.i=@linutronix.de header.b=Bp7xTjiF; dkim=permerror (0-bit key) header.d=linutronix.de header.i=@linutronix.de header.b=hzxfWqvZ; arc=none smtp.client-ip=193.142.43.55
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linutronix.de
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=linutronix.de
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="k1ZAJ98E"
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id BB201C4CEF2;
-	Thu, 26 Jun 2025 13:35:49 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-	s=k20201202; t=1750944950;
-	bh=rdIz5xXm5ngXP00Ob9tXBkL/GKcoEcsNS9qsuE+RcA4=;
-	h=Date:From:To:Cc:Subject:References:In-Reply-To:From;
-	b=k1ZAJ98Ego3DmGDITHwQtcAiWL4EuAuaFMn/MquM93z/Z5kLe388/ZsvN5qoONJe7
-	 FJjGNZfphQUGsbUjBGLW5I/iBxKWYJsFe+PTgUlwQoWZVnCmBvmQnWzdje8r02xlI6
-	 0MzMCZ5Tfq/Bcg+r3CZ9+AKi5e91KpZifkG/MH4g6zbsp35cXAv8QL24ZzRr4VFsiE
-	 Bn7GcDUHcbYNwcM1BUKpVDZctjLV2x3PKjOiq14ABfwxYzImsMMBA4Hedm3/qNAWb2
-	 KcTu6Ho4alz3m6QVqJxEl3Ofk4V12tCqIojwPY2GeM1mw/2mRTkfBtCyQA4ppsorId
-	 /VXBrvAMN4GqQ==
-Date: Thu, 26 Jun 2025 15:35:47 +0200
-From: Frederic Weisbecker <frederic@kernel.org>
-To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+	dkim=pass (2048-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="Bp7xTjiF";
+	dkim=permerror (0-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="hzxfWqvZ"
+Date: Thu, 26 Jun 2025 15:51:13 +0200
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
+	s=2020; t=1750945875;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 in-reply-to:in-reply-to:references:references;
+	bh=k1CAUGAJRYPQoAtPAgzLX5jSVsTFw/26Ie8qsMvtFIk=;
+	b=Bp7xTjiFrtbNw1/8IZ/K2PLBhs74bt313pxIqHXUE6oT7WTslZtbtnrWApca0Jaxt1mcEd
+	tlfYfcjmPOZUfypf024gHDcAgU2YUOEsAXO1YRvi6zxYtVBo3VltmWGJ2LZIsCwZqzkxm4
+	ZQZbAyQTphu4beI7BHrhu6ZZT6Nqvx/WDyVq22+0e0Sj8YPqWNytnlwu78oXE6VbFgrF0P
+	MZMLQrv1eBJiJ8rMCuRkl8MBcxrceQZvmQXGAYXBpSaHT2rgiGH8F6ivlsVvGuw0hS9rWn
+	ultssWiJBQMcz1YAckyT1RGuEw018Z3j5welF4DC3Y/Z4Sx2XdarFKAcY6orJg==
+DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
+	s=2020e; t=1750945875;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 in-reply-to:in-reply-to:references:references;
+	bh=k1CAUGAJRYPQoAtPAgzLX5jSVsTFw/26Ie8qsMvtFIk=;
+	b=hzxfWqvZsI+WDzaylsTp9W28//VuJ9qjXFBZRsKAeMPjBrOd0A1mJY7khFi6L5uUvpz4Oc
+	MqxE4Z78lSnn+YBw==
+From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+To: Frederic Weisbecker <frederic@kernel.org>
 Cc: Christian Brauner <brauner@kernel.org>, Nam Cao <namcao@linutronix.de>,
 	Alexander Viro <viro@zeniv.linux.org.uk>, Jan Kara <jack@suse.cz>,
 	John Ogness <john.ogness@linutronix.de>,
@@ -40,32 +50,25 @@ Cc: Christian Brauner <brauner@kernel.org>, Nam Cao <namcao@linutronix.de>,
 	Jens Axboe <axboe@kernel.dk>,
 	Valentin Schneider <vschneid@redhat.com>
 Subject: Re: [PATCH v3] eventpoll: Fix priority inversion problem
-Message-ID: <aF1MszYwYhUt0Mjy@localhost.localdomain>
+Message-ID: <20250626135113.yjfRdLV-@linutronix.de>
 References: <20250527090836.1290532-1-namcao@linutronix.de>
  <20250530-definieren-minze-7be7a10b4354@brauner>
  <20250625153519.4QpnajiI@linutronix.de>
+ <aF1MszYwYhUt0Mjy@localhost.localdomain>
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
 List-Subscribe: <mailto:linux-rt-users+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=iso-8859-1
+Content-Type: text/plain; charset=utf-8
 Content-Disposition: inline
-Content-Transfer-Encoding: 8bit
-In-Reply-To: <20250625153519.4QpnajiI@linutronix.de>
+In-Reply-To: <aF1MszYwYhUt0Mjy@localhost.localdomain>
 
-Le Wed, Jun 25, 2025 at 05:35:19PM +0200, Sebastian Andrzej Siewior a écrit :
-> On 2025-05-30 07:08:45 [+0200], Christian Brauner wrote:
-> > Care to review this, Frederic?
-> 
-> Frederic, may I summon you?
+On 2025-06-26 15:35:47 [+0200], Frederic Weisbecker wrote:
+> I can't review the guts and details but it looks like a sane
+> approach to me. Also the numbers are nice:
 
-I can't review the guts and details but it looks like a sane
-approach to me. Also the numbers are nice:
+Thank you.
 
-Acked-by: Frederic Weisbecker <frederic@kernel.org>
-
--- 
-Frederic Weisbecker
-SUSE Labs
+Sebastian
