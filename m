@@ -1,149 +1,143 @@
-Received: from mail-qk1-f170.google.com (mail-qk1-f170.google.com [209.85.222.170])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from mta-65-226.siemens.flowmailer.net (mta-65-226.siemens.flowmailer.net [185.136.65.226])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 811F1277C86;
-	Tue,  1 Jul 2025 14:43:29 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.222.170
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 57113285CAF
+	for <linux-rt-users@vger.kernel.org>; Tue,  1 Jul 2025 20:33:16 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=185.136.65.226
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1751381012; cv=none; b=KMBeEalvDMRTLAyFVyXdmuOKDESM81WpufQ1f6VDo6Fe7m9qKcUSNqD6ylsHHJrLlMjI328lpraZ0j8e1gnSWiq5t4A1m7CsZu1d2ZsHRaOkwPw2TxW0VGOCk4jTFjdHrJtNjLsVfvDuRpHigp6DWvLhQPQF6ituFRf975zzUtg=
+	t=1751401999; cv=none; b=qlZaWc1m2ca5QctquWBIkwnDs3r+WhbfDxrDNP18GtAor+Hwt4tfV92c7/W0URmg26b8yCUPP2ajwDMJDDOA1VGoZ5EGgINpik8i/ln4VHXBeBPMbcQVaWPVzlgeCgD8gbNx/JNRxTSERYhoiTm7ko4sEpUUvnsdRhUCqOYcOOY=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1751381012; c=relaxed/simple;
-	bh=pHL/Qk22Rw/qWZR+v/CC9PbQbrDdfVYiZ3CevAfJu1E=;
-	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=FYO4pojCa60dsHlJ8TyaefP3PdiliYxkZRkCN6yIJ8dMXDVwq71hGd9HWpmZE/7yVt4yZuHPSgq+O9AbVNkl/+yCkVsOioF/neXu0Dc9wXXcsero2qQZ2RekL9pHN2ngpZXhtzQxdPXQQNRxJy/3T+Ihmw39ye15Fw6ph0Z91DA=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=fail (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=df2HB1NL; arc=none smtp.client-ip=209.85.222.170
-Authentication-Results: smtp.subspace.kernel.org; dmarc=fail (p=quarantine dis=none) header.from=redhat.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
+	s=arc-20240116; t=1751401999; c=relaxed/simple;
+	bh=911JYjHmj6gjJY5DPIg00EEUOKP+CfWg2wJM8NLTVE0=;
+	h=Message-ID:Subject:From:To:Cc:Date:In-Reply-To:References:
+	 Content-Type:MIME-Version; b=omc7YfgNjkRWhDyFeXxio/2tl9PoFTNn5hW5S+5Sbes86jeNOgkTu9JrUla9fgi4LJmSQTis4meMrRoxgt2FGB/8O1cGsCeXiPXWnTqJeZu2Yg47bUUAB0s1Ir/Re5Nmj67j+ayTJLqyqGFCbfQ9fkze6S8/5cat9JEk0CBtUw4=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=siemens.com; spf=pass smtp.mailfrom=rts-flowmailer.siemens.com; dkim=pass (2048-bit key) header.d=siemens.com header.i=florian.bezdeka@siemens.com header.b=Y6kN1y46; arc=none smtp.client-ip=185.136.65.226
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=siemens.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=rts-flowmailer.siemens.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="df2HB1NL"
-Received: by mail-qk1-f170.google.com with SMTP id af79cd13be357-7d3f5796755so530201985a.1;
-        Tue, 01 Jul 2025 07:43:29 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1751381007; x=1751985807; darn=vger.kernel.org;
-        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
-         :to:from:sender:from:to:cc:subject:date:message-id:reply-to;
-        bh=xcWIGIvdCiX2uQmJI1Lhl0kixwPO/7xNgHt4UXZ8/Jw=;
-        b=df2HB1NLdLUVl9CKgKD2NyUnc7cEEQyRfeK9edASlfOg6BPzkxBo6wpOA2+YvpKJyw
-         za1y3Xs/xyke5i2ulziRmqtL5O86WF2eUX5uQCnyuh7SYNDnBYhA47Wuf50FULdUaZYQ
-         Pb5Ulq6MQq9nozy9R9PKFbz8URHs5CPvb/PB8e8Mi/SQ59kjzOL+K+hjeMmg7whM6iqi
-         Eys7uOVcWRTtOdfyLQ9zn/mvfhtb9Gy8bdM7W3WgeDLZWOFqXfpwgTU4cXuHfNR4ogTo
-         StRMPVpZUY4HKwKjhJ/cgWI4uq7Xrcy+Ms0YtVrSIpAmrSzCbU7WRwI231/bdX8zous9
-         dnhw==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1751381007; x=1751985807;
-        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
-         :to:from:sender:x-gm-message-state:from:to:cc:subject:date
-         :message-id:reply-to;
-        bh=xcWIGIvdCiX2uQmJI1Lhl0kixwPO/7xNgHt4UXZ8/Jw=;
-        b=DE0Iu5Tidjb+QZjGBcNGYXFyZRM3q4+VkYxo4vj2AVRub6TCKSZTsQF0bkaZ0+5qA5
-         ErGolDVAbSaW6mD3ubKkA8N05CkhcyyYhT9f6bwBz5VOqtiLsgNSs0VWU5A4NTJrNbBP
-         z33q3S+a483KAUWoKe/3GizfckQ/+OyPmcYsXez0/yo4FuemSIih3F6oOoHjZPgCkcRw
-         O6FpLiIpiiceeaEQloTpv7BSchApLBNfp89aNCYSqiFa7kGb4Vyefm1ilTX4+DDbsbVm
-         xdeb/2xzBZEk0VUtFPX+pxQm9tNJyl4YTp3vt0o+ctfCWLnbCtw7oFVXQ+SW52KVcxe9
-         5eFw==
-X-Gm-Message-State: AOJu0YwIgZ44PoicoKdcCcLd5sqkAHz3J0V/UFBUV89p5+3fvMhFbiaw
-	B9CkEU0rwMJFA0RXFTzwFI+k4lfsZMrr/kQqTfUEBFcCJBPtyifAOy4DYtP2ag==
-X-Gm-Gg: ASbGncsluGGdg3HBmBfyvqD/zZCimFLgDWVbJsiSKKhQJmg1fkukRDESuD/Tjwcf8kd
-	VD4Q4gXuM9XKkZWzAcxK/GVcl8w+9pQIigAywiYTHFGcrMfQGlBYSA+tq7X3pchor8hniROD8ZO
-	7Q0tJy7BllIck8WA4ZgXStaOaiocv/ESVwHkDi8DC8+7EGVkpuneL/QozBlYjPKRYDjQ3Ue3WZD
-	/VqMU8+5iHjF+r3VI0iSZ62zwqB5RbMbbJInzJyzavtOTYZwWxeyaf6F/g+gm0lg1aRxP5o/wTx
-	3e4sjlM1ywdMi18OHkTmr/zFm78LsfUTTg/zDPSKfIQLm9LuA4YlDyCsH+NhbxXu
-X-Google-Smtp-Source: AGHT+IGunkHC4NtsY2M0lv/LhYLeUdoVJlKWE1bVLj9BVbU0aKhxKNLbEFfSUIj8l50fqJZaizfJTg==
-X-Received: by 2002:a05:620a:27c6:b0:7c5:3c0a:ab7e with SMTP id af79cd13be357-7d443909f4amr2528147385a.5.1751381007486;
-        Tue, 01 Jul 2025 07:43:27 -0700 (PDT)
-Received: from fionn.redhat.com ([76.71.123.242])
-        by smtp.gmail.com with ESMTPSA id af79cd13be357-7d45ac68268sm384041785a.68.2025.07.01.07.43.26
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Tue, 01 Jul 2025 07:43:26 -0700 (PDT)
-Sender: John Kacur <jkacur@gmail.com>
-From: John Kacur <jkacur@redhat.com>
-To: RT <linux-rt-users@vger.kernel.org>
-Cc: lkml <linux-kernel@vger.kernel.org>,
-	Clark Williams <williams@redhat.com>,
-	Tyonnchie Berry <tyberry@redhat.com>,
-	John Kacur <jkacur@redhat.com>
-Subject: [ANNOUNCE] rt-tests-2.9
-Date: Tue,  1 Jul 2025 10:43:06 -0400
-Message-ID: <20250701144306.32234-1-jkacur@redhat.com>
-X-Mailer: git-send-email 2.49.0
+	dkim=pass (2048-bit key) header.d=siemens.com header.i=florian.bezdeka@siemens.com header.b="Y6kN1y46"
+Received: by mta-65-226.siemens.flowmailer.net with ESMTPSA id 2025070120330894b99ef77f924b080b
+        for <linux-rt-users@vger.kernel.org>;
+        Tue, 01 Jul 2025 22:33:08 +0200
+DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; s=fm1;
+ d=siemens.com; i=florian.bezdeka@siemens.com;
+ h=Date:From:Subject:To:Message-ID:MIME-Version:Content-Type:Content-Transfer-Encoding:Cc:References:In-Reply-To;
+ bh=Md1ee6YGuXICMCHtrMUM5ihwD3M3vo1BsbApFOWCUKM=;
+ b=Y6kN1y46aoIqKlsuyz3ipyhxjA8T3yrHi7FTv7uqzZV1VRWR6FV6ZS62sR939Z65UEDhhv
+ FVvuTkMXVlc2RpyqYHzxBdA0HkyAUz3YtuSxqGXAvM32fAyGSrC7sFzHb0wk69k0JdmoWXoL
+ c0q52117v+p8JSyYJn7RvdK7eqnS2A6ZmBON75zJUDPLRFh3F90izn/b8ERM4R+ZKqtmIo3T
+ xY6HtvN2aHeaNwwZdGy+wGE4fXBr5vNVVupLrBM8Ph59F2wRWDxE3qaSkekpSxm6r+4261VN
+ HQ5Q/RMJHuIQw8kxHrm+8gZlhDOpsdVXkvx0EI2VaYjdPhexVs5Vd1SA==;
+Message-ID: <7d49c9b5b533ee2b4b1883faf4c87ac8ebf60eb4.camel@siemens.com>
+Subject: Re: [PATCH v3] eventpoll: Fix priority inversion problem
+From: Florian Bezdeka <florian.bezdeka@siemens.com>
+To: K Prateek Nayak <kprateek.nayak@amd.com>, Nam Cao
+ <namcao@linutronix.de>,  Alexander Viro <viro@zeniv.linux.org.uk>,
+ Christian Brauner <brauner@kernel.org>, Jan Kara <jack@suse.cz>,  Sebastian
+ Andrzej Siewior	 <bigeasy@linutronix.de>, John Ogness
+ <john.ogness@linutronix.de>, Clark Williams <clrkwllms@kernel.org>, Steven
+ Rostedt <rostedt@goodmis.org>, 	linux-fsdevel@vger.kernel.org,
+ linux-kernel@vger.kernel.org, 	linux-rt-devel@lists.linux.dev,
+ linux-rt-users@vger.kernel.org, Joe Damato	 <jdamato@fastly.com>, Martin
+ Karsten <mkarsten@uwaterloo.ca>, Jens Axboe	 <axboe@kernel.dk>
+Cc: Frederic Weisbecker <frederic@kernel.org>, Valentin Schneider
+	 <vschneid@redhat.com>
+Date: Tue, 01 Jul 2025 22:33:05 +0200
+In-Reply-To: <773266ac-aa33-497f-b889-6d9f784e850b@amd.com>
+References: <20250527090836.1290532-1-namcao@linutronix.de>
+	 <773266ac-aa33-497f-b889-6d9f784e850b@amd.com>
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
 List-Subscribe: <mailto:linux-rt-users+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
+X-Flowmailer-Platform: Siemens
+Feedback-ID: 519:519-68982:519-21489:flowmailer
 
-We are pleased to announce rt-tests-2.9
+On Mon, 2025-06-30 at 20:38 +0530, K Prateek Nayak wrote:
+> Hello Nam,
+>=20
+> On 5/27/2025 2:38 PM, Nam Cao wrote:
+> > The ready event list of an epoll object is protected by read-write
+> > semaphore:
+> >=20
+> >    - The consumer (waiter) acquires the write lock and takes items.
+> >    - the producer (waker) takes the read lock and adds items.
+> >=20
+> > The point of this design is enabling epoll to scale well with large num=
+ber
+> > of producers, as multiple producers can hold the read lock at the same
+> > time.
+> >=20
+> > Unfortunately, this implementation may cause scheduling priority invers=
+ion
+> > problem. Suppose the consumer has higher scheduling priority than the
+> > producer. The consumer needs to acquire the write lock, but may be bloc=
+ked
+> > by the producer holding the read lock. Since read-write semaphore does =
+not
+> > support priority-boosting for the readers (even with CONFIG_PREEMPT_RT=
+=3Dy),
+> > we have a case of priority inversion: a higher priority consumer is blo=
+cked
+> > by a lower priority producer. This problem was reported in [1].
+> >=20
+> > Furthermore, this could also cause stall problem, as described in [2].
+> >=20
+> > To fix this problem, make the event list half-lockless:
+> >=20
+> >    - The consumer acquires a mutex (ep->mtx) and takes items.
+> >    - The producer locklessly adds items to the list.
+> >=20
+> > Performance is not the main goal of this patch, but as the producer now=
+ can
+> > add items without waiting for consumer to release the lock, performance
+> > improvement is observed using the stress test from
+> > https://github.com/rouming/test-tools/blob/master/stress-epoll.c. This =
+is
+> > the same test that justified using read-write semaphore in the past.
+> >=20
+> > Testing using 12 x86_64 CPUs:
+> >=20
+> >            Before     After        Diff
+> > threads  events/ms  events/ms
+> >        8       6932      19753    +185%
+> >       16       7820      27923    +257%
+> >       32       7648      35164    +360%
+> >       64       9677      37780    +290%
+> >      128      11166      38174    +242%
+> >=20
+> > Testing using 1 riscv64 CPU (averaged over 10 runs, as the numbers are
+> > noisy):
+> >=20
+> >            Before     After        Diff
+> > threads  events/ms  events/ms
+> >        1         73        129     +77%
+> >        2        151        216     +43%
+> >        4        216        364     +69%
+> >        8        234        382     +63%
+> >       16        251        392     +56%
+> >=20
+>=20
+> I gave this patch a spin on top of tip:sched/core (PREEMPT_RT) with
+> Jan's reproducer from
+> https://lore.kernel.org/all/7483d3ae-5846-4067-b9f7-390a614ba408@siemens.=
+com/.
+>=20
+> On tip:sched/core, I see a hang few seconds into the run and rcu-stall
+> a minute after when I pin the epoll-stall and epoll-stall-writer on the
+> same CPU as the Bandwidth timer on a 2vCPU VM. (I'm using a printk to
+> log the CPU where the timer was started in pinned mode)
+>=20
+> With this series, I haven't seen any stalls yet over multiple short
+> runs (~10min) and even a longer run (~3Hrs).
 
-To fetch:
+Many thanks for running those tests and posting the results as comments
+to this series. Highly appreciated!
 
-Clone one of the following
-git://git.kernel.org/pub/scm/utils/rt-tests/rt-tests.git
-https://git.kernel.org/pub/scm/utils/rt-tests/rt-tests.git
-https://kernel.googlesource.com/pub/scm/utils/rt-tests/rt-tests.git
+Florian
 
-Branch: main
-Tag: v2.9
-
-Tarballs are available here:
-https://kernel.org/pub/linux/utils/rt-tests
-
-Older version tarballs are available here:
-https://kernel.org/pub/linux/utils/rt-tests/older
-
-Thanks to everyone who contributed
-patches, bug-reports are always welcome
-
-Cheng-Yang Chou (1):
-  Makefile: Use -Wno-error=unused-result
-
-Costa Shulyupin (1):
-  rt-tests: hwlatdetect: Add a grouping separator to tracing_cpumask
-
-Crystal Wood (3):
-  rt-tests: Turn off -Wunused-parameter
-  rt-tests: Enable -Werror
-  rt-tests: Remove unused parameter annotations
-
-John Kacur (4):
-  rt-tests: cyclicdeadline: Fix usage for duration
-  Revert "Fix rt-tests build with glibc-2.41"
-  rteval: pi_stress: Change PRIu64 to llu to match upstream sched_attr
-  Makefile: Use -Wno-error=format-truncation=
-
-Khem Raj (1):
-  sched_attr: Do not define for glibc >= 2.41
-
-Shizhao Chen (1):
-  rt-tests: pip_stress: Add option --usleep
-
-Tomas Glozar (2):
-  rt-tests: Put variables in test-feature in quotes
-  rt-tests: Handle -lcpupower flag outside LDFLAGS
-
-Yaakov Selkowitz (1):
-  Fix rt-tests build with glibc-2.41
-
- Makefile                              |  6 +++---
- feature/test-feature.mak              |  2 +-
- src/cyclictest/cyclictest.c           | 11 +++++------
- src/hwlatdetect/hwlatdetect.py        |  7 ++++++-
- src/include/rt-sched.h                | 10 +++++++---
- src/oslat/oslat.c                     |  4 ++--
- src/pi_tests/pi_stress.c              |  6 +++---
- src/pi_tests/pip_stress.8             |  6 +++++-
- src/pi_tests/pip_stress.c             | 10 ++++++++--
- src/pmqtest/pmqtest.c                 |  7 +++----
- src/ptsematest/ptsematest.c           |  7 +++----
- src/queuelat/queuelat.c               |  2 +-
- src/rt-migrate-test/rt-migrate-test.c |  4 ++--
- src/sched_deadline/cyclicdeadline.c   |  4 ++--
- src/signaltest/signaltest.c           |  2 +-
- src/sigwaittest/sigwaittest.c         |  4 ++--
- src/ssdd/ssdd.c                       |  2 +-
- src/svsematest/svsematest.c           |  5 +++--
- 18 files changed, 58 insertions(+), 41 deletions(-)
-
--- 
-2.49.0
 
