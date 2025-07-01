@@ -1,93 +1,143 @@
-Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 703602737F2;
-	Tue,  1 Jul 2025 12:03:51 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 9FB3D26E6F1
+	for <linux-rt-users@vger.kernel.org>; Tue,  1 Jul 2025 14:25:04 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1751371431; cv=none; b=pOxdYTP8Xtl2hlU5iCfIHgM2MicZk+vBxvPbbFY7hFVRBXyQDR/ELVEAmP5P5FNOwW/jqKNznvpo4E+XZWAqJIUCHmwnEl6feKGGd5DHB2Bq5NHeWIu4pZSWSTp6mdVAtzTgpihbEN9ZbB6DIUBc4NSMYEFNAIYFaL3G2dFhhHk=
+	t=1751379906; cv=none; b=k00Mk7ODXtr9zX7xTjMP4vrmDeygiBGPJIZCi8OXhRsg6Eh8KhC1rJxYHUblhzLcujfYsIxN6R767MXN+Q0yV3wCtwhtHOCR8In0DHz5vkPqddDtEF+GEtOUpXqowNcOSDRI2zdgGhmcjU0gLBPHxnjG9+3NxkL9SVK2C9micdk=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1751371431; c=relaxed/simple;
-	bh=Q7QVc2qsYqqx0YXVW49AwV+9qD+1NySnWlFCXrePDPA=;
-	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version:Content-Type; b=a1gjjiUSBIW6NZ+890JvOCQEfqRToXjCpRe6+YnTdwCW3ignTo/rNcVGbEFmGMNlxAj9fkf6grNjKnBHClnA3xKJJJf0PR4/MsdNfVZdSfBIKgM2btG86tRKHhYGVnZ1GngFBydPOwq7BZeClD+PUD/oKu3mcc5ioqNeat6in3o=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=RXJJcXUr; arc=none smtp.client-ip=10.30.226.201
+	s=arc-20240116; t=1751379906; c=relaxed/simple;
+	bh=VbNtaSs2bIb/bU/qDXk0oYaWFh+Mcca/hK/Q1DHls68=;
+	h=Date:From:To:cc:Subject:In-Reply-To:Message-ID:References:
+	 MIME-Version:Content-Type; b=HJJgb9oxh/e+xyULujVX1CbnuDdQ8Zp65lC06ykcSVBvwzmrBMPdZ5UseksCDRss3ENXbayHRcCbd2kvlqQV4QaLMzeYd4JPYwcDwvlLGmOiCSaK/y7z28RrWpSqA3zikF5Y/S2n0gbvMcdBL4cxP2M6t+Su/SWJa26FcCmuXJI=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=RnhPNwFD; arc=none smtp.client-ip=170.10.129.124
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="RXJJcXUr"
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id 39886C4CEEB;
-	Tue,  1 Jul 2025 12:03:47 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-	s=k20201202; t=1751371431;
-	bh=Q7QVc2qsYqqx0YXVW49AwV+9qD+1NySnWlFCXrePDPA=;
-	h=From:To:Cc:Subject:Date:In-Reply-To:References:From;
-	b=RXJJcXUrvHSAIOPY2gI4XfjpcD2WMOoRpuEgtUiwLc9iKiaRf/krf8PhSdchunuJM
-	 8u4WdXAy7Y0lAjuaqgCxhvE5mdRI/Z/Bhz6v7ZTq3DO5qFtAmvy+fZ79lilbCEO+zE
-	 DyC82eMXBFcVinxD0Bq1Zl/0D6OADwhCc9kl6BmvhVS6tqonauHkLcJAZQRR+nWS24
-	 Ig9OwkHGHt3GJVFLkQxDVHQNy9mVlClJS2w92exPJHXe4GW1pms/B2EuiRgOh76FiT
-	 /QRyLz/jJ3FHlOtG54Y7wBA1O2+Tk4GI8Qj5vI7iIMD9uJ/MQyeLiWGQXzGig+olW3
-	 w7BWS9u7aqa0Q==
-From: Christian Brauner <brauner@kernel.org>
-To: Nam Cao <namcao@linutronix.de>
-Cc: Christian Brauner <brauner@kernel.org>,
-	Frederic Weisbecker <frederic@kernel.org>,
-	Valentin Schneider <vschneid@redhat.com>,
-	Alexander Viro <viro@zeniv.linux.org.uk>,
-	Jan Kara <jack@suse.cz>,
-	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-	John Ogness <john.ogness@linutronix.de>,
-	Clark Williams <clrkwllms@kernel.org>,
-	Steven Rostedt <rostedt@goodmis.org>,
-	linux-fsdevel@vger.kernel.org,
-	linux-kernel@vger.kernel.org,
-	linux-rt-devel@lists.linux.dev,
-	linux-rt-users@vger.kernel.org,
-	Joe Damato <jdamato@fastly.com>,
-	Martin Karsten <mkarsten@uwaterloo.ca>,
-	Jens Axboe <axboe@kernel.dk>
-Subject: Re: [PATCH v3] eventpoll: Fix priority inversion problem
-Date: Tue,  1 Jul 2025 14:03:38 +0200
-Message-ID: <20250701-wochen-bespannt-33e745d23ff6@brauner>
-X-Mailer: git-send-email 2.47.2
-In-Reply-To: <20250527090836.1290532-1-namcao@linutronix.de>
-References: <20250527090836.1290532-1-namcao@linutronix.de>
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="RnhPNwFD"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1751379903;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 in-reply-to:in-reply-to:references:references;
+	bh=Ad2CQkUmcLlf40Ri6m+aZ5kIZ4Ypvoq8jp3qC8IhpOk=;
+	b=RnhPNwFDLpLeCvdXMsmqy9xCDY0sWhbViWFy9+okjKh5L7scQ8+zRgWGqXknrtXl+M+b/7
+	JgxcXdWeDEWI7KMobqgMszyUiwX95b8yEobzsnE518kiS1BeKv5g7cfYtlbmmN6Sddd8TR
+	Nm/iSpGyYfoAuqoUBEh7g0im1a5Wopc=
+Received: from mail-qk1-f200.google.com (mail-qk1-f200.google.com
+ [209.85.222.200]) by relay.mimecast.com with ESMTP with STARTTLS
+ (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
+ us-mta-211-Mw7QWscUNy-k1LJDVHzWCA-1; Tue, 01 Jul 2025 10:25:02 -0400
+X-MC-Unique: Mw7QWscUNy-k1LJDVHzWCA-1
+X-Mimecast-MFC-AGG-ID: Mw7QWscUNy-k1LJDVHzWCA_1751379902
+Received: by mail-qk1-f200.google.com with SMTP id af79cd13be357-7d3d3f64739so784713785a.0
+        for <linux-rt-users@vger.kernel.org>; Tue, 01 Jul 2025 07:25:02 -0700 (PDT)
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20230601; t=1751379901; x=1751984701;
+        h=mime-version:references:message-id:in-reply-to:subject:cc:to:from
+         :date:x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
+        bh=Ad2CQkUmcLlf40Ri6m+aZ5kIZ4Ypvoq8jp3qC8IhpOk=;
+        b=XCuovfduKE70tbuUNkceG9aftJG1J0Fhwy8MMjPQx527pE3Yl1JjBNfjqtLn/Sp7H/
+         nRNqNW2cIEPZBqcyLMtmR3YVWED3ItVsS8XxZBE1opaecsmkyvR4RpW7upD0GrC8k2wK
+         4p0sm6Gr2hYnMj0JpbBjuyxngKpo/GLLFrQvNdvpzSACGTQQrH19wUsuoc7VlF4QJdBL
+         +Vl1mZ788c4hYLjyLH78jNb58z/Ft+2wtHaDLNKUheNoaV8feRYwyDnTnbd4lal36pwq
+         nPEvQZ7ctDwG0AmMcNn8cyrs8kxyV87OmH8REZ8uaRyVM2ttxPBANgC7dhTMrXsrobeN
+         NIBA==
+X-Gm-Message-State: AOJu0Ywy9YdKbelOICj507j6KAAp43KDbbhTjmVfO8Ai+eFkBB//B9hO
+	vEnUxYqBLUnvTKoiTemVAVDx1+DMpJyIzkbqxPFJW9zOkUhLx57PdvT/I+Hp0Li/I4QqAYL+qq5
+	NsB79RMB6R5Kyw2A4bjtVgC0fN3iiohZLJ4T774nplOPTnHjEH+c6ImhkUKBanPzHboGN
+X-Gm-Gg: ASbGnctIOP6LenkMkLn9bspvh6pN0hxBlWJfdpeoeCd6ePrvQm07aaVBd/JOVaUAeEk
+	z0dYuLMGcdOPe4S6FiUhps0kAcuW7N44QZYCeKJDOA7vimZzhqjpfb1OaQWKnW4Q5uuQStwteeY
+	tVr44PLq9Cy2H4po0+q0HtHnwGnhdKl3Tlkk0HB6gt9orJXon+6Jpn4UTEOhCnKaqZ1Rg9OCLyh
+	WEicx5yNYSPSLipo+yw5vkIH8S5WHy846hTKAlLMqhC7X8qw1DJA7GBe/hmjKiiQWjwJwFphQDm
+	/Nj7xw8hAA==
+X-Received: by 2002:a05:620a:1987:b0:7d0:a243:d5c5 with SMTP id af79cd13be357-7d44390231dmr2464733885a.5.1751379900848;
+        Tue, 01 Jul 2025 07:25:00 -0700 (PDT)
+X-Google-Smtp-Source: AGHT+IEzwdgKM5mxlWzVURUqoIVqOn7H5hOpvyuYdEfhCGHo4ZCowTsATsfdl+ZYsM7Gh5AkyvREFg==
+X-Received: by 2002:a05:620a:1987:b0:7d0:a243:d5c5 with SMTP id af79cd13be357-7d44390231dmr2464728985a.5.1751379900172;
+        Tue, 01 Jul 2025 07:25:00 -0700 (PDT)
+Received: from fionn ([76.71.123.242])
+        by smtp.gmail.com with ESMTPSA id af79cd13be357-7d4431345b8sm770784785a.15.2025.07.01.07.24.59
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Tue, 01 Jul 2025 07:24:59 -0700 (PDT)
+Date: Tue, 1 Jul 2025 10:24:48 -0400 (EDT)
+From: John Kacur <jkacur@redhat.com>
+To: Costa Shulyupin <costa.shul@redhat.com>
+cc: linux-rt-users <linux-rt-users@vger.kernel.org>, 
+    Clark Williams <williams@redhat.com>, Tomas Glozar <tglozar@redhat.com>
+Subject: Re: [PATCH v3] rt-tests: hwlatdetect: Add a grouping separator to
+ tracing_cpumask
+In-Reply-To: <20250619150331.989973-1-costa.shul@redhat.com>
+Message-ID: <e879611a-5c4a-51be-ead9-d3df72d0d399@redhat.com>
+References: <20250619150331.989973-1-costa.shul@redhat.com>
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
 List-Subscribe: <mailto:linux-rt-users+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-X-Developer-Signature: v=1; a=openpgp-sha256; l=1208; i=brauner@kernel.org; h=from:subject:message-id; bh=Q7QVc2qsYqqx0YXVW49AwV+9qD+1NySnWlFCXrePDPA=; b=owGbwMvMwCU28Zj0gdSKO4sYT6slMWQkn1sQnrzZI0ljcfwpHbZEDYcZy5wUhU6vDzAqev/T+ FMGi4RqRykLgxgXg6yYIotDu0m43HKeis1GmRowc1iZQIYwcHEKwERefGT47+I7r6lfRrx4SZPC gr1nvyx/+ETLa9GU1lkpywpdORRPzmFk2P41wiBiwnsBnxR1dl8pydePEwQ5opmTf1rcsdl8aU4 PCwA=
-X-Developer-Key: i=brauner@kernel.org; a=openpgp; fpr=4880B8C9BD0E5106FC070F4F7B3C391EFEA93624
-Content-Transfer-Encoding: 8bit
+Content-Type: text/plain; charset=US-ASCII
 
-On Tue, 27 May 2025 11:08:36 +0200, Nam Cao wrote:
-> The ready event list of an epoll object is protected by read-write
-> semaphore:
+
+
+On Thu, 19 Jun 2025, Costa Shulyupin wrote:
+
+> Writing values longer than 32 bits without a comma results in an error:
 > 
->   - The consumer (waiter) acquires the write lock and takes items.
->   - the producer (waker) takes the read lock and adds items.
+>   echo 100000000 > /sys/kernel/debug/tracing/tracing_cpumask
+>   bash: echo: write error: Value too large for defined data type
 > 
-> The point of this design is enabling epoll to scale well with large number
-> of producers, as multiple producers can hold the read lock at the same
-> time.
+> The bitmap_pars() kernel function specification:
+> "Commas group hex digits into chunks.
+> Each chunk defines exactly 32 bits of the resultant bitmask.
+> No chunk may specify a value larger than 32 bits (%-EOVERFLOW)"
 > 
-> [...]
+> Add a comma as a grouping separator every 32 bits to a hexadecimal number,
+> as expected by the bitmap_pars() kernel function.
+> 
+> Signed-off-by: Costa Shulyupin <costa.shul@redhat.com>
+> 
+> ---
+> Changes in v3:
+> - rename hex to num_hex
+> Changes in v2:
+> - rebased
+> 
+> Signed-off-by: Costa Shulyupin <costa.shul@redhat.com>
+> ---
+>  src/hwlatdetect/hwlatdetect.py | 7 ++++++-
+>  1 file changed, 6 insertions(+), 1 deletion(-)
+> 
+> diff --git a/src/hwlatdetect/hwlatdetect.py b/src/hwlatdetect/hwlatdetect.py
+> index dc28f38b751a..68f312db639f 100755
+> --- a/src/hwlatdetect/hwlatdetect.py
+> +++ b/src/hwlatdetect/hwlatdetect.py
+> @@ -33,6 +33,11 @@ def info(istr):
+>          print(istr)
+>  
+>  
+> +def group_sep(num_hex):
+> +    """ Add a comma as a grouping separator every 32 bits to a hexadecimal number. """
+> +    return ','.join([num_hex[max(i - 8, 0):i] for i in range(len(num_hex), 0, -8)][::-1])
+> +
+> +
+>  #
+>  # Class used to manage mounting and umounting the debugfs
+>  # filesystem. Note that if an instance of this class mounts
+> @@ -494,7 +499,7 @@ def microseconds(sval):
+>              for i in range(l, r + 1):
+>                  cpumask |= (1 << i)
+>          debug(f"set tracing_cpumask to {cpumask:x}")
+> -        detect.set("cpumask", f"{cpumask:x}")
+> +        detect.set("cpumask", group_sep(f"{cpumask:x}"))
+>  
+>      info(f"hwlatdetect:  test duration {detect.testduration} seconds")
+>      info(f"   detector: {detect.type}")
+> -- 
+> 2.48.1
+> 
+> 
+> 
+Signed-off-by: John Kacur <jkacur@redhat.com>
 
-Applied to the vfs.fixes branch of the vfs/vfs.git tree.
-Patches in the vfs.fixes branch should appear in linux-next soon.
-
-Please report any outstanding bugs that were missed during review in a
-new review to the original patch series allowing us to drop it.
-
-It's encouraged to provide Acked-bys and Reviewed-bys even though the
-patch has now been applied. If possible patch trailers will be updated.
-
-Note that commit hashes shown below are subject to change due to rebase,
-trailer updates or similar. If in doubt, please check the listed branch.
-
-tree:   https://git.kernel.org/pub/scm/linux/kernel/git/vfs/vfs.git
-branch: vfs.fixes
-
-[1/1] eventpoll: Fix priority inversion problem
-      https://git.kernel.org/vfs/vfs/c/e73f3008405b
