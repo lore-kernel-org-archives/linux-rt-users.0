@@ -1,49 +1,49 @@
 Received: from galois.linutronix.de (Galois.linutronix.de [193.142.43.55])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 8D9A127F16C
-	for <linux-rt-users@vger.kernel.org>; Fri,  4 Jul 2025 13:27:45 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 469AE2F94A7
+	for <linux-rt-users@vger.kernel.org>; Fri,  4 Jul 2025 13:27:48 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=193.142.43.55
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1751635666; cv=none; b=BrKjzst7pfH09wWa4epgBbm1b4gmE5H/Z2M+F//ZAdmNQ1u+z1TPio5HBD75tT0ohAPnmdjRUAgeFzypqEevVsQqu27zgQlWjpqafhvyTy562y+Lqlsz+a2i3Di+U/zVb4mfZv9y8U/5FioZXD9yzvTti/9RYbFWGRZBJQswPh0=
+	t=1751635670; cv=none; b=DdCLyAtp/4ovyg5T1p8YgNadN+nSu32vw8ELX/Oy2rGDPcHVHvOnqXzIKq02jnjf8hr61m64rd7FDfLEBfFfH3TUXMrtWJYmoJGIEu2jsRX1J9L5QVB9YH5YJVMCk/N2kyldZ/i6+X7ZQ7WQaBJjrkRFFC0jaNcs+OkM1+ZnvzM=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1751635666; c=relaxed/simple;
-	bh=SVh8Ik/FUZ1ZbkuMmNMakubqlIXZFdEkV5PCf+Z6DOc=;
+	s=arc-20240116; t=1751635670; c=relaxed/simple;
+	bh=F7ZcNwiNILO9poC/edkBmG7TK1J7Tfpr1YgxprbbzhA=;
 	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=bOCrlHx9Jz+sIqD5FKB/mhnYyiHqhX/SHukdN+ueqezxZr5tvFqXi7fufQtCi23k/8erMFuoqmrzdr5YOLt0W72Rs4CPgSBFK8J0qC+46UrqM+9rlyfVNU4qrCtAvgpHA8fy4y5QYaYU4uUU0rBgt7m98EQ+dsAxZngJgrW6h7M=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linutronix.de; spf=pass smtp.mailfrom=linutronix.de; dkim=pass (2048-bit key) header.d=linutronix.de header.i=@linutronix.de header.b=T7nRaJon; dkim=permerror (0-bit key) header.d=linutronix.de header.i=@linutronix.de header.b=2KpKJvQ2; arc=none smtp.client-ip=193.142.43.55
+	 MIME-Version; b=QJXLNELK+cY7QHeN4adY0Y8n+WV7O6ob2SLiJO1Il7rztTwBW3wusuEjqY+WPZwqqFLxFRe3U8ihlN7+tfWKz9q4BHac4468ixUACp8Uq/CvKV7B8VIIH1ccKoSJVfZpKbXJWbaNGEJMNDtl65hvS2l2EGTAQyzIowvc8N1djmk=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linutronix.de; spf=pass smtp.mailfrom=linutronix.de; dkim=pass (2048-bit key) header.d=linutronix.de header.i=@linutronix.de header.b=spZgnCmf; dkim=permerror (0-bit key) header.d=linutronix.de header.i=@linutronix.de header.b=w7/4jluF; arc=none smtp.client-ip=193.142.43.55
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linutronix.de
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=linutronix.de
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="T7nRaJon";
-	dkim=permerror (0-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="2KpKJvQ2"
+	dkim=pass (2048-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="spZgnCmf";
+	dkim=permerror (0-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="w7/4jluF"
 From: "Ahmed S. Darwish" <darwi@linutronix.de>
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
-	s=2020; t=1751635664;
+	s=2020; t=1751635667;
 	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
 	 to:to:cc:cc:mime-version:mime-version:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references;
-	bh=EqO5yx//Q5llcRyetqqJI5qHKmD0iONliBdWrQ1Kkw4=;
-	b=T7nRaJonwWLXCLcDMAfuazmVy1hxP8KIPsQQkBJ0SX2576s+bWiDV7y8rusPJ4P6qIlqaR
-	itrLn9U6xh2Nla5wY3EmilKRympqysD3zoBy47yaSQh/DSlSoLiXHVYk9hjobfR3uKotqH
-	gb2TQgNz4NqPFS7ht/RsuXwp2ar8o31Wb/DvkG6QS7s1Isq3X65wA9ilTiEVOpUzaER9r5
-	Hx2AEBgbJuniBhLsQzQfoLkwa4DLMSNJKsxtvxHXKsnEq/g6q3sa4m7I1lVL4imgJd6DQN
-	YoQp6cAkUEjx1BTlHw3xgV+gB+y0KEd/dgMEQJc7+WFjgbwXvO16Qok6JdseZg==
+	bh=top8pxsJduPhFuYUbKh7y86wvCWriJa8ZCO8ssCCPTc=;
+	b=spZgnCmf6XIW7WxEJqQeAUXeX3D2yKzK32wXWuzxanKndPXhP3HA4TJhTPXeDcVy2QiC3V
+	o7CfADKto1n8NrtVVZJAExfarX3G1tS2T6yzWs6LSMXymgJuSS3mlv0RUWiq3xnLQfszrK
+	epzxSECGa8lCFGUHzjw39S+YkyQbXo1wmjZsSuHLdj9fBkLpxgSnetwrpFu2priplat76h
+	kxkzqN3EwO/KXUuPKd52g3Zgt+1TeG90SM3CN/nUCmWiodOnE5dRX8KLm85VNAJ7l3Tqmy
+	E6zcd2tMMeEeROetD4cwve5ZB0v5D8Orzg9lab3CclnyKMb4kun0ATPB1OL5Kg==
 DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
-	s=2020e; t=1751635664;
+	s=2020e; t=1751635667;
 	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
 	 to:to:cc:cc:mime-version:mime-version:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references;
-	bh=EqO5yx//Q5llcRyetqqJI5qHKmD0iONliBdWrQ1Kkw4=;
-	b=2KpKJvQ2zRcYP1nyWpHPgyhgLfusihZeOOWqfzPT1BKQtbN8Hy02ioc8bRR4ztTcLuVTWJ
-	VuaM52r5a70WdNBQ==
+	bh=top8pxsJduPhFuYUbKh7y86wvCWriJa8ZCO8ssCCPTc=;
+	b=w7/4jluFrOpmlhBYMuv8TlUU/BINrIivxUpoC4INep3oXVQJ1bLVAOTeVFtA7bieU4+BzV
+	sVtUTG7NbElZzDCQ==
 To: linux-rt-users@vger.kernel.org
 Cc: "Ahmed S. Darwish" <darwi@linutronix.de>
-Subject: [PATCH v1 05/28] cyclictest.8: Synopsis: Remove -h flag
-Date: Fri,  4 Jul 2025 15:26:58 +0200
-Message-ID: <20250704132721.13325-6-darwi@linutronix.de>
+Subject: [PATCH v1 06/28] cyclictest.8: Standardize --verbose paragraph formatting
+Date: Fri,  4 Jul 2025 15:26:59 +0200
+Message-ID: <20250704132721.13325-7-darwi@linutronix.de>
 In-Reply-To: <20250704132721.13325-1-darwi@linutronix.de>
 References: <20250704132721.13325-1-darwi@linutronix.de>
 Precedence: bulk
@@ -54,31 +54,39 @@ List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 
-Per commit 79ad2eca9abe ("COPYING file and cyclictest's man page added"),
-"-h" as a flag is an invalid left-over from the template the manpage was
-based on.
+All of cyclictest's options are described in the manpage through a single
+paragraph except --verbose, which renders the verbose statistics output
+format in a separate paragraph for no special reason.
 
-Remove it from the cyclictest's flags list, as "-h" is actually a
-shorthand for "--histogram", which is already documented.
+Let the description text of --versbose match the other parameters style.
+Beside consistency, this will also be useful when all the options will be
+separated at the manpage source level.
 
 Signed-off-by: Ahmed S. Darwish <darwi@linutronix.de>
 ---
- src/cyclictest/cyclictest.8 | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+ src/cyclictest/cyclictest.8 | 9 ++++-----
+ 1 file changed, 4 insertions(+), 5 deletions(-)
 
 diff --git a/src/cyclictest/cyclictest.8 b/src/cyclictest/cyclictest.8
-index 76b10f3..c1a7b29 100644
+index c1a7b29..803c5fd 100644
 --- a/src/cyclictest/cyclictest.8
 +++ b/src/cyclictest/cyclictest.8
-@@ -17,7 +17,7 @@
- cyclictest \- High resolution test program
- .SH SYNOPSIS
- .SY cyclictest
--.RI "[ \-hfmnqrsvMS ] [\-a " proc " ] [\-A " align " ] [\-b " usec " ] [\-c " clock " ] [\-d " dist " ] \
-+.RI "[ \-fmnqrsvMS ] [\-a " proc " ] [\-A " align " ] [\-b " usec " ] [\-c " clock " ] [\-d " dist " ] \
- [\-h " histogram " ] [\-i " intv " ] [\-\-json " filename " ] [\-l " loop " ] [\-o " red " ] \
- [\-p " prio " ] [\-t " num " ] [\-D " time " ]"
- 
+@@ -170,11 +170,10 @@ write a trace mark when \-b latency is exceeded.
+ force unbuffered output for live processing
+ .TP
+ .B \-v, \-\-verbose
+-Output values on stdout for statistics. This option is used to gather statistical information about the latency distribution. The output is sent to stdout. The output format is:
+-
+-n:c:v
+-
+-where n=task number c=count v=latency value in us.
++Output values on stdout for statistics. This option is used to gather
++statistical information about the latency distribution. The output is sent
++to stdout. The output format is: "n:c:v", where n is the task number, c is
++the count, and v is the latency value in microseconds.
+ .TP
+ .B \-\-dbg_cyclictest
+ Print info userful for debugging cyclictest
 -- 
 2.49.0
 
