@@ -1,49 +1,49 @@
 Received: from galois.linutronix.de (Galois.linutronix.de [193.142.43.55])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 7F47E3093A3
-	for <linux-rt-users@vger.kernel.org>; Fri,  4 Jul 2025 13:28:51 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 49F3E307AD6
+	for <linux-rt-users@vger.kernel.org>; Fri,  4 Jul 2025 13:28:53 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=193.142.43.55
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1751635733; cv=none; b=eMDLW+4JC99FiFG0AIvNKxV71tYgAFUmWqoF4O93CChN4Fr4YuQC7/4y8boUKbnybGQyyS45Lf5oMK3N5FzCZ7UK2Bl+ZUrGoaJiAP8R/eqCQ6frqDw0aKcVjtmhts+lnniCtcK0rJ7dBs2CbQhbMpQDLsaGFEIth9TH/QrPSIU=
+	t=1751635737; cv=none; b=E6y7qloBCiIySvFNGOdbv17nef2b3gMV0aTzx44U64h5Q0bgSN8HCo7C71Kk+Ocljwt2qnR8MQEZmdu7BA5TaXZBv+HMFCucwt/OE7klrvJKa2J7slDPh6PsFBvwO6nGgwAbWC7Xbd2lc+8dmYKXMxJIepGjZQgzahAep6xQo+w=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1751635733; c=relaxed/simple;
-	bh=EA1vqFldM+HKB7uYMB/qcIzhDZpM0IWtXK4J4CWj5aM=;
+	s=arc-20240116; t=1751635737; c=relaxed/simple;
+	bh=+0+leP6Wu5oWqTzzwQzp9MICjbc9SOwjDmeBIq0AAjE=;
 	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=ft94malwsG5+bKz2yy/ebUsv8nLr/OpYXh8GVj8j/fQmG3eCqizw7qfRBk+hzZMuWeY2afxfotc06KFdUYuv0yiw5FM2xHE1jW98J4dPCzp4P0BRuIHPXDEtzJP8HuNLTMFXxoti7ku1Wx3IRYcDVys88MnfInqj9GezFC/jwwE=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linutronix.de; spf=pass smtp.mailfrom=linutronix.de; dkim=pass (2048-bit key) header.d=linutronix.de header.i=@linutronix.de header.b=QDC4s2Fk; dkim=permerror (0-bit key) header.d=linutronix.de header.i=@linutronix.de header.b=f4IQFzB/; arc=none smtp.client-ip=193.142.43.55
+	 MIME-Version; b=FMD/I5FsH+PrUbwYxmgmxhqh2yMGn53RtqFtGl94jYpQgMApR3dqbmsPNPm7ktSWgJTMHzD4A92UrtqJxtmYBTsoT5DuzzgTioxSySHF8CU83kLNv4MxHotn5xaqAbeEavkCddNsqbTk8zNp9hWxIN7R/04xP9EVdPV1CUALIRY=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linutronix.de; spf=pass smtp.mailfrom=linutronix.de; dkim=pass (2048-bit key) header.d=linutronix.de header.i=@linutronix.de header.b=yMO5Cp9x; dkim=permerror (0-bit key) header.d=linutronix.de header.i=@linutronix.de header.b=5kz3C9sI; arc=none smtp.client-ip=193.142.43.55
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linutronix.de
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=linutronix.de
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="QDC4s2Fk";
-	dkim=permerror (0-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="f4IQFzB/"
+	dkim=pass (2048-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="yMO5Cp9x";
+	dkim=permerror (0-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="5kz3C9sI"
 From: "Ahmed S. Darwish" <darwi@linutronix.de>
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
-	s=2020; t=1751635729;
+	s=2020; t=1751635732;
 	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
 	 to:to:cc:cc:mime-version:mime-version:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references;
-	bh=7g/lWscxvvXucgvNdeDnXwn+2PynMaBxIeBNDS5SB5g=;
-	b=QDC4s2FkSaFMZ681440AhMekECU+SUY9WRXeg8pcZOeaV3qA0TYv6uGD3OPjW7N0pH3Bs6
-	uIFu5xVKvQ8lUrxlz+bp5Qy/SFp2KQ4Q5td+AlUgVYyKB+Ud3lbcJAu3R3j9qwrCZi6wyj
-	5pC4zoPRstifA48lrKbLeK84QogwT0R381OJ/XsJNQkHiG3mMhYrzVxRdVY5FmDibyGexp
-	6ZVIYMkpBHXDFkhA4qGCZ+dcFXEsAv9GIEizHAt82YT1iQRRq5KNNHp1uLZGWSi63E+PeB
-	c4WidcARXtOAlP1XFIJihPsLNOP37Wx+yvuxzwdauC81NExBJ0kLLR/hogoyEQ==
+	bh=FDWMC+kbr6ZDu1imaRKNvMdWamFpw3b4zPyriJLrPuk=;
+	b=yMO5Cp9xogDSr7lLKI0WZHdIoexmXtE4HDiWWfl78KrHK4RO0mJwfXJuygjinnzhy/5+xF
+	Xy7MB7n805GyqQHm+JbKTinEHpH3tKHBF555DWlJdduViotj47JQrkT9PnjFiQyj3mjmkz
+	vwM7BDUjE8v2Uc1O5Lp1bGOHrRiHdsUZAFgTw7xI1lj+wRkdSwMap6PJPwUrG4QXpYgogI
+	vYjO8hk26h4PwJVd72zjPnsB5lZK+JNdBK8pbt55Ysbzyzq2RzjOr+igGUGLFrM7DAonhk
+	YtW+0x5KqCB8nyliM18wkKn0nazWppcow3yiyrKjfqWGWkBUVMPJngbiMRiuQA==
 DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
-	s=2020e; t=1751635729;
+	s=2020e; t=1751635732;
 	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
 	 to:to:cc:cc:mime-version:mime-version:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references;
-	bh=7g/lWscxvvXucgvNdeDnXwn+2PynMaBxIeBNDS5SB5g=;
-	b=f4IQFzB/FyVapB+I5rh7w2BJ4/TBAROfedNXDdxbAX3Yf5++kkQsHngxjaOWXlfUpm66Lb
-	jAccyrYqZ3GlLuCw==
+	bh=FDWMC+kbr6ZDu1imaRKNvMdWamFpw3b4zPyriJLrPuk=;
+	b=5kz3C9sITnPUS4b6/PzMuBQZbXcbWhQe6sZq6htlwdEJevCNCOoEB37QHiDyhMkAh+8MIq
+	wnEbA90o2b75UICA==
 To: linux-rt-users@vger.kernel.org
 Cc: "Ahmed S. Darwish" <darwi@linutronix.de>
-Subject: [PATCH v1 24/28] cyclictest.8: System options: Deprecate --laptop
-Date: Fri,  4 Jul 2025 15:27:17 +0200
-Message-ID: <20250704132721.13325-25-darwi@linutronix.de>
+Subject: [PATCH v1 25/28] cyclictest.8: Options: Expand --default-system description
+Date: Fri,  4 Jul 2025 15:27:18 +0200
+Message-ID: <20250704132721.13325-26-darwi@linutronix.de>
 In-Reply-To: <20250704132721.13325-1-darwi@linutronix.de>
 References: <20250704132721.13325-1-darwi@linutronix.de>
 Precedence: bulk
@@ -54,29 +54,33 @@ List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 
-Per 61ba1aa3a0db ("rt-tests: cyclictest: Add --default-system option"),
-explicitly mark the --laptop option as obsolete and recommend using
---default-system instead.
+Now that --laptop is explicitly obsoleted and --default-system is
+recommended as its replacement, better formulate the latter's help text.
 
 Signed-off-by: Ahmed S. Darwish <darwi@linutronix.de>
 ---
- src/cyclictest/cyclictest.8 | 3 +--
- 1 file changed, 1 insertion(+), 2 deletions(-)
+ src/cyclictest/cyclictest.8 | 8 +++++---
+ 1 file changed, 5 insertions(+), 3 deletions(-)
 
 diff --git a/src/cyclictest/cyclictest.8 b/src/cyclictest/cyclictest.8
-index f320f66..aff900d 100644
+index aff900d..6982234 100644
 --- a/src/cyclictest/cyclictest.8
 +++ b/src/cyclictest/cyclictest.8
-@@ -92,8 +92,7 @@ cpus.
+@@ -75,9 +75,11 @@ display a usage message and exit.
  .
  .TP
- .B \-\-laptop
--Save battery when running cyclictest. This will give you poorer realtime
--results, but will not drain your battery so quickly.
-+Obsolete option.  Please use \-\-default\-system instead.
+ .B \-\-default\-system
+-Don't attempt to tune the system from cyclictest. Power management is not
+-suppressed. This might give poorer results, but will allow you to discover
+-if you need to tune the system.
++Stop cyclictest from force-tuning the system. Without this option,
++cyclictest writes a value of 0 to /dev/cpu_dma_latency, which prevents the
++CPU from entering deep sleep states.  While such force-tuning might help at
++showing lower latency numbers, it obscures the fact that the system may
++require additional tuning.
  .
- .SS "Sleep-mechanism clock options"
- .
+ .TP
+ .B \-\-latency=PM_Q0S
 -- 
 2.49.0
 
