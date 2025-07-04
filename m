@@ -1,49 +1,49 @@
 Received: from galois.linutronix.de (Galois.linutronix.de [193.142.43.55])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 748402FCE2A
-	for <linux-rt-users@vger.kernel.org>; Fri,  4 Jul 2025 13:28:39 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id E4C3730206D
+	for <linux-rt-users@vger.kernel.org>; Fri,  4 Jul 2025 13:28:42 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=193.142.43.55
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1751635720; cv=none; b=LG96PTtGpI4gRXDOcT710QLV8ByIb+5gSVZmKF48hBUEd6kcuOHD/1iCrlJ+JkROuH0UfdBpA2CHC9H4NKTuuPJeSzIs7WRk3Rc7/J1tl6FoVCje2AxtYI3j7eBMCNdrhZCPBcDz/PAoMsDwRQJAd2/pUdYq+u1Beuj6rYYoo+A=
+	t=1751635724; cv=none; b=K3CEePJXYCMeUMn8X0Et63WIIKB206B53wUiFksUJYpBnyh+/csfd/rZFQvRjHyIto2jZPazAILVCCZpxnFf9qDIf4NEpupbUB1zxBptPE/CeK8pJWM3htEk3KvIf2LxkRrJ/vT/ME2AiPko6hBp8t0KYfW7EajsZEi5XYtB7L8=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1751635720; c=relaxed/simple;
-	bh=0ZsNt2EhcFut+KWG/5yk0Mzrke0cKHSyW/Z/MON9ir4=;
+	s=arc-20240116; t=1751635724; c=relaxed/simple;
+	bh=u1XNmNNJI/Ix5eVRjfQClNmZUE7OrDfHMG9QcqRhwZE=;
 	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=YG6Q7oQ6ekkYKJfCg0Y5sT4FPVPfYc7PsGwcQAH8QqzUUsdzz/laITdMYuzmpe3KqpLqYjI+GphgCTqjojnTDHBaANKHXfD+C8yeCGxiaXi2mUG8Rm8Is9Y2JPtPSWaaPoz4Iu0avoZU6v8SrqqVsOt3PfWaa8NYZWMjW4MCtso=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linutronix.de; spf=pass smtp.mailfrom=linutronix.de; dkim=pass (2048-bit key) header.d=linutronix.de header.i=@linutronix.de header.b=iVRpwkU+; dkim=permerror (0-bit key) header.d=linutronix.de header.i=@linutronix.de header.b=oH+UD5ab; arc=none smtp.client-ip=193.142.43.55
+	 MIME-Version; b=aTXxHsDN6EQ5pyI0ql+bBEK925Pll9a6xjXfQu5eUoJ7idqmttpjBGZ3PyMEU0xYSuWrjGzW1T2LwZvu/gHIoBf3Cw3ObtuHoBoT8Pb1cFJQ86u9Dzn2NvbWTdLtBata0A8ImbchbB+cmENLc6EdYoMY3qsiB8zVBcfNLcLgXrs=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linutronix.de; spf=pass smtp.mailfrom=linutronix.de; dkim=pass (2048-bit key) header.d=linutronix.de header.i=@linutronix.de header.b=jF6Y7lkJ; dkim=permerror (0-bit key) header.d=linutronix.de header.i=@linutronix.de header.b=KghPni3D; arc=none smtp.client-ip=193.142.43.55
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linutronix.de
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=linutronix.de
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="iVRpwkU+";
-	dkim=permerror (0-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="oH+UD5ab"
+	dkim=pass (2048-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="jF6Y7lkJ";
+	dkim=permerror (0-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="KghPni3D"
 From: "Ahmed S. Darwish" <darwi@linutronix.de>
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
-	s=2020; t=1751635717;
+	s=2020; t=1751635721;
 	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
 	 to:to:cc:cc:mime-version:mime-version:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references;
-	bh=WX7FnrGPicYZfQVYhIJUnU1ZusBQzfKCHxqfym9r5Sw=;
-	b=iVRpwkU+kNmcfDrn0vWOltYv2FryFV5K7uFs56PHr5Y+S0Tgr3xrcA5ov84XtVvAig8UQ9
-	h8SiAENl75R2K0xyWLeuYaMGSJyiiuvWsDPsl2MI0NJ/HqntC0bakGLN22vqjSh/n+J5JQ
-	89IdSAAsa1qEjQncf8Rq/yjmBpZYjMgaASRmEQFVqD1BcayIlGKCO9K/OXy4sMfJzSqj9x
-	57EbPOcbFFV0EzDxoAHrasSxDgb4+yAmqfqcdoRPJMuQ1YtbfVM1W4fKCLMEKBTPn0prfz
-	r1FzYnEXzwv2Ao23UFoLkIapetUazGroruhDiP9b51TG5R1ytDpWDAjGTA4rAg==
+	bh=w5V21gI0vhuC7EgGrbTV/ZpVxN0oEn1Q+efKoRZ45Yg=;
+	b=jF6Y7lkJFqCt5tzwmT35ELjaXBv8byzRdiY7G19Pxr8O6dV0JciuC4Ue+6GeYG+Aju6ToT
+	muPFr5QQTOG5jOD5Nv4/yp/iBQqwlwwvMWT2o/GcOp154veui0OOR6RWaYZj3FQdXxofXr
+	wdQ0sNEtoMPp+5PbHcdpOZf+aBcEvsoFcd52HJE/EGXI1Fuj2JG/F+wCcytKCXJj+PMcoG
+	EgyYcTP6OxFXjmg6dN+Z0GltYoPIquTi0Qi6ga4joPGaV0l+EmuoJQGMjIEQq/N7rBG7c/
+	Q+c76KIHEci3Winy6d9ACfc7ZyHqbecC9QfffvcJl/lI0R4XCK20msDR3bE1BA==
 DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
-	s=2020e; t=1751635717;
+	s=2020e; t=1751635721;
 	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
 	 to:to:cc:cc:mime-version:mime-version:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references;
-	bh=WX7FnrGPicYZfQVYhIJUnU1ZusBQzfKCHxqfym9r5Sw=;
-	b=oH+UD5abQkSf8kIkJa2wLMLnFRtC0dlqFiA0/wPHABPPi5IbXV5Yut/j7HKzb5o7FZXcZj
-	BiGViN+c5L8x4rCQ==
+	bh=w5V21gI0vhuC7EgGrbTV/ZpVxN0oEn1Q+efKoRZ45Yg=;
+	b=KghPni3DpfABFPce5JZVsHsrlxWvsFZm+0wF3jZ8Uh5mSFUoQhEQwVsJl653+vJ1I80HsW
+	eg9P9YJXOGN+kODw==
 To: linux-rt-users@vger.kernel.org
 Cc: "Ahmed S. Darwish" <darwi@linutronix.de>
-Subject: [PATCH v1 20/28] cyclictest.8: Group tracing options
-Date: Fri,  4 Jul 2025 15:27:13 +0200
-Message-ID: <20250704132721.13325-21-darwi@linutronix.de>
+Subject: [PATCH v1 21/28] cyclictest.8: Group test duration options
+Date: Fri,  4 Jul 2025 15:27:14 +0200
+Message-ID: <20250704132721.13325-22-darwi@linutronix.de>
 In-Reply-To: <20250704132721.13325-1-darwi@linutronix.de>
 References: <20250704132721.13325-1-darwi@linutronix.de>
 Precedence: bulk
@@ -59,8 +59,8 @@ exploring them in sequence can get the manpage reader lost.
 
 Put the cyclictest's system-altering options:
 
-       -b, --breaktrace=USEC
-       --tracemark
+       -D, --duration=TIME
+       -l, --loops=LOOPS
 
 into their own group.  Adjust the Synopsis accordingly as well.
 
@@ -68,61 +68,67 @@ Further groupings will be added next.
 
 Signed-off-by: Ahmed S. Darwish <darwi@linutronix.de>
 ---
- src/cyclictest/cyclictest.8 | 14 ++++++++------
- 1 file changed, 8 insertions(+), 6 deletions(-)
+ src/cyclictest/cyclictest.8 | 20 +++++++++++---------
+ 1 file changed, 11 insertions(+), 9 deletions(-)
 
 diff --git a/src/cyclictest/cyclictest.8 b/src/cyclictest/cyclictest.8
-index 90a3e08..964996f 100644
+index 964996f..c2c963c 100644
 --- a/src/cyclictest/cyclictest.8
 +++ b/src/cyclictest/cyclictest.8
-@@ -37,6 +37,7 @@ cyclictest \- High resolution test program
- .RB [ \-\-priospread ]
- .RB [ \-b\~\c
- .IR break\-usec ]
-+.RB [ \-\-tracemark ]
+@@ -40,14 +40,14 @@ cyclictest \- High resolution test program
+ .RB [ \-\-tracemark ]
  .RB [ \-D\~\c
  .IR duration\-mhd ]
++.RB [ \-l\~\c
++.IR num\-loops ]
  .RB [ \-f\~\c
-@@ -59,7 +60,6 @@ cyclictest \- High resolution test program
- .IR num\-nodes ]
- .RB [ \-\-dbg_cyclictest ]
- .RB [ \-\-smi ]
--.RB [ \-\-tracemark ]
- .YS
- .
- .SY cyclictest
-@@ -186,13 +186,19 @@ v1, PROC-SET, if specified, must be a single CPU number.
- .B \-m, \-\-mlockall
- Lock current and future memory allocations to prevent being paged out
+ .IR fifo\-path ]
+ .RB [ \-h\~\c
+ .IR max\-latency\-usec ]
+ .RB [ \-H\~\c
+ .IR max\-latency\-usec ]
+-.RB [ \-l\~\c
+-.IR num\-loops ]
+ .RB [ \-o\~\c
+ .IR oscope\-red ]
+ .RB [ \-\-histfile\~\c
+@@ -196,7 +196,7 @@ Send break trace command when latency > USEC
+ .B \-\-tracemark
+ write a trace mark when \-b latency is exceeded.
  .
 -.SS "Other options"
-+.SS "Tracing options"
++.SS "Test-duration options"
  .
  .TP
- .B \-b, \-\-breaktrace=USEC
- Send break trace command when latency > USEC
+ .B \-D, \-\-duration=TIME
+@@ -205,6 +205,14 @@ Specify a length for the test run.
+ Append 'm', 'h', or 'd' to specify minutes, hours or days.
  .
  .TP
-+.B \-\-tracemark
-+write a trace mark when \-b latency is exceeded.
++.B \-l, \-\-loops=LOOPS
++Set the number of loops. The default is 0 (endless). This option is useful
++for automated tests with a given number of test cycles. Cyclictest is
++stopped once the number of timer intervals has been reached.
 +.
 +.SS "Other options"
 +.
 +.TP
- .B \-D, \-\-duration=TIME
- Specify a length for the test run.
- .br
-@@ -262,10 +268,6 @@ The default is 1024 if not specified.
- Enable SMI count/detection on processors with SMI count support.
+ .B \-F, \-\-fifo=<path>
+ Create a named pipe at path and write stats to it
+ .
+@@ -229,12 +237,6 @@ Dump the latency histogram to <path> instead of stdout.
+ Write final results into FILENAME, JSON formatted.
  .
  .TP
--.B \-\-tracemark
--write a trace mark when \-b latency is exceeded.
+-.B \-l, \-\-loops=LOOPS
+-Set the number of loops. The default is 0 (endless). This option is useful
+-for automated tests with a given number of test cycles. Cyclictest is
+-stopped once the number of timer intervals has been reached.
 -.
 -.TP
- .B \-u, \-\-unbuffered
- force unbuffered output for live processing
- .
+ .B \\-M, \-\-refresh_on_max
+ Delay updating the screen until a new max latency is hit. (useful for
+ running cyclictest on low-bandwidth connections)
 -- 
 2.49.0
 
