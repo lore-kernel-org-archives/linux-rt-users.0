@@ -1,190 +1,137 @@
-Received: from mail-wm1-f46.google.com (mail-wm1-f46.google.com [209.85.128.46])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from mgamail.intel.com (mgamail.intel.com [198.175.65.10])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id B19162E7196
-	for <linux-rt-users@vger.kernel.org>; Wed,  9 Jul 2025 15:47:47 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.128.46
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 413D9FC1D
+	for <linux-rt-users@vger.kernel.org>; Wed,  9 Jul 2025 17:30:30 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=198.175.65.10
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1752076069; cv=none; b=cTNg4epWZbpkFKCMvc8z0nN8Hw4d5xAO9hMoAsMcLTCDD1zr/iN9cdXrh8l+6uyPX/YiZpXxFlCIwq8SvRGWqNC6c1vULVqwOBMEtPzp1rATcomHItxE8qg/YYmpe+vz8e7gjmBHHBEZNZxaD4FycWAUkf7jtqsWGZJI/SBmldM=
+	t=1752082231; cv=none; b=juu2vUlUKrdKP3oBlwm/MayWIZHRdjgIYxIyAEbgspS+BNteMr2xFeKG8EaLWsn9wzyqntBv0MZ91nB89cY8bkKqXALZaqMYmT/9LyzwewpqhTMl2t6mbdWRJVDA1Y/Zo3xhCxKMstbmSzZNey6BajzZz1Qr2FG72DGMc3FwWJc=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1752076069; c=relaxed/simple;
-	bh=h6tMRQRXn67KOocJPl7gL2XSOaaSQRap9WsxQwDoJLY=;
-	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=lySZt5k5Rb5E1bDshpgHw3pfvJrRkWwwMyMwPGgxz4KhOn3rJulwgSltcAQyQbGgnHuVRELQXjF1Tt4eASW+ecIVm+6TzyFgwkDzKKJUobahKHBixR+rsAu2y0xRTkEqpq14hhFlTwDigsq7L4a4pH403HzDGScQgdFIhomXC/g=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linaro.org; spf=pass smtp.mailfrom=linaro.org; dkim=pass (2048-bit key) header.d=linaro.org header.i=@linaro.org header.b=E84lmFSn; arc=none smtp.client-ip=209.85.128.46
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linaro.org
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=linaro.org
+	s=arc-20240116; t=1752082231; c=relaxed/simple;
+	bh=Xjt9GDTZMWUDId0mwpSlJgV3+VVoSTEL2awGaEjbe1g=;
+	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
+	 Content-Type:Content-Disposition:In-Reply-To; b=qZ0G0XdueSeD8h9oBejRi4dNamLYjd3f22lO7FCESsnb3eITXnMYbiypll51fuvNEMBwUvJQ6yghtJXFboatMIExdSVBSluKfTwda+xG6ThsHSv0lnaZQqCbpQYi+umasfcyCpN0iGoOMRkY8ZSJxOjsURK7J9V5+By98cTSiVg=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.intel.com; spf=none smtp.mailfrom=linux.intel.com; dkim=pass (2048-bit key) header.d=intel.com header.i=@intel.com header.b=cZFgaYOz; arc=none smtp.client-ip=198.175.65.10
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.intel.com
+Authentication-Results: smtp.subspace.kernel.org; spf=none smtp.mailfrom=linux.intel.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=linaro.org header.i=@linaro.org header.b="E84lmFSn"
-Received: by mail-wm1-f46.google.com with SMTP id 5b1f17b1804b1-451d54214adso41462685e9.3
-        for <linux-rt-users@vger.kernel.org>; Wed, 09 Jul 2025 08:47:47 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=linaro.org; s=google; t=1752076066; x=1752680866; darn=vger.kernel.org;
-        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
-         :to:from:from:to:cc:subject:date:message-id:reply-to;
-        bh=4M7LELCI1cPFBstNSyN002g4c3zY7P9EeDdL35tmOwI=;
-        b=E84lmFSnmHBpUWKcnOp7gkz1a+J7IIz0uyU+ZaSkNK7sou1YggHzcpemdEQfGqj4eG
-         ablawCUq399SHmSFlk+4gKeBgRLU8Twh6l6U7afVlnsjWuRWy9/VgYy8/DjvCX6qrgar
-         9TFV8X9Mymjvv3QZEhmgRqUoy7ZTNzznAvwTu3e5jyRsQEpgcDTUganHsRmbyg5D9Zwo
-         AR3okqhFm/PscynOoGOlIjPerkkECyHqpfPLk4Rc4TOlyaxhdwsCRT+0TH5v2Prq7qRy
-         6slmu//kY4YS0Mfa6/qjkcaOD6WlUsQgHDfrmg/CydYbB3LE2Oy7JP4z9coJpoaFkSbN
-         m6Rw==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1752076066; x=1752680866;
-        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
-         :to:from:x-gm-message-state:from:to:cc:subject:date:message-id
-         :reply-to;
-        bh=4M7LELCI1cPFBstNSyN002g4c3zY7P9EeDdL35tmOwI=;
-        b=PHLWs9pFOdH1Tk/TH5mDBf70x3Wqqn0pNsHNhnyJi0Bl6yy6MZdJ3LNdm5re2k9TQP
-         GrIAs2WhyKcz8BnkDNXdQG3TA4jEN3aSbs9STjKNEz/DoLX34AJ75Rqo4jc941d/z0I1
-         07k2R7LAZtfySH5S8P/GUD1RWx9OmKQvcA7QcbG5d3XUC+S6ShIM1C4rL3A8KsjoBQH1
-         ZlPB1zuBV7LZS/CU+CLauxPQUC/30PD6fMBJPJFnPMVjYzLQJ5Cbc9ZE77xjqBAD8ARN
-         sjBukIkvltutlZkCQkTc72PSj2guqlUPQlxEAmfHYYu1+7vpA2ovXosIm0CSonRpp+6T
-         ccsA==
-X-Forwarded-Encrypted: i=1; AJvYcCVECFzdQAu+9muWe9KiSiuebXKG5lfW98c7PM7uMw90xLg7rRhnQOHPHkaEhWVcLTSPBiHOb5P+xwALVVPDog==@vger.kernel.org
-X-Gm-Message-State: AOJu0YxXfhZWalxi8T63SSBPCERXzwjpnBlH04Fyk0NkoIbzGEtMaG34
-	3mKarJVNAazI5ccLZpaTugldcorGGfq3ogqL4ChmGcMV5hzz5VHN2kcItWuWJZ5K/l4=
-X-Gm-Gg: ASbGncsiRMoLIvTPod/oGjuQ6yVXYVJrJaWxYY4zk1gZULAxADwJHDOWK3KvwTFuwb4
-	YVz4VxANsQXPabs8c4jTkzKJYcXaYxbDZpvC6qv8PTHBJxRXrsLkVeV9YA2kMi9bPr8VY19VSel
-	cTaF2rfERWL93qFkHwAMWUdxoRK8g6H3Y1LKEN1WjjhWRYKxvXw3CFfPpEOHNVkrmTsimuHKhv/
-	eiNbbLoDDibpCkgk60L7gGS+jkQr9eS3ee7Hpt9Ll9SfqpkzXPrWdgI0FCMVyWfKXroy+0/OQzx
-	LCNn7xydR8C8YafNRprHaOxfbIe+akQmS0PirtKRNZkb0CMiYoFZpCrC8W/VFV73hAbKqy1854x
-	xt01CNntXts3M
-X-Google-Smtp-Source: AGHT+IFtb3wKvcyNXV4wx2vLvybT75yPG2OAwmNgwliyjrb9KJP4FNMYX9tqHYbI3ZRouro6vvXlVw==
-X-Received: by 2002:a05:6000:2206:b0:3a5:42:b17b with SMTP id ffacd0b85a97d-3b5e452a289mr2446888f8f.29.1752076065919;
-        Wed, 09 Jul 2025 08:47:45 -0700 (PDT)
-Received: from mai.. (146725694.box.freepro.com. [130.180.211.218])
-        by smtp.gmail.com with ESMTPSA id ffacd0b85a97d-3b471b97732sm16783647f8f.59.2025.07.09.08.47.45
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Wed, 09 Jul 2025 08:47:45 -0700 (PDT)
-From: Daniel Lezcano <daniel.lezcano@linaro.org>
-To: rafael@kernel.org,
-	sudeep.holla@arm.com,
-	ulf.hansson@linaro.org
-Cc: linux-pm@vger.kernel.org,
-	linux-rt-users@vger.kernel.org,
-	linux-arm-kernel@lists.infradead.org,
-	linux-kernel@vger.kernel.org,
-	Raghavendra Kakarla <quic_rkakarla@quicinc.com>,
-	Lorenzo Pieralisi <lpieralisi@kernel.org>,
-	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-	Clark Williams <clrkwllms@kernel.org>,
-	Steven Rostedt <rostedt@goodmis.org>,
-	linux-rt-devel@lists.linux.dev (open list:Real-time Linux (PREEMPT_RT))
-Subject: [PATCH] cpuidle: psci: Fix cpuhotplug routine with PREEMPT_RT=y
-Date: Wed,  9 Jul 2025 17:47:28 +0200
-Message-ID: <20250709154728.733920-1-daniel.lezcano@linaro.org>
-X-Mailer: git-send-email 2.43.0
+	dkim=pass (2048-bit key) header.d=intel.com header.i=@intel.com header.b="cZFgaYOz"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple;
+  d=intel.com; i=@intel.com; q=dns/txt; s=Intel;
+  t=1752082230; x=1783618230;
+  h=date:from:to:cc:subject:message-id:references:
+   mime-version:content-transfer-encoding:in-reply-to;
+  bh=Xjt9GDTZMWUDId0mwpSlJgV3+VVoSTEL2awGaEjbe1g=;
+  b=cZFgaYOzVRdISIKUqeJrDYewk1b7DDfJFyLIpB2m3CEAJUDHZt0CVKPE
+   DrM6Ln+UmjnExQR+6NMZ5HqIw2683z73OlxthVqdltvwnFzCTUfH1SUi8
+   M+g04CSY3v8rPKk9N0yolZdZKNqUn4CSK6xCp68oNQBIUVdHW6+iBhX8N
+   Cby8VUg91XSD/+j20E7MKLEZzaaAuOeI4oeajabKeWC2owYh6RwKX01Rq
+   lzX34hv2pgjKxYd8Hm04ridHe2QePaiTAfaigoXeIT8BoZxNmeKAM0z6X
+   XoqeYaCSFOWiLtXk7APswl7VciJa8T1BnYTQx9d85AhHi3/13KZdmtmY2
+   A==;
+X-CSE-ConnectionGUID: neRLGsf5QQ22vgQsDNKDSA==
+X-CSE-MsgGUID: px1+ARndT16/CwT5BPqq5Q==
+X-IronPort-AV: E=McAfee;i="6800,10657,11489"; a="71798908"
+X-IronPort-AV: E=Sophos;i="6.16,298,1744095600"; 
+   d="scan'208";a="71798908"
+Received: from orviesa005.jf.intel.com ([10.64.159.145])
+  by orvoesa102.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 09 Jul 2025 10:30:30 -0700
+X-CSE-ConnectionGUID: u4PbO8E/TZyjFnEgrd9rXQ==
+X-CSE-MsgGUID: IbRX9hV6TCazUD4NvAQ9jQ==
+X-ExtLoop1: 1
+X-IronPort-AV: E=Sophos;i="6.16,298,1744095600"; 
+   d="scan'208";a="161497538"
+Received: from lfiedoro-mobl.ger.corp.intel.com (HELO stinkbox) ([10.245.245.254])
+  by orviesa005.jf.intel.com with SMTP; 09 Jul 2025 10:30:27 -0700
+Received: by stinkbox (sSMTP sendmail emulation); Wed, 09 Jul 2025 20:30:26 +0300
+Date: Wed, 9 Jul 2025 20:30:26 +0300
+From: Ville =?iso-8859-1?Q?Syrj=E4l=E4?= <ville.syrjala@linux.intel.com>
+To: Ben Hutchings <ben@decadent.org.uk>
+Cc: Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+	linux-rt-users@vger.kernel.org, intel-gfx@lists.freedesktop.org,
+	Debian kernel maintainers <debian-kernel@lists.debian.org>
+Subject: Re: PREEMPT_RT vs i915
+Message-ID: <aG6nMhimN1lWKAEP@intel.com>
+References: <7c42fe5a6158445e150e7d63991767e44fc36d3d.camel@decadent.org.uk>
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
 List-Subscribe: <mailto:linux-rt-users+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
+Content-Type: text/plain; charset=iso-8859-1
+Content-Disposition: inline
 Content-Transfer-Encoding: 8bit
+In-Reply-To: <7c42fe5a6158445e150e7d63991767e44fc36d3d.camel@decadent.org.uk>
+X-Patchwork-Hint: comment
 
-Currently cpu hotplug with the PREEMPT_RT option set in the kernel is
-not supported because the underlying generic power domain functions
-used in the cpu hotplug callbacks are incompatible from a lock point
-of view. This situation prevents the suspend to idle to reach the
-deepest idle state for the "cluster" as identified in the
-undermentioned commit.
+On Tue, Jul 08, 2025 at 09:35:21PM +0200, Ben Hutchings wrote:
+> Hi all,
+> 
+> Debian currently provides non-default kernel packages with the
+> PREEMPT_RT patchset applied and enabled.  However, for the Debian 14
+> "forky" release the plan is to use only the upstream RT support.
+> 
+> One result of this is that the i915 driver will not be included in our
+> RT kernel package on amd64 because the upstream version lacks the
+> patches to make it compatible with PREEMPT_RT.  This was not a surprise
+> to us, but may disappoint some of our users (for example see
+> <https://bugs.debian.org/1108324>).
+> 
+> I see that Sebastian submitted the i915 fixes upstream in October 2024.
+> If I understand the explanation in
+> <https://lore.kernel.org/intel-gfx/Zv-n2h0gsquKOvXu@intel.com/> rightly,
+> much of these changes are unsafe because i915 has its own hard timing
+> requirement for reprogramming multiple display controller registers
+> within a single frame.  Is that still the sticking point?
+> 
+> It seems like the critical uncore lock is currently held in a lot of
+> places and potentially for a long time.
 
-Use the compatible ones when PREEMPT_RT is enabled and remove the
-boolean disabling the hotplug callbacks with this option.
+It shouldn't be held for that long. I think it should just be
+a raw spinlock.
 
-With this change the platform can reach the deepest idle state
-allowing at suspend time to consume less power.
+The only edge case I know is the weird retry hack in
+__intel_get_crtc_scanline() which I suspect is just due to PSR
+and could potentially be handled in a nicer way by actually
+checking the PSR state.
 
-Tested-on Lenovo T14s with the following script:
+> Would it be practical to split
+> this lock into:
+> 
+> 1. raw spinlock protecting only state needed for the atomic (within-one-
+> frame) update
 
-echo 0 > /sys/devices/system/cpu/cpu3/online
-BEFORE=$(cat /sys/kernel/debug/pm_genpd/power-domain-cpu-cluster0/idle_states | grep S0 | awk '{ print $3 }') ;
-rtcwake -s 1 -m mem;
-AFTER=$(cat /sys/kernel/debug/pm_genpd/power-domain-cpu-cluster0/idle_states | grep S0 | awk '{ print $3 }');
-if [ $BEFORE -lt $AFTER ]; then
-    echo "Test successful"
-else
-    echo "Test failed"
-fi
-echo 1 > /sys/devices/system/cpu/cpu3/online
+Spinlocks aren't involved in that. It is achieved by racing against
+the beam, with interrupts disabled to make it more likely the CPU
+wins the race.
 
-Fixes: 1c4b2932bd62 ("cpuidle: psci: Enable the hierarchical topology for s2idle on PREEMPT_RT")
-Cc: Raghavendra Kakarla <quic_rkakarla@quicinc.com>
-Signed-off-by: Daniel Lezcano <daniel.lezcano@linaro.org>
----
- drivers/cpuidle/cpuidle-psci.c | 23 ++++++++++++-----------
- 1 file changed, 12 insertions(+), 11 deletions(-)
+> 2. regular spinlock protecting everything in uncore
+> 
+> or is almost all the uncore state potentially used during an atomic
+> update?
+> 
+> Would it help to offload the atomic updates to a kthread that runs with
+> RT priority but still with hard interrupts enabled?
 
-diff --git a/drivers/cpuidle/cpuidle-psci.c b/drivers/cpuidle/cpuidle-psci.c
-index 4e1ba35deda9..b19bc60cc627 100644
---- a/drivers/cpuidle/cpuidle-psci.c
-+++ b/drivers/cpuidle/cpuidle-psci.c
-@@ -45,7 +45,6 @@ struct psci_cpuidle_domain_state {
- static DEFINE_PER_CPU_READ_MOSTLY(struct psci_cpuidle_data, psci_cpuidle_data);
- static DEFINE_PER_CPU(struct psci_cpuidle_domain_state, psci_domain_state);
- static bool psci_cpuidle_use_syscore;
--static bool psci_cpuidle_use_cpuhp;
- 
- void psci_set_domain_state(struct generic_pm_domain *pd, unsigned int state_idx,
- 			   u32 state)
-@@ -124,8 +123,12 @@ static int psci_idle_cpuhp_up(unsigned int cpu)
- {
- 	struct device *pd_dev = __this_cpu_read(psci_cpuidle_data.dev);
- 
--	if (pd_dev)
--		pm_runtime_get_sync(pd_dev);
-+	if (pd_dev) {
-+		if (!IS_ENABLED(CONFIG_PREEMPT_RT))
-+			pm_runtime_get_sync(pd_dev);
-+		else
-+			dev_pm_genpd_resume(pd_dev);
-+	}
- 
- 	return 0;
- }
-@@ -135,7 +138,11 @@ static int psci_idle_cpuhp_down(unsigned int cpu)
- 	struct device *pd_dev = __this_cpu_read(psci_cpuidle_data.dev);
- 
- 	if (pd_dev) {
--		pm_runtime_put_sync(pd_dev);
-+		if (!IS_ENABLED(CONFIG_PREEMPT_RT))
-+			pm_runtime_put_sync(pd_dev);
-+		else
-+			dev_pm_genpd_suspend(pd_dev);
-+
- 		/* Clear domain state to start fresh at next online. */
- 		psci_clear_domain_state();
- 	}
-@@ -196,9 +203,6 @@ static void psci_idle_init_cpuhp(void)
- {
- 	int err;
- 
--	if (!psci_cpuidle_use_cpuhp)
--		return;
--
- 	err = cpuhp_setup_state_nocalls(CPUHP_AP_CPU_PM_STARTING,
- 					"cpuidle/psci:online",
- 					psci_idle_cpuhp_up,
-@@ -259,10 +263,8 @@ static int psci_dt_cpu_init_topology(struct cpuidle_driver *drv,
- 	 * s2ram and s2idle.
- 	 */
- 	drv->states[state_count - 1].enter_s2idle = psci_enter_s2idle_domain_idle_state;
--	if (!IS_ENABLED(CONFIG_PREEMPT_RT)) {
-+	if (!IS_ENABLED(CONFIG_PREEMPT_RT))
- 		drv->states[state_count - 1].enter = psci_enter_domain_idle_state;
--		psci_cpuidle_use_cpuhp = true;
--	}
- 
- 	return 0;
- }
-@@ -339,7 +341,6 @@ static void psci_cpu_deinit_idle(int cpu)
- 
- 	dt_idle_detach_cpu(data->dev);
- 	psci_cpuidle_use_syscore = false;
--	psci_cpuidle_use_cpuhp = false;
- }
- 
- static int psci_idle_init_cpu(struct device *dev, int cpu)
+Not sure what another thread would specifically get us, as opposed
+to eg. just boosting the priority of the existing thread? But whatever
+thread does the work needs to not be interrupted for any significant
+amount of time.
+
+The interrupt disabling part I suppose is rather hardware/workload
+specific, so hard to say anything general about it.
+
+> 
+> Would it make things easier if setting CONFIG_PREEMPT_RT=y limited i915
+> to not run on some older hardware?
+
+No. All hardware needs this.
+
+Anyways, all of this is rather academic at this point. Someone
+needs to try and see what works, and hammer it hard while doing so
+to make sure it doesn't fall over easily.
+
 -- 
-2.43.0
-
+Ville Syrjälä
+Intel
