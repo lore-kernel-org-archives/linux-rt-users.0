@@ -1,137 +1,73 @@
-Received: from mgamail.intel.com (mgamail.intel.com [198.175.65.10])
+Received: from galois.linutronix.de (Galois.linutronix.de [193.142.43.55])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 413D9FC1D
-	for <linux-rt-users@vger.kernel.org>; Wed,  9 Jul 2025 17:30:30 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=198.175.65.10
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 28B918479
+	for <linux-rt-users@vger.kernel.org>; Wed,  9 Jul 2025 19:44:46 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=193.142.43.55
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1752082231; cv=none; b=juu2vUlUKrdKP3oBlwm/MayWIZHRdjgIYxIyAEbgspS+BNteMr2xFeKG8EaLWsn9wzyqntBv0MZ91nB89cY8bkKqXALZaqMYmT/9LyzwewpqhTMl2t6mbdWRJVDA1Y/Zo3xhCxKMstbmSzZNey6BajzZz1Qr2FG72DGMc3FwWJc=
+	t=1752090288; cv=none; b=HwlqHCk0wwxquAwqY3acRMDJJs/7tsd24UZSS+LF+HXfgP+NY/mJFI3SiOnvYYy2TNZuJGbaTtwp0DT6g5evQJgkaSvzTT3ZepnvjH/MhrXT4LdQQxdkZfi9mKim4TIEayzdJ9R6jr96Hxcq8nOXMHNEEUqDieKxrA3q2eqC5+Y=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1752082231; c=relaxed/simple;
-	bh=Xjt9GDTZMWUDId0mwpSlJgV3+VVoSTEL2awGaEjbe1g=;
+	s=arc-20240116; t=1752090288; c=relaxed/simple;
+	bh=YHoOTaEcM7ajLztHEUilHo8GRkm1itG9TaX4e0uEIiM=;
 	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 Content-Type:Content-Disposition:In-Reply-To; b=qZ0G0XdueSeD8h9oBejRi4dNamLYjd3f22lO7FCESsnb3eITXnMYbiypll51fuvNEMBwUvJQ6yghtJXFboatMIExdSVBSluKfTwda+xG6ThsHSv0lnaZQqCbpQYi+umasfcyCpN0iGoOMRkY8ZSJxOjsURK7J9V5+By98cTSiVg=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.intel.com; spf=none smtp.mailfrom=linux.intel.com; dkim=pass (2048-bit key) header.d=intel.com header.i=@intel.com header.b=cZFgaYOz; arc=none smtp.client-ip=198.175.65.10
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.intel.com
-Authentication-Results: smtp.subspace.kernel.org; spf=none smtp.mailfrom=linux.intel.com
+	 Content-Type:Content-Disposition:In-Reply-To; b=R4FMLpWoHG7BHxD84S7MTCqdl7jKcPF3B4uj+onlCwntSrQH3FMkuf2ZAX6vItQNaw5Q0o73C+YRgUSRWfauwp5Q7maqQ3Qbr/hD6jkk7SfxITXsBtgQ/9dlctM3XuT6UhbWFld6QgMMXpMRhlpDtaTg7R2wSAxGtGud2ONA5Ag=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linutronix.de; spf=pass smtp.mailfrom=linutronix.de; dkim=pass (2048-bit key) header.d=linutronix.de header.i=@linutronix.de header.b=4mMJzgB3; dkim=permerror (0-bit key) header.d=linutronix.de header.i=@linutronix.de header.b=dW/vjvKL; arc=none smtp.client-ip=193.142.43.55
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linutronix.de
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=linutronix.de
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=intel.com header.i=@intel.com header.b="cZFgaYOz"
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple;
-  d=intel.com; i=@intel.com; q=dns/txt; s=Intel;
-  t=1752082230; x=1783618230;
-  h=date:from:to:cc:subject:message-id:references:
-   mime-version:content-transfer-encoding:in-reply-to;
-  bh=Xjt9GDTZMWUDId0mwpSlJgV3+VVoSTEL2awGaEjbe1g=;
-  b=cZFgaYOzVRdISIKUqeJrDYewk1b7DDfJFyLIpB2m3CEAJUDHZt0CVKPE
-   DrM6Ln+UmjnExQR+6NMZ5HqIw2683z73OlxthVqdltvwnFzCTUfH1SUi8
-   M+g04CSY3v8rPKk9N0yolZdZKNqUn4CSK6xCp68oNQBIUVdHW6+iBhX8N
-   Cby8VUg91XSD/+j20E7MKLEZzaaAuOeI4oeajabKeWC2owYh6RwKX01Rq
-   lzX34hv2pgjKxYd8Hm04ridHe2QePaiTAfaigoXeIT8BoZxNmeKAM0z6X
-   XoqeYaCSFOWiLtXk7APswl7VciJa8T1BnYTQx9d85AhHi3/13KZdmtmY2
-   A==;
-X-CSE-ConnectionGUID: neRLGsf5QQ22vgQsDNKDSA==
-X-CSE-MsgGUID: px1+ARndT16/CwT5BPqq5Q==
-X-IronPort-AV: E=McAfee;i="6800,10657,11489"; a="71798908"
-X-IronPort-AV: E=Sophos;i="6.16,298,1744095600"; 
-   d="scan'208";a="71798908"
-Received: from orviesa005.jf.intel.com ([10.64.159.145])
-  by orvoesa102.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 09 Jul 2025 10:30:30 -0700
-X-CSE-ConnectionGUID: u4PbO8E/TZyjFnEgrd9rXQ==
-X-CSE-MsgGUID: IbRX9hV6TCazUD4NvAQ9jQ==
-X-ExtLoop1: 1
-X-IronPort-AV: E=Sophos;i="6.16,298,1744095600"; 
-   d="scan'208";a="161497538"
-Received: from lfiedoro-mobl.ger.corp.intel.com (HELO stinkbox) ([10.245.245.254])
-  by orviesa005.jf.intel.com with SMTP; 09 Jul 2025 10:30:27 -0700
-Received: by stinkbox (sSMTP sendmail emulation); Wed, 09 Jul 2025 20:30:26 +0300
-Date: Wed, 9 Jul 2025 20:30:26 +0300
-From: Ville =?iso-8859-1?Q?Syrj=E4l=E4?= <ville.syrjala@linux.intel.com>
-To: Ben Hutchings <ben@decadent.org.uk>
-Cc: Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-	linux-rt-users@vger.kernel.org, intel-gfx@lists.freedesktop.org,
+	dkim=pass (2048-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="4mMJzgB3";
+	dkim=permerror (0-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="dW/vjvKL"
+Date: Wed, 9 Jul 2025 21:44:43 +0200
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
+	s=2020; t=1752090285;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references;
+	bh=YHoOTaEcM7ajLztHEUilHo8GRkm1itG9TaX4e0uEIiM=;
+	b=4mMJzgB3ZYFoYa58PwQnNDFFy69Mqgmowu8meHS0hgzlxykU1mMRWSbSPHCUa3orQN32NW
+	g0m/IQuyc89/3SBLRFzHWaddP1Rjr+TIylfPE6e+JIROTpEI0AlfDjFzFR9CZfHymLEy4W
+	5o9OlHCOco6TsQHn3jbVYM8rTUQ33q+05EEJWVM+iGIYIUS2w9IC2NHcg+JRip6ceYkbb3
+	0bY8lGkC07fmjk1H7jluU4HZK/xw6RkDiW8SiAiQcCyT2KmZesaqEolMfpp1zt9Hp6/SIy
+	pbZf4F4qd60ezL2J3HvErZ7VHD15id5Z/Mu37PeqLM3oJxxIzhA+ZsWDYmP1OA==
+DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
+	s=2020e; t=1752090285;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references;
+	bh=YHoOTaEcM7ajLztHEUilHo8GRkm1itG9TaX4e0uEIiM=;
+	b=dW/vjvKLKxXOozUk6A6mqkAE9MMMR923W7eSUUEiEGX7lVfV8bDMo0+YjZKLzOC91Arel2
+	yuQxqjL9Uf7hGAAA==
+From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+To: Ville =?utf-8?B?U3lyasOkbMOk?= <ville.syrjala@linux.intel.com>
+Cc: Ben Hutchings <ben@decadent.org.uk>, linux-rt-users@vger.kernel.org,
+	intel-gfx@lists.freedesktop.org,
 	Debian kernel maintainers <debian-kernel@lists.debian.org>
 Subject: Re: PREEMPT_RT vs i915
-Message-ID: <aG6nMhimN1lWKAEP@intel.com>
+Message-ID: <20250709194443.lkevdn6m@linutronix.de>
 References: <7c42fe5a6158445e150e7d63991767e44fc36d3d.camel@decadent.org.uk>
+ <aG6nMhimN1lWKAEP@intel.com>
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
 List-Subscribe: <mailto:linux-rt-users+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=iso-8859-1
+Content-Type: text/plain; charset=utf-8
 Content-Disposition: inline
-Content-Transfer-Encoding: 8bit
-In-Reply-To: <7c42fe5a6158445e150e7d63991767e44fc36d3d.camel@decadent.org.uk>
-X-Patchwork-Hint: comment
+Content-Transfer-Encoding: quoted-printable
+In-Reply-To: <aG6nMhimN1lWKAEP@intel.com>
 
-On Tue, Jul 08, 2025 at 09:35:21PM +0200, Ben Hutchings wrote:
-> Hi all,
-> 
-> Debian currently provides non-default kernel packages with the
-> PREEMPT_RT patchset applied and enabled.  However, for the Debian 14
-> "forky" release the plan is to use only the upstream RT support.
-> 
-> One result of this is that the i915 driver will not be included in our
-> RT kernel package on amd64 because the upstream version lacks the
-> patches to make it compatible with PREEMPT_RT.  This was not a surprise
-> to us, but may disappoint some of our users (for example see
-> <https://bugs.debian.org/1108324>).
-> 
-> I see that Sebastian submitted the i915 fixes upstream in October 2024.
-> If I understand the explanation in
-> <https://lore.kernel.org/intel-gfx/Zv-n2h0gsquKOvXu@intel.com/> rightly,
-> much of these changes are unsafe because i915 has its own hard timing
-> requirement for reprogramming multiple display controller registers
-> within a single frame.  Is that still the sticking point?
-> 
-> It seems like the critical uncore lock is currently held in a lot of
-> places and potentially for a long time.
+On 2025-07-09 20:30:26 [+0300], Ville Syrj=C3=A4l=C3=A4 wrote:
+> >=20
+> > It seems like the critical uncore lock is currently held in a lot of
+> > places and potentially for a long time.
+>=20
+> It shouldn't be held for that long. I think it should just be
+> a raw spinlock.
 
-It shouldn't be held for that long. I think it should just be
-a raw spinlock.
+What about I resubmit the series and we look again? I don't think the
+lock should be made raw just to be done with it.
 
-The only edge case I know is the weird retry hack in
-__intel_get_crtc_scanline() which I suspect is just due to PSR
-and could potentially be handled in a nicer way by actually
-checking the PSR state.
-
-> Would it be practical to split
-> this lock into:
-> 
-> 1. raw spinlock protecting only state needed for the atomic (within-one-
-> frame) update
-
-Spinlocks aren't involved in that. It is achieved by racing against
-the beam, with interrupts disabled to make it more likely the CPU
-wins the race.
-
-> 2. regular spinlock protecting everything in uncore
-> 
-> or is almost all the uncore state potentially used during an atomic
-> update?
-> 
-> Would it help to offload the atomic updates to a kthread that runs with
-> RT priority but still with hard interrupts enabled?
-
-Not sure what another thread would specifically get us, as opposed
-to eg. just boosting the priority of the existing thread? But whatever
-thread does the work needs to not be interrupted for any significant
-amount of time.
-
-The interrupt disabling part I suppose is rather hardware/workload
-specific, so hard to say anything general about it.
-
-> 
-> Would it make things easier if setting CONFIG_PREEMPT_RT=y limited i915
-> to not run on some older hardware?
-
-No. All hardware needs this.
-
-Anyways, all of this is rather academic at this point. Someone
-needs to try and see what works, and hammer it hard while doing so
-to make sure it doesn't fall over easily.
-
--- 
-Ville Syrjälä
-Intel
+Sebastian
