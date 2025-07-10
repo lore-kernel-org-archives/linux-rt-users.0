@@ -1,148 +1,81 @@
 Received: from galois.linutronix.de (Galois.linutronix.de [193.142.43.55])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 775871F948;
-	Thu, 10 Jul 2025 06:21:31 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 3919172602
+	for <linux-rt-users@vger.kernel.org>; Thu, 10 Jul 2025 06:30:16 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=193.142.43.55
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1752128493; cv=none; b=Z3WBAK64J2OmiJmJbrK+yaWmEuTuFgJ5if6DTvzcQFlwcWni/cCJ80FDklv1sGrtEzWzSe6XPaPox3U55BAYCLcHzF2IPZ5un7Jbg9y/gMGLpCHCRGVHpvwW9qRddztqBwW1PA+bQuAJPHIhn/KbigKXSJwGpQfKZLgDquueos8=
+	t=1752129018; cv=none; b=SuQ+30TIppqd9PBxcunvJ1IyjSEs2C7nsEMa+QC3Rndgj4N65wAAVKXeT5YT74k5OGkuiQgUXX4JiXSnhZ4YFoiFGI6G6/GyCv3YZcfXBlKDPahvBEUHSJdPKKymCLO3HW0kpu2P4h0RSlO3vsBtBwWxOxQqUhCM1A3htb/kVxE=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1752128493; c=relaxed/simple;
-	bh=HKk1TXT/elCUckABOi7nQjnbhFAoy0ksCF6kdatm9S0=;
+	s=arc-20240116; t=1752129018; c=relaxed/simple;
+	bh=aLDHg92V75Rj4XJLC1A9CCY+LjpQkBCkXgC6W8/cXpc=;
 	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 Content-Type:Content-Disposition:In-Reply-To; b=FJZvcv1upWMXnT50VA03UVSdsc7dlqaktZb+g2044E04X22SX8loUGlmg5tbYCbOspJcIyRP/gKWC/e8s0t3pCLJe4uE1eBAPjQybFSYqm7eTl8709NYdVdHZXVNqIjYTMCZ54Dn1dvVLYWe5uNwRJ2L0/wfJfv9ZRAsIIg4w04=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linutronix.de; spf=pass smtp.mailfrom=linutronix.de; dkim=pass (2048-bit key) header.d=linutronix.de header.i=@linutronix.de header.b=u0VcIind; dkim=permerror (0-bit key) header.d=linutronix.de header.i=@linutronix.de header.b=WNlullci; arc=none smtp.client-ip=193.142.43.55
+	 Content-Type:Content-Disposition:In-Reply-To; b=MZwUkVw9uEJEJxs5EeFMBr7mQwTUJHtAENS2J6dVvVRI041aIX5M3BP6UWIBbp37xRN+tw7X7/SPvJpVmSfjqGxhXP+8Gc/m1Pjo7k9gPMiauPP6xDS4yxv1w5jF2uoMHofAmqw0MDtdBJu4Mero0yaTUACuDAh9Pok9/VZ+RdA=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linutronix.de; spf=pass smtp.mailfrom=linutronix.de; dkim=pass (2048-bit key) header.d=linutronix.de header.i=@linutronix.de header.b=cYpcZujD; dkim=permerror (0-bit key) header.d=linutronix.de header.i=@linutronix.de header.b=CCAkeryw; arc=none smtp.client-ip=193.142.43.55
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linutronix.de
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=linutronix.de
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="u0VcIind";
-	dkim=permerror (0-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="WNlullci"
-Date: Thu, 10 Jul 2025 08:21:27 +0200
+	dkim=pass (2048-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="cYpcZujD";
+	dkim=permerror (0-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="CCAkeryw"
+Date: Thu, 10 Jul 2025 08:30:14 +0200
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
-	s=2020; t=1752128489;
+	s=2020; t=1752129015;
 	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
 	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references;
-	bh=hoVDFEhzdw4xLmQyVO2AhjEgBOLroUBOpc+jt0DrQQ8=;
-	b=u0VcIindh9wkQ4btLIM4EIkuqFd0y7fVkxQh87q1QAgVkogt8WP1FvOcpUDRX8nyvVbYuM
-	Ahpj1z77RZdNV9YzINUwBC65H4HR3vsuDzEhgo84W02v7dAD7mspETwNAGgfQ2tEwktDZJ
-	gS8AFDhR0cmg667iEkIa9tZvtPgi4Z2jCCX0KZq2Of7whG+XOx4Rnm/0QxUVWguBnR0YUe
-	c09SRiG0SuYtoeTB5eyfRdx05ix+qKcFpJe4pEQ/Y1qFbFwlNmvt2KL34RUb2rR9H2HUie
-	huxiBXnokVyV7Ejx0YBBGKO7irHaTCTdjc+yKNNZW9YCvJeptKrKFh+P3R6xdg==
+	bh=sRdUqJjRDXKQa6NQYpQE+ckcA6YtCcbj5vZJklfRA18=;
+	b=cYpcZujDbNh9B6/NbLvQQw1Kht+CgA/cSlkZ2L1MIopf++un9VlvT35zeEix7QUG+uwC3H
+	qCOChh2K6EggkM4k5Lu+Stbf7o1MwV7e5eyP1M7RPETg+I8lNRrEZVTp6wC2hb2eFxuWQG
+	OSC/aT9PtnRBv80hkWsCBV29sNxaTjxb2euNezy3uzmil5adzaJLyEECHACFLPh/T2TDOm
+	lKY+MT2axbIOYGZCowmg9mB98Rqo9j/VYMzrjTzkzvXtF1XyENYFSFHBuvNLxKgOeVR0nz
+	bmpz3G7AsVrc71e3kCs6lorD3VttKmv6yhT6Fep5HFIykS7CW0wDzfCrFXS5tQ==
 DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
-	s=2020e; t=1752128489;
+	s=2020e; t=1752129015;
 	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
 	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references;
-	bh=hoVDFEhzdw4xLmQyVO2AhjEgBOLroUBOpc+jt0DrQQ8=;
-	b=WNlullciP7Aizocv9Sd+z3qURZ/QTbs22xiC17wMCXtGTg/UQs3RUx9CUeUepqFiglONEg
-	g3obNyvyIra+FZAg==
-From: Nam Cao <namcao@linutronix.de>
-To: Xi Ruoyao <xry111@xry111.site>
-Cc: Christian Brauner <brauner@kernel.org>,
-	Frederic Weisbecker <frederic@kernel.org>,
-	Valentin Schneider <vschneid@redhat.com>,
-	Alexander Viro <viro@zeniv.linux.org.uk>, Jan Kara <jack@suse.cz>,
-	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-	John Ogness <john.ogness@linutronix.de>,
-	Clark Williams <clrkwllms@kernel.org>,
-	Steven Rostedt <rostedt@goodmis.org>, linux-fsdevel@vger.kernel.org,
-	linux-kernel@vger.kernel.org, linux-rt-devel@lists.linux.dev,
-	linux-rt-users@vger.kernel.org, Joe Damato <jdamato@fastly.com>,
-	Martin Karsten <mkarsten@uwaterloo.ca>,
-	Jens Axboe <axboe@kernel.dk>
-Subject: Re: [PATCH v3] eventpoll: Fix priority inversion problem
-Message-ID: <20250710062127.QnaeZ8c7@linutronix.de>
-References: <20250527090836.1290532-1-namcao@linutronix.de>
- <20250701-wochen-bespannt-33e745d23ff6@brauner>
- <cda3b07998b39b7d46f10394c232b01a778d07a9.camel@xry111.site>
- <20250710034805.4FtG7AHC@linutronix.de>
- <20250710040607.GdzUE7A0@linutronix.de>
- <6f99476daa23858dc0536ca182038c8e80be53a2.camel@xry111.site>
+	bh=sRdUqJjRDXKQa6NQYpQE+ckcA6YtCcbj5vZJklfRA18=;
+	b=CCAkerywn1eJ+UnJPqqXMR7WTXCCc39pEF8gTfbmEH3iso4ETorQyY50+ogKLvJvZlWt3b
+	HGLWPAXCRFUtnwDA==
+From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+To: Matthew Brost <matthew.brost@intel.com>
+Cc: Ville =?utf-8?B?U3lyasOkbMOk?= <ville.syrjala@linux.intel.com>,
+	Ben Hutchings <ben@decadent.org.uk>, linux-rt-users@vger.kernel.org,
+	intel-gfx@lists.freedesktop.org,
+	Debian kernel maintainers <debian-kernel@lists.debian.org>
+Subject: Re: PREEMPT_RT vs i915
+Message-ID: <20250710063014.eOrcpX6Y@linutronix.de>
+References: <7c42fe5a6158445e150e7d63991767e44fc36d3d.camel@decadent.org.uk>
+ <aG6nMhimN1lWKAEP@intel.com>
+ <20250709194443.lkevdn6m@linutronix.de>
+ <aG7MckLkTuzZ5LBe@intel.com>
+ <aG7na/6m/IcrJ3xx@lstrano-desk.jf.intel.com>
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
 List-Subscribe: <mailto:linux-rt-users+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=iso-8859-1
+Content-Type: text/plain; charset=utf-8
 Content-Disposition: inline
-Content-Transfer-Encoding: 8bit
-In-Reply-To: <6f99476daa23858dc0536ca182038c8e80be53a2.camel@xry111.site>
+In-Reply-To: <aG7na/6m/IcrJ3xx@lstrano-desk.jf.intel.com>
 
-On Thu, Jul 10, 2025 at 11:08:18AM +0800, Xi Ruoyao wrote:
-> After upgrading my kernel to the recent mainline I've encountered some
-> stability issue, like:
+On 2025-07-09 15:04:27 [-0700], Matthew Brost wrote:
+> > And IIRC the other remaining problem with RT was the spinlocks used
+> > inside tracepoints (which is uncore lock, and probably some vblank
+> > locks). So that too needs some kind of solution because it's going to
+> > very hard to debug the timing sensitive parts without the tracepoints.
 > 
-> - When GDM started gnome-shell, the screen often froze and the only
-> thing I could do was to switch into a VT and reboot.
-> - Sometimes gnome-shell started "fine" but then starting an application
-> (like gnome-console) needed to wait for about a minute.
-> - Sometimes the system shutdown process hangs waiting for a service to
-> stop.
-> - Rarely the system boot process hangs for no obvious reason.
-> 
-> Most strangely in all the cases there are nothing alarming in dmesg or
-> system journal.
-> 
-> I'm unsure if this is the culprit but I'm almost sure it's the trigger.
-> Maybe there's some race condition in my userspace that the priority
-> inversion had happened to hide...  but anyway reverting this patch
-> seemed to "fix" the issue.
-> 
-> Any thoughts or pointers to diagnose further?
+> A bit of a drive-by comment, but taking locks inside tracepoints seems
+> like a pretty horrible idea in general. We've managed to write an entire
+> driver (Xe) from scratch and bring it up without doing this. I'd be very
+> surprised if this is truly necessary in i915.
 
-I have been running this new epoll on my work machine for weeks by now
-without issue, while you seem to reproduce it reliably. I'm guessing that
-the problem is on some code path which is dead on my system, but executed
-on yours.
+Steven made suggestions how to get around it make it work but my
+impression was that this was not appreciated by the i915 side.
+The general unwritten rule is to not to take any locks but simply assign
+variables.
 
-I am curious if Gnome is using some epoll options which are unused on my
-system.
+> Matt
 
-I presume you can still access dmesg despite the freeze. Do you mind
-running the below patch, let me know what's in your dmesg? It may help
-identifying that code path.
-
-Best regards,
-Nam
-
-diff --git a/fs/eventpoll.c b/fs/eventpoll.c
-index 895256cd2786..e3dafc48a59a 100644
---- a/fs/eventpoll.c
-+++ b/fs/eventpoll.c
-@@ -532,6 +532,9 @@ static long ep_eventpoll_bp_ioctl(struct file *file, unsigned int cmd,
- 		WRITE_ONCE(ep->busy_poll_usecs, epoll_params.busy_poll_usecs);
- 		WRITE_ONCE(ep->busy_poll_budget, epoll_params.busy_poll_budget);
- 		WRITE_ONCE(ep->prefer_busy_poll, epoll_params.prefer_busy_poll);
-+		printk("%s busy_poll_usecs=%d busy_poll_budget=%d prefer_busy_poll=%d\n",
-+			__func__, epoll_params.busy_poll_usecs, epoll_params.busy_poll_budget,
-+			epoll_params.prefer_busy_poll);
- 		return 0;
- 	case EPIOCGPARAMS:
- 		memset(&epoll_params, 0, sizeof(epoll_params));
-@@ -2120,6 +2123,9 @@ int do_epoll_ctl(int epfd, int op, int fd, struct epoll_event *epds,
- 	struct epitem *epi;
- 	struct eventpoll *tep = NULL;
- 
-+	printk("%s: epfd=%d op=%d fd=%d events=0x%x data=0x%llx nonblock=%d\n",
-+		__func__, epfd, op, fd, epds->events, epds->data, nonblock);
-+
- 	CLASS(fd, f)(epfd);
- 	if (fd_empty(f))
- 		return -EBADF;
-diff --git a/io_uring/epoll.c b/io_uring/epoll.c
-index 8d4610246ba0..e9c33c0c8cc5 100644
---- a/io_uring/epoll.c
-+++ b/io_uring/epoll.c
-@@ -54,6 +54,8 @@ int io_epoll_ctl(struct io_kiocb *req, unsigned int issue_flags)
- 	int ret;
- 	bool force_nonblock = issue_flags & IO_URING_F_NONBLOCK;
- 
-+	printk("%s flags=0x%x\n", __func__, issue_flags);
-+
- 	ret = do_epoll_ctl(ie->epfd, ie->op, ie->fd, &ie->event, force_nonblock);
- 	if (force_nonblock && ret == -EAGAIN)
- 		return -EAGAIN;
+Sebastian
