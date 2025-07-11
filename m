@@ -1,86 +1,88 @@
-Received: from galois.linutronix.de (Galois.linutronix.de [193.142.43.55])
+Received: from xry111.site (xry111.site [89.208.246.23])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id BF70727CB06;
-	Fri, 11 Jul 2025 09:58:33 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=193.142.43.55
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id C9A871F4C8C;
+	Fri, 11 Jul 2025 12:09:34 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=89.208.246.23
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1752227915; cv=none; b=X5BO/xTHdNcLq9hQhDr0RDShJyryevsyoOwEvFpr44Y49fECu8xpLCwyahBs+oQoip8YURLpKjO5gdzXSRTMkBiWucy1a/xMJyr8NVkQPXYEJTbQaIk6o8u2GY/j4O8QQyLk3eVUt+CfuLB8ehqpYyPu4YSV+QAtMQ6iQIBKMfY=
+	t=1752235776; cv=none; b=RtfO3a3/N2n6FZfyFNftQJdSzh5SyoSWI7G7H/uPu+kIF1frLd/qugti8vh6rKPVOqSNKUVGI/SP0AbQMxkFensNgWuQWJPMAG/sStkG0fxH1Q91kpj1amCKT+AOe5yYzTY0rSJZRHB2rbK9dIHQoPlRt605ljXeaFhlGKk6TPE=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1752227915; c=relaxed/simple;
-	bh=g1xrU+e1GsGmN+uweAiTje1VtKoc1T+zH6tvL1x68zk=;
-	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 Content-Type:Content-Disposition:In-Reply-To; b=Vn6IVEht68GNS/nFFQLjR2TdqzjOnnWEHCak7g4KMFZdhIXtZ1q2ZqRou13LvIPsJnZeHbzloJCj63PkUcwn4vYaHk9KBcgWFc81GrsvPvKSLOrFOFvcbAqdBP7itzAC1Y6VOiu9Lb6REgeUnnw1qi4GqOGizjmf18V8Z7aV46o=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linutronix.de; spf=pass smtp.mailfrom=linutronix.de; dkim=pass (2048-bit key) header.d=linutronix.de header.i=@linutronix.de header.b=HVFdqbnc; dkim=permerror (0-bit key) header.d=linutronix.de header.i=@linutronix.de header.b=rtxk43Wn; arc=none smtp.client-ip=193.142.43.55
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linutronix.de
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=linutronix.de
+	s=arc-20240116; t=1752235776; c=relaxed/simple;
+	bh=OH6igIH0VnLlQeaehu/2rr7T/sYdx6rQbMfXPqkOURw=;
+	h=Message-ID:Subject:From:To:Cc:Date:In-Reply-To:References:
+	 Content-Type:MIME-Version; b=gklSDP+ByZcFhN14MUN7sNGr2Y0xzpYY79ew6K+HRO9wdL2fnfG3Qa6/Fo0ucnPfQIWYAP3f5b66mLiD6kvO/PKxlSXjuyhsHagYKbv81etsBirFh9y4REujehmmA7Vy+sNun/TrlzQY3uLbchEVfQjx6XCFYJNhylfM6Y7N8s8=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=xry111.site; spf=pass smtp.mailfrom=xry111.site; dkim=pass (1024-bit key) header.d=xry111.site header.i=@xry111.site header.b=NEvaFiRp; arc=none smtp.client-ip=89.208.246.23
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=xry111.site
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=xry111.site
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="HVFdqbnc";
-	dkim=permerror (0-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="rtxk43Wn"
-Date: Fri, 11 Jul 2025 11:58:30 +0200
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
-	s=2020; t=1752227912;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 in-reply-to:in-reply-to:references:references;
-	bh=g1xrU+e1GsGmN+uweAiTje1VtKoc1T+zH6tvL1x68zk=;
-	b=HVFdqbncBetLRIYMMQ0nPvTUiPU/19OzfMPzPk1ZvzssCzMJjj4TncNehyxDUNOMjhPjjJ
-	WeLXyxWsJhnveWJwiwWMQERpGgpduQb71xhcdL+OgOGL5AO0rXAWnchFc0/q/sTp12s8yD
-	vCtI/lqhZN2SdHkq+MPZdIYAcXp9wTQZK3GbHme7ZAk8AxwiHJ14jfrpr5mp65bs6IU/ws
-	eUv5QhffyxcidbtnEjXunF0O6OZw62J+4QagkhZekkzQCQUGoz/Xm8vxbP8P53mZuzQMrn
-	3aMvGu9jrDKuFbKjGZKixc10jsOY0W768SXl1lqRd2G1tBklqt9e5ITlzxkpnw==
-DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
-	s=2020e; t=1752227912;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 in-reply-to:in-reply-to:references:references;
-	bh=g1xrU+e1GsGmN+uweAiTje1VtKoc1T+zH6tvL1x68zk=;
-	b=rtxk43Wng2JyxZH/v9g3kK+T40NfuVpuNT8DdZPJlyeyCf05c7FZ0LXEmFQpGu0QnfUk1G
-	SnIjFBftdF9YRxCA==
-From: Nam Cao <namcao@linutronix.de>
-To: Xi Ruoyao <xry111@xry111.site>
-Cc: Christian Brauner <brauner@kernel.org>,
-	Frederic Weisbecker <frederic@kernel.org>,
-	Valentin Schneider <vschneid@redhat.com>,
-	Alexander Viro <viro@zeniv.linux.org.uk>, Jan Kara <jack@suse.cz>,
-	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-	John Ogness <john.ogness@linutronix.de>,
-	Clark Williams <clrkwllms@kernel.org>,
-	Steven Rostedt <rostedt@goodmis.org>, linux-fsdevel@vger.kernel.org,
-	linux-kernel@vger.kernel.org, linux-rt-devel@lists.linux.dev,
-	linux-rt-users@vger.kernel.org, Joe Damato <jdamato@fastly.com>,
-	Martin Karsten <mkarsten@uwaterloo.ca>,
-	Jens Axboe <axboe@kernel.dk>
+	dkim=pass (1024-bit key) header.d=xry111.site header.i=@xry111.site header.b="NEvaFiRp"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=xry111.site;
+	s=default; t=1752235771;
+	bh=zLIhDjORDALPL1f9cxqC+vMuKXG/jVF8rfdI3FxxNNk=;
+	h=Subject:From:To:Cc:Date:In-Reply-To:References:From;
+	b=NEvaFiRpEbrBCYqyx/55a4noUdEDJVZgX6jKZygUaSS9qBm0Rzs0AoKiD+FmAVBKn
+	 tm8K2a5is6GtAJNXug/VnJHzDvo8CAuMk8Y6soNjIhlpphMwyPa96KKPZo3HrDkq3I
+	 3rykmVxIqQNNSERNdJcQ1XD1YSfZ7bZJWfqmh/To=
+Received: from [IPv6:110::1f] (unknown [IPv6:2409:874d:200:3037::3])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange ECDHE (prime256v1) server-signature ECDSA (secp384r1) server-digest SHA384)
+	(Client did not present a certificate)
+	(Authenticated sender: xry111@xry111.site)
+	by xry111.site (Postfix) with ESMTPSA id B869C65F62;
+	Fri, 11 Jul 2025 08:09:22 -0400 (EDT)
+Message-ID: <7a50fd8af9d21aade901fe4d32e14e698378c82f.camel@xry111.site>
 Subject: Re: [PATCH v3] eventpoll: Fix priority inversion problem
-Message-ID: <20250711095830.048P551B@linutronix.de>
+From: Xi Ruoyao <xry111@xry111.site>
+To: Nam Cao <namcao@linutronix.de>
+Cc: Christian Brauner <brauner@kernel.org>, Frederic Weisbecker	
+ <frederic@kernel.org>, Valentin Schneider <vschneid@redhat.com>, Alexander
+ Viro	 <viro@zeniv.linux.org.uk>, Jan Kara <jack@suse.cz>, Sebastian Andrzej
+ Siewior	 <bigeasy@linutronix.de>, John Ogness <john.ogness@linutronix.de>,
+ Clark Williams <clrkwllms@kernel.org>, Steven Rostedt
+ <rostedt@goodmis.org>, 	linux-fsdevel@vger.kernel.org,
+ linux-kernel@vger.kernel.org, 	linux-rt-devel@lists.linux.dev,
+ linux-rt-users@vger.kernel.org, Joe Damato	 <jdamato@fastly.com>, Martin
+ Karsten <mkarsten@uwaterloo.ca>, Jens Axboe	 <axboe@kernel.dk>
+Date: Fri, 11 Jul 2025 20:09:12 +0800
+In-Reply-To: <20250711095830.048P551B@linutronix.de>
 References: <20250710034805.4FtG7AHC@linutronix.de>
- <20250710040607.GdzUE7A0@linutronix.de>
- <6f99476daa23858dc0536ca182038c8e80be53a2.camel@xry111.site>
- <20250710062127.QnaeZ8c7@linutronix.de>
- <d14bcceddd9f59a72ef54afced204815e9dd092e.camel@xry111.site>
- <20250710083236.V8WA6EFF@linutronix.de>
- <c720efb6a806e0ffa48e35d016e513943d15e7c0.camel@xry111.site>
- <20250711050217.OMtx7Cz6@linutronix.de>
- <20250711-ermangelung-darmentleerung-394cebde2708@brauner>
- <6856a981f0505233726af0301a1fb1331acdce1c.camel@xry111.site>
+	 <20250710040607.GdzUE7A0@linutronix.de>
+	 <6f99476daa23858dc0536ca182038c8e80be53a2.camel@xry111.site>
+	 <20250710062127.QnaeZ8c7@linutronix.de>
+	 <d14bcceddd9f59a72ef54afced204815e9dd092e.camel@xry111.site>
+	 <20250710083236.V8WA6EFF@linutronix.de>
+	 <c720efb6a806e0ffa48e35d016e513943d15e7c0.camel@xry111.site>
+	 <20250711050217.OMtx7Cz6@linutronix.de>
+	 <20250711-ermangelung-darmentleerung-394cebde2708@brauner>
+	 <6856a981f0505233726af0301a1fb1331acdce1c.camel@xry111.site>
+	 <20250711095830.048P551B@linutronix.de>
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
+User-Agent: Evolution 3.56.2 
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
 List-Subscribe: <mailto:linux-rt-users+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-In-Reply-To: <6856a981f0505233726af0301a1fb1331acdce1c.camel@xry111.site>
 
-On Fri, Jul 11, 2025 at 05:48:56PM +0800, Xi Ruoyao wrote:
-> Sadly, still no luck.
+On Fri, 2025-07-11 at 11:58 +0200, Nam Cao wrote:
+> On Fri, Jul 11, 2025 at 05:48:56PM +0800, Xi Ruoyao wrote:
+> > Sadly, still no luck.
+>=20
+> That's unfortunate.
+>=20
+> I'm still unable to reproduce the issue, so all I can do is staring at th=
+e
+> code and guessing. But I'm out of idea for now.
 
-That's unfortunate.
+Same as I.  I tried to reproduce in a VM running Fedora Rawhide but
+failed.
 
-I'm still unable to reproduce the issue, so all I can do is staring at the
-code and guessing. But I'm out of idea for now.
+> This one is going to be hard to figure out..
 
-This one is going to be hard to figure out..
+And I'm afraid this may be a bug in my userspace... Then I'd feel guilty
+if this is reverted because of an invalid bug report from I :(.
 
-Nam
+--=20
+Xi Ruoyao <xry111@xry111.site>
