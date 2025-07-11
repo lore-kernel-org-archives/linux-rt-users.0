@@ -1,112 +1,115 @@
-Received: from galois.linutronix.de (Galois.linutronix.de [193.142.43.55])
+Received: from mgamail.intel.com (mgamail.intel.com [198.175.65.18])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id B362123ED6F;
-	Fri, 11 Jul 2025 12:21:26 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=193.142.43.55
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id A864529B220
+	for <linux-rt-users@vger.kernel.org>; Fri, 11 Jul 2025 12:35:36 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=198.175.65.18
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1752236488; cv=none; b=G5tkLWXerBn19aPivs7twzK2psMU+DltdQrEZpR06BvLTd+BmpE5X1rbdOIWz6Ic35gRKuqOUHbEUcUrB2+LD+zegA6w2s/275n8LJX2xXTGRxu6xFw+ZUNqIBmHtKYf3H3M8oXNIdxQ4Can1FmfvIwYr9jT0KaofiR6Rar3KqI=
+	t=1752237338; cv=none; b=ipmRkZtOFl6kDEOqid+JYI7iBlt3FXZPKE1Xmr9sWewNFol5GKlDpfPq7PSyjrwHJbM5z5q7He69gHjK07oGmaAx1gn5t2TTWoPa7eRlE+Aamz2j3NYOSqZnOxUX0k8ZWQnQP8igsCcrVaX2FaS9Hd+u4Sr1WzRPZfx945hvIDs=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1752236488; c=relaxed/simple;
-	bh=hiGIhRKiTOmNcvBHyDkXssmWtLPbnb5hDySW7wqiltI=;
-	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 Content-Type:Content-Disposition:In-Reply-To; b=GsmlEemhGg/0ulvITzEZvRywhGhta3xIVfHTsH+teyRn4s68UJSANzcyIZOFCuEo1eldiI+1NXmfXq4pBeD1L5CE16g4JQPFwQ982T+MWRxRpXQUIwhkO/DWuIP46pOR83Nis8SFXzzeTaxu5Qtc9ehMhJiXzjV5GejJaAzh5go=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linutronix.de; spf=pass smtp.mailfrom=linutronix.de; dkim=pass (2048-bit key) header.d=linutronix.de header.i=@linutronix.de header.b=sGKV+wBO; dkim=permerror (0-bit key) header.d=linutronix.de header.i=@linutronix.de header.b=rKv0b5SH; arc=none smtp.client-ip=193.142.43.55
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linutronix.de
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=linutronix.de
+	s=arc-20240116; t=1752237338; c=relaxed/simple;
+	bh=RjkSdEVpeSrzpN8Ht6j6XIPzWqJyjTMgQemB9y+9mgU=;
+	h=Message-ID:Date:MIME-Version:Subject:To:Cc:References:From:
+	 In-Reply-To:Content-Type; b=obs7/3/JMQjTPs/ZeNE/0S0ar9N12zY9M/+oRhOBTpKLckXb8OCPlFN6gGGZbnvs2i8/e6TZM9nxw7Gl1sHS3l9u2X2GVU9+rIlfRB7dsk15Jh6Q/uT3TSexayJThIYb6muezLhXEBnmLh4B/0pOI2b25Culn1aJfBy2fTBK/dQ=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.intel.com; spf=none smtp.mailfrom=linux.intel.com; dkim=pass (2048-bit key) header.d=intel.com header.i=@intel.com header.b=YoAhC6lv; arc=none smtp.client-ip=198.175.65.18
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.intel.com
+Authentication-Results: smtp.subspace.kernel.org; spf=none smtp.mailfrom=linux.intel.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="sGKV+wBO";
-	dkim=permerror (0-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="rKv0b5SH"
-Date: Fri, 11 Jul 2025 14:21:23 +0200
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
-	s=2020; t=1752236484;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 in-reply-to:in-reply-to:references:references;
-	bh=on+h7+JPsOaseXxmTBL9Mtf7ti/qneEhfl3yBpXQJ5s=;
-	b=sGKV+wBOwX9Xv6F+6+3W4ePgkqqryfMap4ENuXI1zvkYOtof8knG2RqcR8lXsVKDWWPL0a
-	jBnuNXqXROX22aAtbqLjIr5lEIYQeHvjnPS4lQoZ0iP4Nx2KIvCHj0SIgljsA8xrgFaPk3
-	N/suyvtvIGiF8OmICs4J4uJrK5U51Y4jwZllgoS8RKGU1oj6Rj17AiHCJZ+6rvbO7D23ja
-	7I89Yi3Ff9Z/0fYooupiIg0DH9Bqo7bnCpddKgQz3RHWGCR2VzfiC0w2gZpzjvlXHdlxad
-	P+dB2pGjSY2YxJKD7pKoQrrlggtnPjVUSPMesoXT7fJyfYgQPFd3n37UjIIcyw==
-DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
-	s=2020e; t=1752236484;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 in-reply-to:in-reply-to:references:references;
-	bh=on+h7+JPsOaseXxmTBL9Mtf7ti/qneEhfl3yBpXQJ5s=;
-	b=rKv0b5SH3ytvcxYzwPp4wxZ980VhtFdQ/LC6EeAhwsLGrooaOYaEvJa0vKVnOV42UHDOgl
-	FG0olKwBw8wsYLCQ==
-From: Nam Cao <namcao@linutronix.de>
-To: Xi Ruoyao <xry111@xry111.site>
-Cc: Christian Brauner <brauner@kernel.org>,
-	Frederic Weisbecker <frederic@kernel.org>,
-	Valentin Schneider <vschneid@redhat.com>,
-	Alexander Viro <viro@zeniv.linux.org.uk>, Jan Kara <jack@suse.cz>,
-	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-	John Ogness <john.ogness@linutronix.de>,
-	Clark Williams <clrkwllms@kernel.org>,
-	Steven Rostedt <rostedt@goodmis.org>, linux-fsdevel@vger.kernel.org,
-	linux-kernel@vger.kernel.org, linux-rt-devel@lists.linux.dev,
-	linux-rt-users@vger.kernel.org, Joe Damato <jdamato@fastly.com>,
-	Martin Karsten <mkarsten@uwaterloo.ca>,
-	Jens Axboe <axboe@kernel.dk>
-Subject: Re: [PATCH v3] eventpoll: Fix priority inversion problem
-Message-ID: <20250711122123.qXVK-EkF@linutronix.de>
-References: <6f99476daa23858dc0536ca182038c8e80be53a2.camel@xry111.site>
- <20250710062127.QnaeZ8c7@linutronix.de>
- <d14bcceddd9f59a72ef54afced204815e9dd092e.camel@xry111.site>
- <20250710083236.V8WA6EFF@linutronix.de>
- <c720efb6a806e0ffa48e35d016e513943d15e7c0.camel@xry111.site>
- <20250711050217.OMtx7Cz6@linutronix.de>
- <20250711-ermangelung-darmentleerung-394cebde2708@brauner>
- <6856a981f0505233726af0301a1fb1331acdce1c.camel@xry111.site>
- <20250711095830.048P551B@linutronix.de>
- <7a50fd8af9d21aade901fe4d32e14e698378c82f.camel@xry111.site>
+	dkim=pass (2048-bit key) header.d=intel.com header.i=@intel.com header.b="YoAhC6lv"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple;
+  d=intel.com; i=@intel.com; q=dns/txt; s=Intel;
+  t=1752237337; x=1783773337;
+  h=message-id:date:mime-version:subject:to:cc:references:
+   from:in-reply-to:content-transfer-encoding;
+  bh=RjkSdEVpeSrzpN8Ht6j6XIPzWqJyjTMgQemB9y+9mgU=;
+  b=YoAhC6lv38CLIClWT5HQ938z549GhX+OOs19wXuFMk6mWeKLL3JMc2Gj
+   5EXESjuvlSnh6eztDMoLJtHk4ebiP0z3URHuR/mbJaWcRH+KCUwVAqKMn
+   kICkFLKNMEDM3Klc1VAoFWy+28w3JBn3QjVCcr3inyR0N+GwudE5aYdx8
+   T7Vhes2kncsHY3JuVrab9sE1uUSMotNnzOqBG9YyZgUuxOICmUP8RSX4h
+   o2Ep/WY7QnAh87YdEGxv+ImnLcUPfwjX0PwuqgPJ6bFQD9EFbmMsCqCGb
+   4P6UxG71odRwBZp23cD1rnR8XcM6FXKmInl9KYynfCfFke8ez7yoVg+pz
+   w==;
+X-CSE-ConnectionGUID: 8I8/AKbfReWDrb4907ny8A==
+X-CSE-MsgGUID: 1jOYKkykQeKja0/K0ScOew==
+X-IronPort-AV: E=McAfee;i="6800,10657,11491"; a="54663737"
+X-IronPort-AV: E=Sophos;i="6.16,303,1744095600"; 
+   d="scan'208";a="54663737"
+Received: from fmviesa001.fm.intel.com ([10.60.135.141])
+  by orvoesa110.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 11 Jul 2025 05:35:37 -0700
+X-CSE-ConnectionGUID: deWF5A4MT8C28g6N5FtpfQ==
+X-CSE-MsgGUID: U1B8dxmVQ5KdJA3spNobnQ==
+X-ExtLoop1: 1
+X-IronPort-AV: E=Sophos;i="6.16,303,1744095600"; 
+   d="scan'208";a="187340619"
+Received: from dalessan-mobl3.ger.corp.intel.com (HELO [10.245.245.61]) ([10.245.245.61])
+  by smtpauth.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 11 Jul 2025 05:35:34 -0700
+Message-ID: <2d4a5031-307d-4f29-8875-13b8b599b220@linux.intel.com>
+Date: Fri, 11 Jul 2025 14:35:32 +0200
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
 List-Subscribe: <mailto:linux-rt-users+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-In-Reply-To: <7a50fd8af9d21aade901fe4d32e14e698378c82f.camel@xry111.site>
+User-Agent: Mozilla Thunderbird
+Subject: Re: PREEMPT_RT vs i915
+To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+ =?UTF-8?B?VmlsbGUgU3lyasOkbMOk?= <ville.syrjala@linux.intel.com>
+Cc: Ben Hutchings <ben@decadent.org.uk>, linux-rt-users@vger.kernel.org,
+ intel-gfx@lists.freedesktop.org,
+ Debian kernel maintainers <debian-kernel@lists.debian.org>
+References: <7c42fe5a6158445e150e7d63991767e44fc36d3d.camel@decadent.org.uk>
+ <aG6nMhimN1lWKAEP@intel.com> <20250709194443.lkevdn6m@linutronix.de>
+ <aG7MckLkTuzZ5LBe@intel.com> <20250710064136.rur6FoOU@linutronix.de>
+ <aG_VzpXaYRCQQGYt@intel.com> <20250710152008.ZyaHjC3w@linutronix.de>
+Content-Language: en-US
+From: Maarten Lankhorst <maarten.lankhorst@linux.intel.com>
+In-Reply-To: <20250710152008.ZyaHjC3w@linutronix.de>
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
 
-On Fri, Jul 11, 2025 at 08:09:12PM +0800, Xi Ruoyao wrote:
-> On Fri, 2025-07-11 at 11:58 +0200, Nam Cao wrote:
-> > On Fri, Jul 11, 2025 at 05:48:56PM +0800, Xi Ruoyao wrote:
-> > > Sadly, still no luck.
-> > 
-> > That's unfortunate.
-> > 
-> > I'm still unable to reproduce the issue, so all I can do is staring at the
-> > code and guessing. But I'm out of idea for now.
+Hey,
+
+On 2025-07-10 17:20, Sebastian Andrzej Siewior wrote:
+> On 2025-07-10 18:04:42 [+0300], Ville Syrjälä wrote:
+>>
+>> When this was last discussed I suggested that there should be a
+>> versions of the tracepoint macros that do the sampling outside
+>> the lock, but that wasn't deemed acceptable for whatever reason.
+>> I don't even know why the current macros are doing the
+>> sampling while holding the lock...
 > 
-> Same as I.  I tried to reproduce in a VM running Fedora Rawhide but
-> failed.
+> Any objections to me sending the batch and we figure out later how get
+> the tracepoints for i915 enabled again on RT?
+> It would be an improvement because you could take a vanilla kernel and
+> enable PREEMPT_RT and you would only miss the tracepoints while now you
+> can't enable i915 at all and XE either doesn't compile or spills
+> warnings at runtime due to the code it shares with i915.
 > 
-> > This one is going to be hard to figure out..
-> 
-> And I'm afraid this may be a bug in my userspace...
+> Sebastian
 
-Yeah I expect the same thing. In the log you sent me, there are some
-strange-looking event masks that look like a userspace bug.
+FWIW, I did some quick testing. There should be no need for disabling tracepoints on xe.
+The uncore lock is for a very specific reason (intel_de.h):
+ * Certain architectures will die if the same cacheline is concurrently accessed
+ * by different clients (e.g. on Ivybridge). Access to registers should
+ * therefore generally be serialised, by either the dev_priv->uncore.lock or
+ * a more localised lock guarding all access to that bank of registers.
 
-I tried those strange looking event masks, but epoll_ctl() correctly
-rejects them with EINVAL. So those masks probably aren't the reason, but
-they still suggest that userspace may also be broken somewhere else and
-triggers hard-to-reproduce problems in kernel's epoll.
+Since we only support modern platforms on xe there is no need for the uncore lock and the specific error will not trigger.
+On xe, it only exists to be used in vblank evasion for compatiblity with i915.
 
-> Then I'd feel guilty if this is reverted because of an invalid bug report
-> from I :(.
+From the xe point of view, I would say applying patch 1-3 is sufficient.
+Patch 3 because i915_utils.h is used by display still, unfortunately..
 
-But even when userspace is broken, if the kernel patch makes userspace
-non-functional, I would still call it a kernel bug. So it's a valid bug
-report alright, don't worry about it.
+I would recommend adjusting the patch to keep the display tracepoints enabled on xe,
+the non-vblank i915-specific patches should be harmless to apply.
 
-Until we know exactly the root cause, I think revert is the right thing to
-do.
+After that, the rest can be applied too.
 
-Best regards,
-Nam
+While I understand the theoretical need for more testing, I think we should go for practical and apply
+patch 1-2 too. Even on normal kernels there is absolutely no guarantee of fast completion.
+I'd say on a deterministic -rt kernel, I'd say it's less likely that vblank evasion is a problem.
+
+Kind regards,
+~Maarten
+
