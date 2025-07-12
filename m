@@ -1,71 +1,71 @@
-Received: from mail-pg1-f182.google.com (mail-pg1-f182.google.com [209.85.215.182])
+Received: from mail-pl1-f172.google.com (mail-pl1-f172.google.com [209.85.214.172])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 782AE277C81
-	for <linux-rt-users@vger.kernel.org>; Sat, 12 Jul 2025 13:42:48 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.215.182
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 9C710277C8F
+	for <linux-rt-users@vger.kernel.org>; Sat, 12 Jul 2025 13:42:49 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.214.172
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1752327769; cv=none; b=W6cAF+tW10ax/PGbxEXwlUX539QDCDMju16BJrBHSQ1oK9Eozp+/nuL1bnvpu7ZZGfu3+gvAe3JkVD96COEeTFKLzUvnJhPs7VV5iip9ELkbccyjgGElTAuytHo/abFJAfK2iSe0iR08Efm/aCmYhAkqrhrVuKWqV0rsOSzPGy4=
+	t=1752327771; cv=none; b=ZsBk4cP70tAIwEJVgINh2JmfBdf9X7J65Ggrtq7voDtXMxXh6iefXc4ml58z8XtzSDfz7dBymjHXV+PZDaD9pc/pAidf8S6F0NFJ4r3mpFOY65m42Spr2aj7jy+h/Tlu+z9fFfXTy+ZscuEsF3bp5NJPEYPEBaFovEoa5CuqffE=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1752327769; c=relaxed/simple;
-	bh=CqzApoAQ9rWremRWZmXWavMmV7Vb4YnQI5As4t6CDSc=;
+	s=arc-20240116; t=1752327771; c=relaxed/simple;
+	bh=N19n9xIOqAui9pMfRG2oYrw2CL8y39Nkmr9bIjXSdwQ=;
 	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=Sa1T5rcF6nXf6ucsqajy/9cg38MEx1ptHqvoVOsk4h+KqXIwkyhJ7nmOfvGpDqkxvun+m9K0gPAra+YRdMDVUwX1NJYFBkPCvfNSOuWhR0gVSrzc60x71bR8KRRaZuQFWXj1CHQptVjL169S1xrw6hxbWVbAtOZN+tLGCbAKFxs=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=BGeauSV8; arc=none smtp.client-ip=209.85.215.182
+	 MIME-Version; b=JNi05L0F5sZyGgasIFQ7M/JWf+7LCaz/kcQG/0DxSo4qQkh5XO5dT5i4i/Y8Nf+PRrGNiDx61Sq5dgoG82U0P09kKpC69G3On4758ET1jl0CT0zStqg1PoVJnojK0vEfPN/PHn4kfv/aapg5ZKJB63tnJEGzR+i8nPjt5SzPVpE=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=TZYycFCw; arc=none smtp.client-ip=209.85.214.172
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="BGeauSV8"
-Received: by mail-pg1-f182.google.com with SMTP id 41be03b00d2f7-b350704f506so2373262a12.0
-        for <linux-rt-users@vger.kernel.org>; Sat, 12 Jul 2025 06:42:48 -0700 (PDT)
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="TZYycFCw"
+Received: by mail-pl1-f172.google.com with SMTP id d9443c01a7336-23526264386so27214615ad.2
+        for <linux-rt-users@vger.kernel.org>; Sat, 12 Jul 2025 06:42:49 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1752327768; x=1752932568; darn=vger.kernel.org;
+        d=gmail.com; s=20230601; t=1752327769; x=1752932569; darn=vger.kernel.org;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:from:to:cc:subject:date
          :message-id:reply-to;
-        bh=8YSc8Fn0OR8YucL/vwEoif3LrDgb5fjUrqja363VwEU=;
-        b=BGeauSV8mXR/NSxH2Kk0e2nfExTS3qIwOeYk3m0ezlq9JtuQlzDpTyVWcVvoYJYNQX
-         U2ZP8/Ms7OXxXB+aHDSBJwYnOHE7+/YaQMFjvRJiFsxwvKvYIAf4aYGN/jlt/1rKTevk
-         wTuzFytmk4U8PdBFgnUCvEkMI2QqLLD/jUv4GJuS3LfNnjZ0pzmKIHNmUrecRjSG0O0f
-         qGRKkjTOGbiYi3/zaswuwaIA6LLUPvlcgmKnCqGbOlDIHr7FkjzhhDUT0XQ/SGt011g5
-         VyPVwVhwSgjTVH0asCbDdQuw/ScasGRgamhNNd1ws3GICMDB3cAmYZL2h9Tj3Ffwc9rw
-         IQsw==
+        bh=L4VxBgM80QEk0EY5WC78cE9sWpmgbmqTdm8Ze6VurzI=;
+        b=TZYycFCwkmwxVDWBRxnWjroFQukdUFWPWtezl85wy9Ai6bvmOxCIuF+2GiewsWe3MF
+         3LuNtI4G1sF8Njv8Nj3zuVjOnlk7aiLSMcWU0Q5YzBILQ3ATL4RP7qQEQ5Uulz5hRN4+
+         mYDgfXzFuIIa5gIh3CqihLffAJ9tEOfuxhxRDLulrtdUQu5rHqFHRHIheNdZPi9plRAh
+         26ozg8Kw2KybJv1wIpeX0lThaUO/tHTpV6vNNeFquIV0kSefHIrJ0Ibx+5kDx2p8eV2g
+         L5scZmtwjsocq7GiIyQLNTQUP3hPynppzO0GPmCBWPHs+Lh9XddwKYw1W0Jn7V44j2wX
+         W4rA==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1752327768; x=1752932568;
+        d=1e100.net; s=20230601; t=1752327769; x=1752932569;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:x-gm-message-state:from:to:cc
          :subject:date:message-id:reply-to;
-        bh=8YSc8Fn0OR8YucL/vwEoif3LrDgb5fjUrqja363VwEU=;
-        b=pmjDsLe15SA3A6uJs5eBtSzitWdd/3XPINx7HLyrEGbkCoJkCRhN74nBbH64+qqMWg
-         hDcm15HisqphucZk/J4y7VinO2pZngJ7kKWvtaJ+jOGQjtuY0p4jJ0ywkj6yoTtttVgq
-         Y1VwWeGR93/hA82Hatpv1r5txE+iFSuaOziWsxdzrWaFe7XsCGcfaO17gf5gVxeThF4l
-         K8muCn9llX0Tmws8WucD1eTFF8MsDNui63FosYZ31E6ruqeDcNoYRerX2UfxF618Ey0u
-         u1Oq4kp6ka1EH5e1QgbBtZGoSbdgD8to2Hrk9Kk0MDrpQFEMhykev1dgzrnKLx1IBHx0
-         Olng==
-X-Gm-Message-State: AOJu0Yw4QCHLMRK6z5/gQzMdl3aBylqPtgPVv/cHQ/mj8f+kD3YJm+wI
-	KK/4oLtxCa5jPPtRT9L5sD2BwvmUqphrMLie5tKxM8QEe386oET1Ks1T
-X-Gm-Gg: ASbGnctRSyQG0LEHxsohvXlCLSl9tfzkOK3CJXpw/gTPaIRYiPrcGraPdWQ4/h70seJ
-	SGuMKW+FId5IhkSuM8RgVb8iWPQEfPPtkbtZtBNaQnmYHJaXXipoJNtl0jSmzNXFgki9Q4jAjPS
-	MHiDU/yJP+VDmu0oPFwTTTzuxlVVcjReC/0wqQp4BrN5UReJpeIaX0jWkO9kFbFxNX/0AbY6KQW
-	giLIdrbAjYJzy+JdYXN4f+neSmfvabEe0FbTD5JW6mY4txqQgsOgu4oUnllA1Tpax9UoqYFGyXR
-	LcGr2hzQVkbhMd3d1R20Y2T+MsxibyjNVuAaVLxkcuZ8NOg1XtMCH2VQzZNcjOUaCrerwSpcQq5
-	SOtS2pecoHjMrrN5BlObHERj7u4BlW/d7keUJWfuI9abNQDF0Ge1+
-X-Google-Smtp-Source: AGHT+IEY7MUVY+0hSz3eSSt5TA5Q372EcvX2O8rftJ6CChu+KFPN+9moBVife604PkMV0kuudfFLPA==
-X-Received: by 2002:a17:902:f68e:b0:234:8a4a:ad89 with SMTP id d9443c01a7336-23dedd025f3mr111388135ad.1.1752327767426;
-        Sat, 12 Jul 2025 06:42:47 -0700 (PDT)
+        bh=L4VxBgM80QEk0EY5WC78cE9sWpmgbmqTdm8Ze6VurzI=;
+        b=peeyv3OS5iaY73iJIAx/Kl0WTHrBI4AoYfLLf4TEOOszZqiPf9F68lLB4EyEuORlJI
+         y97LoO56khZPfiDm+74GvCaB7iySxa36AlsnzuxVYbIQPDmC3+0FdM8/gvKANUNsguQm
+         B6eTDrP2IF4BxDbeDDv5VSBchTrktzSMMp2TRG49AKuGEtWBY9W+jKIb4mPxDyzNYwiU
+         Y802KEZIz5twHfO3ty5bk9OdnHJoj8x16jzE8e8jsP6/no8yQ8g4xDHpID82vra//vP+
+         0cSHADtDWe0LyuOhnq9rCpGyu8QcaVxLVTpni071rB4Jkoq/egBKGWMQUUDIfe9CxVo4
+         AwmQ==
+X-Gm-Message-State: AOJu0YyTmhGXWT7/+VHYcvT516vkbCDapwDMHtM3eL/JIitsnC2+8ASF
+	IWdJJiOzr5i16v1wkX70GQkLJX1oFyQSiH6pvQRSseuQLUKOvYeCKQCm
+X-Gm-Gg: ASbGncvAjzVsjL+IvXWMh/j8Sxl8Uqtnv3BIT3iAP04yp6GrmmGDyXDIt0+sopHgcfx
+	zclDTXtMH9gMe3wtuWLMhuXO8/uLTNUoy/lRAy4vDhl7qDMGr2cAC3yPZWhKdOGJQ+0+WTeVtZ8
+	9sfqkP3DUm9G1enbpM38VlTMWdiYEa5kER6bJ3qrhHa9/ghglbE6kmUU6E207Gm8FO60FGqgsCR
+	p3VMro43apm4nwqGwcfKgyVZdgH+WRb4+mo9qjFnkmEA83cyLsVZih45RraJ0QvYrABGkwedECx
+	KhM28wvcwvNVC1Q/QZ3VFeRBfIaE5ISmQX37QYdVOyw+aEYcprMGR6/iDHYHlkITV9mpj0zakHk
+	QKkZDo6TnRnMTIRAOJoAw0c20M67G4VFru+e6DpwSix/vq53n1JcP
+X-Google-Smtp-Source: AGHT+IE1SAeVajwYXBARy+b2xefE0sCHzcuVNLOmOQTVxctjbekJaALUVv3rky9Uag/g/SBYMkBy0w==
+X-Received: by 2002:a17:903:f87:b0:223:619e:71da with SMTP id d9443c01a7336-23dee28523bmr110910135ad.49.1752327768817;
+        Sat, 12 Jul 2025 06:42:48 -0700 (PDT)
 Received: from eric-wcnlab.tail151456.ts.net ([2001:288:7001:1099:90c1:8214:37cf:b3e5])
-        by smtp.gmail.com with ESMTPSA id d9443c01a7336-23de42ae865sm64193205ad.72.2025.07.12.06.42.46
+        by smtp.gmail.com with ESMTPSA id d9443c01a7336-23de42ae865sm64193205ad.72.2025.07.12.06.42.47
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Sat, 12 Jul 2025 06:42:47 -0700 (PDT)
+        Sat, 12 Jul 2025 06:42:48 -0700 (PDT)
 From: Cheng-Yang Chou <yphbchou0911@gmail.com>
 To: williams@redhat.com,
 	jkacur@redhat.com
 Cc: linux-rt-users@vger.kernel.org,
 	jserv@ccns.ncku.edu.tw,
 	yphbchou0911@gmail.com
-Subject: [PATCH 6/8] deadline_test.c: Suppress warning
-Date: Sat, 12 Jul 2025 21:42:11 +0800
-Message-ID: <20250712134213.58582-7-yphbchou0911@gmail.com>
+Subject: [PATCH 7/8] sigwaittest.c: Suppress warning
+Date: Sat, 12 Jul 2025 21:42:12 +0800
+Message-ID: <20250712134213.58582-8-yphbchou0911@gmail.com>
 X-Mailer: git-send-email 2.48.1
 In-Reply-To: <20250712134213.58582-1-yphbchou0911@gmail.com>
 References: <20250712134213.58582-1-yphbchou0911@gmail.com>
@@ -79,107 +79,47 @@ Content-Transfer-Encoding: 8bit
 
 Signed-off-by: Cheng-Yang Chou <yphbchou0911@gmail.com>
 ---
- src/sched_deadline/deadline_test.c | 37 ++++++++++++++++++++++++++----
- 1 file changed, 32 insertions(+), 5 deletions(-)
+ src/sigwaittest/sigwaittest.c | 13 +++++++++++--
+ 1 file changed, 11 insertions(+), 2 deletions(-)
 
-diff --git a/src/sched_deadline/deadline_test.c b/src/sched_deadline/deadline_test.c
-index ca2da47..4f9a6a6 100644
---- a/src/sched_deadline/deadline_test.c
-+++ b/src/sched_deadline/deadline_test.c
-@@ -325,6 +325,7 @@ static void ftrace_write(char *buf, const char *fmt, ...)
- {
- 	va_list ap;
- 	int n;
+diff --git a/src/sigwaittest/sigwaittest.c b/src/sigwaittest/sigwaittest.c
+index 026cc81..3944b54 100644
+--- a/src/sigwaittest/sigwaittest.c
++++ b/src/sigwaittest/sigwaittest.c
+@@ -72,6 +72,7 @@ void *semathread(void *param)
+ 	cpu_set_t mask;
+ 	int policy = SCHED_FIFO;
+ 	struct sched_param schedp;
 +	int ret;
  
- 	if (mark_fd < 0)
- 		return;
-@@ -333,7 +334,9 @@ static void ftrace_write(char *buf, const char *fmt, ...)
- 	n = my_vsprintf(buf, BUFSIZ, fmt, ap);
- 	va_end(ap);
- 
--	write(mark_fd, buf, n);
-+	ret = write(mark_fd, buf, n);
-+	if (ret < 0)
-+		perror("ftrace write failed");
- }
- 
- /**
-@@ -626,6 +629,10 @@ static int mount_cpuset(void)
- 	if (fd < 0)
- 		return fd;
- 	ret = write(fd, "0", 2);
-+	if (ret < 0) {
-+		close(fd);
-+		return ret;
-+	}
- 	close(fd);
- 
- 	return 0;
-@@ -875,7 +882,19 @@ static void destroy_cpuset(const char *name, int print)
- 		sprintf(buf, "%d", pid);
- 		if (print)
- 			printf("Moving %d out of %s\n", pid, name);
--		write(fd, buf, strlen(buf));
-+		ret = write(fd, buf, strlen(buf));
-+		if(ret<0 && errno == ENOSPC) {
-+			/*
-+			 * If we get ENOSPC, then we have a problem, as it
-+			 * means that the cpuset is full, and we cannot move
-+			 * the tasks out of it.
-+			 */
-+			fclose(fp);
-+			close(fd);
-+			fprintf(stderr, "Failed to move %d out of %s\n", pid, name);
-+			perror("write");
-+			return;
-+		}
- 	}
- 	fclose(fp);
- 	close(fd);
-@@ -910,16 +929,21 @@ static void destroy_cpuset(const char *name, int print)
- static void teardown(void)
- {
- 	int fd;
-+	int ret;
- 
- 	fd = open_cpuset(CPUSET_PATH, "cpuset.cpu_exclusive");
- 	if (fd >= 0) {
--		write(fd, "0", 2);
-+		ret = write(fd, "0", 2);
-+		if (ret < 0)
-+			perror("cpuset.cpu_exclusive");
- 		close(fd);
- 	}
- 
- 	fd = open_cpuset(CPUSET_PATH, "cpuset.sched_load_balance");
- 	if (fd >= 0) {
--		write(fd, "1", 2);
-+		ret = write(fd, "1", 2);
-+		if (ret < 0)
-+			perror("cpuset.sched_load_balance");
- 		close(fd);
- 	}
- 
-@@ -1790,6 +1814,7 @@ int main(int argc, char **argv)
- 	int rt_task = 0;
- 	int i;
- 	int c;
-+	int ret;
- 
- 	cpu_count = sysconf(_SC_NPROCESSORS_CONF);
- 	if (cpu_count < 1) {
-@@ -2041,7 +2066,9 @@ int main(int argc, char **argv)
- 			exit(-1);
+ 	memset(&schedp, 0, sizeof(schedp));
+ 	schedp.sched_priority = par->priority;
+@@ -168,7 +169,10 @@ void *semathread(void *param)
+ 				int tracing_enabled =
+ 				    open(tracing_enabled_file, O_WRONLY);
+ 				if (tracing_enabled >= 0) {
+-					write(tracing_enabled, "0", 1);
++					ret = write(tracing_enabled, "0", 1);
++					if (ret < 0)
++						fatal("Could not write to %s: %s\n",
++						      tracing_enabled_file, strerror(errno));
+ 					close(tracing_enabled);
+ 				} else
+ 					fatal("Could not access %s\n",
+@@ -489,7 +493,12 @@ int main(int argc, char *argv[])
+ 			fprintf(stderr, "Could not create shared memory\n");
+ 			return 1;
  		}
- 
--		system("cat /sys/fs/cgroup/cpuset/my_cpuset/tasks");
-+		ret = system("cat /sys/fs/cgroup/cpuset/my_cpuset/tasks");
-+		if (ret < 0)
-+			perror("system call failed");
- 	}
- 
- 	pthread_barrier_wait(&barrier);
+-		ftruncate(shmem, totalsize);
++		if (ftruncate(shmem, totalsize) == -1) {
++			perror("ftruncate failed");
++			close(shmem);
++			shm_unlink("/sigwaittest");
++			return 1;
++		}
+ 		param = mmap(0, totalsize, PROT_READ|PROT_WRITE, MAP_SHARED,
+ 		    shmem, 0);
+ 		if (param == MAP_FAILED) {
 -- 
 2.48.1
 
