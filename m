@@ -1,165 +1,120 @@
-Received: from mail-ej1-f45.google.com (mail-ej1-f45.google.com [209.85.218.45])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from galois.linutronix.de (Galois.linutronix.de [193.142.43.55])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 6151C25EFB6
-	for <linux-rt-users@vger.kernel.org>; Mon, 14 Jul 2025 16:17:17 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.218.45
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 5400613D531
+	for <linux-rt-users@vger.kernel.org>; Mon, 14 Jul 2025 19:01:22 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=193.142.43.55
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1752509839; cv=none; b=DnFcp3Ry/VS/GVHf8Q3sbrsB4XbqCBzklFCBD5UroR1QDfbaiL0nci9fvAIFtPCuWapuXQkbtPRRSI7fFdh0d2Q6hOFU6TcPUuO6FHDzxu84D7B5N45kWwQMM472eaom5PxduV/qwkA8CSzsk6kWX9BF+GIHx8J5OJla2/LSoNM=
+	t=1752519683; cv=none; b=sHxM3pnHMWp4zaDm7PQ0ThhpjswB1iBmiq0r1s01zoFFG0h6ivlHJc2fajUmeVjf2Ml1Rtlp4HeHfLeZAKpJWcE91hGV4+IMB6xoVz5ksyx/ISn3vOD3zkP7yzP4gmtQm5KFl3fUXRcoLhEdIVoRz6VeyiNOOAPM9xylmGNA190=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1752509839; c=relaxed/simple;
-	bh=i/R26POJP4dDcBivK5gMdeMHp+1pQls5mGnd176yHgM=;
-	h=MIME-Version:References:In-Reply-To:From:Date:Message-ID:Subject:
-	 To:Cc:Content-Type; b=oAP+vCdxdb4M7GaWkq8rDoNGSrfglLQhuXtspDaQpGsZwFo2bIqa66IQFyw0fC8NmqhOmBq92yErzL9H2K6u0dWU3Cp9uAvKqhXXc+HqbOJd1Zc1T/YlBcc6r9d93dp6MahLNOWdB16OEDGUKwOW61y3FOWc62JKgSVZQEVYBGM=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=linux-foundation.org; spf=pass smtp.mailfrom=linuxfoundation.org; dkim=pass (1024-bit key) header.d=linux-foundation.org header.i=@linux-foundation.org header.b=D1eWxC3S; arc=none smtp.client-ip=209.85.218.45
-Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=linux-foundation.org
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=linuxfoundation.org
+	s=arc-20240116; t=1752519683; c=relaxed/simple;
+	bh=vt6pn4j3s7r0dQGKAga8P1DLaxzYPEZbgFLF84+JBt0=;
+	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
+	 Content-Type:Content-Disposition:In-Reply-To; b=Cq6BpLM+Boh37LcEy2lgSACN8QjwsWB0T/0vLPg65v54NP1Su2Ikd+BU0829Che9qDE8/28stqLDwU+nuiYC0yEIP6u5CJUbHPiiKKXR93Naco9qcQIx4WggRkF3bJtClxTMZe24vgA2Zyd/XJar6BUbAkGHjiA21XL1Y3YGSDk=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linutronix.de; spf=pass smtp.mailfrom=linutronix.de; dkim=pass (2048-bit key) header.d=linutronix.de header.i=@linutronix.de header.b=QDlgNlDx; dkim=permerror (0-bit key) header.d=linutronix.de header.i=@linutronix.de header.b=4gtDOKXf; arc=none smtp.client-ip=193.142.43.55
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linutronix.de
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=linutronix.de
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=linux-foundation.org header.i=@linux-foundation.org header.b="D1eWxC3S"
-Received: by mail-ej1-f45.google.com with SMTP id a640c23a62f3a-ae0e0271d82so817105366b.3
-        for <linux-rt-users@vger.kernel.org>; Mon, 14 Jul 2025 09:17:17 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=linux-foundation.org; s=google; t=1752509835; x=1753114635; darn=vger.kernel.org;
-        h=cc:to:subject:message-id:date:from:in-reply-to:references
-         :mime-version:from:to:cc:subject:date:message-id:reply-to;
-        bh=nEQq66OWWE9JtkTfXjKqpWkex8XQYQ6HwopNDNvjlsc=;
-        b=D1eWxC3SuUctDTeonZF/eu1/bEecxFV+y31RuafrNjs1eJQVNdZGzucUTsLMdsUVPB
-         ZA117tJLiRLNO+jvSNbMmFr+6QeN7rE871l811kSev5MezYneIF4aBK+bnQw/JoFKbqd
-         XGLAz3rhaCEPm4GlZyTUkAqxELHMF0rsERPvs=
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1752509835; x=1753114635;
-        h=cc:to:subject:message-id:date:from:in-reply-to:references
-         :mime-version:x-gm-message-state:from:to:cc:subject:date:message-id
-         :reply-to;
-        bh=nEQq66OWWE9JtkTfXjKqpWkex8XQYQ6HwopNDNvjlsc=;
-        b=Etlc7ia2WDDiFLDpt/Ty28k4QnhQhMLvJJL1+TIW660EqBGvh379r8qE8HJsI+sFOv
-         LWywZQjmRtxO87OxgquZlosjh/bRpfa1RphsEO/84hr1unflm2jv+yJS+OrFNEjXMiSD
-         oDIaTwvwQ54K5QmczQpr/fNQ3olIpSZpE9Col//T5lyGG/tN1IRLu2K4qNbC0kDMxSES
-         FdG6Q6M1zAtWidvLOaE16w3Mr4x3Ct1FncGnnwRcMg++l/lH7nh5bMBV7tSS00z7xSfc
-         tg9SNSLRR5MUZgEOljZOqFqWgMkBipwbKMZLBMNH+qLgwF3ZEuDnzXtOF6CDAW0hSH7F
-         TlBw==
-X-Forwarded-Encrypted: i=1; AJvYcCXp2A+BGkYEVXeIadQFRcQOT++XKosPIK2U3i0Kd/4Bq6F6Xi11uGWhFPHrQLtsepN3Zw8sJ4WGowSMaw32IQ==@vger.kernel.org
-X-Gm-Message-State: AOJu0Yx0zKSAoTo/atnyU/RQglyU+wPXAltdYYRVHtKvqeGETp888aod
-	rLN+5ID74GOZNGLoRWYp0zTTYisQV1CTjIrQT03MsFoYhm5ajztb7vDloPMJugSscwqmQumPTr4
-	nn2skX1E=
-X-Gm-Gg: ASbGnctWfDwvxACq3q7rky4jOiONU2+SpU06ptmTB26L/jZ/3apo8+4yo3Wh1q3VJdv
-	Jx9J2vD+8yvJDRuxGW6BtxF9SdiLcNzyIgOYIjY3IYh3QBQn8rDukWs2njZWSPzGyX+i/wVCSwj
-	7yqiTzphKCeBOxLDtYcJUI/+YTWD2gIA0C+bLGHUzznbpe0mc6rCiFlNixtFiUonm645+kjRZFc
-	ONapQeZTY4d4ady7kyv17Uv0v1hy3bLzFNcygQihdFOmI64+50NOcV+YOJSRIaEP4FA2EWUXx9t
-	a1ThS0pH3TKM3LLsXbJ5cLQYUXROqYiogRHZiTXzpHgZ68B0dM5trsM/K3eyC1ognmue9lBq48m
-	pyCg4oxmXcq+NnHfaPSBDP8oidu+op1yNR1as3BFGG4hfxw864BpzoUbAGlDxFX93PwgHrHVJ
-X-Google-Smtp-Source: AGHT+IH2OCATE2itTlX0hBhopYnVa1k3csyOE4WV+IWKyevRwc/SNNGWlaXdLDorJ/FURT2JSatstQ==
-X-Received: by 2002:a17:907:1b19:b0:ae0:c0b3:5656 with SMTP id a640c23a62f3a-ae6fbc8c8b7mr1491504866b.22.1752509835286;
-        Mon, 14 Jul 2025 09:17:15 -0700 (PDT)
-Received: from mail-ed1-f52.google.com (mail-ed1-f52.google.com. [209.85.208.52])
-        by smtp.gmail.com with ESMTPSA id a640c23a62f3a-ae6e8294c0asm828317666b.127.2025.07.14.09.17.13
-        for <linux-rt-users@vger.kernel.org>
-        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
-        Mon, 14 Jul 2025 09:17:13 -0700 (PDT)
-Received: by mail-ed1-f52.google.com with SMTP id 4fb4d7f45d1cf-607cf70b00aso8697677a12.2
-        for <linux-rt-users@vger.kernel.org>; Mon, 14 Jul 2025 09:17:13 -0700 (PDT)
-X-Forwarded-Encrypted: i=1; AJvYcCUMOpw9jvyyiMBFhf7CdRFGuvP2dobZpTg7nhX4Apx5aZd1CvongoEV/riVEI+0EIWLSB4Ael39X0O4rlcm6w==@vger.kernel.org
-X-Received: by 2002:aa7:d78f:0:b0:602:201:b46e with SMTP id
- 4fb4d7f45d1cf-611e84f8dd6mr9695286a12.31.1752509833354; Mon, 14 Jul 2025
- 09:17:13 -0700 (PDT)
+	dkim=pass (2048-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="QDlgNlDx";
+	dkim=permerror (0-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="4gtDOKXf"
+Date: Mon, 14 Jul 2025 21:01:18 +0200
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
+	s=2020; t=1752519680;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 in-reply-to:in-reply-to:references:references;
+	bh=dYnFerd+0kEq6UzDv64Fqx6FyOKl/Heljfd5f2Wc/wE=;
+	b=QDlgNlDxJc92cVNTrlNPCctE7SLo7L2n+DuVAeb3LbhEWqsslZEtvw+7PgbpT7KB9WDfEA
+	qMTCF8yIhQvR5C8NIjUJvsoRAAbWo5c8q7estE1WEviDsuDr8XKioTY0ngp0HlCRaEWyz/
+	rdcM13y2siNQRD7iyI27uwdbxs7NFP5ucIuk3epWqlqhexoibMZAgcJJGJPKu8hgBG313L
+	u89PC9VPY3nuejpv41t6wGuZopU+HLZuvgE1PWartaEG+dg3lLA2OIK0PlQ7f2vLyE4Mo6
+	cgaSnUtj2laFEbn0Ph2EnfrJxtCJ2KO2GnGcS+b4gDKaVvlW7X6BYMxmdZiwFw==
+DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
+	s=2020e; t=1752519680;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 in-reply-to:in-reply-to:references:references;
+	bh=dYnFerd+0kEq6UzDv64Fqx6FyOKl/Heljfd5f2Wc/wE=;
+	b=4gtDOKXf1CVOKW74s+rh052iv3E/ldFEhtr7Ej8pCE8WF0x34NoERvBcUAoK8z7Q2F1KiN
+	+OnHF32pBOXV4JAw==
+From: "Ahmed S. Darwish" <darwi@linutronix.de>
+To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Cc: John Kacur <jkacur@redhat.com>, Clark Williams <williams@redhat.com>,
+	linux-rt-users@vger.kernel.org
+Subject: Re: [PATCH v1 00/28] rt-tests: Rework cyclictest manpage
+Message-ID: <aHVT_g1VIj-GxfSp@lx-t490>
+References: <20250704132721.13325-1-darwi@linutronix.de>
+ <20250714130104.29nUrEeQ@linutronix.de>
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
 List-Subscribe: <mailto:linux-rt-users+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-References: <20250710034805.4FtG7AHC@linutronix.de> <20250710040607.GdzUE7A0@linutronix.de>
- <6f99476daa23858dc0536ca182038c8e80be53a2.camel@xry111.site>
- <20250710062127.QnaeZ8c7@linutronix.de> <d14bcceddd9f59a72ef54afced204815e9dd092e.camel@xry111.site>
- <20250710083236.V8WA6EFF@linutronix.de> <c720efb6a806e0ffa48e35d016e513943d15e7c0.camel@xry111.site>
- <20250711050217.OMtx7Cz6@linutronix.de> <20250711-ermangelung-darmentleerung-394cebde2708@brauner>
- <20250711095008.lBxtWQh6@linutronix.de> <20250714-leumund-sinnen-44309048c53d@brauner>
-In-Reply-To: <20250714-leumund-sinnen-44309048c53d@brauner>
-From: Linus Torvalds <torvalds@linux-foundation.org>
-Date: Mon, 14 Jul 2025 09:16:56 -0700
-X-Gmail-Original-Message-ID: <CAHk-=whniDdvSeCEQD5aUzr79HnhZ=A+ftzr0p_mY+n_f0AMHg@mail.gmail.com>
-X-Gm-Features: Ac12FXxWB0yp1KMBo5BvpABIxBDtYWLONaWyJRXqnq_-Wkoa7_1NLpHwfbQeSac
-Message-ID: <CAHk-=whniDdvSeCEQD5aUzr79HnhZ=A+ftzr0p_mY+n_f0AMHg@mail.gmail.com>
-Subject: Re: [PATCH v3] eventpoll: Fix priority inversion problem
-To: Christian Brauner <brauner@kernel.org>
-Cc: Nam Cao <namcao@linutronix.de>, Xi Ruoyao <xry111@xry111.site>, 
-	Frederic Weisbecker <frederic@kernel.org>, Valentin Schneider <vschneid@redhat.com>, 
-	Alexander Viro <viro@zeniv.linux.org.uk>, Jan Kara <jack@suse.cz>, 
-	Sebastian Andrzej Siewior <bigeasy@linutronix.de>, John Ogness <john.ogness@linutronix.de>, 
-	Clark Williams <clrkwllms@kernel.org>, Steven Rostedt <rostedt@goodmis.org>, 
-	linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org, 
-	linux-rt-devel@lists.linux.dev, linux-rt-users@vger.kernel.org, 
-	Joe Damato <jdamato@fastly.com>, Martin Karsten <mkarsten@uwaterloo.ca>, Jens Axboe <axboe@kernel.dk>
-Content-Type: text/plain; charset="UTF-8"
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+In-Reply-To: <20250714130104.29nUrEeQ@linutronix.de>
 
-On Mon, 14 Jul 2025 at 02:00, Christian Brauner <brauner@kernel.org> wrote:
+Hi,
+
+On Mon, 14 Jul 2025, Sebastian Andrzej Siewior wrote:
 >
-> I was on the fence myself and I juggled the commit between vfs.fixes and
-> vfs-6.17.misc because I wasn't sure whether we should consider such
-> priority inversion fix something that's urgent or not.
+> I would merge the "remove $X" flag patches. It is a few times the same
+> thing.
+>
 
-Well, this time it actually helped that it didn't come in through the
-merge window, because it made the bisection much shorter.
+Each "remove -$X" patch references the rt-tests commit that removed the
+cyclictest option in question.  I felt it's valuable to reference such
+option removal commits on a one-by-one basis.
 
-But in general, I do think that eventpoll should be considered to be
-something that needs to die, rather than something that needs to be
-improved upon. It's horrendous.
+> Therefore I would suggest to write a new page for cyclictest based on
+> what we have after content wise after #28, let rt-tests generate the
+> man-page from it, remove the current man-page.
 
-The indirections it does have been huge problems, even if they are
-"powerful", because we've had lots of issues with recursion and loops,
-which are all bad for reference counting - and not using reference
-counting for lifetimes is just fundamentally a design bug.
+Perfect is the enemy of the good.
 
-For example, the vfs file close thing has a special
-"eventpoll_release()" thing just because epoll can't use file
-references for the references it holds (because that would just cause
-recursive refs), and dammit, that's just the result of a fundamental
-mis-design. And this is all after all the years of fixing outright
-bugs (with hidden ones still lurking - unusually we had *another*
-long-standing epoll bug fixed last week)
+I have another patch series on top of this one which further expands upon
+most of the parameters' description.
 
-(Don't get me wrong: unix domain fd passing has caused all these
-problems and more, so it's not like epoll is the *only* thing that
-causes these kinds of horrendous issues, but unix domain fd passing
-was something we did due to external reasons, not some self-inflicted
-pain)
+So, I would suggest that we first:
 
-So this is just a heads-up that I will *NOT* be taking any epoll
-patches AT ALL unless they are
+  (a) review/merge this series
 
- (a) obvious bug fixes
+  (b) review/merge the next one
 
- (b) clearly separated into well-explained series with each individual
-patch simple and obvious.
+  (c) I send a third patch queue that transforms most of the project's
+      manpages to rst2man.
 
-Because it was really a mistake to take that big epoll patch. That was
-not a "small and obvious" fix to a big bug. That was literally a
-"makes things worse" thing.
+The rt-tests project already has 19 groff manpages:
 
-I didn't react very much to that patch because epoll has been fairly
-calm for the last decade, and I had forgotten how much of a pain it
-could be. So I was "whatever".
+      rt-tests (main)$ find src/ -name '*.8'
 
-But this all re-awakened my "epoll is horrendous" memories.
+      src/sigwaittest/sigwaittest.8
+      src/hackbench/hackbench.8
+      src/oslat/oslat.8
+      src/pi_tests/pi_stress.8
+      src/pi_tests/pip_stress.8
+      src/svsematest/svsematest.8
+      src/backfire/sendme.8
+      src/hwlatdetect/hwlatdetect.8
+      src/pmqtest/pmqtest.8
+      src/queuelat/queuelat.8
+      src/queuelat/determine_maximum_mpps.8
+      src/signaltest/signaltest.8
+      src/ptsematest/ptsematest.8
+      src/rt-migrate-test/rt-migrate-test.8
+      src/cyclictest/get_cyclictest_snapshot.8
+      src/cyclictest/cyclictest.8
+      src/ssdd/ssdd.8
+      src/sched_deadline/cyclicdeadline.8
+      src/sched_deadline/deadline_test.8
 
-Nam - please disregard performance as a primary thing in epoll. The
-*only* thing that matters is "make it simpler, fix bugs".
+So IMHO there's a weak ground for requesting the format transformation
+beforehand; i.e., the (a)-(b)-(c) development order above is the most
+sensible.
 
-Because long-term, epoll needs to die, or at least be seen as a legacy
-interface that should be cut down, not something to be improved upon.
+Thanks!
 
-And yes, I hate epoll. It has caused *so* many problems over the
-years. And it causes problems *outside* of epoll, ie we have that
-horrendous pipe hackery:
-
-         * Epoll nonsensically wants a wakeup whether the pipe
-         * was already empty or not.
-
-and the pipe code has that "poll_usage" flag just to deal with the
-fallout of bad epoll fallout.
-
-THAT was fun too.
-
-Not.
-
-              Linus
+--
+Ahmed S. Darwish
+Linutronix GmbH
