@@ -1,48 +1,88 @@
 Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 07CF315B0EF;
-	Sun, 13 Jul 2025 18:21:55 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 05F0123C50C;
+	Mon, 14 Jul 2025 09:00:05 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1752430916; cv=none; b=JCkLrbyq5IPG4qlfpo8OPFAmck6PitIS0M0Z9iqHwzQhRYS0/TDH4hp36W4LjTnNcxzgtWq2lGTPyBkvcYUYvr7AXn8+XKLFRfXD8mKHGY7JRzF2AZ9ynrr8NhzL1k4Ds7mmoLgIGbS+rQH9AUfpw3xt9Er9Myrhk+1Lz7tbnws=
+	t=1752483607; cv=none; b=Bj4BXn66cfA1XpPAL3WQDgAQcNyEgqPB+v54D24dUit+R5onprgZ8XBMq5AJRToi/HOySNeF/FftZeWlowORt0hSZ0rif0bZQIvdPGwJgwLBbNArdCCday9YH3OyHEjHKfn8vkhXj+3dxksrYrYm+PoYHbakMlqW1ATbytZ4aJc=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1752430916; c=relaxed/simple;
-	bh=0z4tBetC1XzgynJx07RVrSZfqezQIZ9FMUsD+ce9VWE=;
-	h=From:Subject:Date:Message-ID:To; b=HTVjygbB2FsxBvbFjCKfQmWDNHs+sI3ra+Nrw2oViMx74fd5JKYDK9WH1K+eEEL6uK1WVpfGi5X/4OLQJCBKPqHWbbvJrz1RjqPcXa31YOu8PRiOFkJ7WO8sIad3ty6sSQvL1/lX9gSEEjqQ85hwzjFXI3Xf0iAsdUT8vZ34Roc=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id 5864AC4CEE3;
-	Sun, 13 Jul 2025 18:21:55 +0000 (UTC)
-From: Clark Williams <williams@redhat.com>
-Subject: [ANNOUNCE] 6.6.97-rt57
-Date: Sun, 13 Jul 2025 18:21:26 -0000
-Message-ID: <175243088672.156964.5270040877373409435@demetrius>
-To: LKML <linux-kernel@vger.kernel.org>,linux-rt-users <linux-rt-users@vger.kernel.org>,Steven Rostedt <rostedt@goodmis.org>,Thomas Gleixner <tglx@linutronix.de>,Carsten Emde <C.Emde@osadl.org>,John Kacur <jkacur@redhat.com>,Sebastian Andrzej Siewior <bigeasy@linutronix.de>,Daniel Wagner <daniel.wagner@suse.com>,Tom Zanussi <tom.zanussi@linux.intel.com>,Clark Williams <williams@redhat.com>,Pavel Machek <pavel@denx.de>,Joseph Salisbury <joseph.salisbury@oracle.com>,Luis Claudio R. Goncalves <lgoncalv@redhat.com>
+	s=arc-20240116; t=1752483607; c=relaxed/simple;
+	bh=wubLM7oc7vyYccOjiNamFuoXLUMcbsRbuLS8tmqUYLY=;
+	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
+	 Content-Type:Content-Disposition:In-Reply-To; b=fX5hXvLN84EYY//wSehBn7JXD1LMe3ktiRLM8uMTozYa9+4Z1sjsl03qsdtorJScb5jj4nNLQfgOvbl8sR+3+VD6wv3X+JXGZnPWwoxfiVa8nnoL56KwXA4Odr2Taupeu0wTizs7M/G8fy2RySw30XcPyyvzk0FfhWcluEbm5ow=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=SBJu93Sw; arc=none smtp.client-ip=10.30.226.201
+Authentication-Results: smtp.subspace.kernel.org;
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="SBJu93Sw"
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id B2940C4CEED;
+	Mon, 14 Jul 2025 09:00:01 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
+	s=k20201202; t=1752483605;
+	bh=wubLM7oc7vyYccOjiNamFuoXLUMcbsRbuLS8tmqUYLY=;
+	h=Date:From:To:Cc:Subject:References:In-Reply-To:From;
+	b=SBJu93SwzHezEltZTZjnq8mJT/xYjJHioXFB9hCzJ6mxfAbKDzC24qPW4r96LYn/Q
+	 B8C3FQMlFt9Xjd5wesqUXEhcVE2ySUwOtPCoHU5yFYTBTdKXL9+t2kCLm3hae9zWMf
+	 vG3Y2VSG8e2lCZfCrFP1kscCMan0v+F8VQ5Mgb3Y0b4fervoqeZvrQPZSqAg92+NHc
+	 kfJZ5+wUFnN7XlrFPrcDFxdUVyBjiouf7JBIMZmUh/lqlguE7ExBCn7Ensvm4DYtj/
+	 JsJnztYC8RUKhStRbv5HdLY+k6WYz2hkNTD/dE1jo8y1BzWes6+RUaTNgXoJVWU6ch
+	 Y/KEs7MU+/Cig==
+Date: Mon, 14 Jul 2025 10:59:58 +0200
+From: Christian Brauner <brauner@kernel.org>
+To: Nam Cao <namcao@linutronix.de>, 
+	Linus Torvalds <torvalds@linux-foundation.org>
+Cc: Xi Ruoyao <xry111@xry111.site>, 
+	Frederic Weisbecker <frederic@kernel.org>, Valentin Schneider <vschneid@redhat.com>, 
+	Alexander Viro <viro@zeniv.linux.org.uk>, Jan Kara <jack@suse.cz>, 
+	Sebastian Andrzej Siewior <bigeasy@linutronix.de>, John Ogness <john.ogness@linutronix.de>, 
+	Clark Williams <clrkwllms@kernel.org>, Steven Rostedt <rostedt@goodmis.org>, 
+	linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org, linux-rt-devel@lists.linux.dev, 
+	linux-rt-users@vger.kernel.org, Joe Damato <jdamato@fastly.com>, 
+	Martin Karsten <mkarsten@uwaterloo.ca>, Jens Axboe <axboe@kernel.dk>
+Subject: Re: [PATCH v3] eventpoll: Fix priority inversion problem
+Message-ID: <20250714-leumund-sinnen-44309048c53d@brauner>
+References: <20250710034805.4FtG7AHC@linutronix.de>
+ <20250710040607.GdzUE7A0@linutronix.de>
+ <6f99476daa23858dc0536ca182038c8e80be53a2.camel@xry111.site>
+ <20250710062127.QnaeZ8c7@linutronix.de>
+ <d14bcceddd9f59a72ef54afced204815e9dd092e.camel@xry111.site>
+ <20250710083236.V8WA6EFF@linutronix.de>
+ <c720efb6a806e0ffa48e35d016e513943d15e7c0.camel@xry111.site>
+ <20250711050217.OMtx7Cz6@linutronix.de>
+ <20250711-ermangelung-darmentleerung-394cebde2708@brauner>
+ <20250711095008.lBxtWQh6@linutronix.de>
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
 List-Subscribe: <mailto:linux-rt-users+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
+MIME-Version: 1.0
+Content-Type: text/plain; charset=utf-8
+Content-Disposition: inline
+In-Reply-To: <20250711095008.lBxtWQh6@linutronix.de>
 
-Hello RT-list!
+On Fri, Jul 11, 2025 at 11:50:08AM +0200, Nam Cao wrote:
+> On Fri, Jul 11, 2025 at 11:44:28AM +0200, Christian Brauner wrote:
+> > I think we should revert the fix so we have time to fix it properly
+> > during v6.17+. This patch was a bit too adventurous for a fix in the
+> > first place tbh.
+> 
+> Agreed. I did feel a bit uneasy when I saw the patch being applied to
+> vfs.fixes.
 
-I'm pleased to announce the 6.6.97-rt57 stable release.
+I was on the fence myself and I juggled the commit between vfs.fixes and
+vfs-6.17.misc because I wasn't sure whether we should consider such
+priority inversion fix something that's urgent or not.
 
-You can get this release via the git tree at:
+I tried to communicate to Linus that I was uncertain about this
+particular patch at the beginning of
 
-  git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
+https://lore.kernel.org/20250704-vfs-fixes-fa31f5ff8c05@brauner
 
-  branch: v6.6-rt
-  Head SHA1: 60afa5684fff981a86d2a55f600767cb4cd353dc
+But I should've called it earlier.
 
-Or to build 6.6.97-rt57 directly, the following patches should be applied:
+Linus, thanks for reverting this! I had a revert ready as announced on
+Friday for today but it's good that this got kicked out already.
 
-  https://www.kernel.org/pub/linux/kernel/v6.x/linux-6.6.tar.xz
-
-  https://www.kernel.org/pub/linux/kernel/v6.x/patch-6.6.97.xz
-
-  https://www.kernel.org/pub/linux/kernel/projects/rt/6.6/patch-6.6.97-rt57.patch.xz
-
-
-Enjoy!
-Clark
+My lesson from this is that touching epoll without a really really good
+and urgent reason always end up a complete mess. So going forward we'll
+just be very careful here.
