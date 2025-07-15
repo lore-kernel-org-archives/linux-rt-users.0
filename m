@@ -1,164 +1,120 @@
-Received: from galois.linutronix.de (Galois.linutronix.de [193.142.43.55])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+Received: from mail-ed1-f43.google.com (mail-ed1-f43.google.com [209.85.208.43])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 26F082627FC;
-	Tue, 15 Jul 2025 12:58:30 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=193.142.43.55
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id B0D49278774
+	for <linux-rt-users@vger.kernel.org>; Tue, 15 Jul 2025 16:43:11 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.208.43
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1752584312; cv=none; b=ScWMAoxiP7vwH3HLwJZsxuVf/MAArt8y231qSdZIGSPkW2eWabJ5R9ggfj9GIqjdXUeBMGmpx4aWw+2DiCXob46oNV4ZIxgmBU5NNBwryPZvgJVJ+jBIALRsxdukKdZ0KpKGNKrjWFmXqYWl2ct/ipkh8oocHKlvLZJjcRYt/bQ=
+	t=1752597795; cv=none; b=XAGN/oJhNsUxf9f2z4daNUYlbSy0zS6as1ecbtZzGuG9d5Fta6z+YiDynIE9XPzMkRypXgloW+/g5XDTXZlFJaeU6h6eBFld3GLgsZzy5zveuFKVZWzrYljx9e3NiKb7mx6ITDej5zG0LcHiu9aNBpApBEn/ZFZOaRq2O3AnUMY=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1752584312; c=relaxed/simple;
-	bh=6SCddfOTDHHGObCBwebbZIS9WbD3aNhWQRhtOi2Ux8g=;
-	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 Content-Type:Content-Disposition:In-Reply-To; b=rD3TtzwdrV6fCBoYf1jedyoOVBNjsng2FQf7JdX+sGed2+Q2Win5H0ljZjj4vRsXQhqbK+VsEDG+Y2xpmhJ7lmFTk9/rJO3ac4VW/YzoF3I/PO94TaEf03j5u7Ux5htboVddbyls3yU1zUJKM2Fc51rHfBLt1VwPbmUhLlZhlyE=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linutronix.de; spf=pass smtp.mailfrom=linutronix.de; dkim=pass (2048-bit key) header.d=linutronix.de header.i=@linutronix.de header.b=sf7bZYQ9; dkim=permerror (0-bit key) header.d=linutronix.de header.i=@linutronix.de header.b=eSMLzsEO; arc=none smtp.client-ip=193.142.43.55
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linutronix.de
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=linutronix.de
+	s=arc-20240116; t=1752597795; c=relaxed/simple;
+	bh=OZLBdP80AuAPBpQatgV4tnOFj5nsWaDVvWpCLDIyI1k=;
+	h=MIME-Version:References:In-Reply-To:From:Date:Message-ID:Subject:
+	 To:Cc:Content-Type; b=o+vtfnmJx0ESke0CYILHZRGDFaiJVXPjLZMo3xWREljNxRa4V6ElWzy4ZTNeq3xdI5iA/x8ueLOHV+gT5AUUw9KPG6jDidDVTMrU0ys2RtMtguntVp3+EfxCRuuzsPgXVgbnDWW98QFhRYVUEs3+taGjjgHMqTqsa1ezrryPhag=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=linux-foundation.org; spf=pass smtp.mailfrom=linuxfoundation.org; dkim=pass (1024-bit key) header.d=linux-foundation.org header.i=@linux-foundation.org header.b=SI3kAVwt; arc=none smtp.client-ip=209.85.208.43
+Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=linux-foundation.org
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=linuxfoundation.org
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="sf7bZYQ9";
-	dkim=permerror (0-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="eSMLzsEO"
-Date: Tue, 15 Jul 2025 14:58:27 +0200
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
-	s=2020; t=1752584308;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 in-reply-to:in-reply-to:references:references;
-	bh=/B9TLRBtxUDCJxsWBE7GcJCQaPVHwv80Fiu3ht2Nt6I=;
-	b=sf7bZYQ9ZiWk8RvGDCHDL5F8ixwxhN0UkvRoxyuTukIbBSsEU5PzrZOjeWZQYp48EFpWkg
-	2MAY3rRSagVDoMRaqQnLWkcV+KBXWbfiLIXodnP4cSabUINmn/LdWr5WCB0XkAPhHim+yc
-	wYyoC4xYPDTXbKQNr8l29WxulcFT1ro2IgYZ9tiyUH397IvTxTjpXM8nuA5oVZKywjewOH
-	ECsLT2IXIEaRXeuhPaZLf9SvyA+dsHd9Zryu42MjCjReF68glSLY3u/CaW59YUn5t0n713
-	YaoDdwkyDwSusJtCHbB77Nh12PYJTArvZDMAMY2d/B8VzFIqeHNaXNCek7KU4A==
-DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
-	s=2020e; t=1752584308;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 in-reply-to:in-reply-to:references:references;
-	bh=/B9TLRBtxUDCJxsWBE7GcJCQaPVHwv80Fiu3ht2Nt6I=;
-	b=eSMLzsEOm6CDkh/rn6rfN0u0+4XWy5ZXnYN77a0NBMn1Yx6NruYwZ37rJqm2+2cocS5fjg
-	eItyNbeObWf/6VCg==
-From: Nam Cao <namcao@linutronix.de>
-To: Christian Brauner <brauner@kernel.org>,
-	Linus Torvalds <torvalds@linux-foundation.org>,
-	Xi Ruoyao <xry111@xry111.site>,
-	Frederic Weisbecker <frederic@kernel.org>,
-	Valentin Schneider <vschneid@redhat.com>,
-	Alexander Viro <viro@zeniv.linux.org.uk>, Jan Kara <jack@suse.cz>,
-	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-	John Ogness <john.ogness@linutronix.de>,
-	K Prateek Nayak <kprateek.nayak@amd.com>,
-	Clark Williams <clrkwllms@kernel.org>,
-	Steven Rostedt <rostedt@goodmis.org>, linux-fsdevel@vger.kernel.org,
-	linux-kernel@vger.kernel.org, linux-rt-devel@lists.linux.dev,
-	linux-rt-users@vger.kernel.org, Joe Damato <jdamato@fastly.com>,
-	Martin Karsten <mkarsten@uwaterloo.ca>,
-	Jens Axboe <axboe@kernel.dk>
-Cc: stable@vger.kernel.org
-Subject: Re: [PATCH v4 1/1] eventpoll: Replace rwlock with spinlock
-Message-ID: <20250715125827.SpZa8hHS@linutronix.de>
-References: <cover.1752581388.git.namcao@linutronix.de>
- <ec92458ea357ec503c737ead0f10b2c6e4c37d47.1752581388.git.namcao@linutronix.de>
+	dkim=pass (1024-bit key) header.d=linux-foundation.org header.i=@linux-foundation.org header.b="SI3kAVwt"
+Received: by mail-ed1-f43.google.com with SMTP id 4fb4d7f45d1cf-60700a745e5so11728192a12.3
+        for <linux-rt-users@vger.kernel.org>; Tue, 15 Jul 2025 09:43:11 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=linux-foundation.org; s=google; t=1752597790; x=1753202590; darn=vger.kernel.org;
+        h=cc:to:subject:message-id:date:from:in-reply-to:references
+         :mime-version:from:to:cc:subject:date:message-id:reply-to;
+        bh=46zpS+UQ3AzjYrdMtZXy87Fu+5mO7Am2ZTQb8NQ0ZbA=;
+        b=SI3kAVwt4n2o1Aq3Hv+RmcxE60FVsLNTY25pw4y83pRPZN+IX1Cj1r8I5mooJ5zAs0
+         zmC3mZV+tFEk/UqEF5Sy8eGCWQ2JCuGnN2ZC0y6kwvgGl3ioOoPy/GNX9tnydgCrzEL6
+         Fi4b03i+ljxj35R8zMEfjAPKibfDra9z3dx5g=
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20230601; t=1752597790; x=1753202590;
+        h=cc:to:subject:message-id:date:from:in-reply-to:references
+         :mime-version:x-gm-message-state:from:to:cc:subject:date:message-id
+         :reply-to;
+        bh=46zpS+UQ3AzjYrdMtZXy87Fu+5mO7Am2ZTQb8NQ0ZbA=;
+        b=J10RkTKvPIoAQxFkxiD5mMHVwBwFRhHUXP0d5KK0iEdEIavJhU9M8/YspPRNySquCZ
+         GcXTGR9RYrwVQUL1UyJ3c41gYvOSPq0cXq8fpYujkrAW+9pMgxa15fuGW1HivzsSzkau
+         EjXiLRDrtEsJZR8YpSQJ6QSaTXfm3lr6XlG2EXtn2yiecFPZ7qLjZjIYPEd6Qq/1tnNL
+         uehjLjnZN/ETF35GQE6OQpEeo5dXKQsyNSAzZnbByE2hZWggoTL3JV4Vp0051nzhJkT1
+         OQOJkMSPs7XHWvtR2O4lsQrlLi6ADPQCII3BoaNDc6o0f9XI8hlXH7bRZQP/6o1u0brG
+         NZAQ==
+X-Forwarded-Encrypted: i=1; AJvYcCUr1xmQXI+/iiuGDlD2iL5/T1iXelP017GdRdq4LK3lG9xA2y/c/UQ/iRunjOwJo1+wDiwkF5SkPAwR5XHVsA==@vger.kernel.org
+X-Gm-Message-State: AOJu0Yx4VAXEoGD241fXflCNtMvS83Twt8Q/6ItoWZkttN96cscq6aYT
+	P8e8NMPvhhtWBWizOYCkYDqBk6CFCQJMXovxbn62khbhl9hIvEtEkyozbNV7OzcqZ1YSb05TN/D
+	sILvRmy0=
+X-Gm-Gg: ASbGncswTgZNtSMYVaLkRO7c/8Q/K8peKrQZuTN2G5CDTs/nrtweOWvZan94TlsRC6C
+	R3YSXeR31x684tAHAAOq4ghSOJc/Tba0y6VtA8VqSlRFtYwvYdHU1Lts1w6HXieaYl8NTMJN1ik
+	cf67W1P0z/bwAKPDbBJaVyVb4FIhYcWkepnhjxVzgrfoM7tlJ/0HNwp0j/ciXPdzvMvz3KaaYqu
+	CrZu4EmkSrwYrbAxoE5qfJXt20NvjWcjdo4jBNTUy3PdsocuLky4L+n6OcNis7fvYXlXy3tBDu/
+	NTxw4E/n0VbHxSRqojf2AnplBnc0UVQ/5RXQIfXGQZVlXfwcassl6E8mt4+ESSJW55qpY3Efd19
+	2fW9G6V2vRxdBTHEDeU/UaqTTwaROdEs8AmMSMcsxw92UP2A+q6dPmc3zUEGXBmQF5ZEr/6g6
+X-Google-Smtp-Source: AGHT+IHYHS4Yz6LfI5gFy1CxT7l6yZwX/FRfE47OrI80Hn2p5WxzRV3ir2yFkaVI9ey4wm/ps5pkOQ==
+X-Received: by 2002:a17:907:9493:b0:ae0:d78a:2366 with SMTP id a640c23a62f3a-ae9c9988a8emr20675166b.4.1752597789979;
+        Tue, 15 Jul 2025 09:43:09 -0700 (PDT)
+Received: from mail-ed1-f48.google.com (mail-ed1-f48.google.com. [209.85.208.48])
+        by smtp.gmail.com with ESMTPSA id a640c23a62f3a-ae6e82dee16sm1029895266b.152.2025.07.15.09.43.09
+        for <linux-rt-users@vger.kernel.org>
+        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
+        Tue, 15 Jul 2025 09:43:09 -0700 (PDT)
+Received: by mail-ed1-f48.google.com with SMTP id 4fb4d7f45d1cf-60bfcada295so8797212a12.1
+        for <linux-rt-users@vger.kernel.org>; Tue, 15 Jul 2025 09:43:09 -0700 (PDT)
+X-Forwarded-Encrypted: i=1; AJvYcCUDT+QCMPAVOWluDy7STXhEnnKxUSrlVfx9MVbsbVV8k+ysSy2VZudFAJxkq3mfnuSrmMu7Pj0H7vBJlroCsQ==@vger.kernel.org
+X-Received: by 2002:a05:6402:2686:b0:607:f64a:47f9 with SMTP id
+ 4fb4d7f45d1cf-61281f226d2mr26921a12.3.1752597788853; Tue, 15 Jul 2025
+ 09:43:08 -0700 (PDT)
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
 List-Subscribe: <mailto:linux-rt-users+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
+References: <cover.1752581388.git.namcao@linutronix.de> <ec92458ea357ec503c737ead0f10b2c6e4c37d47.1752581388.git.namcao@linutronix.de>
 In-Reply-To: <ec92458ea357ec503c737ead0f10b2c6e4c37d47.1752581388.git.namcao@linutronix.de>
+From: Linus Torvalds <torvalds@linux-foundation.org>
+Date: Tue, 15 Jul 2025 09:42:52 -0700
+X-Gmail-Original-Message-ID: <CAHk-=wheHZRWPyNNoqXB8+ygw2PqEYjbyKQfSbYpirecg5K1Nw@mail.gmail.com>
+X-Gm-Features: Ac12FXwEFq81tRpxQQo-YtMJ6UxIp_wzb2appHmE6OGEEPULt8cuT-X-Zaqr3nQ
+Message-ID: <CAHk-=wheHZRWPyNNoqXB8+ygw2PqEYjbyKQfSbYpirecg5K1Nw@mail.gmail.com>
+Subject: Re: [PATCH v4 1/1] eventpoll: Replace rwlock with spinlock
+To: Nam Cao <namcao@linutronix.de>
+Cc: Christian Brauner <brauner@kernel.org>, Xi Ruoyao <xry111@xry111.site>, 
+	Frederic Weisbecker <frederic@kernel.org>, Valentin Schneider <vschneid@redhat.com>, 
+	Alexander Viro <viro@zeniv.linux.org.uk>, Jan Kara <jack@suse.cz>, 
+	Sebastian Andrzej Siewior <bigeasy@linutronix.de>, John Ogness <john.ogness@linutronix.de>, 
+	K Prateek Nayak <kprateek.nayak@amd.com>, Clark Williams <clrkwllms@kernel.org>, 
+	Steven Rostedt <rostedt@goodmis.org>, linux-fsdevel@vger.kernel.org, 
+	linux-kernel@vger.kernel.org, linux-rt-devel@lists.linux.dev, 
+	linux-rt-users@vger.kernel.org, Joe Damato <jdamato@fastly.com>, 
+	Martin Karsten <mkarsten@uwaterloo.ca>, Jens Axboe <axboe@kernel.dk>, stable@vger.kernel.org
+Content-Type: text/plain; charset="UTF-8"
 
-On Tue, Jul 15, 2025 at 02:46:34PM +0200, Nam Cao wrote:
-> The ready event list of an epoll object is protected by read-write
-> semaphore:
-> 
->   - The consumer (waiter) acquires the write lock and takes items.
->   - the producer (waker) takes the read lock and adds items.
-> 
-> The point of this design is enabling epoll to scale well with large number
-> of producers, as multiple producers can hold the read lock at the same
-> time.
-> 
-> Unfortunately, this implementation may cause scheduling priority inversion
-> problem. Suppose the consumer has higher scheduling priority than the
-> producer. The consumer needs to acquire the write lock, but may be blocked
-> by the producer holding the read lock. Since read-write semaphore does not
-> support priority-boosting for the readers (even with CONFIG_PREEMPT_RT=y),
-> we have a case of priority inversion: a higher priority consumer is blocked
-> by a lower priority producer. This problem was reported in [1].
-> 
-> Furthermore, this could also cause stall problem, as described in [2].
-> 
-> Fix this problem by replacing rwlock with spinlock.
-> 
-> This reduces the event bandwidth, as the producers now have to contend with
-> each other for the spinlock. According to the benchmark from
-> https://github.com/rouming/test-tools/blob/master/stress-epoll.c:
-> 
->     On 12 x86 CPUs:
->                   Before     After        Diff
->         threads  events/ms  events/ms
->               8       7162       4956     -31%
->              16       8733       5383     -38%
->              32       7968       5572     -30%
->              64      10652       5739     -46%
->             128      11236       5931     -47%
-> 
->     On 4 riscv CPUs:
->                   Before     After        Diff
->         threads  events/ms  events/ms
->               8       2958       2833      -4%
->              16       3323       3097      -7%
->              32       3451       3240      -6%
->              64       3554       3178     -11%
->             128       3601       3235     -10%
-> 
-> Although the numbers look bad, it should be noted that this benchmark
-> creates multiple threads who do nothing except constantly generating new
-> epoll events, thus contention on the spinlock is high. For real workload,
-> the event rate is likely much lower, and the performance drop is not as
-> bad.
-> 
-> Using another benchmark (perf bench epoll wait) where spinlock contention
-> is lower, improvement is even observed on x86:
-> 
->     On 12 x86 CPUs:
->         Before: Averaged 110279 operations/sec (+- 1.09%), total secs = 8
->         After:  Averaged 114577 operations/sec (+- 2.25%), total secs = 8
-> 
->     On 4 riscv CPUs:
->         Before: Averaged 175767 operations/sec (+- 0.62%), total secs = 8
->         After:  Averaged 167396 operations/sec (+- 0.23%), total secs = 8
-> 
-> In conclusion, no one is likely to be upset over this change. After all,
-> spinlock was used originally for years, and the commit which converted to
-> rwlock didn't mention a real workload, just that the benchmark numbers are
-> nice.
-> 
-> This patch is not exactly the revert of commit a218cc491420 ("epoll: use
-> rwlock in order to reduce ep_poll_callback() contention"), because git
-> revert conflicts in some places which are not obvious on the resolution.
-> This patch is intended to be backported, therefore go with the obvious
-> approach:
-> 
->   - Replace rwlock_t with spinlock_t one to one
-> 
->   - Delete list_add_tail_lockless() and chain_epi_lockless(). These were
->     introduced to allow producers to concurrently add items to the list.
->     But now that spinlock no longer allows producers to touch the event
->     list concurrently, these two functions are not necessary anymore.
-> 
-> Fixes: a218cc491420 ("epoll: use rwlock in order to reduce ep_poll_callback() contention")
-> Signed-off-by: Nam Cao <namcao@linutronix.de>
-> Cc: stable@vger.kernel.org
+On Tue, 15 Jul 2025 at 05:47, Nam Cao <namcao@linutronix.de> wrote:
+>
+>  fs/eventpoll.c | 139 +++++++++----------------------------------------
+>  1 file changed, 26 insertions(+), 113 deletions(-)
 
-I forgot to add:
+Yeah, this is more like the kind of diffstat I like to see for
+eventpoll. Plus it makes things fundamentally simpler.
 
-Reported-by: Frederic Weisbecker <frederic@kernel.org>
-Closes: https://lore.kernel.org/linux-rt-users/20210825132754.GA895675@lothringen/ [1]
-Reported-by: Valentin Schneider <vschneid@redhat.com>
-Closes: https://lore.kernel.org/linux-rt-users/xhsmhttqvnall.mognet@vschneid.remote.csb/ [2]
+It might be worth looking at ep_poll_callback() - the only case that
+had read_lock_irqsave() - and seeing if perhaps some of the tests
+inside the lock might be done optimistically, or delayed to after the
+lock.
 
-Christian, do you mind adding those for me, if/when you apply the patch?
+For example, the whole wakeup sequence looks like it should be done
+*after* the ep->lock has been released, because it uses its own lock
+(ie the
 
-Nam
+                if (sync)
+                        wake_up_sync(&ep->wq);
+                else
+                        wake_up(&ep->wq);
+
+thing uses the wq lock, and there is nothing that ep->lock protects
+there as far as I can tell.
+
+So I think this has some potential for _simple_ optimizations, but I'm
+not sure how worth it it is.
+
+Thanks,
+          Linus
