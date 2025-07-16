@@ -1,218 +1,252 @@
-Received: from galois.linutronix.de (Galois.linutronix.de [193.142.43.55])
+Received: from NAM11-BN8-obe.outbound.protection.outlook.com (mail-bn8nam11on2072.outbound.protection.outlook.com [40.107.236.72])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 1B42928C00D;
-	Wed, 16 Jul 2025 07:41:14 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=193.142.43.55
-ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1752651676; cv=none; b=spLkT5e50rrGBJNIxQjaBDC+wma/upEpXAKEOnS3EJmgVMxXECupNj7HvnBPfpk0m8b6j8Pdehkz80LloMRR8QNeRFCEdgPochmv1WNJ7lfRD4Zz/0Xht6OVCg0urBPh/cVzKXwt4gXOY50eXsRA341fWitBBLu93f8Qf7ZIr3c=
-ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1752651676; c=relaxed/simple;
-	bh=7tLvQT4ajAYz8L2kE7Rd//y+9tF8RvMJqJqaL8Qg1AI=;
-	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 Content-Type:Content-Disposition:In-Reply-To; b=HgPB/Z9D7Yh0zrug09E4n3Lub2kQXxfi+ylKT89Kzw4tCOvHwidzGziD0iD18O4Fc8Tzl3uMspvFqOawYz93gTB0WJ9dlWeZ3ntMiAGNOzG9ibLaxBrIK6ABALZlarxhGEiEdiZtF25RpGmBTUGKTISuxggkXzlc3uOxptpy5+M=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linutronix.de; spf=pass smtp.mailfrom=linutronix.de; dkim=pass (2048-bit key) header.d=linutronix.de header.i=@linutronix.de header.b=tD8cN2xN; dkim=permerror (0-bit key) header.d=linutronix.de header.i=@linutronix.de header.b=Q7sLjV2z; arc=none smtp.client-ip=193.142.43.55
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linutronix.de
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=linutronix.de
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id D99902EE997;
+	Wed, 16 Jul 2025 08:34:23 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=fail smtp.client-ip=40.107.236.72
+ARC-Seal:i=2; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
+	t=1752654867; cv=fail; b=SRaIUP+rpbtFAt+ys5thMXTgc97XEcDfbHp7kcXZ2y4dMa9RHCpdUaRSZu0rbT0Aki2+MernJH82KHrkq29hSBpArnXYbDD3sW8oxS0LS1yUAIApNrbhOnDer74Ou0SDJPu9sGJ4iSe2wxoiWujv7GnQXiO0JwK0QmDgCZzpc2o=
+ARC-Message-Signature:i=2; a=rsa-sha256; d=subspace.kernel.org;
+	s=arc-20240116; t=1752654867; c=relaxed/simple;
+	bh=XzfRhkyRZn8uJx5wQX+WbdkKWBygE8LBrsa5yyhedhg=;
+	h=Message-ID:Date:MIME-Version:Subject:To:CC:References:From:
+	 In-Reply-To:Content-Type; b=u8ffmqeducPT8OheDWtPF6RPL3e6BNJHM0WKHV6ojWYt0B6Yi7dAuFe7DDgN2PoqxHk+LhRrd2me2LrtrjTWfeO0SWQ3Ocab4mt5RQwik9FG+5lEnrI+Xy7/O74cM7ThhiFkT93M9cIJvGeMhiShJ5I3+saKsVOhPkjZ6EC5Xdc=
+ARC-Authentication-Results:i=2; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=amd.com; spf=fail smtp.mailfrom=amd.com; dkim=pass (1024-bit key) header.d=amd.com header.i=@amd.com header.b=LFYmlJ4j; arc=fail smtp.client-ip=40.107.236.72
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=amd.com
+Authentication-Results: smtp.subspace.kernel.org; spf=fail smtp.mailfrom=amd.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="tD8cN2xN";
-	dkim=permerror (0-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="Q7sLjV2z"
-Date: Wed, 16 Jul 2025 09:41:10 +0200
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
-	s=2020; t=1752651672;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 in-reply-to:in-reply-to:references:references;
-	bh=kgwJrdiNOObJR6kCFcttJ7IUEoM+Yb14XVp75zVk58k=;
-	b=tD8cN2xNnCAqUZh5XcNaMwn+byVnz2K5nP5G3TYtrRlAkyADjGxw+rE0uBNf/kyFYDzFa1
-	bVZDvoOp3AJd9zVQ2UF6owcvmMTX0Jsh6tU992Y39wG/MG9o6EM3xma+sm21oKMznHqBIc
-	mZorfBGb1lphqH17+J9fSxZUYL8lhEtV1ySR1c8ZhlAaotLB7pUF2IteVGys3YBxSs+VjI
-	jF4by7tL7/hO7TAGhZG21xFEz0CsDnn4W0S4nMFyhyI8vkJt1oseSEhjoquWRkZUsrAETH
-	pyLihMBYv2PDEINi8Jyj+OvI6afWwcUUghOOMl/rYiqE1XhyWLyWXV+A+bt33Q==
-DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
-	s=2020e; t=1752651672;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 in-reply-to:in-reply-to:references:references;
-	bh=kgwJrdiNOObJR6kCFcttJ7IUEoM+Yb14XVp75zVk58k=;
-	b=Q7sLjV2z0D1AsbtLNbqAfLF4/7R9i0u8ircXmcQ8URApMlFJulJ16IcVCuG+i8DMFRGT95
-	ucI7vdlm9ebQKHDg==
-From: Nam Cao <namcao@linutronix.de>
-To: Linus Torvalds <torvalds@linux-foundation.org>
-Cc: Christian Brauner <brauner@kernel.org>, Xi Ruoyao <xry111@xry111.site>,
-	Frederic Weisbecker <frederic@kernel.org>,
-	Valentin Schneider <vschneid@redhat.com>,
-	Alexander Viro <viro@zeniv.linux.org.uk>, Jan Kara <jack@suse.cz>,
-	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-	John Ogness <john.ogness@linutronix.de>,
-	K Prateek Nayak <kprateek.nayak@amd.com>,
-	Clark Williams <clrkwllms@kernel.org>,
-	Steven Rostedt <rostedt@goodmis.org>, linux-fsdevel@vger.kernel.org,
-	linux-kernel@vger.kernel.org, linux-rt-devel@lists.linux.dev,
-	linux-rt-users@vger.kernel.org, Joe Damato <jdamato@fastly.com>,
-	Martin Karsten <mkarsten@uwaterloo.ca>,
-	Jens Axboe <axboe@kernel.dk>, stable@vger.kernel.org
-Subject: Re: [PATCH v4 1/1] eventpoll: Replace rwlock with spinlock
-Message-ID: <20250716074110.AY8PBtBi@linutronix.de>
-References: <cover.1752581388.git.namcao@linutronix.de>
- <ec92458ea357ec503c737ead0f10b2c6e4c37d47.1752581388.git.namcao@linutronix.de>
- <CAHk-=wheHZRWPyNNoqXB8+ygw2PqEYjbyKQfSbYpirecg5K1Nw@mail.gmail.com>
+	dkim=pass (1024-bit key) header.d=amd.com header.i=@amd.com header.b="LFYmlJ4j"
+ARC-Seal: i=1; a=rsa-sha256; s=arcselector10001; d=microsoft.com; cv=none;
+ b=ydlnOJl68/sALe+nE9ZptsT0XTdmzjF2o6FTBg7bL/VWTyuRyyxxHwjLymDXnK9PR831wRAmmG9/Owg2h0NJ646aDyA0ZhwAl4wLBLcR9UkdyfJ90gctQEnM1lhxucyQyr7B7T203c3y5rm99F2PjyyEFAS/7vYQT6Og30+qAJK6a+FMm5jk0Ee2zEG/UGIE0tVG26jdP9LejNV3W9/cE5g7XNG2OwLnR75xzEAMI6ENQ9Wh7Gh3g81Tn4gM4AeLM9Np54ZwRALB9J+LVbo2L2aGVmBEl5muqJ2E1tWCRbL9Y2Qe1UOHGpgJ/2e/eUQKsnb7Rk2OT5KQE0PUJBhAUg==
+ARC-Message-Signature: i=1; a=rsa-sha256; c=relaxed/relaxed; d=microsoft.com;
+ s=arcselector10001;
+ h=From:Date:Subject:Message-ID:Content-Type:MIME-Version:X-MS-Exchange-AntiSpam-MessageData-ChunkCount:X-MS-Exchange-AntiSpam-MessageData-0:X-MS-Exchange-AntiSpam-MessageData-1;
+ bh=dznyoN39twSHOk9h64oopq1p7l/ovxXtGqSjIu/Ppxg=;
+ b=Rhvh/0ivON0iGJUYeCPq/Dit0a1kKxjyEb27BcD6v11YxycPpNzFydGk7jn/vAerTgSFn+Ev5dVKs0dnnPGQhrMu6CTuPIrt7mMqQ+IFbjMHg7eflso2hp+ClPBee9vkpilhprswrHW+ObBxljow9O/XpMt5aLWaeuYOYGzKi6YiH9xHZAK4MEt5IzSVBoO+T9T9IJ3f9tO4p4C+NQSlE+WfiWRxqrgTeH6yLWXBnjRal3TTRpyMj+J3WWfxWwJsHAnPHbQao/PT5GGTHMwp53pC6CpO30PJi0C7e1HF4KaU0/qGCAeWA2RZJ4TvaepJxxq5n54FTuLJ2keLORw3Aw==
+ARC-Authentication-Results: i=1; mx.microsoft.com 1; spf=pass (sender ip is
+ 165.204.84.17) smtp.rcpttodomain=linutronix.de smtp.mailfrom=amd.com;
+ dmarc=pass (p=quarantine sp=quarantine pct=100) action=none
+ header.from=amd.com; dkim=none (message not signed); arc=none (0)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=amd.com; s=selector1;
+ h=From:Date:Subject:Message-ID:Content-Type:MIME-Version:X-MS-Exchange-SenderADCheck;
+ bh=dznyoN39twSHOk9h64oopq1p7l/ovxXtGqSjIu/Ppxg=;
+ b=LFYmlJ4jwzAOW+GZbO07PD1EU1x3Hf5uE4ezSfIj8zmbwMQTyu0Jbd26TIU8p1tUffn/ZcI/p6AQn7t8fQ0T764S3lK5odNcvbnXwhX0HFkpmKCr8h8nlNwJVvI34PVrbFjmIXRkhFv/tuZBaKKotU8yf8PObwEgxUWN4DYcF7g=
+Received: from BN9PR03CA0453.namprd03.prod.outlook.com (2603:10b6:408:139::8)
+ by IA0PPF8FC6E1236.namprd12.prod.outlook.com (2603:10b6:20f:fc04::bda) with
+ Microsoft SMTP Server (version=TLS1_2,
+ cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.20.8835.25; Wed, 16 Jul
+ 2025 08:34:21 +0000
+Received: from BL6PEPF0001AB4C.namprd04.prod.outlook.com
+ (2603:10b6:408:139:cafe::35) by BN9PR03CA0453.outlook.office365.com
+ (2603:10b6:408:139::8) with Microsoft SMTP Server (version=TLS1_3,
+ cipher=TLS_AES_256_GCM_SHA384) id 15.20.8943.19 via Frontend Transport; Wed,
+ 16 Jul 2025 08:34:21 +0000
+X-MS-Exchange-Authentication-Results: spf=pass (sender IP is 165.204.84.17)
+ smtp.mailfrom=amd.com; dkim=none (message not signed)
+ header.d=none;dmarc=pass action=none header.from=amd.com;
+Received-SPF: Pass (protection.outlook.com: domain of amd.com designates
+ 165.204.84.17 as permitted sender) receiver=protection.outlook.com;
+ client-ip=165.204.84.17; helo=SATLEXMB03.amd.com; pr=C
+Received: from SATLEXMB03.amd.com (165.204.84.17) by
+ BL6PEPF0001AB4C.mail.protection.outlook.com (10.167.242.70) with Microsoft
+ SMTP Server (version=TLS1_2, cipher=TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256) id
+ 15.20.8922.22 via Frontend Transport; Wed, 16 Jul 2025 08:34:21 +0000
+Received: from SATLEXMB04.amd.com (10.181.40.145) by SATLEXMB03.amd.com
+ (10.181.40.144) with Microsoft SMTP Server (version=TLS1_2,
+ cipher=TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256) id 15.1.2507.39; Wed, 16 Jul
+ 2025 03:34:20 -0500
+Received: from [10.252.218.128] (10.180.168.240) by SATLEXMB04.amd.com
+ (10.181.40.145) with Microsoft SMTP Server id 15.1.2507.39 via Frontend
+ Transport; Wed, 16 Jul 2025 03:34:15 -0500
+Message-ID: <9b03a602-cfa9-431a-97b9-7f46d2238e6a@amd.com>
+Date: Wed, 16 Jul 2025 14:04:14 +0530
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
 List-Subscribe: <mailto:linux-rt-users+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-In-Reply-To: <CAHk-=wheHZRWPyNNoqXB8+ygw2PqEYjbyKQfSbYpirecg5K1Nw@mail.gmail.com>
+User-Agent: Mozilla Thunderbird
+Subject: Re: [PATCH v4 1/1] eventpoll: Replace rwlock with spinlock
+To: Nam Cao <namcao@linutronix.de>, Christian Brauner <brauner@kernel.org>,
+	Linus Torvalds <torvalds@linux-foundation.org>, Xi Ruoyao
+	<xry111@xry111.site>, Frederic Weisbecker <frederic@kernel.org>, Valentin
+ Schneider <vschneid@redhat.com>, Alexander Viro <viro@zeniv.linux.org.uk>,
+	Jan Kara <jack@suse.cz>, Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+	John Ogness <john.ogness@linutronix.de>, Clark Williams
+	<clrkwllms@kernel.org>, Steven Rostedt <rostedt@goodmis.org>,
+	<linux-fsdevel@vger.kernel.org>, <linux-kernel@vger.kernel.org>,
+	<linux-rt-devel@lists.linux.dev>, <linux-rt-users@vger.kernel.org>, Joe
+ Damato <jdamato@fastly.com>, Martin Karsten <mkarsten@uwaterloo.ca>, Jens
+ Axboe <axboe@kernel.dk>
+CC: <stable@vger.kernel.org>
+References: <cover.1752581388.git.namcao@linutronix.de>
+ <ec92458ea357ec503c737ead0f10b2c6e4c37d47.1752581388.git.namcao@linutronix.de>
+Content-Language: en-US
+From: K Prateek Nayak <kprateek.nayak@amd.com>
+In-Reply-To: <ec92458ea357ec503c737ead0f10b2c6e4c37d47.1752581388.git.namcao@linutronix.de>
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: 7bit
+Received-SPF: None (SATLEXMB03.amd.com: kprateek.nayak@amd.com does not
+ designate permitted sender hosts)
+X-EOPAttributedMessage: 0
+X-MS-PublicTrafficType: Email
+X-MS-TrafficTypeDiagnostic: BL6PEPF0001AB4C:EE_|IA0PPF8FC6E1236:EE_
+X-MS-Office365-Filtering-Correlation-Id: d5b3969a-cac2-40b6-129f-08ddc4438fe2
+X-MS-Exchange-SenderADCheck: 1
+X-MS-Exchange-AntiSpam-Relay: 0
+X-Microsoft-Antispam:
+	BCL:0;ARA:13230040|36860700013|7416014|376014|1800799024|82310400026|921020;
+X-Microsoft-Antispam-Message-Info:
+	=?utf-8?B?MFY1dEdNaGNoZUw1TUZST2RqaWtYUEQwdmZBaGhjQk8zd2lqZWUrL29zTUFW?=
+ =?utf-8?B?QnJtTks4elEzU0k5b21yeG4yZ2phZjBBd1lxeHhub2E5MFZZQlREaXRHTCtS?=
+ =?utf-8?B?cXRvSFIzU2xKa3pmbkpLRWYyRHJTYTF4Wjl3N0RvQ2FEN0NlazJwWmQ5d0ZR?=
+ =?utf-8?B?QlFNQkJRWDRtL3Z6NitSeFo2cmMxYVYzSXh5VlZkRFlBdlpZd05yRENMd0pK?=
+ =?utf-8?B?YkJ1ek5idThuUTBySHVFM0VHTDRMQVduQ3Nsd3l6SWdNZDFVdktuNUY5Y3JF?=
+ =?utf-8?B?b1RpVU5sdENFSVJJZWdTc3VEdXdxaUkyOUU0UUZ2cEw5VW1Wbmd4ZGtCOEpy?=
+ =?utf-8?B?cTlCb0V1ZzRaTDhhblppWkk2TW1PK1duam1wRW1maWJaOGFBdEJsc3VobXds?=
+ =?utf-8?B?MEltYmFSRm1kcDJKaVRlZkZxV3ZxTldRWTREUHlwMHVkaG8vRlJNTkQ0Rllw?=
+ =?utf-8?B?WTY5endYZUNGU1U0c3VjeVp5Mit3ZXZJRGdGcWdrVlZEcDJ2ckM4NmRzZk42?=
+ =?utf-8?B?UUxETEtUSHhmcW16aHVQMDA1dlhlSU9EQXljRUMxS1BWbTE3dlNtV2NjaFJv?=
+ =?utf-8?B?RGgxUk93S1Fuczh3N013S3hlQUN6a0s5eWYrK3FTbkkxS2RnWWtMcEZaUG5B?=
+ =?utf-8?B?b3F0cFl5YmRWZW5TbmRyRHVUR3A5WlYzRjZDaURlYmNNWlZzaHpTR2JBRnpJ?=
+ =?utf-8?B?bkM5blc0VVlVRDg1cUM1SlN4am5jMFZYQWtLZ3VyU1ZsdXQ1M0kyUlhSTy9p?=
+ =?utf-8?B?S2RMblRVY1ZJK3pTdHBXank4c2ljcWFaUTlIcytxUXk3YjV1YVFLQU9FS29s?=
+ =?utf-8?B?dUNUYWtMM3hFY0NHUytPUFVrd1VCNGlXMUZDcEZHYjMrZU5WRk1GVW9wMUdF?=
+ =?utf-8?B?T1hWNkdnendSTjJDSU5uT2lGVnRPc00yaEpZWHhRNVpFRTZIVmhnRWRWVGF4?=
+ =?utf-8?B?R3U1T2QyQ0lZajFpZ2lBVldoc0NHbUpYSElSQjZ5Q0FHQzd4b1J1TWNHQVpC?=
+ =?utf-8?B?UUNOTHZiNUdiS2lURlAzd09nY1J6dExiTVFjTTdjVktzT2F1WmN5UUc5L2FB?=
+ =?utf-8?B?Vjc1aFc0ODVYQzhjblZZb3ZpcUErUm9pQWxaRVMySEdkcnRpSExqQmJLMCs1?=
+ =?utf-8?B?bWVyKzE0M3pKN0k2YVcwMTZ0ck5Nd2dBTG9zNytSdm53NG1sZDZWNlo1RXRx?=
+ =?utf-8?B?TDVUcW1weVBKNjlpZ0RMUE9ySm9JdTBlMFdYSGV3UzRIbyswaWlTaWVZaEd0?=
+ =?utf-8?B?SkxQUkR2dGQwNVZFK1Y2b0Z3V01aR3k3ZlNjRlpueG1jVUZES2dnU2cwaTZU?=
+ =?utf-8?B?U1BBQjdoUEJzTlFWTC9vWnBCMjBlei8yQjNlc3ord21iSEd5RDhPTlF4Y1lX?=
+ =?utf-8?B?akM5WGt0NHY3eVNoeFF5T056Q3RjdHpRdnJIZ05CVWFqQ3N0MlQ3NUdQUWFH?=
+ =?utf-8?B?STRqTVVEQWN6YnRUOGJVc2xRLzRDMHJmcDVoaWlNRFJldlRxbWI0OHFEaGlV?=
+ =?utf-8?B?L3QrbUlQL2NhRVVtQ1FIak1SWjdUTVF3VjVVcU1TYldLL2U3dkdKbnBqOTNI?=
+ =?utf-8?B?dy9mOW1VSTdIOTNlTWJidUE5TE51aDBSeDRNdmxmYVFuVisxQUVGSjNiV25X?=
+ =?utf-8?B?NWRGejJMdk9ORnVCeWljTXgrcHovZWhPTldrRXhDY2hsRDc2cGU0LzE2OTJK?=
+ =?utf-8?B?NklZeXpyTEVzay8rZ1g4TmFtU2tRZ1dxZ1QrWk1CTU9Nakx2b3IyeXMyczZ4?=
+ =?utf-8?B?eHRXcmxYekhxcUJxekJFcG9ZM2ZESll5TzBTYmMrYk1QUXphaDVSMmRqUUpo?=
+ =?utf-8?B?aEMzUS9zL09WaXJCT0RVYTNrUmZwWVhVL0VTckFlV0cya1VlbVpWeVlsanYx?=
+ =?utf-8?B?NWdVTytXRWF5ZWtaRmFLS2VIczJpYStKdEpaS0IwR0RaWHE3WlFyT1hGcmxH?=
+ =?utf-8?B?QlhnTnRSemJjSExlYTd2WmVSazQ0QVhZSHB2ZnVhU29xSWdYS2NLdWNmSVY3?=
+ =?utf-8?B?dTg1c01mcEVtdnEyZG9QR0Y1QzZybklKY0ZzVmRmZm1ZM204bUZMYzhrS2Nl?=
+ =?utf-8?B?MSs1UEp4Wk8wNXFLMmlmWEppK2I3MVV0MjhIb2N1NHlLczNpZi81dTBpNzhu?=
+ =?utf-8?Q?BwjI=3D?=
+X-Forefront-Antispam-Report:
+	CIP:165.204.84.17;CTRY:US;LANG:en;SCL:1;SRV:;IPV:CAL;SFV:NSPM;H:SATLEXMB03.amd.com;PTR:InfoDomainNonexistent;CAT:NONE;SFS:(13230040)(36860700013)(7416014)(376014)(1800799024)(82310400026)(921020);DIR:OUT;SFP:1101;
+X-OriginatorOrg: amd.com
+X-MS-Exchange-CrossTenant-OriginalArrivalTime: 16 Jul 2025 08:34:21.1859
+ (UTC)
+X-MS-Exchange-CrossTenant-Network-Message-Id: d5b3969a-cac2-40b6-129f-08ddc4438fe2
+X-MS-Exchange-CrossTenant-Id: 3dd8961f-e488-4e60-8e11-a82d994e183d
+X-MS-Exchange-CrossTenant-OriginalAttributedTenantConnectingIp: TenantId=3dd8961f-e488-4e60-8e11-a82d994e183d;Ip=[165.204.84.17];Helo=[SATLEXMB03.amd.com]
+X-MS-Exchange-CrossTenant-AuthSource:
+	BL6PEPF0001AB4C.namprd04.prod.outlook.com
+X-MS-Exchange-CrossTenant-AuthAs: Anonymous
+X-MS-Exchange-CrossTenant-FromEntityHeader: HybridOnPrem
+X-MS-Exchange-Transport-CrossTenantHeadersStamped: IA0PPF8FC6E1236
 
-On Tue, Jul 15, 2025 at 09:42:52AM -0700, Linus Torvalds wrote:
-> On Tue, 15 Jul 2025 at 05:47, Nam Cao <namcao@linutronix.de> wrote:
-> >
-> >  fs/eventpoll.c | 139 +++++++++----------------------------------------
-> >  1 file changed, 26 insertions(+), 113 deletions(-)
-> 
-> Yeah, this is more like the kind of diffstat I like to see for
-> eventpoll. Plus it makes things fundamentally simpler.
-> 
-> It might be worth looking at ep_poll_callback() - the only case that
-> had read_lock_irqsave() - and seeing if perhaps some of the tests
-> inside the lock might be done optimistically, or delayed to after the
-> lock.
-> 
-> For example, the whole wakeup sequence looks like it should be done
-> *after* the ep->lock has been released, because it uses its own lock
-> (ie the
-> 
->                 if (sync)
->                         wake_up_sync(&ep->wq);
->                 else
->                         wake_up(&ep->wq);
-> 
-> thing uses the wq lock, and there is nothing that ep->lock protects
-> there as far as I can tell.
-> 
-> So I think this has some potential for _simple_ optimizations, but I'm
-> not sure how worth it it is.
+Hello Nam,
 
-Actually ep->lock does protect this part. Because ep_poll() touches ep->wq
-without holding the waitqueue's lock.
+On 7/15/2025 6:16 PM, Nam Cao wrote:
+> The ready event list of an epoll object is protected by read-write
+> semaphore:
+> 
+>   - The consumer (waiter) acquires the write lock and takes items.
+>   - the producer (waker) takes the read lock and adds items.
+> 
+> The point of this design is enabling epoll to scale well with large number
+> of producers, as multiple producers can hold the read lock at the same
+> time.
+> 
+> Unfortunately, this implementation may cause scheduling priority inversion
+> problem. Suppose the consumer has higher scheduling priority than the
+> producer. The consumer needs to acquire the write lock, but may be blocked
+> by the producer holding the read lock. Since read-write semaphore does not
+> support priority-boosting for the readers (even with CONFIG_PREEMPT_RT=y),
+> we have a case of priority inversion: a higher priority consumer is blocked
+> by a lower priority producer. This problem was reported in [1].
+> 
+> Furthermore, this could also cause stall problem, as described in [2].
+> 
+> Fix this problem by replacing rwlock with spinlock.
+> 
+> This reduces the event bandwidth, as the producers now have to contend with
+> each other for the spinlock. According to the benchmark from
+> https://github.com/rouming/test-tools/blob/master/stress-epoll.c:
+> 
+>     On 12 x86 CPUs:
+>                   Before     After        Diff
+>         threads  events/ms  events/ms
+>               8       7162       4956     -31%
+>              16       8733       5383     -38%
+>              32       7968       5572     -30%
+>              64      10652       5739     -46%
+>             128      11236       5931     -47%
+> 
+>     On 4 riscv CPUs:
+>                   Before     After        Diff
+>         threads  events/ms  events/ms
+>               8       2958       2833      -4%
+>              16       3323       3097      -7%
+>              32       3451       3240      -6%
+>              64       3554       3178     -11%
+>             128       3601       3235     -10%
+> 
+> Although the numbers look bad, it should be noted that this benchmark
+> creates multiple threads who do nothing except constantly generating new
+> epoll events, thus contention on the spinlock is high. For real workload,
+> the event rate is likely much lower, and the performance drop is not as
+> bad.
+> 
+> Using another benchmark (perf bench epoll wait) where spinlock contention
+> is lower, improvement is even observed on x86:
+> 
+>     On 12 x86 CPUs:
+>         Before: Averaged 110279 operations/sec (+- 1.09%), total secs = 8
+>         After:  Averaged 114577 operations/sec (+- 2.25%), total secs = 8
+> 
+>     On 4 riscv CPUs:
+>         Before: Averaged 175767 operations/sec (+- 0.62%), total secs = 8
+>         After:  Averaged 167396 operations/sec (+- 0.23%), total secs = 8
+> 
+> In conclusion, no one is likely to be upset over this change. After all,
+> spinlock was used originally for years, and the commit which converted to
+> rwlock didn't mention a real workload, just that the benchmark numbers are
+> nice.
+> 
+> This patch is not exactly the revert of commit a218cc491420 ("epoll: use
+> rwlock in order to reduce ep_poll_callback() contention"), because git
+> revert conflicts in some places which are not obvious on the resolution.
+> This patch is intended to be backported, therefore go with the obvious
+> approach:
+> 
+>   - Replace rwlock_t with spinlock_t one to one
+> 
+>   - Delete list_add_tail_lockless() and chain_epi_lockless(). These were
+>     introduced to allow producers to concurrently add items to the list.
+>     But now that spinlock no longer allows producers to touch the event
+>     list concurrently, these two functions are not necessary anymore.
+> 
+> Fixes: a218cc491420 ("epoll: use rwlock in order to reduce ep_poll_callback() contention")
+> Signed-off-by: Nam Cao <namcao@linutronix.de>
+> Cc: stable@vger.kernel.org
 
-We could do something like the diff below. But things are not so simple
-anymore.
+Tested this version with the reproducer that Jan shared in [1] on top of
+tip:sched/core (PREEMPT_RT) and I didn't run into any rcu-stalls with
+your patch applied on top (the VM is running the repro for over an hour
+now and is still responsive). Feel free to include:
 
-Best regards,
-Nam
+Tested-by: K Prateek Nayak <kprateek.nayak@amd.com>
 
-diff --git a/fs/eventpoll.c b/fs/eventpoll.c
-index a171f7e7dacc..5e6c7da606e7 100644
---- a/fs/eventpoll.c
-+++ b/fs/eventpoll.c
-@@ -1252,8 +1252,6 @@ static int ep_poll_callback(wait_queue_entry_t *wait, unsigned mode, int sync, v
- 	unsigned long flags;
- 	int ewake = 0;
- 
--	spin_lock_irqsave(&ep->lock, flags);
--
- 	ep_set_busy_poll_napi_id(epi);
- 
- 	/*
-@@ -1263,7 +1261,7 @@ static int ep_poll_callback(wait_queue_entry_t *wait, unsigned mode, int sync, v
- 	 * until the next EPOLL_CTL_MOD will be issued.
- 	 */
- 	if (!(epi->event.events & ~EP_PRIVATE_BITS))
--		goto out_unlock;
-+		goto out;
- 
- 	/*
- 	 * Check the events coming with the callback. At this stage, not
-@@ -1272,7 +1270,7 @@ static int ep_poll_callback(wait_queue_entry_t *wait, unsigned mode, int sync, v
- 	 * test for "key" != NULL before the event match test.
- 	 */
- 	if (pollflags && !(pollflags & epi->event.events))
--		goto out_unlock;
-+		goto out;
- 
- 	/*
- 	 * If we are transferring events to userspace, we can hold no locks
-@@ -1280,6 +1278,8 @@ static int ep_poll_callback(wait_queue_entry_t *wait, unsigned mode, int sync, v
- 	 * semantics). All the events that happen during that period of time are
- 	 * chained in ep->ovflist and requeued later on.
- 	 */
-+	spin_lock_irqsave(&ep->lock, flags);
-+
- 	if (READ_ONCE(ep->ovflist) != EP_UNACTIVE_PTR) {
- 		if (epi->next == EP_UNACTIVE_PTR) {
- 			epi->next = READ_ONCE(ep->ovflist);
-@@ -1292,9 +1292,14 @@ static int ep_poll_callback(wait_queue_entry_t *wait, unsigned mode, int sync, v
- 		ep_pm_stay_awake_rcu(epi);
- 	}
- 
-+	spin_unlock_irqrestore(&ep->lock, flags);
-+
-+
- 	/*
- 	 * Wake up ( if active ) both the eventpoll wait list and the ->poll()
- 	 * wait list.
-+	 *
-+	 * Memory barrier for waitqueue_active() from spin_unlock_irqrestore().
- 	 */
- 	if (waitqueue_active(&ep->wq)) {
- 		if ((epi->event.events & EPOLLEXCLUSIVE) &&
-@@ -1321,9 +1326,7 @@ static int ep_poll_callback(wait_queue_entry_t *wait, unsigned mode, int sync, v
- 	if (waitqueue_active(&ep->poll_wait))
- 		pwake++;
- 
--out_unlock:
--	spin_unlock_irqrestore(&ep->lock, flags);
--
-+out:
- 	/* We have to call this outside the lock */
- 	if (pwake)
- 		ep_poll_safewake(ep, epi, pollflags & EPOLL_URING_WAKE);
-@@ -2001,13 +2004,7 @@ static int ep_poll(struct eventpoll *ep, struct epoll_event __user *events,
- 		init_wait(&wait);
- 		wait.func = ep_autoremove_wake_function;
- 
--		spin_lock_irq(&ep->lock);
--		/*
--		 * Barrierless variant, waitqueue_active() is called under
--		 * the same lock on wakeup ep_poll_callback() side, so it
--		 * is safe to avoid an explicit barrier.
--		 */
--		__set_current_state(TASK_INTERRUPTIBLE);
-+		prepare_to_wait_exclusive(&ep->wq, &wait, TASK_INTERRUPTIBLE);
- 
- 		/*
- 		 * Do the final check under the lock. ep_start/done_scan()
-@@ -2016,10 +2013,8 @@ static int ep_poll(struct eventpoll *ep, struct epoll_event __user *events,
- 		 * period of time although events are pending, so lock is
- 		 * important.
- 		 */
-+		spin_lock_irq(&ep->lock);
- 		eavail = ep_events_available(ep);
--		if (!eavail)
--			__add_wait_queue_exclusive(&ep->wq, &wait);
--
- 		spin_unlock_irq(&ep->lock);
- 
- 		if (!eavail)
-@@ -2036,7 +2031,7 @@ static int ep_poll(struct eventpoll *ep, struct epoll_event __user *events,
- 		eavail = 1;
- 
- 		if (!list_empty_careful(&wait.entry)) {
--			spin_lock_irq(&ep->lock);
-+			spin_lock_irq(&ep->wq.lock);
- 			/*
- 			 * If the thread timed out and is not on the wait queue,
- 			 * it means that the thread was woken up after its
-@@ -2047,7 +2042,7 @@ static int ep_poll(struct eventpoll *ep, struct epoll_event __user *events,
- 			if (timed_out)
- 				eavail = list_empty(&wait.entry);
- 			__remove_wait_queue(&ep->wq, &wait);
--			spin_unlock_irq(&ep->lock);
-+			spin_unlock_irq(&ep->wq.lock);
- 		}
- 	}
- }
+[1] https://lore.kernel.org/all/7483d3ae-5846-4067-b9f7-390a614ba408@siemens.com/
+
+> ---
+>  fs/eventpoll.c | 139 +++++++++----------------------------------------
+>  1 file changed, 26 insertions(+), 113 deletions(-)
+-- 
+Thanks and Regards,
+Prateek
+
