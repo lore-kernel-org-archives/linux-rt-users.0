@@ -1,76 +1,75 @@
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id BDB931E0DD8
-	for <linux-rt-users@vger.kernel.org>; Mon, 21 Jul 2025 19:06:11 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id B29B6A95C
+	for <linux-rt-users@vger.kernel.org>; Mon, 21 Jul 2025 19:10:03 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1753124773; cv=none; b=jIJAtATwSyfxa+Q+n/TOqN3HY9cykxGNaYwU5LOmgsUUJAdx6xTdU4yYAXux7AVjrTpWK2lNN3F+1ponOb+dM8FcvqpqnyZqQJETmN5RlrNn6c2Ev/PnwozaekkaWk70wb2WlGFxhOVUvk93qN+5Jc/u3Vxl9cULszXvB9P3hH0=
+	t=1753125005; cv=none; b=kEJu2A1rCmXYdM8HPfeItkr07Mm6/tqjSk4Pyi4E72+ZCUWlaQBL3ItnXkMXP6EfMBhzzts+uLVTZv17/nbO9LGK6XYCA7OrbghpZ5h6Baxu1V5O5CyhoGpJkfYStCaamGWa/RVNZytsWgUDjiRlSOCOdk+iF4X/jvLugngB+k8=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1753124773; c=relaxed/simple;
-	bh=eIkCp2MprQvey0mgrkveJslLJTlpQ58pigSkAumnvmw=;
+	s=arc-20240116; t=1753125005; c=relaxed/simple;
+	bh=1rR1AyUg2Yye/KiZEviIX47h1W1O5Je/PDeIZ1sMeys=;
 	h=Date:From:To:cc:Subject:In-Reply-To:Message-ID:References:
-	 MIME-Version:Content-Type; b=iZJlDSLvNU0FfxsK+V4G6MoPbIkr81xRmRoU35LNHgctJd6nBeIrO7jU2S4gjdwvmdtbdpKwe3CtNU82r2Zfhk5td4KADrHW0Idee0hjssA5ORNSsg5UKrRYz+H5GxeLGwh12FTzRNxj05haHYGEcHy1+ZXoJEtOr8LUdWga2Gs=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=I1Xuc0h7; arc=none smtp.client-ip=170.10.129.124
+	 MIME-Version:Content-Type; b=E8Hw3X303CGUZSMNkrzxThvsKJYlGTAnjjNz+md9qwyatTV726rtKrihOIOKN5QmaqH0EqAnhmdlfTJaYPdJpNUx4WVsd7uEa1arKdjjVpbH2VwcpHjtvc0hepZer2ctW36f8bDqr4xWwHus2c5u4X81zJBmeuy0pY0w+kC45iQ=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=WNZIcYUw; arc=none smtp.client-ip=170.10.129.124
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="I1Xuc0h7"
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="WNZIcYUw"
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1753124770;
+	s=mimecast20190719; t=1753125002;
 	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
 	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
 	 in-reply-to:in-reply-to:references:references;
-	bh=Q49kXbf9pZHSBSYfP7LechvXZVVdp4S0YcsR0o69bJc=;
-	b=I1Xuc0h7EeXHOw2J/kknzxMzNj1lyh3eIDDDYV8guk7/gfrTs+b1osDtM+qNM9/6fTeyH7
-	sKo21zWaY5jBIaqxo1ORGfW1jMcyTeQK8CrMM9bUKfDh35yhC5tefP/MEbW5Ge5Y3Gekm+
-	v+uhEt+s1npUplW8lll3WtJs0WOHpJ8=
-Received: from mail-qv1-f70.google.com (mail-qv1-f70.google.com
- [209.85.219.70]) by relay.mimecast.com with ESMTP with STARTTLS
+	bh=WC9PDgKKznuZtp5e1tMN++GJtgYalAnWlSOnFx5oHwc=;
+	b=WNZIcYUwKUftcXGnrUUouixfmENiqUXFdEDOADxQzz1LZ0jRy8Anm878QeAEkSswFRWYML
+	WuUZ6ntR9amadcNd5DUIC96h7O0jaWxx3tntnA9tj8djo7xcfDvQ1S2MDKd7/nyei1uhcs
+	sF65h5auFoU6GBNhoAhGYsgXkX5AoQg=
+Received: from mail-qk1-f200.google.com (mail-qk1-f200.google.com
+ [209.85.222.200]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
- us-mta-391-5_ysxMvXOr2lfgtMcyEzBw-1; Mon, 21 Jul 2025 15:06:07 -0400
-X-MC-Unique: 5_ysxMvXOr2lfgtMcyEzBw-1
-X-Mimecast-MFC-AGG-ID: 5_ysxMvXOr2lfgtMcyEzBw_1753124767
-Received: by mail-qv1-f70.google.com with SMTP id 6a1803df08f44-6fabd295d12so64865646d6.1
-        for <linux-rt-users@vger.kernel.org>; Mon, 21 Jul 2025 12:06:07 -0700 (PDT)
+ us-mta-655-TrGEyZEUMCmbI5aeyFwSPA-1; Mon, 21 Jul 2025 15:10:00 -0400
+X-MC-Unique: TrGEyZEUMCmbI5aeyFwSPA-1
+X-Mimecast-MFC-AGG-ID: TrGEyZEUMCmbI5aeyFwSPA_1753125000
+Received: by mail-qk1-f200.google.com with SMTP id af79cd13be357-7e4ca52aedaso118109785a.1
+        for <linux-rt-users@vger.kernel.org>; Mon, 21 Jul 2025 12:10:00 -0700 (PDT)
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1753124766; x=1753729566;
+        d=1e100.net; s=20230601; t=1753125000; x=1753729800;
         h=mime-version:references:message-id:in-reply-to:subject:cc:to:from
          :date:x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
-        bh=Q49kXbf9pZHSBSYfP7LechvXZVVdp4S0YcsR0o69bJc=;
-        b=fwGeoIUMBbiybqtwxMeChjDIcMkLupVxstVm6w/SucVIva7qIkF0DCgwOUEg7jhMW9
-         uNeKWBauZR11uwuff2kFEX1Mr1MtHa/n1aiFPwROMX+n/NApnReeGvDJ7tZT71XthzrK
-         EV2DLYxteGTXn5eihzsO5VDwSayNwh/jkPjyfZOgt5ytVSwczZ5xqe47Fwp4UAxxxSCH
-         Ll3VCL+Oj80ZuZFs3zJTfYYvaCwekeHmYcjZzjhrPCaIRIAGUeDB907rx+0CM9MYlt85
-         Rc0GSam5qIX8KxZ3cwsZNcKkchH1t2dNaJzbK6l5mAbxobVZU1w1skhvR8pfaxAw2HYM
-         wpAg==
-X-Gm-Message-State: AOJu0Yze6sTJhN1BCsSHF83JKu2XnHvazoHVuxHh9kZuhi01gRKVLkId
-	0q1w5Q3d/w2AGz2jYIWzF5cog7jY0tZObADx0+4kgllgoEUqNs88OpEgOrYg/w2rsiR3FqNtYNl
-	2J8fkXAiK+bEb8gD45Lc63Wa2G553qIZZKiFmR7bJf8wfJI/uLROIyjJujNOI9rkJuyWAqJt9uZ
-	ZV
-X-Gm-Gg: ASbGncst0B+8QLEWclWLNHFd+lgq3Yo9EYIXqncM11lCK/LNpYdoVmvSbZgTRnbMe/d
-	3CIoVTnwvqiMqFNkgQgUuuSImUoYRzF17Nd6XAHNCueGm/iriOh1IyXO37S8opGhA04tTSwSgVM
-	RhwhBBSSJ/II5OexnAr835OaP4x6eiTyTv9t7Li+GEFquiZPXH/ORavpWF+p69QyH1an+iNtHrd
-	ts9cCzJNrV9HNPd+IKgjCiBAg5Y3CxKIU+Pqwiq4En+CHZZ3rXNAJTnJgMq13MAZ/Gr71t1/gMw
-	YaUvOlvRPASP6BwWgSQ3Mby+IedaGA==
-X-Received: by 2002:ad4:5f46:0:b0:704:8afa:250c with SMTP id 6a1803df08f44-704f48364c2mr293243906d6.15.1753124766055;
-        Mon, 21 Jul 2025 12:06:06 -0700 (PDT)
-X-Google-Smtp-Source: AGHT+IEqwwb6oXNq+Qbhbjp5U6Lmt+X0HXNsRlsotPcD2q0uUrAn9t6dPRl5+aOjB8q7dmebCxvfNw==
-X-Received: by 2002:ad4:5f46:0:b0:704:8afa:250c with SMTP id 6a1803df08f44-704f48364c2mr293243546d6.15.1753124765638;
-        Mon, 21 Jul 2025 12:06:05 -0700 (PDT)
+        bh=WC9PDgKKznuZtp5e1tMN++GJtgYalAnWlSOnFx5oHwc=;
+        b=W//pEa6jfIXMvhEccibJVDuGWZbz2V5TkoMYkv3QF1RiyGh/LOfIkgcW/xO1kcdoyz
+         mdStKe1Mj1F44TJV6YBsKF4HRb3HWMMaB8O4JCyByKP35pEMXZsn5NYpzECBvBmjc6d8
+         W/zrnUcACqqUsPznr/VqwHu9zban3TczGmiiDNaRFByaw6fvtFUKMCxxSpAHZyeKEhjw
+         vUesBxDbfe/X+5xUkr/e2DHis0tVTX2pyFsuh+KOHVUvGwEz0Nlolh0558GsrFO0S89y
+         2hEPPpB83kK2p/6AeL4OVi13+/HyCMaDhnR1JthrZ9mj3DNZWlvao1uc3yucWEIp2Cdk
+         OWzg==
+X-Gm-Message-State: AOJu0YxbkxyJh4dccX4fxABvhzCQNoKa3HIxHmXeA16qOi0qUmGGnop+
+	kzTv2XkrAoWw0yM+olLO7STlGAXuBKdm/WWGs0b4mlIScKylgnUgd7C4ypAlNMSRx7c0JMDUTH3
+	N9lJO0tWKCMjQpvlfLs+TUFd6epVTpBjByTMlmTz1NyArB9sOxuqNe4YzttLzxtgxBGHLKpJE5N
+	K5
+X-Gm-Gg: ASbGncvFZnxymlD6NrkJN2ZFhFs09feMMfPBG+7L8uEMbvkM+xbf0zYtfaX7Ew99a/G
+	QcktDnqugInef7F4dIi1dE4Hgky50K0j5kuYLPZEMmPYLQ83rtbSYF58y03ksyfyC/QckFmI2wh
+	hoyhFgyBEzqqV46wOQ5vXL6oImgfkLvIyfGeMH8GMx4Fof7HNOGArTbbirT1hg0hH2Jk0twUCIX
+	37rOF+73cnXWMkmCdyY6z5gGnVebsgfhYGNMLrVVsk2Tmit5O5RtZhViC19CB3YPfz30JyoMbYv
+	0K0w3lYAkZVntlKc9y+ZVtPeQmaKQQ==
+X-Received: by 2002:a05:620a:c55:b0:7e1:38c7:d073 with SMTP id af79cd13be357-7e342ab1761mr3163748485a.14.1753124999871;
+        Mon, 21 Jul 2025 12:09:59 -0700 (PDT)
+X-Google-Smtp-Source: AGHT+IHHy/yHZnrHoy7s+n63XrjSV/yEq/pJ6VmsVO8u8xOmNig839NhAOpZpbYzMhHXpubHtL6pjw==
+X-Received: by 2002:a05:620a:c55:b0:7e1:38c7:d073 with SMTP id af79cd13be357-7e342ab1761mr3163742685a.14.1753124999255;
+        Mon, 21 Jul 2025 12:09:59 -0700 (PDT)
 Received: from fionn ([142.189.102.151])
-        by smtp.gmail.com with ESMTPSA id 6a1803df08f44-7051ba6b02dsm41765526d6.63.2025.07.21.12.06.05
+        by smtp.gmail.com with ESMTPSA id af79cd13be357-7e356c40b33sm441873585a.63.2025.07.21.12.09.58
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Mon, 21 Jul 2025 12:06:05 -0700 (PDT)
-Date: Mon, 21 Jul 2025 15:06:04 -0400 (EDT)
+        Mon, 21 Jul 2025 12:09:58 -0700 (PDT)
+Date: Mon, 21 Jul 2025 15:09:57 -0400 (EDT)
 From: John Kacur <jkacur@redhat.com>
 To: "Ahmed S. Darwish" <darwi@linutronix.de>
 cc: linux-rt-users@vger.kernel.org
-Subject: Re: [PATCH v1 06/28] cyclictest.8: Standardize --verbose paragraph
- formatting
-In-Reply-To: <20250704132721.13325-7-darwi@linutronix.de>
-Message-ID: <5f7d033c-f2dc-8ec1-4461-7232335e6fc9@redhat.com>
-References: <20250704132721.13325-1-darwi@linutronix.de> <20250704132721.13325-7-darwi@linutronix.de>
+Subject: Re: [PATCH v1 07/28] cyclictest.8: Remove left-over comments
+In-Reply-To: <20250704132721.13325-8-darwi@linutronix.de>
+Message-ID: <d87f38ff-2d60-8658-8b49-76929a54de4c@redhat.com>
+References: <20250704132721.13325-1-darwi@linutronix.de> <20250704132721.13325-8-darwi@linutronix.de>
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
@@ -83,39 +82,89 @@ Content-Type: text/plain; charset=US-ASCII
 
 On Fri, 4 Jul 2025, Ahmed S. Darwish wrote:
 
-> All of cyclictest's options are described in the manpage through a single
-> paragraph except --verbose, which renders the verbose statistics output
-> format in a separate paragraph for no special reason.
+> Simplify the cyclictest manpage source by removing all obsolete comments.
 > 
-> Let the description text of --versbose match the other parameters style.
-> Beside consistency, this will also be useful when all the options will be
-> separated at the manpage source level.
+> Per commit 79ad2eca9abe ("COPYING file and cyclictest's man page added"),
+> most of such comments are random leftovers from the original template the
+> cyclictest's manpage was based on.  Namely:
+> 
+> (a) Remove emacs markers; modern emacsen do not need them.
+> 
+> (b) Remove the roff macros description table; they're all already
+>     documented at man(7).
+> 
+> (c) Reference groff_man_style(7).  Per man(7): "man page authors and
+>     maintainers who are not already experienced groff users should
+>     consult groff_man_style(7)."
+> 
+> (d) Remove legacy, commented-out, earlier cyclictest descriptions.
+> 
+> (e) Remove a reference to info pages; cyclictest does not have any.
+> 
+> (f) Remove an obscure joke about the manpage being written by "The Rise
+>     and Fall of a Fooish Bar."
+> 
+> With this, further documentation cleanups will be easily stacked on top.
 > 
 > Signed-off-by: Ahmed S. Darwish <darwi@linutronix.de>
 > ---
->  src/cyclictest/cyclictest.8 | 9 ++++-----
->  1 file changed, 4 insertions(+), 5 deletions(-)
+>  src/cyclictest/cyclictest.8 | 25 +------------------------
+>  1 file changed, 1 insertion(+), 24 deletions(-)
 > 
 > diff --git a/src/cyclictest/cyclictest.8 b/src/cyclictest/cyclictest.8
-> index c1a7b29..803c5fd 100644
+> index 803c5fd..d4ce648 100644
 > --- a/src/cyclictest/cyclictest.8
 > +++ b/src/cyclictest/cyclictest.8
-> @@ -170,11 +170,10 @@ write a trace mark when \-b latency is exceeded.
->  force unbuffered output for live processing
+> @@ -1,18 +1,6 @@
+>  .\" SPDX-License-Identifier: GPL-2.0-only
+> -.\"                                      Hey, EMACS: -*- nroff -*-
+> +.\" For a man pages tutorial, check groff_man_style(7)
+>  .TH CYCLICTEST 8 "April 22, 2016"
+> -.\" Please adjust this date whenever revising the manpage.
+> -.\"
+> -.\" Some roff macros, for reference:
+> -.\" .nh        disable hyphenation
+> -.\" .hy        enable hyphenation
+> -.\" .ad l      left justify
+> -.\" .ad b      justify to both left and right margins
+> -.\" .nf        disable filling
+> -.\" .fi        enable filling
+> -.\" .br        insert line break
+> -.\" .sp <n>    insert n+1 empty lines
+> -.\" for manpage-specific macros, see man(7)
+>  .SH NAME
+>  cyclictest \- High resolution test program
+>  .SH SYNOPSIS
+> @@ -21,18 +9,11 @@ cyclictest \- High resolution test program
+>  [\-h " histogram " ] [\-i " intv " ] [\-\-json " filename " ] [\-l " loop " ] [\-o " red " ] \
+>  [\-p " prio " ] [\-t " num " ] [\-D " time " ]"
+>  
+> -.\" .SH DESCRIPTION
+> -.\" This manual page documents briefly the
+> -.\" .B cyclictest commands.
+> -.\" .PP
+> -.\" \fI<whatever>\fP escape sequences to invode bold face and italics, respectively.
+> -.\" \fBcyclictest\fP is a program that...
+>  .SH OPTIONS
+>  These programs follow the usual GNU command line syntax, with long
+>  options starting with two dashes ('\-\-').
+>  .br
+>  A summary of options is included below.
+> -.\" For a complete description, see the Info files.
 >  .TP
->  .B \-v, \-\-verbose
-> -Output values on stdout for statistics. This option is used to gather statistical information about the latency distribution. The output is sent to stdout. The output format is:
-> -
-> -n:c:v
-> -
-> -where n=task number c=count v=latency value in us.
-> +Output values on stdout for statistics. This option is used to gather
-> +statistical information about the latency distribution. The output is sent
-> +to stdout. The output format is: "n:c:v", where n is the task number, c is
-> +the count, and v is the latency value in microseconds.
->  .TP
->  .B \-\-dbg_cyclictest
->  Print info userful for debugging cyclictest
+>  .B \-a, \-\-affinity[=PROC-SET]
+>  Run threads on the set of processors given by PROC-SET.  If PROC-SET is not
+> @@ -184,10 +165,6 @@ Use POSIX timers instead of clock_nanosleep.
+>  .SH SEE ALSO
+>  .BR numa (3),
+>  .BR numactl (8),
+> -.\" .br
+> -.\" The programs are documented fully by
+> -.\" .IR "The Rise and Fall of a Fooish Bar" ,
+> -.\" available via the Info system.
+>  .SH AUTHOR
+>  cyclictest was written by Thomas Gleixner <tglx@linuxtronix.de>.
+>  .PP
 > -- 
 > 2.49.0
 > 
