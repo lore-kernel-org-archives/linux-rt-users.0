@@ -1,76 +1,75 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id E96B1239E9E
-	for <linux-rt-users@vger.kernel.org>; Mon, 21 Jul 2025 20:14:35 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 0C3142236FD
+	for <linux-rt-users@vger.kernel.org>; Mon, 21 Jul 2025 20:15:39 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1753128879; cv=none; b=H6fLQjhWO7l24CAfLMX/2/1lq8V5KNpesgLMQDaJiX0EMiA+fSX5//Vngqb5NsAiLBWuwMjcB68icNJbk4eouXYivNzi4mkDW8627LtQv58zOIcRBXv/YKbCqyAz/1U18TeZI/YzYgOMKKojeEb3218kJS8wHul0ZKbsDJ+t214=
+	t=1753128941; cv=none; b=huERV1QRc8LFgYmarwTNhObmNry16seAB0TOdFAsXFaByH0BFXyzMxdc/7L7g6Ke7ohUkormbOHYZaZiWBZVgw6wzZnuYlLJBGh0Sed0zKe2ObQ1WQq5+msagc8DWAmAOGgau1PoyP5EdZs/i6CBg7L4b2fehpRMjgN9V0K2AUg=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1753128879; c=relaxed/simple;
-	bh=nOA11x8A6UnqF5v5wW6ru4VHZ8p9i04T1bkKi+cqIhg=;
+	s=arc-20240116; t=1753128941; c=relaxed/simple;
+	bh=jzfjzy9kWBkDyCcdXBwuERzp36u5pck+yNSdovXKeZs=;
 	h=Date:From:To:cc:Subject:In-Reply-To:Message-ID:References:
-	 MIME-Version:Content-Type; b=RIhejPOtOGguMrTzXTIIrA9wSlW5QKJWgWp48sVk1T4LC+D6mtLOy/3dTeMGKUFkH2RpSo5xPhEghFG9wf2aUutoP5iNwHyZeg2zj28MGVL5TdOzS7eyIY6xPI5OPYshbWcR0D2+4hzx2O+NeM53iaA1rXhbZdJzIfcfyvy6u/U=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=WE7Sv02U; arc=none smtp.client-ip=170.10.129.124
+	 MIME-Version:Content-Type; b=nJc0w5wpVKmXsT+k0YPqRH/BPdXBCeJo0Kl3fCJlAV1mJoKXyfs0deTTxO/RASVcll5XKpAV3/WTKL3qZ07Aw0ZTP0ZTjAbbKsYQpgUBa/IhkdgP3r2JSbeIConSwxjsPX6xePcACPgO5rQT1zg6QrG9kHI3ZrT2QHzik4XvtK0=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=e1MDCpxH; arc=none smtp.client-ip=170.10.133.124
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="WE7Sv02U"
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="e1MDCpxH"
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1753128874;
+	s=mimecast20190719; t=1753128938;
 	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
 	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
 	 in-reply-to:in-reply-to:references:references;
-	bh=ApwTLcwxN9V0UXZCIz6+Rb5RZkggfpD2ZhktelUIHgY=;
-	b=WE7Sv02UXx/aohVIybJRFeotIBB17D9qkVxb8RPssrwiJFkyLU6EN4JrIrkdOCzTzK+vhd
-	orLVO2NhVGhwiCO8/FRu0rbe6+CcPvTO6K+OvOA83dxy1CG2VAU8sfjDCLfl4T6mc+63e9
-	SYofAy31DpkVcL6hAIY4vbIa6/NiI0g=
-Received: from mail-qt1-f197.google.com (mail-qt1-f197.google.com
- [209.85.160.197]) by relay.mimecast.com with ESMTP with STARTTLS
+	bh=9fcmNyE7LN3+Q8P5rziX7iX204RlmMX9aaCylH3imjs=;
+	b=e1MDCpxH7awMp50atYWvi4+F9Tq+sR8pB2e8rd/4dcRCj3bwGFMFkVfdPowE4c4czseYdM
+	r2KqOOaUDOTq22F7YuPQ0c2gn20mTkbylMv+akqKNhIrlGEJuUjW446KvJeeQrz/dLjQet
+	z7LXvl+Gb/F6cX9oB9h0a6oIRi+Xkwo=
+Received: from mail-qv1-f69.google.com (mail-qv1-f69.google.com
+ [209.85.219.69]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
- us-mta-37-GXmj1abJNH2Aj7LuMT1H7Q-1; Mon, 21 Jul 2025 16:14:33 -0400
-X-MC-Unique: GXmj1abJNH2Aj7LuMT1H7Q-1
-X-Mimecast-MFC-AGG-ID: GXmj1abJNH2Aj7LuMT1H7Q_1753128872
-Received: by mail-qt1-f197.google.com with SMTP id d75a77b69052e-4abafdba95fso83502481cf.2
-        for <linux-rt-users@vger.kernel.org>; Mon, 21 Jul 2025 13:14:33 -0700 (PDT)
+ us-mta-230-7ScLzoU4PfG6sEvUYnGyyA-1; Mon, 21 Jul 2025 16:15:35 -0400
+X-MC-Unique: 7ScLzoU4PfG6sEvUYnGyyA-1
+X-Mimecast-MFC-AGG-ID: 7ScLzoU4PfG6sEvUYnGyyA_1753128935
+Received: by mail-qv1-f69.google.com with SMTP id 6a1803df08f44-6fac216872cso99822516d6.2
+        for <linux-rt-users@vger.kernel.org>; Mon, 21 Jul 2025 13:15:35 -0700 (PDT)
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1753128872; x=1753733672;
+        d=1e100.net; s=20230601; t=1753128935; x=1753733735;
         h=mime-version:references:message-id:in-reply-to:subject:cc:to:from
          :date:x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
-        bh=ApwTLcwxN9V0UXZCIz6+Rb5RZkggfpD2ZhktelUIHgY=;
-        b=O2FmivilfhjBEmG4LjAVGjs0hqLiNS38IzwZdFvaFIsbh4rKza3Rcr3L55tjHhUwtU
-         FpF+3gLtmb+PYWZAjOWXEcNC9z1c70Y5GRghb7gKoh39Th6fS/0VmPv5UkXY37u+HuRi
-         kPP2c6eQZvzWluBROF2vxWD+GzHs8NPrOJ2K3oVUT3F3B54B40BY7mLtm4J2k0D+LYzC
-         kquK4hnrBZ0AxLMa3ZnkjfZz2ugJC8u9d4j7UeZdga3NRHzGr0EGQYvnuuNn8yK6mDdv
-         3DJWx+C7Taz9fsUS81dtjFh35I6NdqD5OrhYwVMCmXbnt0O0JRn9BeoVedQ18pi5eC/X
-         qV0A==
-X-Gm-Message-State: AOJu0YyF1QL5FgHNcl63IGMzpH1JD+ZAhUzUZSjIwdWUbRNXpnIDLE7q
-	q64JyZaQpHzsKTpd5vKi7WTfxTFJeBXf+zk96r8dxxqOTBcxC6rft1aAWQ0N49+k09x5yLylyds
-	4qttqTObBKcCOuavQFeE59HVMyH4AucoHEpQXPoGSspkYeD95YyIfVjzXgLYKMVyJRETarKJaAT
-	b3
-X-Gm-Gg: ASbGncsH6Lt2GO1otbEbbL6sfq2d8E7+eA29bLub+va2HsT/pI0MPMgGKJ3WkdePQQI
-	dZbgqXB9jQxQWVITYlVTQBLSJe1wJFVxwQzl62YomsK2smYlsJd0EC8TBxlF9caAVx5sfpqX4WW
-	o2R0E8b9T1T4OCT5PlU13dpKoZyK/F5G4DEk7anFnnLuLBxCnlQlhgvKxE3TcrCBoXG4/Vn88fo
-	RRZlxSyHK4Nb9744NUBRmp72qqdWPcTb88wYot3XNWaxJ4BNYSJR/iymGa8naztMBVjEg3FipcC
-	fB1ASZV0CvZ+RURXthPjjX8lcU94sg==
-X-Received: by 2002:a05:622a:5815:b0:4a9:db25:8b6f with SMTP id d75a77b69052e-4ab93cc977amr353492231cf.23.1753128872139;
-        Mon, 21 Jul 2025 13:14:32 -0700 (PDT)
-X-Google-Smtp-Source: AGHT+IFhZFGuh0P/Qbjl1g6pl81cXKBvyR4Lok5QFd0t/gH+Ge/2sYxQi+KBf8zm2c4/GkBYo9eMZg==
-X-Received: by 2002:a05:622a:5815:b0:4a9:db25:8b6f with SMTP id d75a77b69052e-4ab93cc977amr353491931cf.23.1753128871717;
-        Mon, 21 Jul 2025 13:14:31 -0700 (PDT)
+        bh=9fcmNyE7LN3+Q8P5rziX7iX204RlmMX9aaCylH3imjs=;
+        b=AUQ8+8tRVAb8uTGFDKx5x+9MCjLhC0wpyj07+QiH8cYmAn8dc2SsWuco2tCFIRusQV
+         PlhqkBKqrkl19ga4VJKVi0dWXXHCnnJtDpkzGT6QHKbOvxYatpt1Jslx8Te0gze3MKL6
+         aU/kYA9R/sYw6YUviuqiMJZqPkTWS1nt98VS2uK3tLh2QeO9NFUEZziANJIljtIGbwD1
+         NKC+nAYDRUELNbd1rD7H6amSed4ZPLC/rJlUfZhyh875CbR+BWHD3a7QbQTu0pKaYHQd
+         t5ZlW3230PwR9xtZyqMkx/9qjF0XnzPfixsiX0aPUHnDjnSdI0g3yC7Kw6Qn2ZyZEHEu
+         HJvw==
+X-Gm-Message-State: AOJu0YwK59uvFRX/GP1KMNZJLOPE56iKrzVdp0h4en0SRTwOLXD8PJoD
+	DvtMvBxY0BwrDvk7ltmGXeEXt+p7Ow4CdV3cgY25eHI9dURmwqpSd16iNTaxyQ0ki9CT9ldCz94
+	zUtCtFUcM+s9DXzcS8q/MJA/2jrC36ZDTNZHI3O349h4D88AGPXT3j+eB8uZVaQCkk/Rp
+X-Gm-Gg: ASbGncuAsH+WNAhjmRjSkU4DMFK7RmU6A/rCX7HXEOLztay8k7NDk/iIuX1EgwoJcFg
+	Dvf7Air66y86r0Yo5da8LOk/8qUpy8E9rANFM5UD/sbY4ER7vT/uqIqwZVZkG9MftN28ztcixNL
+	Dnk5fjnn43WJAU4ptKn+ZdtUnxT+ZurLijfeRaEDN9FhlJ8bzGpgGDRoDEedvya7yrl06rsGuRa
+	8FR5eDkKnZB6pvPKnK0KgqpndPRDUrm+Zly0yq3v9A4+vjeUh9ndRFbKsMG15VWf+vSnHvsIXgJ
+	6/h0b6kULn4R9ChT5+JD4Z3LKGjkKQ==
+X-Received: by 2002:ad4:5aa8:0:b0:703:98ef:8a71 with SMTP id 6a1803df08f44-704f69b51d8mr258895606d6.0.1753128934548;
+        Mon, 21 Jul 2025 13:15:34 -0700 (PDT)
+X-Google-Smtp-Source: AGHT+IG+MzBQtjh7bve9HegHGrHryV62ruiXmRkZYONnexy5LxgS9QQZGIQYkHkx/9/FZ842z34lRg==
+X-Received: by 2002:ad4:5aa8:0:b0:703:98ef:8a71 with SMTP id 6a1803df08f44-704f69b51d8mr258895196d6.0.1753128934036;
+        Mon, 21 Jul 2025 13:15:34 -0700 (PDT)
 Received: from fionn ([142.189.102.151])
-        by smtp.gmail.com with ESMTPSA id d75a77b69052e-4abb4b491c2sm46055521cf.69.2025.07.21.13.14.31
+        by smtp.gmail.com with ESMTPSA id 6a1803df08f44-7051b8bd516sm42525246d6.10.2025.07.21.13.15.33
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Mon, 21 Jul 2025 13:14:31 -0700 (PDT)
-Date: Mon, 21 Jul 2025 16:14:29 -0400 (EDT)
+        Mon, 21 Jul 2025 13:15:33 -0700 (PDT)
+Date: Mon, 21 Jul 2025 16:15:32 -0400 (EDT)
 From: John Kacur <jkacur@redhat.com>
 To: "Ahmed S. Darwish" <darwi@linutronix.de>
 cc: linux-rt-users@vger.kernel.org
-Subject: Re: [PATCH v1 24/28] cyclictest.8: System options: Deprecate
- --laptop
-In-Reply-To: <20250704132721.13325-25-darwi@linutronix.de>
-Message-ID: <481fea7f-6f10-23cd-40b1-5a6089d6d6b0@redhat.com>
-References: <20250704132721.13325-1-darwi@linutronix.de> <20250704132721.13325-25-darwi@linutronix.de>
+Subject: Re: [PATCH v1 25/28] cyclictest.8: Options: Expand --default-system
+ description
+In-Reply-To: <20250704132721.13325-26-darwi@linutronix.de>
+Message-ID: <1baccd75-0c56-4be2-071f-2bf22a026b6d@redhat.com>
+References: <20250704132721.13325-1-darwi@linutronix.de> <20250704132721.13325-26-darwi@linutronix.de>
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
@@ -83,34 +82,37 @@ Content-Type: text/plain; charset=US-ASCII
 
 On Fri, 4 Jul 2025, Ahmed S. Darwish wrote:
 
-> Per 61ba1aa3a0db ("rt-tests: cyclictest: Add --default-system option"),
-> explicitly mark the --laptop option as obsolete and recommend using
-> --default-system instead.
+> Now that --laptop is explicitly obsoleted and --default-system is
+> recommended as its replacement, better formulate the latter's help text.
 > 
 > Signed-off-by: Ahmed S. Darwish <darwi@linutronix.de>
 > ---
->  src/cyclictest/cyclictest.8 | 3 +--
->  1 file changed, 1 insertion(+), 2 deletions(-)
+>  src/cyclictest/cyclictest.8 | 8 +++++---
+>  1 file changed, 5 insertions(+), 3 deletions(-)
 > 
 > diff --git a/src/cyclictest/cyclictest.8 b/src/cyclictest/cyclictest.8
-> index f320f66..aff900d 100644
+> index aff900d..6982234 100644
 > --- a/src/cyclictest/cyclictest.8
 > +++ b/src/cyclictest/cyclictest.8
-> @@ -92,8 +92,7 @@ cpus.
+> @@ -75,9 +75,11 @@ display a usage message and exit.
 >  .
 >  .TP
->  .B \-\-laptop
-> -Save battery when running cyclictest. This will give you poorer realtime
-> -results, but will not drain your battery so quickly.
-> +Obsolete option.  Please use \-\-default\-system instead.
+>  .B \-\-default\-system
+> -Don't attempt to tune the system from cyclictest. Power management is not
+> -suppressed. This might give poorer results, but will allow you to discover
+> -if you need to tune the system.
+> +Stop cyclictest from force-tuning the system. Without this option,
+> +cyclictest writes a value of 0 to /dev/cpu_dma_latency, which prevents the
+> +CPU from entering deep sleep states.  While such force-tuning might help at
+> +showing lower latency numbers, it obscures the fact that the system may
+> +require additional tuning.
 >  .
->  .SS "Sleep-mechanism clock options"
->  .
+>  .TP
+>  .B \-\-latency=PM_Q0S
 > -- 
 > 2.49.0
 > 
 > 
 > 
-I think this requires a patch to cyclictest as well, but otherwise
 Signed-off-by: John Kacur <jkacur@redhat.com>
 
