@@ -1,75 +1,75 @@
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 489352B9A8
-	for <linux-rt-users@vger.kernel.org>; Mon, 21 Jul 2025 19:53:44 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id A5EE522F770
+	for <linux-rt-users@vger.kernel.org>; Mon, 21 Jul 2025 19:54:48 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1753127628; cv=none; b=nhbQdjWmd/SbKuS0cx+Nmx3UOcdSwEMRTjSYAT9INBZOAuYORBZHwkgAzPSokCg9Rcq6qM8cphnIMeZKTREls+pEd4Yf/Vl4vZU43lLNKGpp2Kw+n0GH/VEHkEDFbHuWDTTT1sTijOsFBuJL+Vk6KvAWi45Wr1dgct059bz+wiY=
+	t=1753127690; cv=none; b=W4XVaSb9tW5QR7BoY9ufKbJOcOaOgd5hBRovpEocOGeMbIZeMuKLSYdHxweyyfDOUaTlgX6zfzCI+IPwOeUx4xbg3AAEIDEM0Aon/g66SCtSvSLG7DB9U7hle8iygqbai9cx24+XsBjUKsvvXoKt/2xCvSDDLboJRAuinH2u7Lg=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1753127628; c=relaxed/simple;
-	bh=os+h+oHT/wiLj5ZbIYfICa9keAqVNnJmxC1gJxqWL8E=;
+	s=arc-20240116; t=1753127690; c=relaxed/simple;
+	bh=ZaIsOrV7WofibX3zQZExfFivv+FkNl+qqXmNc/yy42s=;
 	h=Date:From:To:cc:Subject:In-Reply-To:Message-ID:References:
-	 MIME-Version:Content-Type; b=FyDVu1cmCllqit2Jy+DJbf8BaPdw6jbJGr/An2ymF4/C8xJwlDHBIDaocw04zA+Cde5OEJSQdescnadaQ0lUlhrppavyB6HqitUE4iAz+fLG98wxSy+ZAX/CoUJZ+FsNR+yI9P7JnLubjVutZB0nTswDKnyJDXbXX685ARMPik0=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=HWmqTnlV; arc=none smtp.client-ip=170.10.133.124
+	 MIME-Version:Content-Type; b=jwk3wLPd/O8pYxcSyLdOVVfj0OUf65Wfm+GvzyIAHiC9Q2VXfDPuSkaTUbzGtA2ZqRUwYF2HLsGZnejAkJjdrb3GiygqokhAkl8q91T0b34OiesCbYSL0dEzGnxyRUpiSyPCFBGiBAIvA6G068sdjr+CMnalIX0byNSRluNUeDw=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=Cidt8kzX; arc=none smtp.client-ip=170.10.133.124
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="HWmqTnlV"
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="Cidt8kzX"
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1753127623;
+	s=mimecast20190719; t=1753127687;
 	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
 	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
 	 in-reply-to:in-reply-to:references:references;
-	bh=ZwiFwn4P8x2ZB9NO2W8ZfBRMk1tYfkXXPLwfU2+F1kk=;
-	b=HWmqTnlV0xKkdORW4mOAl2M4LETYxU0nzNIESO61gayEermKbJcLWWSOih/93jR5FA04Wz
-	k3QmpqTxZq0S1OBsRZzm9MmJ8WYcCb8QQQbRBxhspf1mFBxpS2qJZOi4EgccUSmi0eQA3s
-	95s6Na3borVfs7cTamYai/bbvglsXZY=
-Received: from mail-qv1-f72.google.com (mail-qv1-f72.google.com
- [209.85.219.72]) by relay.mimecast.com with ESMTP with STARTTLS
+	bh=+NPNJ4EX/dmEsSQ0WB+V3v7qxHNbG29fvpT7s/uAAU4=;
+	b=Cidt8kzX/uvVvQkxHcZRobsUR2OpcMqpfQkKqHP2IqOedsw8q09IpaZS6UeVan9JofpqH2
+	QPrBajSC8f/iSyJzNGdMU2k+eTXyGteLeGrWvr4snUlMQ8XkWnLNDyCd3drt9whs2AzLop
+	+qw2R8JVCX9/dyaUE8o+DRNgwaEi6hk=
+Received: from mail-qv1-f69.google.com (mail-qv1-f69.google.com
+ [209.85.219.69]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
- us-mta-648-w4Rk-K8XPRuWbtB50t_isA-1; Mon, 21 Jul 2025 15:53:40 -0400
-X-MC-Unique: w4Rk-K8XPRuWbtB50t_isA-1
-X-Mimecast-MFC-AGG-ID: w4Rk-K8XPRuWbtB50t_isA_1753127620
-Received: by mail-qv1-f72.google.com with SMTP id 6a1803df08f44-6face45b58dso74209676d6.3
-        for <linux-rt-users@vger.kernel.org>; Mon, 21 Jul 2025 12:53:40 -0700 (PDT)
+ us-mta-428-_N2KUS7WORaIJCFiEe39fA-1; Mon, 21 Jul 2025 15:54:46 -0400
+X-MC-Unique: _N2KUS7WORaIJCFiEe39fA-1
+X-Mimecast-MFC-AGG-ID: _N2KUS7WORaIJCFiEe39fA_1753127686
+Received: by mail-qv1-f69.google.com with SMTP id 6a1803df08f44-702b5e87d98so85885726d6.0
+        for <linux-rt-users@vger.kernel.org>; Mon, 21 Jul 2025 12:54:46 -0700 (PDT)
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1753127620; x=1753732420;
+        d=1e100.net; s=20230601; t=1753127685; x=1753732485;
         h=mime-version:references:message-id:in-reply-to:subject:cc:to:from
          :date:x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
-        bh=ZwiFwn4P8x2ZB9NO2W8ZfBRMk1tYfkXXPLwfU2+F1kk=;
-        b=obuoXUDcJoprdNWgisHyxMJv4hr+MFW4FdfU/8cZiPuPTmnQHuCULGUIZ7Kju7nAFW
-         uqknrBi/sJeSJRIqt/dc3XtgRbpvy3MXnhvAZBI8lQnZlwlWXBEH9LhqZcN0/IrwTUA/
-         JrTnKTDpHJMqRUEeJyg7R+m7Y7xTqUSKnYJ8VEZ7P4/NoSZGRXBVtn2kTa/srKjS2IO3
-         hE0RH3Y7DBVALdmPbYa/RRB5D4C/gwqaIllHkz84dFlqKGuXT1rqgen3GYhxwyJr0SEO
-         TAJxosMMI6x7VBkc2GYkI3tpgdseIpiowZ+k7D5BTw+9P6JVSV8QREYFHteVPO7PAJnU
-         3dow==
-X-Gm-Message-State: AOJu0YzD2BR0/uxnOyyAapFCLtSLqe0DqfcVj3OO9JNBvI732IknuJfT
-	WyE2LY6TyUDCbaFC8y26WCXSEZiSmxdV7/6+iXZ7yQ/4quiGI8TIXUQK62OYDqm2mnGUhAR6Bvm
-	ZQHJXMfeamy4KVJD9BkfTH/RP3+C5iThGBHL0rRgK36S0l6TlbnPk9ANSCO/B+RNYumib
-X-Gm-Gg: ASbGncvlLZaX7zVmj6W1G7erHwaAdGVBOeYPrM3fwcQleP97TLnpXCl+s1zpX3aHKCR
-	5alB+/JG9hc9HDPoE7S6nQuFBmKo4umgfyNKO70MXJALOiSetaMmz4WMuhb2sYnls0kDd8kFHY/
-	XpsmPTW8Mnq9HXOu0Yrt/pIyHq95tefU/6pet+I0Q1vEWgxQrEzrFfzeNwsw2tf53M5MMjoz3zA
-	RAj4Lki/HmOQPutg1g8mNzNTtorv28n9UzPee/dDiBNcc85QSjkYjmYDPiG+O05pYNgCAYZNtss
-	RaqWNyUXbIs1u3hC7CITI6kAiE/h7A==
-X-Received: by 2002:ad4:5aad:0:b0:6fb:6775:4fb8 with SMTP id 6a1803df08f44-704f6a577bdmr366252716d6.13.1753127619796;
-        Mon, 21 Jul 2025 12:53:39 -0700 (PDT)
-X-Google-Smtp-Source: AGHT+IHfr9x9jw/OV7QQ9aBGg/q6+N/VWKsXr44NjOOWBWUcP7ZJ4McSQzx3r44p/6qVWBDyjz2sZg==
-X-Received: by 2002:ad4:5aad:0:b0:6fb:6775:4fb8 with SMTP id 6a1803df08f44-704f6a577bdmr366252386d6.13.1753127619324;
-        Mon, 21 Jul 2025 12:53:39 -0700 (PDT)
+        bh=+NPNJ4EX/dmEsSQ0WB+V3v7qxHNbG29fvpT7s/uAAU4=;
+        b=wZ8gTn3fktszdzLsm/4T91j3Khgy5Q5966ZWBMqgXioAvxCInRgOivYqZlofzBqcLy
+         TCIIeYKBZRoaaNX6PHQmfOgX5vYySvzNO3fSmw3oZZn0Q5BLPiO4JK2QZMF5+nKz9Z9M
+         gPs3+nqhWnzBBmwLX7rUT1Cv/kRlBDEDETdSfp5nBA3x7hSPW53sHP9oCWZvuuwQ7o1W
+         ie7yn7IZqFNy+q2UCQcTnyfNtNf48WAHVmVLBJ03nW/LjTr5wrboQt2z4rM9HtHDf495
+         RNRZB8Kx+X0aLtsJswCHe4BpR2Yi0dCVXdtpiooeOUKRieXcv5v8DWM++IKJVrkHKJVh
+         YDQQ==
+X-Gm-Message-State: AOJu0YwfR6ILGogJeMKBAxRGc1tGLj/2l4L8EtpIAgdAqpOQQX2Nf1gt
+	wK170yBC6sjtNdpahAfq/Wb6NcWeCp1s5Lt5JdQrHbn/K6bG7VIk90i3CgAxJUmYConDVoVJL5c
+	+L1/EAhuRrZx7uLGLaBvKJDgxRsJiMQ03QUb3S2SSU+qxLMbn+P15s8GGXgY70e/YJLyCTjAQDz
+	DX
+X-Gm-Gg: ASbGncvl2DdQLKEGxxDcF2+vI89iBUatoG9a2+CREXi6eNtxIsIEWFZ1oQUrYreE/qd
+	lcy1X2Frg/TWG5R5Jhi1FblBJjdW8tkwHN8mI36IbLmeC2N2YqYB5lqubuC0Xj0wBaTmzgAGEqq
+	p/oZ7NC9bJ7NoB8VDEzkVTZJIIrFzrYm+Y9bfRuyxE5/dpoBOXhLXEKYO2rEu0RdaPI/DaqG2Me
+	bWhNqOKXgzIxeCYa7pHHzpZLXV9oi7cpO0VUiIn1DhBVgw6nRrBlxnFxBCui7m8TjBumEO4x1jO
+	NPbk3JCPZSFBN5R8EaHviTofjPtOng==
+X-Received: by 2002:a05:6214:20ca:b0:6ff:1548:6f0b with SMTP id 6a1803df08f44-70507448814mr222065796d6.44.1753127684899;
+        Mon, 21 Jul 2025 12:54:44 -0700 (PDT)
+X-Google-Smtp-Source: AGHT+IFsWwwzKKBYMCVx0xeyeRJDb2UydAxPIiW3+lWo39bTFmRlNqsFCCXg+XIeJ49lr6hJRRh09Q==
+X-Received: by 2002:a05:6214:20ca:b0:6ff:1548:6f0b with SMTP id 6a1803df08f44-70507448814mr222065426d6.44.1753127684164;
+        Mon, 21 Jul 2025 12:54:44 -0700 (PDT)
 Received: from fionn ([142.189.102.151])
-        by smtp.gmail.com with ESMTPSA id 6a1803df08f44-7051bab471esm42338316d6.105.2025.07.21.12.53.38
+        by smtp.gmail.com with ESMTPSA id 6a1803df08f44-7051b8bc393sm43601516d6.1.2025.07.21.12.54.43
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Mon, 21 Jul 2025 12:53:38 -0700 (PDT)
-Date: Mon, 21 Jul 2025 15:53:37 -0400 (EDT)
+        Mon, 21 Jul 2025 12:54:43 -0700 (PDT)
+Date: Mon, 21 Jul 2025 15:54:42 -0400 (EDT)
 From: John Kacur <jkacur@redhat.com>
 To: "Ahmed S. Darwish" <darwi@linutronix.de>
 cc: linux-rt-users@vger.kernel.org
-Subject: Re: [PATCH v1 11/28] cyclictest.8: Synopsis: Fix parameters list
- rendering
-In-Reply-To: <20250704132721.13325-12-darwi@linutronix.de>
-Message-ID: <d15cc17b-c056-9a64-ef15-3a06e2b80aa3@redhat.com>
-References: <20250704132721.13325-1-darwi@linutronix.de> <20250704132721.13325-12-darwi@linutronix.de>
+Subject: Re: [PATCH v1 12/28] cyclictest.8: Rework the Synopsis blurb
+In-Reply-To: <20250704132721.13325-13-darwi@linutronix.de>
+Message-ID: <686c16a3-73f8-5b7d-9c88-b38feda522eb@redhat.com>
+References: <20250704132721.13325-1-darwi@linutronix.de> <20250704132721.13325-13-darwi@linutronix.de>
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
@@ -82,73 +82,120 @@ Content-Type: text/plain; charset=US-ASCII
 
 On Fri, 4 Jul 2025, Ahmed S. Darwish wrote:
 
-> Follow groff_man_style(7) parameters documentation style.  Namely:
+> The cyclictest's SYNOPSIS blurb is buggy and incomplete.
 > 
-> - Order cyclictest flags in the form -abcCeEgGijklNpRsStUVXzZ
+> For the cyclictest's flag list:
 > 
-> - Present the flag and option names in bold to cue the user that they
->   should be input literally.
+>   - Remove 'f', for --fifo, as it's not a flag and requires the fifo's path
+>   - Add 'N', for --nsecs
+>   - Add 'R', for --resolution
+>   - Add 'S', for --smp
+>   - Add 'u', for --unbuffered
+>   - Add 'x', for --posix_timers
 > 
-> - Use the non-breaking adjustable space escape sequence "\~" to prevent
->   the line output from being broken within the option brackets.
+> For options with arguments, expand the argument names with something
+> comprehensible since the whole purpose of the SYNOPSIS section is to get,
+> in a blitz, an understanding of the tool's actual options.  The original
+> argument names, especially when -combined with the one-letter option's
+> shorthand form, were totally -incomprehensible.
 > 
-> - Use the output line continuation escape sequence "\c" to allow all
->   three font styles to be set without breakable space among them.
+> For consistency, be coherent regarding the arguments' names; e.g.,
+> "*-path" for all file paths like file-path and fifo-path, "proc-set" for
+> cpuset-related arguments, "num-*" for counts like num-threads and
+> num-loops; "*-usec" for microsecond arguments, and so on.
 > 
-> - End the parameters list with .YS, the "End synopsis" macro.  It
->   restores indentation, adjustment, and hyphenation to their previous
->   state.
+> Also add the missing options --deepest-idle-state, --histfile, --latency,
+> --mainaffinity, --policy, --spike, --spike-nodes, --dbg_cyclictest,
+> --default-system, --smi, --priospread, --smi, and --tracemark.  Do not
+> add --laptop since it is deprecated.
 > 
-> Beside just following the standards, this makes the groff rendering of
-> the cyclictest's parameter list way more legible and comprehensible.
+> Note, this makes the cyclictest's SYNOPSIS blurb complete and gives a
+> comprehensive view of cyclictest's abilities in a glance.
 > 
 > Signed-off-by: Ahmed S. Darwish <darwi@linutronix.de>
 > ---
->  src/cyclictest/cyclictest.8 | 31 ++++++++++++++++++++++++++++---
->  1 file changed, 28 insertions(+), 3 deletions(-)
+>  src/cyclictest/cyclictest.8 | 57 ++++++++++++++++++++++++++-----------
+>  1 file changed, 41 insertions(+), 16 deletions(-)
 > 
 > diff --git a/src/cyclictest/cyclictest.8 b/src/cyclictest/cyclictest.8
-> index 7f1bd39..f093677 100644
+> index f093677..0271f5c 100644
 > --- a/src/cyclictest/cyclictest.8
 > +++ b/src/cyclictest/cyclictest.8
-> @@ -7,9 +7,34 @@ cyclictest \- High resolution test program
+> @@ -7,33 +7,58 @@ cyclictest \- High resolution test program
 >  .
 >  .SH Synopsis
 >  .SY cyclictest
-> -.RI "[ \-fmnqrsvMS ] [\-a " proc " ] [\-A " align " ] [\-b " usec " ] [\-c " clock " ] [\-d " dist " ] \
-> -[\-h " histogram " ] [\-i " intv " ] [\-\-json " filename " ] [\-l " loop " ] [\-o " red " ] \
-> -[\-p " prio " ] [\-t " num " ] [\-D " time " ]"
-> +.RB [ \-fmMnqrsMv ]
-> +.RB [ \-a\~\c
-> +.IR proc ]
-> +.RB [ \-A\~\c
-> +.IR align ]
-> +.RB [ \-b\~\c
-> +.IR usec ]
-> +.RB [ \-c\~\c
-> +.IR clock ]
-> +.RB [ \-d\~\c
-> +.IR dist ]
-> +.RB [ \-h\~\c
-> +.IR histogram ]
-> +.RB [ \-i\~\c
-> +.IR intv ]
-> +.RB [ \-\-json\~\c
-> +.IR filename ]
-> +.RB [ \-l\~\c
-> +.IR loop ]
-> +.RB [ \-o\~\c
-> +.IR red ]
-> +.RB [ \-p\~\c
-> +.IR prio ]
-> +.RB [ \-t\~\c
-> +.IR num ]
+> -.RB [ \-fmMnqrsMv ]
+> +.RB [ \-mMNqrRsSuvx ]
+>  .RB [ \-a\~\c
+> -.IR proc ]
+> +.IR proc\-set ]
+>  .RB [ \-A\~\c
+> -.IR align ]
+> +.IR alignment\-usec ]
+>  .RB [ \-b\~\c
+> -.IR usec ]
+> +.IR break\-usec ]
+>  .RB [ \-c\~\c
+> -.IR clock ]
+> +.IR clock\-type ]
+>  .RB [ \-d\~\c
+> -.IR dist ]
+> +.IR distance\-usec ]
 > +.RB [ \-D\~\c
-> +.IR time ]
-> +.YS
+> +.IR duration\-mhd ]
+> +.RB [ \-f\~\c
+> +.IR fifo\-path ]
+>  .RB [ \-h\~\c
+> -.IR histogram ]
+> +.IR max\-latency\-usec ]
+> +.RB [ \-H\~\c
+> +.IR max\-latency\-usec ]
+>  .RB [ \-i\~\c
+> -.IR intv ]
+> -.RB [ \-\-json\~\c
+> -.IR filename ]
+> +.IR interval\-usec ]
+>  .RB [ \-l\~\c
+> -.IR loop ]
+> +.IR num\-loops ]
+>  .RB [ \-o\~\c
+> -.IR red ]
+> +.IR oscope\-red ]
+>  .RB [ \-p\~\c
+> -.IR prio ]
+> +.IR thread\-prio ]
+>  .RB [ \-t\~\c
+> -.IR num ]
+> -.RB [ \-D\~\c
+> -.IR time ]
+> +.IR num\-threads ]
+> +.RB [ \-\-deepest\-idle\-state\~\c
+> +.IR idle-state-num ]
+> +.RB [ \-\-histfile\~\c
+> +.IR file\-path ]
+> +.RB [ \-\-json\~\c
+> +.IR file\-path ]
+> +.RB [ \-\-latency\~\c
+> +.IR pm\-c\-state ]
+> +.RB [ \-\-mainaffinity\~\c
+> +.IR proc-set ]
+> +.RB [ \-\-policy\~\c
+> +.IR threads\-sched\-policy ]
+> +.RB [ \-\-secaligned\~\c
+> +.IR wakeup\-usec ]
+> +.RB [ \-\-spike\~\c
+> +.IR trigger\-point-usec ]
+> +.RB [ \-\-spike\-nodes\~\c
+> +.IR num\-nodes ]
+> +.RB [ \-\-dbg_cyclictest ]
+> +.RB [ \-\-default\-system ]
+> +.RB [ \-\-priospread ]
+> +.RB [ \-\-smi ]
+> +.RB [ \-\-tracemark ]
+>  .YS
 >  .
 >  .SH Options
->  These programs follow the usual GNU command line syntax, with long
 > -- 
 > 2.49.0
 > 
