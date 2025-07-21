@@ -1,76 +1,74 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 62E142236E3
-	for <linux-rt-users@vger.kernel.org>; Mon, 21 Jul 2025 20:00:32 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 0CD1520B22
+	for <linux-rt-users@vger.kernel.org>; Mon, 21 Jul 2025 20:01:01 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1753128034; cv=none; b=IDRyHtvkkMO4AnCGv0Q4OxpbWasC9sD54R5H+YHAkdxMUVEOMf767IssND3DINFSzLT3xuvNeL3PyFPzqu19FjRt1Vzyg3bpwr2VO1VmyWzP6AIBZxPEDxeBOnbd5LBYbbwInmW5WOtFxMNtpAxpH4l3P6uIcaE4QhnEGnZYpHM=
+	t=1753128063; cv=none; b=cqe0bSpQlSKwayjXOZIFX/WgOP8tDPMSqV+ai8UOkNBlI0adgpaLKGXt09bmR6tcvb1y5h2Lp/9BnYuuuVaUA1hubU0mdgFm3wrwnAurlRzsNrDGPRMmcWyyulxrqVxyFovhvMMcGrd6NSQNrl526t1hdv3Sd4bCtuvsbinShcI=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1753128034; c=relaxed/simple;
-	bh=KwziMPjQ/x7zsO5xZA1juGeaj3PhOhhRLkchvgkvNKY=;
+	s=arc-20240116; t=1753128063; c=relaxed/simple;
+	bh=yrWNdgp5jifHvone/jBJb++f9UHTo7/u6RuztElXfOY=;
 	h=Date:From:To:cc:Subject:In-Reply-To:Message-ID:References:
-	 MIME-Version:Content-Type; b=a+1HFT3frgR9aHwjthSSm7BhXPFY8SXH9ARkAm2PdIa1DulqP1InAtToX45+1DF0TBuz0y3WRysTUqBtqrJu5wkvj2aoC4G/tuf/s72xXED3+L1uPCWbtL/yRONbOtlM79XK9Hmr0ly27AIxNIiiwbhSJSg6Z+oOJELmorszzD8=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=C8Saf57N; arc=none smtp.client-ip=170.10.133.124
+	 MIME-Version:Content-Type; b=m/oxEEkHvOozANamqQxIVOWDDQphOk3VGB9l5LjHLcRn0b4BQNnt0S/X+z+DWndTJ+nyJEfDFAr4nCv3yPVW6HboPoIRmvrwnGV6l3yCbsRcRyNYdvgZH7fefF2++hTct10Tx5+QI7VsFUkJtabmn2z2Nd1hk4a74cqUQOeMwP4=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=bn6oqTAi; arc=none smtp.client-ip=170.10.129.124
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="C8Saf57N"
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="bn6oqTAi"
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1753128031;
+	s=mimecast20190719; t=1753128060;
 	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
 	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
 	 in-reply-to:in-reply-to:references:references;
-	bh=c0RnBRlVeLE7N/rSGffV0dCc8SJZhf1J85lwqeOx16A=;
-	b=C8Saf57NUeLGOu9/Z8m1wqeIgyAgbpqKd0B10VC0fCs2hju+BLxIRuNLTMCtcTrze5jZvd
-	+n6DhkH2x5H7DpRbfzBavtXTlnhrWaRhLC5QAabWuxdFUz2gnsIDz8r77gzTDeKLI8G9Sd
-	RoQnAJITD8xTPIfrrMJ/WBGWZcuU+rI=
-Received: from mail-qk1-f200.google.com (mail-qk1-f200.google.com
- [209.85.222.200]) by relay.mimecast.com with ESMTP with STARTTLS
+	bh=UWVnKLqPzkUQu96nFxNuKL97UgGloEmzOH1NywPw8Gw=;
+	b=bn6oqTAimOLljz5RxfCIpGiudvRUkv1GDvbBfaYGo/EoVHw5YB2/7nPVrgW3xm1IRdjEHi
+	3yFc+qReKbcgxtopaW7HxSzPW8IwzVCksDJCC/oCP+0x0ySik7o3TzRjyEaSyq00ogR5nO
+	XHByNpP0wpHPmTFLCBjjlhMAb3uNHUA=
+Received: from mail-vs1-f71.google.com (mail-vs1-f71.google.com
+ [209.85.217.71]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
- us-mta-564-sHdL_ULxP2mmWeUphbEmJQ-1; Mon, 21 Jul 2025 16:00:27 -0400
-X-MC-Unique: sHdL_ULxP2mmWeUphbEmJQ-1
-X-Mimecast-MFC-AGG-ID: sHdL_ULxP2mmWeUphbEmJQ_1753128027
-Received: by mail-qk1-f200.google.com with SMTP id af79cd13be357-7e06402c7daso691556885a.0
-        for <linux-rt-users@vger.kernel.org>; Mon, 21 Jul 2025 13:00:27 -0700 (PDT)
+ us-mta-213-BUEIGtPsMuuQxUNyEmRKnw-1; Mon, 21 Jul 2025 16:00:59 -0400
+X-MC-Unique: BUEIGtPsMuuQxUNyEmRKnw-1
+X-Mimecast-MFC-AGG-ID: BUEIGtPsMuuQxUNyEmRKnw_1753128059
+Received: by mail-vs1-f71.google.com with SMTP id ada2fe7eead31-4f5ccb416bdso165304137.2
+        for <linux-rt-users@vger.kernel.org>; Mon, 21 Jul 2025 13:00:59 -0700 (PDT)
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1753128027; x=1753732827;
+        d=1e100.net; s=20230601; t=1753128059; x=1753732859;
         h=mime-version:references:message-id:in-reply-to:subject:cc:to:from
          :date:x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
-        bh=c0RnBRlVeLE7N/rSGffV0dCc8SJZhf1J85lwqeOx16A=;
-        b=wl47B1NGJ4XkGHrIkKWDHKhf8a0LwSlDnSZhAHvaYiDF+nrwimCD7O9WIJV/K0UQ2V
-         +6ciqDbM1xBrOXZB8QJdhPIOVsQd2CSnW4FI693O34nxm0KTm70P65Y2+2IcFsLPfKgL
-         GEBEMOCJF88sYdX/MpW2daYWkCHsXv8XhMHCSZ+thjGiaVh3AYRxBNRn5MRBr1Mu9P27
-         ONUwxDRLWzYkMoYw6LsNu88J/UpGqBc+CKOViugbu8YCrh8PVEA1E9AZPtnyUibZcYba
-         G5pLmS9wW/QdBu1xvyB2PYEeXEj5+ArY5L/SbMqhAlBZhevrTv2bo2Cloi57VUs5DdGX
-         f6Fg==
-X-Gm-Message-State: AOJu0YywkCqPvtHqTzjv0eiy4uF30u3loTDC25I3+juyya0RqCRdq8It
-	5fxmwSCAI1LTgbzIcdDxBa7pDe6LinnGGqCgKHnh327+VNVjNpuL14Svi+FQVrSXJZ71vxxx7ma
-	r/cTBTB0WFmElIlG7u0fJJdlTYra8R1SqFonom3Apwkp3mW6o1bnTxWHownhSBS9Y1SbuNHb2bw
-	/Z
-X-Gm-Gg: ASbGnct6GiDXCZfX4Xzw0aESEzoSi0IxW54HVddaQ9CxRwX8vgbjw43rX71pKkM1gI+
-	EY72j/4+RgzuqcdAeGKGUvN9QYQj1b7Wu3DBSHkC1fK4YL3eC0pw5RI2mpx2Wk08F0cA1MeO8Wo
-	xPWAV6PXOVJ8cRIF5fMfc+edcX9nHruhRWUZdOrAzD/Tm2xlVc+mP5Y455emoAuTQ32FBfXepQb
-	PyTqSSUuys33NLbvVAeNQ/aoeOurgdKlH2C+cIOO4/tNbpBY8WEJSkEUvPwLHDTa2wXvbfo1dyE
-	mRhpTCXXuRnshCUCgC4cDvylTEYv8Q==
-X-Received: by 2002:a05:620a:192a:b0:7d5:e432:2d91 with SMTP id af79cd13be357-7e342b8a269mr2924509185a.49.1753128026817;
-        Mon, 21 Jul 2025 13:00:26 -0700 (PDT)
-X-Google-Smtp-Source: AGHT+IEZVKlwLFRyb5aAP5HMdvYNndnVLaYz3XNTES1JJbb67cL5o0Ylp3Ue3sqPxj//uLZmtnMdIA==
-X-Received: by 2002:a05:620a:192a:b0:7d5:e432:2d91 with SMTP id af79cd13be357-7e342b8a269mr2924502285a.49.1753128026194;
-        Mon, 21 Jul 2025 13:00:26 -0700 (PDT)
+        bh=UWVnKLqPzkUQu96nFxNuKL97UgGloEmzOH1NywPw8Gw=;
+        b=tXzPT+y4jGOMn7H8kmHu1xITZfXv9jbCxOe1mzhzhEksan9InU3NlMiP6fjM1StM7F
+         w8m5b6yPdNJc98RC0J9/iSI15OC7FjshHlOrGV8S1m0g9XoetsqG3QjmFaNjBl77Rvrs
+         OADzk+BaYgysJ540kCoBjgjX485EHxnD+VxC5L1LMmOVjX7tG9OXAVeW2ngVBF3N1PE3
+         lg9uIjIUOYTj13BgdYwLs6/+Phhmh6fHlHlhmwtpi9tJJ3fdlhS00R92fhDIXIh02mkc
+         kBt95T4Yi5FyWKI7wB2OL/x7J4Xfowz8UVNxbXXYzadCXGNlE1zpFK9cQ0IRA7b4cyoA
+         5zdg==
+X-Gm-Message-State: AOJu0YyoCq0TABXHE35N+Xrrdj768YvF38wVkgsAbLpA7yDlHc6vZAjG
+	N/ZyNcqTivqzUsuJRH/sLJcfl0JsLYapjD8sFxBSwDsiZjK0xjbELkzuJIbC4M8ZmG15vXZM7Dk
+	WxoFKWK9n19oc/2Uxw/vI1G4wSiLzEIYmOH6DqJq9yM2sNIFAHjNAs0VF7ZUJ7sjmIuRx
+X-Gm-Gg: ASbGncu48EkVqWz5WaKI19A4/t2kxio7thOlicVvWnYuIL09qHhisoO0WSfKiDVyhYj
+	fCPX/gm0eR91JA4ZeJXuqZwzW2gXvf9EIqeRENDjf3gShhICF3UWTduGvhyq/XB4R/Z+Qb4Yl5j
+	1YIhKmGgyQhPluihaKeLrdfkehlaJMZoDndKrB2abzb2Uj/k0Gv/ksLfneBW3aU75+JjMCH3Y3u
+	aXHx+kFZ94jYdRoyQ5NrG0HBO/tjrP49ta54gyPbdJulv/AvB8e3wggUSNKkz1MdaFU4wE85nb4
+	GYqqY3KRCnRE/NCAuBKjPQRCoQJH+A==
+X-Received: by 2002:a05:6102:4420:b0:4e2:aafe:1bde with SMTP id ada2fe7eead31-4f95f2aa5b6mr10332063137.9.1753128058657;
+        Mon, 21 Jul 2025 13:00:58 -0700 (PDT)
+X-Google-Smtp-Source: AGHT+IHSCxFWg0zr8xQdwwNW6bcMmsA+Ac50KeD1zhx/XIbHSFV4QORRhmfswY4rqEfLSGllo+AYpg==
+X-Received: by 2002:a05:6102:4420:b0:4e2:aafe:1bde with SMTP id ada2fe7eead31-4f95f2aa5b6mr10331991137.9.1753128058109;
+        Mon, 21 Jul 2025 13:00:58 -0700 (PDT)
 Received: from fionn ([142.189.102.151])
-        by smtp.gmail.com with ESMTPSA id af79cd13be357-7e356cc1aa8sm449049885a.111.2025.07.21.13.00.25
+        by smtp.gmail.com with ESMTPSA id af79cd13be357-7e356b2a976sm445873685a.13.2025.07.21.13.00.57
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Mon, 21 Jul 2025 13:00:25 -0700 (PDT)
-Date: Mon, 21 Jul 2025 16:00:24 -0400 (EDT)
+        Mon, 21 Jul 2025 13:00:57 -0700 (PDT)
+Date: Mon, 21 Jul 2025 16:00:56 -0400 (EDT)
 From: John Kacur <jkacur@redhat.com>
 To: "Ahmed S. Darwish" <darwi@linutronix.de>
 cc: linux-rt-users@vger.kernel.org
-Subject: Re: [PATCH v1 16/28] cyclictest.8: Group thread wakeup timing
- options
-In-Reply-To: <20250704132721.13325-17-darwi@linutronix.de>
-Message-ID: <8819a936-d049-7d0b-1073-a19a9b44b0d2@redhat.com>
-References: <20250704132721.13325-1-darwi@linutronix.de> <20250704132721.13325-17-darwi@linutronix.de>
+Subject: Re: [PATCH v1 17/28] cyclictest.8: Group SMP-related options
+In-Reply-To: <20250704132721.13325-18-darwi@linutronix.de>
+Message-ID: <471cc3e8-b65e-2d66-3056-d56c168b3922@redhat.com>
+References: <20250704132721.13325-1-darwi@linutronix.de> <20250704132721.13325-18-darwi@linutronix.de>
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
@@ -86,135 +84,125 @@ On Fri, 4 Jul 2025, Ahmed S. Darwish wrote:
 > The number and breadth of cyclictest's options is huge, and just
 > exploring them in sequence can get the manpage reader lost.
 > 
-> Put the cyclictest's thread-wakeup timing options:
+> Put the cyclictest's SMP-related options:
 > 
->        -d, --distance=DIST
->        -i, --interval=INTV
->        --secaligned [USEC]
->        -A, --align=USEC
+>        -S, --smp
+>        -t, --threads[=NUM]
+>        --mainaffinity=CPUSET
+>        -a, --affinity[=PROC-SET]
 > 
-> into their own group.  Adjust the Synopsis accordingly as well.
+> into their own group.
 > 
 > Further groupings will be added next.
 > 
 > Signed-off-by: Ahmed S. Darwish <darwi@linutronix.de>
 > ---
->  src/cyclictest/cyclictest.8 | 52 +++++++++++++++++++------------------
->  1 file changed, 27 insertions(+), 25 deletions(-)
+>  src/cyclictest/cyclictest.8 | 46 +++++++++++++++++++------------------
+>  1 file changed, 24 insertions(+), 22 deletions(-)
 > 
 > diff --git a/src/cyclictest/cyclictest.8 b/src/cyclictest/cyclictest.8
-> index eb7d713..6ab3b19 100644
+> index 6ab3b19..7fc0420 100644
 > --- a/src/cyclictest/cyclictest.8
 > +++ b/src/cyclictest/cyclictest.8
-> @@ -16,14 +16,18 @@ cyclictest \- High resolution test program
->  .IR idle-state-num ]
->  .RB [ \-c\~\c
->  .IR clock\-type ]
-> -.RB [ \-a\~\c
-> -.IR proc\-set ]
-> +.RB [ \-d\~\c
-> +.IR distance\-usec ]
-> +.RB [ \-i\~\c
-> +.IR interval\-usec ]
-> +.RB [ \-\-secaligned\~\c
-> +.IR wakeup\-usec ]
+> @@ -24,6 +24,10 @@ cyclictest \- High resolution test program
+>  .IR wakeup\-usec ]
 >  .RB [ \-A\~\c
 >  .IR alignment\-usec ]
-> +.RB [ \-a\~\c
-> +.IR proc\-set ]
+> +.RB [ \-t\~\c
+> +.IR num\-threads ]
+> +.RB [ \-\-mainaffinity\~\c
+> +.IR proc-set ]
+>  .RB [ \-a\~\c
+>  .IR proc\-set ]
 >  .RB [ \-b\~\c
->  .IR break\-usec ]
-> -.RB [ \-d\~\c
-> -.IR distance\-usec ]
->  .RB [ \-D\~\c
->  .IR duration\-mhd ]
->  .RB [ \-f\~\c
-> @@ -32,8 +36,6 @@ cyclictest \- High resolution test program
->  .IR max\-latency\-usec ]
->  .RB [ \-H\~\c
->  .IR max\-latency\-usec ]
-> -.RB [ \-i\~\c
-> -.IR interval\-usec ]
->  .RB [ \-l\~\c
->  .IR num\-loops ]
->  .RB [ \-o\~\c
-> @@ -50,8 +52,6 @@ cyclictest \- High resolution test program
->  .IR proc-set ]
+> @@ -42,14 +46,10 @@ cyclictest \- High resolution test program
+>  .IR oscope\-red ]
+>  .RB [ \-p\~\c
+>  .IR thread\-prio ]
+> -.RB [ \-t\~\c
+> -.IR num\-threads ]
+>  .RB [ \-\-histfile\~\c
+>  .IR file\-path ]
+>  .RB [ \-\-json\~\c
+>  .IR file\-path ]
+> -.RB [ \-\-mainaffinity\~\c
+> -.IR proc-set ]
 >  .RB [ \-\-policy\~\c
 >  .IR threads\-sched\-policy ]
-> -.RB [ \-\-secaligned\~\c
-> -.IR wakeup\-usec ]
 >  .RB [ \-\-spike\~\c
->  .IR trigger\-point-usec ]
->  .RB [ \-\-spike\-nodes\~\c
-> @@ -127,6 +127,25 @@ not be used for reproducible tests.
->  Check clock resolution, calling clock_gettime() many times. List of
->  lock_gettime() values will be reported with -X
+> @@ -146,7 +146,24 @@ align thread wakeups to the next full second and apply the optional offset.
+>  .B \-A, \-\-align=USEC
+>  Align thread wakeups to a specific offset in microseconds
 >  .
-> +.SS "Thread-waekup timing options"
+> -.SS "Other options"
+> +.SS "SMP-related options"
 > +.
 > +.TP
-> +.B \-d, \-\-distance=DIST
-> +Distance of thread intervals in us, default = 500
+> +.B \\-S, \-\-smp
+> +Set options for standard testing on SMP systems. Equivalent to using the
+> +options: "\-t \-a" as well keeping any specified priority equal across all
+> +threads
 > +.
 > +.TP
-> +.B \-i, \-\-interval=INTV
-> +Set the base interval of the thread(s) in microseconds (default is
-> +1000us). This sets the interval of the first thread. See also \-d.
+> +.B \-t, \-\-threads[=NUM]
+> +Set the number of test threads (default is 1). Create NUM test threads. If
+> +NUM is not specified, NUM is set to the number of available CPUs. See \-d,
+> +\-i and \-p for further information.
 > +.
 > +.TP
-> +.B \-\-secaligned [USEC]
-> +align thread wakeups to the next full second and apply the optional offset.
-> +.
-> +.TP
-> +.B \-A, \-\-align=USEC
-> +Align thread wakeups to a specific offset in microseconds
-> +.
->  .SS "Other options"
+> +.B \-\-mainaffinity=CPUSET
+> +Run the main thread on CPU #N. This only affects the main thread and not
+> +the measurement threads
 >  .
 >  .TP
-> @@ -145,18 +164,10 @@ sets.  * Support for CPU sets requires libnuma version >= 2.  For libnuma
+>  .B \-a, \-\-affinity[=PROC-SET]
+> @@ -163,6 +180,8 @@ field in /proc/cpuinfo.  See numa(3) for more information on specifying CPU
+>  sets.  * Support for CPU sets requires libnuma version >= 2.  For libnuma
 >  v1, PROC-SET, if specified, must be a single CPU number.
 >  .
+> +.SS "Other options"
+> +.
 >  .TP
-> -.B \-A, \-\-align=USEC
-> -Align thread wakeups to a specific offset in microseconds
-> -.
-> -.TP
 >  .B \-b, \-\-breaktrace=USEC
 >  Send break trace command when latency > USEC
+> @@ -204,11 +223,6 @@ for automated tests with a given number of test cycles. Cyclictest is
+>  stopped once the number of timer intervals has been reached.
 >  .
 >  .TP
-> -.B \-d, \-\-distance=DIST
-> -Distance of thread intervals in us, default = 500
+> -.B \-\-mainaffinity=CPUSET
+> -Run the main thread on CPU #N. This only affects the main thread and not
+> -the measurement threads
 > -.
 > -.TP
->  .B \-D, \-\-duration=TIME
->  Specify a length for the test run.
->  .br
-> @@ -183,11 +194,6 @@ runs a single thread only, the -H option is equivalent to -h.
->  Dump the latency histogram to <path> instead of stdout.
+>  .B \-m, \-\-mlockall
+>  Lock current and future memory allocations to prevent being paged out
 >  .
->  .TP
-> -.B \-i, \-\-interval=INTV
-> -Set the base interval of the thread(s) in microseconds (default is
-> -1000us). This sets the interval of the first thread. See also \-d.
-> -.
-> -.TP
->  .B \-\-json=FILENAME
->  Write final results into FILENAME, JSON formatted.
->  .
-> @@ -241,10 +247,6 @@ Print a summary only on exit. Useful for automated tests, where only the
+> @@ -247,12 +261,6 @@ Print a summary only on exit. Useful for automated tests, where only the
 >  summary output needs to be captured.
 >  .
 >  .TP
-> -.B \-\-secaligned [USEC]
-> -align thread wakeups to the next full second and apply the optional offset.
+> -.B \\-S, \-\-smp
+> -Set options for standard testing on SMP systems. Equivalent to using the
+> -options: "\-t \-a" as well keeping any specified priority equal across all
+> -threads
 > -.
 > -.TP
->  .B \\-S, \-\-smp
->  Set options for standard testing on SMP systems. Equivalent to using the
->  options: "\-t \-a" as well keeping any specified priority equal across all
+>  .B \-\-spike=<trigger>
+>  record all spikes > trigger
+>  .
+> @@ -267,12 +275,6 @@ The default is 1024 if not specified.
+>  Enable SMI count/detection on processors with SMI count support.
+>  .
+>  .TP
+> -.B \-t, \-\-threads[=NUM]
+> -Set the number of test threads (default is 1). Create NUM test threads. If
+> -NUM is not specified, NUM is set to the number of available CPUs. See \-d,
+> -\-i and \-p for further information.
+> -.
+> -.TP
+>  .B \-\-tracemark
+>  write a trace mark when \-b latency is exceeded.
+>  .
 > -- 
 > 2.49.0
 > 
