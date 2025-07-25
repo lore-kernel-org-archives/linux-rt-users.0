@@ -1,94 +1,182 @@
-Received: from mail-pf1-f171.google.com (mail-pf1-f171.google.com [209.85.210.171])
+Received: from mail-qt1-f177.google.com (mail-qt1-f177.google.com [209.85.160.177])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id A2DE28F6E
-	for <linux-rt-users@vger.kernel.org>; Fri, 25 Jul 2025 18:21:00 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.210.171
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 329BE24A047
+	for <linux-rt-users@vger.kernel.org>; Fri, 25 Jul 2025 19:00:12 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.160.177
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1753467661; cv=none; b=RaWIGksriInPKcm6fWnQWw817tjyT/Y5j9uPvV9ecZvQVtDPEzNuUuw+DqRGVdi8AvgGqwCAvp06bLXq18fcxkCTN+kej7APMsSo2jUQj2pzLaUBgrdVewdd2MnPXewiODD8d35zLKVXl5yk08D4rqp3Zrv68qNDfQZG8zwzvGM=
+	t=1753470013; cv=none; b=EzHsNRKkdG7yoPbKXe4+0LpR3s9TG5F1CSF6TDquH/UvU7ekEJ0dylYWtDmsqRUR18C4R0x3wwUWy+Gi/546acsF/Lh6adrKYtdLInaoZxnQvjzDIPILCXAJsTgnZ10653VY/RZRPcCprkGnDf5JlOB0U8pR19D3CMTvdZbYfJA=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1753467661; c=relaxed/simple;
-	bh=8K/+3BEGBXAw4XdcFFBqVZdkPvBTXdMwrBlAy+Llvw8=;
-	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 Content-Type:Content-Disposition:In-Reply-To; b=eoy9Kj4ruAdizVnpDZvku8a7ONTrBWh9Vnv4LNUYqAxG2nr+Wtx/hG4OUXPqBGg0I/4E6cZJnibtvZXZK53Jtira1wcx/JqBz6ZgMF36xWozJB3bpqYk37zphZ+NFEVa8fAHdqf7Od8hPSJXmFlBbf5vAN+IEIY19hwuvcDbFsI=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=AGRcSxrC; arc=none smtp.client-ip=209.85.210.171
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
+	s=arc-20240116; t=1753470013; c=relaxed/simple;
+	bh=3FzTVuSixL9dUtGBL9PAlUjNWX8Guuq7ZGx7dx/IXNo=;
+	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=FV1XOQvgla65i6dIghj/f0RUA4azSyMY0/b+nW8cWDNvuuiAZabjaDse5umvLKLKd/xTNNlzMBo7zeIHDldgx1jFGCNM9Yim1voyLrDaUyBvxP4a33naKP1f2HrV26Q/yI12jR78ScJyPwevbuVuyZKoGZK8a6PzC4wKf1gNzbU=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=fail (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=BAQq34+Y; arc=none smtp.client-ip=209.85.160.177
+Authentication-Results: smtp.subspace.kernel.org; dmarc=fail (p=quarantine dis=none) header.from=redhat.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="AGRcSxrC"
-Received: by mail-pf1-f171.google.com with SMTP id d2e1a72fcca58-7426c44e014so2115721b3a.3
-        for <linux-rt-users@vger.kernel.org>; Fri, 25 Jul 2025 11:21:00 -0700 (PDT)
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="BAQq34+Y"
+Received: by mail-qt1-f177.google.com with SMTP id d75a77b69052e-4ab9ba884c6so32038301cf.0
+        for <linux-rt-users@vger.kernel.org>; Fri, 25 Jul 2025 12:00:12 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1753467660; x=1754072460; darn=vger.kernel.org;
-        h=in-reply-to:content-disposition:mime-version:references:message-id
-         :subject:cc:to:from:date:from:to:cc:subject:date:message-id:reply-to;
-        bh=h2Au9S0eJ8jtrPFtYeQIyNOSBaF54l9dEPCzCt/X9Go=;
-        b=AGRcSxrCmwLzczQw2KwXJJCLMM/ZFmQEmnYfnrkHanW1kFeKeykxy5TgchGqshEfe0
-         ssAlPYpBy53OEZAjC059YRk7PxQkJMYBxSoSMWy3mbnUoVXxPEXD3xcfGuYWrfTI4UE1
-         RJmkvqyJjnUnE2mJzC/Pd10WpEF6rX6alvvBUjBTdEygajoGqUdwsDB1O7xro2i2lZV8
-         zIdlI496n0Rp1oOTclRTvLY7MY8ftnHve83WV/OrDr9u/XXwtMu0gSOm0EC3Tm37ie+T
-         6VWvJGDN3KTpIqP5f6ESWJldLn8dMlUyH0aKuCmYO2TbZc2nIW2PxkdK6xQVShfnWDy7
-         mGHg==
+        d=gmail.com; s=20230601; t=1753470011; x=1754074811; darn=vger.kernel.org;
+        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+         :to:from:sender:from:to:cc:subject:date:message-id:reply-to;
+        bh=BFs5Kfr93O/qi6xw1FSkulVWyumfVU8r2H+UvsUQmCg=;
+        b=BAQq34+YwYxqQ2623SihNWkrhc0aTNhq6iBPE5q54FbbVpS5h7rORzQ9EBaC09UYJQ
+         d3VwI9RLd/myDBVlvHtUT7cyC1QKxvMsLKLiGr1/AmW/L4OCVG+2imBmPrFNuh6P7c8b
+         /i6yy0LZHp5TRjewplazdHsmW0Pvzjy9Xxpi+qKq8KhTEaEncN9RhGP5d202jUvJF4jM
+         hbWWLaBeRM2S3P0BrUsy1z8rb/DjmFmx5PoahkRgrWAKVGkp00PWKsuvK1BfnFlsjRn/
+         wDnrmdT2eQRmPuzeGny/PoSu/U558guOJtWHgMAB0ylJ9GuGeN7L4qkiWOgE3GrEpDZF
+         m4EA==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1753467660; x=1754072460;
-        h=in-reply-to:content-disposition:mime-version:references:message-id
-         :subject:cc:to:from:date:x-gm-message-state:from:to:cc:subject:date
+        d=1e100.net; s=20230601; t=1753470011; x=1754074811;
+        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+         :to:from:sender:x-gm-message-state:from:to:cc:subject:date
          :message-id:reply-to;
-        bh=h2Au9S0eJ8jtrPFtYeQIyNOSBaF54l9dEPCzCt/X9Go=;
-        b=sj+blkvCsyJ5Ff3FXD2/c3VnM016TUixMb8n6ArzYuILzTSMzAV75SJ519dOFWiYLa
-         psQsD5t/Te6ovt19kMqeSnBZOpV/YkNxSvFv7lvYAmU6ZyHxXtBd1H7ajhaStM9eIjaj
-         wq8syJTQrbpr1hVngNjtfHGwTYmJzYiTS0w3NkmW4Oj1BY79sduQ/nQJVEteMlUQQL7s
-         eo4S7EqEtOpySUck8cGBIvEFqVwjyjLRbfcczg2R1lT5KkvvGIOW/UUC6vUoPXnctChC
-         p7SNJ7FRlaedTj3GEnrxnm2Y2Tc5RsTDsCk/8VpZxnLy4W7rdaSD5bIvRFtLZjheuNoS
-         Z7Aw==
-X-Forwarded-Encrypted: i=1; AJvYcCUMnUxG3/dgV2uW8gYL7L0LlZrNsWPAredQwRn+rvCYwf9DfTzOgo3d182dBqcTwU3djjjJfqrAFZoPRVoKrg==@vger.kernel.org
-X-Gm-Message-State: AOJu0YxbudMUuACHaBBbPOUBxfvB5VU4AIQ04/Uh+pNbEvYuzXzlVEJf
-	uH3tYMnQkbFEY2BEgAByUnjWl2bEXk9ENK5hSQc2xl6HAAQ1Rdo2n+xO/VgB5MnV
-X-Gm-Gg: ASbGncv3lUOJUlfPGIkgscdxWc8xykZqfOyZ9WP74SEadBr5EpuCsNmQ+4B8lG6ceGv
-	yLqb/hifgKtNOjT3sWcvGqvDZ82zmKh4EXFmWcFX13Sph6SfUBBQceOphyn3kwSS/a7/27YzoiR
-	4RYC/wNSRjC0JuG2zCQ+zixpuGXw5faR9mEHUHq7rByhR/Val71eMD7mBdQpDgTWXgQaLK9u1BP
-	mr63Ly2mbWhmYcOLOvcAIYXxQK5Uia81C4I7ry3DZYjSpz3NDtYIYigFEawSQIdlDiRG/WjinYy
-	aurbv+DeHiR6G+c0vEE+AhMb/pdGhN9He7jbM9Y7kTrqsf/WoWrnaccj8smr6QqcE5bA7RYDf9E
-	AMws7CdhF7yMlCSPwducLfdxDurpanPNbpJXfebsjjvxNqZUbFSahyw4RErI=
-X-Google-Smtp-Source: AGHT+IF7F37WVXyqz3LLll3RZfCOXVwH5MHsHZ+EnDM6cONHaXD4iN2314EuFX7mv15/HCt/9f1PMA==
-X-Received: by 2002:a05:6a20:244b:b0:232:cc63:45d8 with SMTP id adf61e73a8af0-23d70087b76mr4257599637.20.1753467659613;
-        Fri, 25 Jul 2025 11:20:59 -0700 (PDT)
-Received: from eric-acer (36-225-98-168.dynamic-ip.hinet.net. [36.225.98.168])
-        by smtp.gmail.com with ESMTPSA id 41be03b00d2f7-b3f7f568ac1sm353683a12.5.2025.07.25.11.20.58
+        bh=BFs5Kfr93O/qi6xw1FSkulVWyumfVU8r2H+UvsUQmCg=;
+        b=NBHpWFbYTMzZAOLaEmWXtk/XdtHcOw1tt8lVuwZC7pirHIIq6zuPEH193wfdxLtyAq
+         B6z2ap2TWUAQkdT2MPWe49xMWLtQsCeL+KgfJtnevxITRw4El2+FqJj6zKOfLzN2yUAC
+         Boh0yuw1AOwPSnL9JihSUumQfE8Hc0YidmnCBZTHzxmsABMqpsJHgzOYqz5wuS+NlyWE
+         Fqq+ABIldYNkr7VJ11ReME116N8Lpho76nD2N0KBqF64zr5UmoVvIA4r3TXF/d11AgIb
+         GeBSKvIDoSURV57PdvVFrqZUXNBQn72x4Yi2mFOzTpZtWfdoHvj8zXKfFda0azu9HUNM
+         18Fw==
+X-Gm-Message-State: AOJu0YwR9mKg0t7lNL9Sunz7iTRo0JVJ/c0oBN/YEfRHf4/09krx6bYS
+	Q8p+4pnyg7skku3Bjv1DCUzdintFvHJGGWiqeEJWbf3GuOgFXWUWwuwMJKK09xKw
+X-Gm-Gg: ASbGncumKM8kN5q/KESKdUhni4Zaz5db7qpIeV+sGJTyeiMmMPjRofzSHKkSOycppYx
+	8XFhlMN+prpYIwQ9SgOWhSvrH/5jt9ZqvXNm4NDum1wzGIvgk/vaahUDJRXXJfF1dPjvmKMGc3b
+	3N7/OoFay/nJH9mMjEfGq7+RHqAbkkwYHeg6dl/KMHcQ3mdiiopYJtc6rYiV8jWIuVs6dII8r8A
+	bIO0AgPXsPpdFMRNvq9TsvnlMUrj57tfCbZ8mDmt6KwIsh/4knfFGqcvyUv0+dTNh2M61q8lfvG
+	wU1w+rk4DRrFtz0JH7gq3nR8ZMiSMHmx5guKoB8mnKRWqA0NA1XTL9vcwbTayeamLiN0gFHK5DP
+	0iIr5WOhEH8LZlSBPA2YP0l8UAb7ZNlOzqw==
+X-Google-Smtp-Source: AGHT+IFZTp4C1pHwHtiPsOrsjT5zrssbJT7YlYTiTlm6jFFSuaIVNv/o+1dV2U2VBlph8CKwpuwkkg==
+X-Received: by 2002:ac8:5804:0:b0:4ab:5d26:db8a with SMTP id d75a77b69052e-4ae8e878ec5mr37750581cf.18.1753470010557;
+        Fri, 25 Jul 2025 12:00:10 -0700 (PDT)
+Received: from localhost.localdomain ([142.189.102.151])
+        by smtp.gmail.com with ESMTPSA id d75a77b69052e-4ae9966c3cfsm3184641cf.48.2025.07.25.12.00.09
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Fri, 25 Jul 2025 11:20:59 -0700 (PDT)
-Date: Sat, 26 Jul 2025 02:20:56 +0800
-From: Cheng-Yang Chou <yphbchou0911@gmail.com>
-To: John Kacur <jkacur@redhat.com>
-Cc: williams@redhat.com, linux-rt-users@vger.kernel.org,
-	jserv@ccns.ncku.edu.tw
-Subject: Re: [PATCH 0/8] Fix -Wunused-result warnings by checking return
- values
-Message-ID: <aIPLCID1NklIUK_d@eric-acer>
-References: <20250712134213.58582-1-yphbchou0911@gmail.com>
- <61792d75-d574-f255-5290-f1818807667e@redhat.com>
+        Fri, 25 Jul 2025 12:00:10 -0700 (PDT)
+Sender: John Kacur <jkacur@gmail.com>
+From: John Kacur <jkacur@redhat.com>
+To: linux-rt-users <linux-rt-users@vger.kernel.org>
+Cc: John Wyatt <jwyatt@redhat.com>,
+	John Kacur <jkacur@redhat.com>
+Subject: [PATCH 1/3] tuna: Fix show_threads -t and show_irqs -q
+Date: Fri, 25 Jul 2025 14:59:35 -0400
+Message-ID: <20250725185937.72945-1-jkacur@redhat.com>
+X-Mailer: git-send-email 2.49.0
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
 List-Subscribe: <mailto:linux-rt-users+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-In-Reply-To: <61792d75-d574-f255-5290-f1818807667e@redhat.com>
+Content-Transfer-Encoding: 8bit
 
-On Fri, Jul 25, 2025 at 02:16:55PM -0400, John Kacur wrote:
-> The code is generally okay, but I noticed after I signed off on a few, 
-> that none of your commits have commit messages.
-> 
-> Please run checkpatch from the kernel on your patches and fix the 
-> appropriate warnings and resend.
-> 
-> John Kacur
->
+Fix show_threads -t and show_irqs -q to not match everything if there is
+no match.
 
-Got it, I'll send a v2 patch. 
-Thanks for the heads-up!
+jkacur@fionn:~/src/tuna$ ./tuna-cmd.py show_threads | wc -l
+428
+jkacur@fionn:~/src/tuna$ ./tuna-cmd.py show_threads -t "nosuchthread" | wc -l
+0
+jkacur@fionn:~/src/tuna$ ./tuna-cmd.py show_threads -t "Isolated*" | wc -l
+55
 
-Thanks,
--chengyang
+jkacur@fionn:~/src/tuna$ ./tuna-cmd.py show_irqs -q "iwlwifi*" | wc -l
+14
+jkacur@fionn:~/src/tuna$ ./tuna-cmd.py show_irqs | wc -l
+58
+jkacur@fionn:~/src/tuna$ ./tuna-cmd.py show_irqs -q "nosuchirq" | wc -l
+0
+
+Signed-off-by: John Kacur <jkacur@redhat.com>
+---
+ tuna-cmd.py | 23 +++++++++++++++++++++--
+ 1 file changed, 21 insertions(+), 2 deletions(-)
+
+diff --git a/tuna-cmd.py b/tuna-cmd.py
+index 4997eaa5de92..9496c61f0c2b 100755
+--- a/tuna-cmd.py
++++ b/tuna-cmd.py
+@@ -79,6 +79,7 @@ except:
+ 
+ ps = None
+ irqs = None
++match_requested = False
+ 
+ class HelpMessageParser(argparse.ArgumentParser):
+     def error(self, message):
+@@ -391,6 +392,8 @@ def ps_show(ps, affect_children, thread_list, cpu_list,
+             irq_list_numbers, show_uthreads, show_kthreads,
+             has_ctxt_switch_info, sock_inodes, sock_inode_re, cgroups, compact):
+ 
++    global match_requested
++
+     ps_list = []
+     for pid in list(ps.keys()):
+         iskth = tuna.iskthread(pid)
+@@ -422,7 +425,11 @@ def ps_show(ps, affect_children, thread_list, cpu_list,
+             raise e
+         if cpu_list and not set(cpu_list).intersection(set(affinity)):
+             continue
+-        ps_list.append(pid)
++        if match_requested and thread_list and pid in thread_list:
++            ps_list.append(pid)
++        elif not match_requested:
++            ps_list.append(pid)
++
+ 
+     ps_list.sort()
+ 
+@@ -498,6 +505,7 @@ def find_drivers_by_users(users):
+ 
+ def show_irqs(irq_list, cpu_list):
+     global irqs
++    global match_requested
+     if not irqs:
+         irqs = procfs.interrupts()
+ 
+@@ -515,7 +523,11 @@ def show_irqs(irq_list, cpu_list):
+ 
+         if cpu_list and not set(cpu_list).intersection(set(affinity)):
+             continue
+-        sorted_irqs.append(irqn)
++
++        if match_requested and irq_list and irqn in irq_list:
++            sorted_irqs.append(irqn)
++        elif not match_requested:
++            sorted_irqs.append(irqn)
+ 
+     sorted_irqs.sort()
+     for irq in sorted_irqs:
+@@ -540,6 +552,9 @@ def do_list_op(op, current_list, op_list):
+ 
+ def threadstring_to_list(threadstr):
+     global ps
++    global match_requested
++    if threadstr:
++        match_requested = True
+     thread_list = []
+     thread_strings = list(set(threadstr.split(',')))
+     for s in thread_strings:
+@@ -555,6 +570,9 @@ def threadstring_to_list(threadstr):
+ 
+ def irqstring_to_list(irqstr):
+ 
++    global match_requested
++    if irqstr:
++        match_requested = True
+     irq_list = []
+     irq_strings = list(set(irqstr.split(',')))
+     for s in irq_strings:
+@@ -636,6 +654,7 @@ def nohz_full_to_cpu():
+               _(" needs nohz_full=cpulist on the kernel command line"))
+         sys.exit(2)
+ 
++
+ def main():
+     global ps
+ 
+-- 
+2.49.0
+
