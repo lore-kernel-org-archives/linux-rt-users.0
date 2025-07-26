@@ -1,73 +1,70 @@
-Received: from mail-qt1-f172.google.com (mail-qt1-f172.google.com [209.85.160.172])
+Received: from mail-pj1-f44.google.com (mail-pj1-f44.google.com [209.85.216.44])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 5C0272571C9
-	for <linux-rt-users@vger.kernel.org>; Fri, 25 Jul 2025 19:00:14 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.160.172
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id BAF342D052
+	for <linux-rt-users@vger.kernel.org>; Sat, 26 Jul 2025 09:18:44 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.216.44
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1753470015; cv=none; b=CmhHRzOYeEs1bld/LY0a74m3EFkgv5btWZ1c4xKpoa+aEGphGAF7q0eYCuZHYC1N9GA5IpL/qDCXmRxY1z/GTzldraPwSVx6w/wlp9flhMH8V9YY9AbSvyIcKjd6X+UYZ9dN/vllYpthIfhjNvQMWyn9Tamh4SnB9hIUwCwg8EQ=
+	t=1753521526; cv=none; b=eImlsPkhNPaaN/qpyNHuIfqhNH/Xq6hhpyKzVtwlqJNpC0Zr6uj+sfQwE/02Csk25E+3cWAG7zMdv2xFNBUpknUB3+nmxU3wi34NTQ6iqXdlEgUb/7UnIiyGY7RRnvPza+4p8ZGy+WqTRzteOfB+LCOwMxsSkiHkZ+4Ff0UnXFs=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1753470015; c=relaxed/simple;
-	bh=RS+TF6mXrrsJz+M/jvegihU+AqNf749At4T8aVC2g3I=;
-	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=fMh38+9HAVTXmqkFq7t4t682tnLZuZvgSYib2SezAdkE6wNkOadvdJwy42eMO2rivk+FQhelwVQd31iQis4hvRqhLio0re5t43mX7A8BSh6bti+xPmmkdUGcTVXvnbbwIiElg244YA0KBFZfYnk/eXvnabuMBSAa5OxdN9ZFt5Y=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=fail (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=X06WMVk4; arc=none smtp.client-ip=209.85.160.172
-Authentication-Results: smtp.subspace.kernel.org; dmarc=fail (p=quarantine dis=none) header.from=redhat.com
+	s=arc-20240116; t=1753521526; c=relaxed/simple;
+	bh=TinAafR7WPrIgoGFDjbEIiamKOnDgJayObhvvajIdd8=;
+	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=mMN++rcIcKFbm2ef5kwxlu7oMPiMO/gouvJAA+OZSpoE/9Vr2607Rvt02GVpsEHLG81mYjuRlwabLH5EA4Ig8qrP8KgOHyY9Pe9hikCBZvKILlxGgV189iAVpJpPqIpuQIkJxUKWLtNdTB6qW31hBQAoCNVQjFSeqwQdh6nhcZ8=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=DQHzF5Ow; arc=none smtp.client-ip=209.85.216.44
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="X06WMVk4"
-Received: by mail-qt1-f172.google.com with SMTP id d75a77b69052e-4ab7384b108so27058991cf.0
-        for <linux-rt-users@vger.kernel.org>; Fri, 25 Jul 2025 12:00:14 -0700 (PDT)
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="DQHzF5Ow"
+Received: by mail-pj1-f44.google.com with SMTP id 98e67ed59e1d1-3139027b825so2452070a91.0
+        for <linux-rt-users@vger.kernel.org>; Sat, 26 Jul 2025 02:18:44 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1753470013; x=1754074813; darn=vger.kernel.org;
-        h=content-transfer-encoding:mime-version:references:in-reply-to
-         :message-id:date:subject:cc:to:from:sender:from:to:cc:subject:date
-         :message-id:reply-to;
-        bh=/O+LW8Qu11sUz1SudQgV3ED36f0DQ0OZu2gAZNCTdAc=;
-        b=X06WMVk4FdjKczZFj582yCc8cRVJPPidAkZgZsG8TIaNxdVbAWfGLK4HlQF2aY55xo
-         l2+//oqsM9UdmGgozjmvF6+LDvwpEUrd80EJqDSJIGCIPslZWfdD5Mj1mbOpORzpWWZZ
-         hBoKYXI4Fe8IGBqM/PdGtKX05jB7bATMLJqOENgB8p7v2eNCvR/F1Sg5SRUSO4LzzAO8
-         RPbmowictxMoa+H+jAI6uzSIhAyPmdtHAcsbcl92tGa1niG8SWur0erJwSecjx8Lfxb5
-         fmmpUyhnjBwbyMmwcgIK3OT/jh9llH2GQ+wcNDcSddxNJ5GpiqWtlJoBDIhMlvHa7fcB
-         MUKA==
+        d=gmail.com; s=20230601; t=1753521524; x=1754126324; darn=vger.kernel.org;
+        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+         :to:from:from:to:cc:subject:date:message-id:reply-to;
+        bh=HUkek/YB4uQcM4GmSDr/TxnHNI3PV2LrgYZ710sWuTQ=;
+        b=DQHzF5OwW2qOY8s1VI3cpyqtQSifPloISyy6VjrRWN9oJ3Ui2kHISQqtoTI08/cfdp
+         +bE+3JJo0VI4wR8Qq+AfJ1v6a4Kd99sYbYionH3YbbhPqjMFHQGsPPqdzTYpJtGRR+/V
+         lfq0i8o7qH4g78Lksw7d2Jm6yql2D4RcJ7r+7y/9Qi/RpYFnhyxfmMu9YEKo6cMH/6/1
+         lTVdHeLhjeieVRIZGx2EKf2b3vQjlrxC8mI/B/Osa+2AITNhp9/hzEzL36JVb+SPF6qq
+         6bHZEjIPl1W3O9AfUojdTGLEHA1gwHuhgU9bGwB1MgArHjyQUjzdE5+L0c3MkjkuYo0m
+         hG/Q==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1753470013; x=1754074813;
-        h=content-transfer-encoding:mime-version:references:in-reply-to
-         :message-id:date:subject:cc:to:from:sender:x-gm-message-state:from
-         :to:cc:subject:date:message-id:reply-to;
-        bh=/O+LW8Qu11sUz1SudQgV3ED36f0DQ0OZu2gAZNCTdAc=;
-        b=lZlPGAAVdDXReWvwamO60VufOYZNaazLEqhgvV2Et2jCz0CNxUx5SiH1GDRRUf1gvm
-         NGhz1fKQt1C/CeVoBgZbSqwI+5IwgVq+Qx4xDunOTVzDi9uN+m1cXFYdvSOQPs5EZjO2
-         /xy1t52Cjdmp6nYCJ65u42fDSbg2WPppxDz4c31PVZ3FnEeV20qnodxjIUtJIaOqdRcP
-         mtDLChNZ6Gqw1Ude6RbWTUDpxn/yq4v2edpI9rUeAf4NnQ/pi2oN5qSEALTJpYIoHAUd
-         /Puu6lEF5JP7F250+jfvHpqnM4Gdiini5zYf8Gu0vjGsMKuVXaQv66HIU7iEmQvbzJd3
-         FiQg==
-X-Gm-Message-State: AOJu0YzXScsL2ONr3bz+JVc0GZRoA2fZv3DdUZTULAwnm8PyO3x4v8tx
-	uICfvLktZ0g7npdr5bPR9thomUe+mpbTyRUuyDb7XJgz25eesIynoBEm5TPO9cTp
-X-Gm-Gg: ASbGncug03rZGswEY1WLb/7xE9feGNqCZjJND4wIsMamlY69ISNcd28qSVITmkrvUX/
-	A3ixMXmGzFCwitGd7Mwm5qivCpg0DExNWNno5ajhyV554G6tRtDxIY9z14NErraHWiE+8Z146wO
-	/YhBi3IGhYEZJMvLls2s0tnePm4MaKWUJ/1Iu7+vpCnoShAuPbHWTcIYzMixD9PtHamBKz9GJ9M
-	zZ6F0c+gOk/kjl3mFsWmlx1jeDn8nheb/qeB938BMYTcdXJ8VLkFHuI9w4SI8/a815cWNa1F6Wn
-	adUKBDrDTXpbxsC2Uld/Vdj3GhB7lAPYfltPipWIUKAKoWdH90jkKVepanGKd648ip/m+8xpLxN
-	2x8DHyzZhm5snhgIwi4ohi5OReai2CxV5+A==
-X-Google-Smtp-Source: AGHT+IGfE1uf7K053luqnMulvqQIgT5dulatssG93lJb6H9XZkH8dQq5BfUf86QPS6d4otXCXDBnAA==
-X-Received: by 2002:a05:622a:1ba3:b0:4ab:6753:9388 with SMTP id d75a77b69052e-4ae8f085ac7mr32261001cf.48.1753470012846;
-        Fri, 25 Jul 2025 12:00:12 -0700 (PDT)
-Received: from localhost.localdomain ([142.189.102.151])
-        by smtp.gmail.com with ESMTPSA id d75a77b69052e-4ae9966c3cfsm3184641cf.48.2025.07.25.12.00.11
+        d=1e100.net; s=20230601; t=1753521524; x=1754126324;
+        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+         :to:from:x-gm-message-state:from:to:cc:subject:date:message-id
+         :reply-to;
+        bh=HUkek/YB4uQcM4GmSDr/TxnHNI3PV2LrgYZ710sWuTQ=;
+        b=f51ZfJyYGjcl5mi7deZisEYynjjAmVXoFcu4bDL6v14rdShH/TZ+8sF/hoZNVmJWfK
+         eTYUMFTBr0HldeEoZsCqrFDG05wKEXbJ17lRkFcZZrUDumEb5kMLNJbMCROonB8kt1ff
+         4F+Xr/67+g49AJjjjKtmxGtZIXVZZBiZDuiKfwo3NyRboj+/o19xFRXF2uKzgofeiLPZ
+         cpb1hu66aaxrTWV7ylbSALO7R56Zrzlm+bhMUw1MZHyCqRygHtQNWcTGKPOL42Fi+nl1
+         xXw5q1ikcK261urjHgH7YCR/2ynTQJQ4CPUNwu92j12sVVqzpF6bZjklYc8hbMTc0yn6
+         XbSg==
+X-Gm-Message-State: AOJu0YxlwN+spxWNCk0voURu//IclnUo4TKu1tzRyJ3Tcvmtp1De3AAm
+	i8xKeA1atAPU0GBRTeJuii8ncWE/7h5LkgBTHPcQqmvnKKQ3SErIDbZ7
+X-Gm-Gg: ASbGnctjZI9P5tgMau4r5tRKMjx/WbId+FMnUlVASfqKBGnQWqpqmghDqnHRzyKxY9J
+	iFVTfQIgOWUEymVi1e2PnDHcwnODcMrWVX/7KSsyKXicUDAsbMSEyqMluZrJqJAtEBRPWD+QieI
+	JhQDVs+5leZAqlP6i1QKZfpQNAsvLGmE2uRahXJmeOZTIG0LXdwLSZamUI8aaA5m1yauaWAHETD
+	MNkgyxhqXED0htFvUDji+Xj1/kuhEVisvnZ2M7j/W+DJ6duUaJ+TyI6u/iMghdvdMFNtX190i2k
+	8nvq61/ZerzLU2ka/0ZBcd9J4/upri6l8wW0x4c+L7wbZmdKPWBI52dylrwstxBD92LtWz/gwoj
+	31VPeqK4MkImK6PPYcUTVaonGiMtQEIqv8mya1K+9Jo5KABamGhKN
+X-Google-Smtp-Source: AGHT+IGSK8pMmRu20n7mrIqzJ8/jv+/DXUjx8agkU1gkyrvTeHywaKMYuJmhDu8BsRa4Pt3MJcAntw==
+X-Received: by 2002:a17:90b:4b4c:b0:311:e8cc:4264 with SMTP id 98e67ed59e1d1-31e7785eed2mr7134219a91.12.1753521523709;
+        Sat, 26 Jul 2025 02:18:43 -0700 (PDT)
+Received: from eric-wcnlab.tail151456.ts.net ([2001:288:7001:1099:3fec:e266:6de8:8b66])
+        by smtp.gmail.com with ESMTPSA id 41be03b00d2f7-b3f7f569d24sm1295025a12.1.2025.07.26.02.18.42
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Fri, 25 Jul 2025 12:00:12 -0700 (PDT)
-Sender: John Kacur <jkacur@gmail.com>
-From: John Kacur <jkacur@redhat.com>
-To: linux-rt-users <linux-rt-users@vger.kernel.org>
-Cc: John Wyatt <jwyatt@redhat.com>,
-	John Kacur <jkacur@redhat.com>
-Subject: [PATCH 3/3] tuna: Add -U and -K to the move command
-Date: Fri, 25 Jul 2025 14:59:37 -0400
-Message-ID: <20250725185937.72945-3-jkacur@redhat.com>
-X-Mailer: git-send-email 2.49.0
-In-Reply-To: <20250725185937.72945-1-jkacur@redhat.com>
-References: <20250725185937.72945-1-jkacur@redhat.com>
+        Sat, 26 Jul 2025 02:18:43 -0700 (PDT)
+From: Cheng-Yang Chou <yphbchou0911@gmail.com>
+To: williams@redhat.com,
+	jkacur@redhat.com
+Cc: linux-rt-users@vger.kernel.org,
+	jserv@ccns.ncku.edu.tw,
+	yphbchou0911@gmail.com
+Subject: [PATCH v2 0/8] Fix -Wunused-result warnings by checking return values
+Date: Sat, 26 Jul 2025 17:18:29 +0800
+Message-ID: <20250726091837.493915-1-yphbchou0911@gmail.com>
+X-Mailer: git-send-email 2.48.1
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
@@ -76,64 +73,42 @@ List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 
-Add the following options to the move command (like in the show_threads
-command)
-  -U, --no_uthreads     Operations will not affect user threads
-  -K, --no_kthreads     Operations will not affect kernel threads
+This v2 series adds proper commit messages and addresses coding style
+warnings previously reported by checkpatch.pl.
 
-Signed-off-by: John Kacur <jkacur@redhat.com>
+All patches have been verified with checkpatch.pl and show no errors
+or warnings.
+
+Changes in v2:
+ - Add commit messages to all patches
+ - Ensure all patches pass checkpatch cleanly
+ - Link to v1: https://lore.kernel.org/all/20250712134213.58582-1-yphbchou0911@gmail.com/
+
+Thanks,
+-chengyang
+
 ---
- tuna-cmd.py  | 4 +++-
- tuna/tuna.py | 7 ++++++-
- 2 files changed, 9 insertions(+), 2 deletions(-)
 
-diff --git a/tuna-cmd.py b/tuna-cmd.py
-index 9496c61f0c2b..d0a3e6b7dbf8 100755
---- a/tuna-cmd.py
-+++ b/tuna-cmd.py
-@@ -174,6 +174,8 @@ def gen_parser():
-     move_group.add_argument('-N', '--nohz_full', **MODS['nohz_full'])
-     move.add_argument('-t', '--threads', **MODS['threads'])
-     move.add_argument('-q', '--irqs', **MODS['irqs'])
-+    move.add_argument('-U', '--no_uthreads', **MODS['no_uthreads'])
-+    move.add_argument('-K', '--no_kthreads', **MODS['no_kthreads'])
- 
-     spread_group = spread.add_mutually_exclusive_group(required=True)
-     spread_group.add_argument('-c', '--cpus', **MODS['cpus'])
-@@ -746,7 +748,7 @@ def main():
-             parser.error(f"tuna: {args.command} requires a thread/irq list!\n")
- 
-         if args.thread_list:
--            tuna.move_threads_to_cpu(args.cpu_list, args.thread_list, spread=spread)
-+            tuna.move_threads_to_cpu(args.cpu_list, args.thread_list, args.uthreads, args.kthreads, spread=spread)
- 
-         if args.irq_list:
-             tuna.move_irqs_to_cpu(args.cpu_list, args.irq_list, spread=spread)
-diff --git a/tuna/tuna.py b/tuna/tuna.py
-index 1380df0dadba..ef60c033362d 100755
---- a/tuna/tuna.py
-+++ b/tuna/tuna.py
-@@ -174,7 +174,7 @@ def is_hardirq_handler(self, pid):
-     except:
-         return False
- 
--def move_threads_to_cpu(cpus, pid_list, set_affinity_warning=None, spread=False):
-+def move_threads_to_cpu(cpus, pid_list, show_uthreads, show_kthreads, set_affinity_warning=None, spread=False):
-     changed = False
- 
-     ps = procfs.pidstats()
-@@ -183,6 +183,11 @@ def move_threads_to_cpu(cpus, pid_list, set_affinity_warning=None, spread=False)
-     new_affinity = cpus
-     last_cpu = max(cpus) + 1
-     for pid in pid_list:
-+        iskth = iskthread(pid)
-+        if not show_uthreads and not iskth:
-+            continue
-+        if not show_kthreads and iskth:
-+            continue
-         if spread:
-             new_affinity = [cpus[cpu_idx]]
-             cpu_idx += 1
+Cheng-Yang Chou (8):
+  rt-utils.c: Check return values of write()
+  pmqtest.c: Check return values of write() and ftruncate()
+  ptsematest.c: Check return values of write() and ftruncate()
+  rt-migrate-test.c: Check return values of write() and ftruncate()
+  cyclicdeadline.c: Check return values of write() and ftruncate()
+  deadline_test.c: Check return values of write() and ftruncate()
+  sigwaittest.c: Check return values of write() and ftruncate()
+  svsematest.c: Check return values of write() and ftruncate()
+
+ src/lib/rt-utils.c                    |  9 +++++--
+ src/pmqtest/pmqtest.c                 |  6 ++++-
+ src/ptsematest/ptsematest.c           |  6 ++++-
+ src/rt-migrate-test/rt-migrate-test.c |  5 +++-
+ src/sched_deadline/cyclicdeadline.c   | 32 +++++++++++++++++++----
+ src/sched_deadline/deadline_test.c    | 37 +++++++++++++++++++++++----
+ src/sigwaittest/sigwaittest.c         | 13 ++++++++--
+ src/svsematest/svsematest.c           | 13 ++++++++--
+ 8 files changed, 102 insertions(+), 19 deletions(-)
+
 -- 
-2.49.0
+2.48.1
 
