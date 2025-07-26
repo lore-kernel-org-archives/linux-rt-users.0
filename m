@@ -1,71 +1,71 @@
-Received: from mail-pg1-f175.google.com (mail-pg1-f175.google.com [209.85.215.175])
+Received: from mail-pf1-f182.google.com (mail-pf1-f182.google.com [209.85.210.182])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 68B932264D5
-	for <linux-rt-users@vger.kernel.org>; Sat, 26 Jul 2025 09:18:51 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.215.175
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id AFF0A21A95D
+	for <linux-rt-users@vger.kernel.org>; Sat, 26 Jul 2025 09:18:52 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.210.182
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1753521532; cv=none; b=Vqp6jehOiLUvA+xiy0FxyKrSWkYt30qURNEu741kVjOBYZHAOVFzZcApFnxp6941/6gFccBzusueRRltmL8AR64AizdH7RZ++ubZUb1TOuXbsuM8epcKbT8N/m+aQ/L12TR8VMUYVcPizhucMWhMFtAc35I2gF+BqqCym7BWPgs=
+	t=1753521534; cv=none; b=IgwMypK9LmZ3fgfRn668/n+GvlvIHjy4mXekTaG0DZ44wHTD/eGmKFoZah5m/Wqteo2anZHb20DyjL5ERIPRBYF4/BVVwBivukWjVAPuZf/vJKPbuytbpP7p87ekaoyiCrCu67TYYaZlnbLDrT9gGEtll3piR2OimORJaGRyejc=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1753521532; c=relaxed/simple;
-	bh=w9xwZ5xvy9g2bEIzI1y9oWQnc62BHCaJhnknJB0mybA=;
+	s=arc-20240116; t=1753521534; c=relaxed/simple;
+	bh=VtzAwHvKpnmZMJSkbRonb9WFXMV3/iZMFeTPU4cAWJ4=;
 	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=Ym3gx/OlWNjqJ8L9qt6vGLzajw0k6z4Yvtt+rg0VDAuddswDnG5hldYpdgb3OeFMg231VOzQEHUOiO914OxaopGyhaNLoeuQdUmDVOIHIBGr9ClsmBVBJXFe9esaZGR5Wcn9BQGIgumG+JM677DOro4ACSt9K2xOp7NIrHv+ekI=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=h77XS10P; arc=none smtp.client-ip=209.85.215.175
+	 MIME-Version; b=YlutFpCpGZByQ79Tcwg3ZDoWZYlZgyPZz43ziqnhPkYrWgtEMTDrurty+XpntvRBQGpIEwU8CTrVvnAt7HUvYsUFYi+acxImPreVbcrbbg7orzuZoUvlRXIm60GDaVOP6OkSLb08vdzMqjvaQunnxcG2wpA84+ZgRzRHdfTtX08=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=FYYi2fJm; arc=none smtp.client-ip=209.85.210.182
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="h77XS10P"
-Received: by mail-pg1-f175.google.com with SMTP id 41be03b00d2f7-b34a6d0c9a3so3631754a12.3
-        for <linux-rt-users@vger.kernel.org>; Sat, 26 Jul 2025 02:18:51 -0700 (PDT)
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="FYYi2fJm"
+Received: by mail-pf1-f182.google.com with SMTP id d2e1a72fcca58-74b54cead6cso1968151b3a.1
+        for <linux-rt-users@vger.kernel.org>; Sat, 26 Jul 2025 02:18:52 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1753521531; x=1754126331; darn=vger.kernel.org;
+        d=gmail.com; s=20230601; t=1753521532; x=1754126332; darn=vger.kernel.org;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:from:to:cc:subject:date
          :message-id:reply-to;
-        bh=hCB1eeG2Dmnx5gO46V48MoYbNf/NXD5UUzKGQTbSw2o=;
-        b=h77XS10PYiABnpdZ+7YQuy5mG1s/IVORUerrB5Apx4Y2V4qtdFBpjEd352F1mWayHJ
-         89oRiIaJyav7SDiPjJ0Uqr0wF2NQngNiELs6RMdLpLMyDTiSGxIgD0/40UqtW3nFC0s1
-         +93QAE2+y1TdhHxnmlpmZs6+1zFqdu4zEz0xatVLyquR9p3SnIncVZymXRXSS7uUr+8m
-         /VMDSJfuMOhlt7VT5PlQfwOP/BtygStIn1MNTYpzqKng/bMZzTQfjdGbwTVzyjf8xVX1
-         FGoqBHv43OxESFtGZnF5ADMz8VX75mI6lAjDSmuv2efvHL+YjvGManmCiblCpduH4asy
-         +MdQ==
+        bh=dGCQuiM/9gunqhKpGFChIp8ztPJzim8lF+vc0kf9qpc=;
+        b=FYYi2fJmQK1jwDzkfMm04RCDGpXjshWk9KfP9Mhw/U73CAAKvhaXzEgnoS7Y+p0h0o
+         MdXYjYS0MLklOCcBy6HSnyy5Oh7YNUjDMtBEq3vzawtg/0Z9CBOi3UrEUlPcWC2HAjLj
+         hAeoFfReCPTRWNnosEvRT17gBg6njVdzxhscYcWIy0CETIKVix/N3/AoBRYh4kc8v2bV
+         ZgQzz9Xj5E1WfFoUhneAcW5GVcgsbSJaDQU8NP9/83wxIo2lGgR9X9IVGr0eOGDgLJXj
+         fYXOod26rxqJBqQWHo++Tk7CrXEJ3TAvlDOM3DEcJvoT+BBI6bjUCSugbV85xWepVU4V
+         9kjg==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1753521531; x=1754126331;
+        d=1e100.net; s=20230601; t=1753521532; x=1754126332;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:x-gm-message-state:from:to:cc
          :subject:date:message-id:reply-to;
-        bh=hCB1eeG2Dmnx5gO46V48MoYbNf/NXD5UUzKGQTbSw2o=;
-        b=WoTJG5n07YEr+jM5+zuhfCru/gCtatAgRcWnRZwZLWTzp2suot6eGTtFaxZ8jhDjiG
-         +cU/eX78Ks1ECMsBGkiKo5dhPA3/YkVQ8iXIXfP0OVc8am8uraWcu7/rBmKagQzFJR1H
-         gt/iFZToTzLQ5mI3nAu5Gtk2Pn177ddRdprdbj4hPu4QNlhlCQyb6XJSpuXJJJXDKqhE
-         UzNwEz+cgs4gB16JTxNAfd4Q6BklxFlpUAyTeSA35uWyPoBwwKw7gPSrc2IbcE8fErj6
-         IfcH/InRk5c+TjzttmEvPZyEn4JTf9CyX8h/UYZmHHR+ItZdQ8xFbW3T92LSFQJf/u1/
-         auEA==
-X-Gm-Message-State: AOJu0Yw2vtN9JmIBR8U8T+HGxbTOBQXhksU2r8JDYHgXrfbzkQLRrp5D
-	DUvvCi/XYbwb6jbgjMRgfZXzuh5SeBun+4YFm8yGfg/6JCAGQ/pglkro
-X-Gm-Gg: ASbGnctwmWLPu0uCxXowAQLkaP82R1AAo6o3NMnVZW3G/CU0mlJMy5dSVjY6HCQGIy7
-	gCx9Dhbj99QLjbWmvdqc9axvGhOALApQo6MpP1OnR+ho3cO6xNcfpivt/LaS9pWU2I/rBNTvrw5
-	xT09GeN98SFFruea65cYA2H7OogV2tfJU2lv+K4Wt+2G17h5pwu3cCCnB+fUBepkG3nOH8YJ2uv
-	PSvoc4AtN0km6r0oqC1i+YNvmjqYMQl8pEXfzbS7/m2ANVOn6tZJX1BxarulIsTm6baAE02iBKL
-	fi7pOoneT0okgk3ZQwpKT6lRqkE0AwOFGdumQTUQ9uH4IA0n+fiumiUClIDVstRx2DFZMtvAgtt
-	Ap5EtaGIMDukXNBbz7Gu7ji0hA6pQ3Ylnz1v3y5/5CZy3in1BsSnV
-X-Google-Smtp-Source: AGHT+IGEid1K70yU9LJRFK52nW8UEeSyZBcyM4sii2gQXE17Xvo87lAkGnknMH6aeWatYtJglC45Xw==
-X-Received: by 2002:a05:6a20:94c8:b0:21f:5324:340 with SMTP id adf61e73a8af0-23d701ebc8dmr8691077637.41.1753521530493;
-        Sat, 26 Jul 2025 02:18:50 -0700 (PDT)
+        bh=dGCQuiM/9gunqhKpGFChIp8ztPJzim8lF+vc0kf9qpc=;
+        b=Nm6x7LWq8jAnPh3gitMOZqVHRtHYPuKuEhgjNd2+9He6emcsIbLe/T+DKft1iNjLVI
+         hak9/fMeSGa36mW0Tz0eUpTomOnNCmBg4mbh3E5uRhzMr5Huy8pbQU3VnLQZ8FD6O0Pb
+         L/K5BalC8mZTaFfGr8dJ4y/Tv/c7BbryAlbwY61WaIPeS5DCT41IuS9q0QD1SkMhoeJA
+         ErLo0cSdcZmCT+xQCkhN55eOArXWuBXDY53YA5qpoj/9LvnE6665Yos5LAD0+hFHDbIh
+         4OQICn+eWxYHbGFYd6eDX+2yYnPd93X2aFfR8TmRvAFTpfK3xRwJw5kNaRlI3v2Ln3PT
+         vVYQ==
+X-Gm-Message-State: AOJu0YzZeJBodcCjr8oX/qIsxaL4b0C6HYs+7Kdl4PSup6+1SHMYKArI
+	OXXMghYi1VZ403q0fKaezRgEcF1KtWUu/W2z0UWXUbvxX/yuQYuxsjo1
+X-Gm-Gg: ASbGncvhR+QO61FqAKhimrrRcG2PVC7bBXZfMJ4KPWs67yLM79zCgl3M6RlqFa9XjKq
+	b0SmbrHXLToWKbCZs5HBNrjZUFAjN8GI4IX6NUhRQMTFtFrFU8X0cKYStHX14LzMoC6mgrF67Tb
+	LDYihvE4PdL6niiEs9AtWqULa92JVQTKLIfn0DjH1sHZ6hwPEc2yi7EdacyJML01qirVXKJT7B5
+	k8KEInN46WYNJQSsf5c8pIyVTnbQd6a+qdJGEgM3rqUQY+MzWzgL/BqJufOi6jt4r+55osqR6+T
+	RIG6KmY1YxWjQZLWR9xDx5unPC7DGDVEOiadE+p22/HwXwcas1ToRjhpgkxXd8PNYsZFZte0K1W
+	fh3Bbww1VX3oAv7BjkLD9j9P5XcWkFHNBhLfcc1TVh7OOtIN/QC7f
+X-Google-Smtp-Source: AGHT+IE8dKuxprhrf75sUzR5lPXZZUNHKPuDgWhe18URU9f7Xh1sEgpYoGMsYTwuakD5upo1DQyEiA==
+X-Received: by 2002:a05:6a21:339b:b0:232:1d30:cd90 with SMTP id adf61e73a8af0-23d6ffe4a50mr7298718637.5.1753521531847;
+        Sat, 26 Jul 2025 02:18:51 -0700 (PDT)
 Received: from eric-wcnlab.tail151456.ts.net ([2001:288:7001:1099:3fec:e266:6de8:8b66])
-        by smtp.gmail.com with ESMTPSA id 41be03b00d2f7-b3f7f569d24sm1295025a12.1.2025.07.26.02.18.49
+        by smtp.gmail.com with ESMTPSA id 41be03b00d2f7-b3f7f569d24sm1295025a12.1.2025.07.26.02.18.50
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Sat, 26 Jul 2025 02:18:50 -0700 (PDT)
+        Sat, 26 Jul 2025 02:18:51 -0700 (PDT)
 From: Cheng-Yang Chou <yphbchou0911@gmail.com>
 To: williams@redhat.com,
 	jkacur@redhat.com
 Cc: linux-rt-users@vger.kernel.org,
 	jserv@ccns.ncku.edu.tw,
 	yphbchou0911@gmail.com
-Subject: [PATCH v2 5/8] cyclicdeadline.c: Check return values of write() and ftruncate()
-Date: Sat, 26 Jul 2025 17:18:34 +0800
-Message-ID: <20250726091837.493915-6-yphbchou0911@gmail.com>
+Subject: [PATCH v2 6/8] deadline_test.c: Check return values of write() and ftruncate()
+Date: Sat, 26 Jul 2025 17:18:35 +0800
+Message-ID: <20250726091837.493915-7-yphbchou0911@gmail.com>
 X-Mailer: git-send-email 2.48.1
 In-Reply-To: <20250726091837.493915-1-yphbchou0911@gmail.com>
 References: <20250726091837.493915-1-yphbchou0911@gmail.com>
@@ -82,14 +82,14 @@ system() calls to avoid ignoring errors.
 
 Signed-off-by: Cheng-Yang Chou <yphbchou0911@gmail.com>
 ---
- src/sched_deadline/cyclicdeadline.c | 32 ++++++++++++++++++++++++-----
- 1 file changed, 27 insertions(+), 5 deletions(-)
+ src/sched_deadline/deadline_test.c | 37 ++++++++++++++++++++++++++----
+ 1 file changed, 32 insertions(+), 5 deletions(-)
 
-diff --git a/src/sched_deadline/cyclicdeadline.c b/src/sched_deadline/cyclicdeadline.c
-index 04e61ed..6b5d3e0 100644
---- a/src/sched_deadline/cyclicdeadline.c
-+++ b/src/sched_deadline/cyclicdeadline.c
-@@ -206,6 +206,7 @@ static void ftrace_write(char *buf, const char *fmt, ...)
+diff --git a/src/sched_deadline/deadline_test.c b/src/sched_deadline/deadline_test.c
+index ca2da47..a74d514 100644
+--- a/src/sched_deadline/deadline_test.c
++++ b/src/sched_deadline/deadline_test.c
+@@ -325,6 +325,7 @@ static void ftrace_write(char *buf, const char *fmt, ...)
  {
  	va_list ap;
  	int n;
@@ -97,7 +97,7 @@ index 04e61ed..6b5d3e0 100644
  
  	if (mark_fd < 0)
  		return;
-@@ -214,7 +215,9 @@ static void ftrace_write(char *buf, const char *fmt, ...)
+@@ -333,7 +334,9 @@ static void ftrace_write(char *buf, const char *fmt, ...)
  	n = my_vsprintf(buf, BUFSIZ, fmt, ap);
  	va_end(ap);
  
@@ -107,8 +107,8 @@ index 04e61ed..6b5d3e0 100644
 +		perror("ftrace write failed");
  }
  
- static void setup_ftrace_marker(void)
-@@ -448,6 +451,10 @@ static int mount_cpuset(void)
+ /**
+@@ -626,6 +629,10 @@ static int mount_cpuset(void)
  	if (fd < 0)
  		return fd;
  	ret = write(fd, "0", 2);
@@ -119,30 +119,32 @@ index 04e61ed..6b5d3e0 100644
  	close(fd);
  
  	return 0;
-@@ -634,7 +641,14 @@ static void destroy_cpuset(const char *name, int print)
+@@ -875,7 +882,19 @@ static void destroy_cpuset(const char *name, int print)
  		sprintf(buf, "%d", pid);
  		if (print)
  			printf("Moving %d out of %s\n", pid, name);
 -		write(fd, buf, strlen(buf));
 +		ret = write(fd, buf, strlen(buf));
 +		if (ret < 0 && errno == ENOSPC) {
++			/*
++			 * If we get ENOSPC, then we have a problem, as it
++			 * means that the cpuset is full, and we cannot move
++			 * the tasks out of it.
++			 */
 +			fclose(fp);
 +			close(fd);
-+			fatal("Cannot move tasks out of cpuset %s\n", name);
++			fprintf(stderr, "Failed to move %d out of %s\n", pid, name);
++			perror("write");
++			return;
 +		}
-+
-+
  	}
  	fclose(fp);
  	close(fd);
-@@ -656,19 +670,24 @@ static void destroy_cpuset(const char *name, int print)
+@@ -910,16 +929,21 @@ static void destroy_cpuset(const char *name, int print)
  static void teardown(void)
  {
  	int fd;
 +	int ret;
- 
- 	if (all_cpus)
- 		return;
  
  	fd = open_cpuset(CPUSET_PATH, "cpuset.cpu_exclusive");
  	if (fd >= 0) {
@@ -162,17 +164,17 @@ index 04e61ed..6b5d3e0 100644
  		close(fd);
  	}
  
-@@ -1164,6 +1183,7 @@ int main(int argc, char **argv)
- 	int nr_cpus;
+@@ -1790,6 +1814,7 @@ int main(int argc, char **argv)
+ 	int rt_task = 0;
  	int i;
  	int c;
 +	int ret;
  
- 	rt_init(argc, argv);
- 
-@@ -1387,7 +1407,9 @@ int main(int argc, char **argv)
- 				  CPUSET_FL_CLONE_CHILDREN |
- 				  CPUSET_FL_TASKS, pids);
+ 	cpu_count = sysconf(_SC_NPROCESSORS_CONF);
+ 	if (cpu_count < 1) {
+@@ -2041,7 +2066,9 @@ int main(int argc, char **argv)
+ 			exit(-1);
+ 		}
  
 -		system("cat /sys/fs/cgroup/cpuset/my_cpuset/tasks");
 +		ret = system("cat /sys/fs/cgroup/cpuset/my_cpuset/tasks");
@@ -180,7 +182,7 @@ index 04e61ed..6b5d3e0 100644
 +			perror("system call failed");
  	}
  
- 	debug(debug_enable, "main thread %d\n", gettid());
+ 	pthread_barrier_wait(&barrier);
 -- 
 2.48.1
 
