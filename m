@@ -1,71 +1,71 @@
-Received: from mail-pj1-f48.google.com (mail-pj1-f48.google.com [209.85.216.48])
+Received: from mail-pg1-f172.google.com (mail-pg1-f172.google.com [209.85.215.172])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 16C0F7B3E1
-	for <linux-rt-users@vger.kernel.org>; Sat, 26 Jul 2025 09:18:45 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.216.48
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 5449A21A95D
+	for <linux-rt-users@vger.kernel.org>; Sat, 26 Jul 2025 09:18:47 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.215.172
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1753521527; cv=none; b=kmzQ1MFHoJYgu8q3hP/xrZL4TL8YtZxh/LFQh5zJNvPbHhhQZdGkOf0lEFPm1jjfuagP6wj7l/vu6CJKh94MN33l/2tqPeqBTTg9GKrI4B9Z8Ut4PO2jIuUhQpiVIrN4RrP55nFmDxdO3DsxTbodfK9k4pV+aztQKK/6xq3D6Kg=
+	t=1753521528; cv=none; b=gP323GreLpXeIu1gMBMWAacHWqL2jv97lonKz+eEGw1kpSTzp/xRnOdg4LXPsr9VSnCXiLR+QWOr9A6XJxYvAoydZZ7SuRH5fadYZqjpgohZEN8ZpCDFN24guf9Xn8P2EDVJuN3HCcxzl8vCJwScDNRG6jIuoUscp1pmV+xLrUs=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1753521527; c=relaxed/simple;
-	bh=jT8TjqBK8Ww2lJZcoMFYZ9ljNFEFGIsaXvmhI2EyzH0=;
+	s=arc-20240116; t=1753521528; c=relaxed/simple;
+	bh=sh5rDXPLe1RjzcwcnUo7t4tEFD3Y/PI7+noNaJD+9m0=;
 	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=tN4GTJpzEEnYdN9QQ7GwsnNqEvZxXbj6IR4jN5O4Jv/46Z7kTNwuXjCKkX0uevKYkm6nCQX3McdOJwZJOU4poniBjWob5U68fu8DZbXuAMlRLEZ1GUjUfxEnXivQj5N48qNNeA7ghhcrCqsLwe55bOCBea0W2AUHA/IN6P+lurU=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=mmL3QcHd; arc=none smtp.client-ip=209.85.216.48
+	 MIME-Version; b=lAJpR/6qhdqbyheC+bUEOT3RBf0/5wMuYCesnX5FmnsD7zZXNORfQz5gFJHUnN+SvAQE9DZN5sHZgFQG9m+NpjGyNGekogSJEBR/lUUbLDoQBUumC81byWl9hkRkolLMMURt9ZN6cBARQED71TWnSM8IkuON1G7vrdtw5maxspA=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=aKx//tTu; arc=none smtp.client-ip=209.85.215.172
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="mmL3QcHd"
-Received: by mail-pj1-f48.google.com with SMTP id 98e67ed59e1d1-313bb9b2f5bso2611717a91.3
-        for <linux-rt-users@vger.kernel.org>; Sat, 26 Jul 2025 02:18:45 -0700 (PDT)
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="aKx//tTu"
+Received: by mail-pg1-f172.google.com with SMTP id 41be03b00d2f7-b31d489a76dso3097515a12.1
+        for <linux-rt-users@vger.kernel.org>; Sat, 26 Jul 2025 02:18:47 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1753521525; x=1754126325; darn=vger.kernel.org;
+        d=gmail.com; s=20230601; t=1753521526; x=1754126326; darn=vger.kernel.org;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:from:to:cc:subject:date
          :message-id:reply-to;
-        bh=X8/O3ZQvMq/bBiPCwERGI7qsHDiQ7ys9KGkMZBQxCnw=;
-        b=mmL3QcHdEQQmWrX6lHtehnphUQkuMQ+TnC676uHgWInJUqGuADhOkhlrIdQQDnVyr1
-         lDluQ2X9npD63lpFqX0EHM4DATZRSmjlC24e6FPPPiWLWYj30fhze49DM6Kw/UUR63Wn
-         j6yDml4K5/+IWLUuXCa0lUoIOkB1ljGSHjo9sM2a1z9pMjAcM8UC5XmJ5u8qpzcB2vgS
-         jZyvZWd1gNPVQbsHaAW/ZuJakfPPwtFNO7TOLypd5anY/MAF+dRzZ6tNwbv6/SWEC8q0
-         m9QVp5msMQH7KGihxcSE22Y86AUz8Mvgt+UAojtoywb2WdxGMvXTM80RFCoaOccWOuaH
-         Fksw==
+        bh=OIkmbdqbRqQ7RXytvm6wSqUM6ftZINRtF4AGrWlK8Fs=;
+        b=aKx//tTu1mJK9MsvRDB7gUkr3pHhgI8rC9tmXH8hzFYJLBcoUuphnC9IBVt8ujEG3G
+         L6y4ajC2UitIkyUkz5HPx1zO10+abW69gClGO5xhlMTrHY0pv423x34Q5o94it13P1oQ
+         hX5L0px7GrMxQfM39oSqz94qbffki3kBNxNYN1UW4ge0JjDu3U6D1ey2jcnJcAazlBW9
+         JOJ9T1kKeXP/1qJtMez85suWrE4iioXrI0ly71BBsQnSNQQgvVoYcZStTSBbG8DihfwP
+         ueW8/SaMYH64TfvoBNh4+8CJm/4PCg9JMrXrQk3TmgCd3KLMA0gOK343//WZnTpOTK3H
+         ZPKw==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1753521525; x=1754126325;
+        d=1e100.net; s=20230601; t=1753521526; x=1754126326;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:x-gm-message-state:from:to:cc
          :subject:date:message-id:reply-to;
-        bh=X8/O3ZQvMq/bBiPCwERGI7qsHDiQ7ys9KGkMZBQxCnw=;
-        b=q0Adzt+7HeuaWTv5vdLdUa1y3C74vIh8vYwqXuudF3udECzFCw7V+vxFtheqh8wKOp
-         24eECWAhzmoP9zDIUU165ukCfGz5MrCtcDadt3++/HbYvxAQ8AX/5mJAr3fTheaoItCN
-         DYf3sMKl344fMzkBupxryr/7au9SVlFaRQTbjozn7G8xQo3Z8etS130pkU2ZJleAvBM/
-         etEN1og6H1KYwFYlOTVWu0Am6geaPkM1n3jrb80a1Ujf6/kygYn+nfMw2rbCgpY8wtGs
-         iVKFFL8vnkKEMwqChm+oA9mSR0De8OKL0Md+JF2IO4UQa5zgok29JnEAY+ODa2/XSw+E
-         MFaQ==
-X-Gm-Message-State: AOJu0YzGj6jtTF07LPfEW4vCsqZ3iqV+fpkNAuLdxTGhYYRta5x3Njlx
-	ioONC6dEqKMcXnQxNsJJYcbVf9Y0I4MT7OQ21rzaHsw8PvQBu5iQ/4yI
-X-Gm-Gg: ASbGncueN5JVzvgUb2wQSjvjALs4Y3PEd9RBkoDZDATwPoYVRhjpoc0xWcE86k+xtF2
-	LiKpuMfdEj+QDb/O86N5XbOU80KskdWoDXL8nyXKiEFOdWkhQDfF+zhzncr7hS6gg03xxa4Go2D
-	mzYqFi505QIgBbQSVHfSc1R3HkCYZ/Y07FP7xhtlsdtg+r7qNHf8XtJqgyUFY3rrvTK15J7OVa4
-	RUfkvallqhj3aynCwVKaBylKqPRaGk+6W4XoihgdujnPnk7PKkP7X7FH//cimIgrE9PJO5yLmvq
-	IZG7c5DFiRx7hXhW05G6FBRVWhn/x1smKpdE9rDPLfJLTUTi6FQbxD4UMybQNwHRvbOxOcUq3yQ
-	LvAYCMQ3a74OTkhfnwLa/ptXGl6Z9Iyz9/3Cw+hYVTjEapkfN6BU9
-X-Google-Smtp-Source: AGHT+IGb5ZIpaL1n+d2vQIH7CVfi0i4Qf4/X3bUPYaOrfygeDALXxDqVIU7j5lVuqZMla4QIM2WC9Q==
-X-Received: by 2002:a17:90b:51c8:b0:312:51a9:5d44 with SMTP id 98e67ed59e1d1-31e77730556mr7161688a91.5.1753521525070;
-        Sat, 26 Jul 2025 02:18:45 -0700 (PDT)
+        bh=OIkmbdqbRqQ7RXytvm6wSqUM6ftZINRtF4AGrWlK8Fs=;
+        b=iPSIdMF7B/NVewtjpPUL6qQ9DjQFXN5FT80bL3xxyVgcHctyB7AZrNBEAE596ZzDOs
+         7fiv3Lng7JiylTAzTs+L35ZfI/tw3G+Bq8dZEinyw5pqtS83b7antvy/HwDw2UcVeh/c
+         cgptm+KcHKmCDdeNvOnuvZpMTDXKziwWcGpCh0rE0WH693oQswa6exHGYLLahaCyAjPk
+         kMjQ67cqZ6qoaKu3y3FBAKJ3AvNW1sM6pg3hI111lNtcHs6+etNFufR2eoj134hOARuT
+         9FYV23ZJmHywhZKf282/WvTqQBrn2qdWU2zXOyuyR7GjRoaoMn2asspDAbaU6LIdTtpY
+         RS0g==
+X-Gm-Message-State: AOJu0YyIn51vRei2R7HFJ7d3rLDeEh2o+m9aC8rIknCeEC1B/qzlzPOL
+	erhLUPl8G2p213Lm0SSQsugo+erFEREQFvFToMwncqo6YPzZU32vIIxv
+X-Gm-Gg: ASbGncubqL8DQ8aExQwekKJy5KhlAwnTEL3sYANoCOWMBznn2RFNkfbPDjPqUNTugBI
+	GJ0JnqU76xbyhdSnfQTeoY3F8SFiLODDw1FKpMhmXzmPXjQOsFLI01R73onltpJYUQrw7IcclUg
+	Gre2NUYmoqrlCQe1CqZQVm8Lx1XBA/wXoF335xjQ50Vqf+NnC6YYR9GTh4yq5fx0C3maVC+vibj
+	S7GPMlq/elobKjSAlfRmc8Zy6ihNNjoeRwE8P2RVxkYLdWDkXBfFrkgsnI8u+4A7z4/yiNVdlNt
+	R+jse5Kdt661eLQlFP8Pqij2RVYxEL2W9IUukC7oyOjn0IZKPOIP29miCx6ZCmqo7d8d+mWdqkx
+	zA0jBsVpcxnmsk1M0XUsrzEmR+o6Ii1PtqswMNUU3IINaQHbujOXbD0xPeSvx3KE=
+X-Google-Smtp-Source: AGHT+IHS3E4cqYXCeAhtW+UNaiRpUmb+MKbb7mxKPLb5lnmtjYTzgeOC5oA1q9D7bImxVJzlpDYT0w==
+X-Received: by 2002:a05:6a20:7488:b0:215:eafc:abd9 with SMTP id adf61e73a8af0-23d700e9754mr8979610637.14.1753521526394;
+        Sat, 26 Jul 2025 02:18:46 -0700 (PDT)
 Received: from eric-wcnlab.tail151456.ts.net ([2001:288:7001:1099:3fec:e266:6de8:8b66])
-        by smtp.gmail.com with ESMTPSA id 41be03b00d2f7-b3f7f569d24sm1295025a12.1.2025.07.26.02.18.43
+        by smtp.gmail.com with ESMTPSA id 41be03b00d2f7-b3f7f569d24sm1295025a12.1.2025.07.26.02.18.45
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Sat, 26 Jul 2025 02:18:44 -0700 (PDT)
+        Sat, 26 Jul 2025 02:18:46 -0700 (PDT)
 From: Cheng-Yang Chou <yphbchou0911@gmail.com>
 To: williams@redhat.com,
 	jkacur@redhat.com
 Cc: linux-rt-users@vger.kernel.org,
 	jserv@ccns.ncku.edu.tw,
 	yphbchou0911@gmail.com
-Subject: [PATCH v2 1/8] rt-utils.c: Check return values of write()
-Date: Sat, 26 Jul 2025 17:18:30 +0800
-Message-ID: <20250726091837.493915-2-yphbchou0911@gmail.com>
+Subject: [PATCH v2 2/8] pmqtest.c: Check return values of write() and ftruncate()
+Date: Sat, 26 Jul 2025 17:18:31 +0800
+Message-ID: <20250726091837.493915-3-yphbchou0911@gmail.com>
 X-Mailer: git-send-email 2.48.1
 In-Reply-To: <20250726091837.493915-1-yphbchou0911@gmail.com>
 References: <20250726091837.493915-1-yphbchou0911@gmail.com>
@@ -77,43 +77,38 @@ List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 
-Add error handling for write() to tracefs in tracemark() to avoid ignoring
-partial or failed writes.
+Add error handling for write() to tracefs and ftruncate() on shared memory
+to avoid ignoring errors.
 
 Signed-off-by: Cheng-Yang Chou <yphbchou0911@gmail.com>
 ---
- src/lib/rt-utils.c | 9 +++++++--
- 1 file changed, 7 insertions(+), 2 deletions(-)
+ src/pmqtest/pmqtest.c | 6 +++++-
+ 1 file changed, 5 insertions(+), 1 deletion(-)
 
-diff --git a/src/lib/rt-utils.c b/src/lib/rt-utils.c
-index 6bbd25a..447e158 100644
---- a/src/lib/rt-utils.c
-+++ b/src/lib/rt-utils.c
-@@ -465,6 +465,7 @@ void tracemark(char *fmt, ...)
- {
- 	va_list ap;
- 	int len;
+diff --git a/src/pmqtest/pmqtest.c b/src/pmqtest/pmqtest.c
+index 04e36a1..eb20baa 100644
+--- a/src/pmqtest/pmqtest.c
++++ b/src/pmqtest/pmqtest.c
+@@ -75,6 +75,7 @@ void *pmqthread(void *param)
+ 	int policy = SCHED_FIFO;
+ 	struct sched_param schedp;
+ 	struct timespec ts;
 +	int ret;
  
- 	/* bail out if we're not tracing */
- 	/* or if the kernel doesn't support trace_mark */
-@@ -476,10 +477,14 @@ void tracemark(char *fmt, ...)
- 	va_end(ap);
- 
- 	/* write the tracemark message */
--	write(tracemark_fd, tracebuf, len);
-+	ret = write(tracemark_fd, tracebuf, len);
-+	if (ret != len)
-+		warn("%s: write failed", __func__);
- 
- 	/* now stop any trace */
--	write(trace_fd, "0\n", 2);
-+	ret = write(trace_fd, "0\n", 2);
-+	if (ret != 2)
-+		warn("trace stop write failed");
- }
- 
- void enable_trace_mark(void)
+ 	memset(&schedp, 0, sizeof(schedp));
+ 	schedp.sched_priority = par->priority;
+@@ -189,7 +190,10 @@ void *pmqthread(void *param)
+ 				int tracing_enabled =
+ 				    open(tracing_enabled_file, O_WRONLY);
+ 				if (tracing_enabled >= 0) {
+-					write(tracing_enabled, "0", 1);
++					ret = write(tracing_enabled, "0", 1);
++					if (ret < 0)
++						fatal("Could not write to %s: %s\n",
++						      tracing_enabled_file, strerror(errno));
+ 					close(tracing_enabled);
+ 				} else
+ 					fatal("Could not access %s\n", tracing_enabled_file);
 -- 
 2.48.1
 
