@@ -1,228 +1,179 @@
-Received: from smtp-out2.suse.de (smtp-out2.suse.de [195.135.223.131])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from OSPPR02CU001.outbound.protection.outlook.com (mail-norwayeastazon11013020.outbound.protection.outlook.com [40.107.159.20])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 7A62441C62
-	for <linux-rt-users@vger.kernel.org>; Fri,  1 Aug 2025 12:57:10 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=195.135.223.131
-ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1754053033; cv=none; b=ohrxmKGSY5u4bEF2BmonjmeqUqXIdktgYEfD5Nt3hG1RWDBs1VvJu4d5Yob6NaXhdMj8RCLaaE3lzq9EqYgXU9RU+2P91USvrG8C7K9wzKSImVkwn/qcAyOScRD9Bf/ya6GotnVP7F1M+nYxvbjGtDTyFfmFFiPSchVV5rXQ/qk=
-ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1754053033; c=relaxed/simple;
-	bh=LqTgMO8PQ0IGc9FI51uzqbmQtJQTBxSSKp34m1bOQLU=;
-	h=Message-ID:Date:MIME-Version:Subject:To:Cc:References:From:
-	 In-Reply-To:Content-Type; b=T/A0MgfOjHHCTcRrXLJAPA2xngtwCnzqi1qfdc46sP3MuGyiWYemFyKIpTiuIo5sC8YsszmK4z78jIZUcH6M7tFa1QwsM/lAhd6k2Ej/TSf7gdRAVTluYq3mGf8BglVg4wCntf1DfaMr7ybQQz0yb/NVplqBbG12+S7DvAwyh9Q=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=suse.cz; spf=pass smtp.mailfrom=suse.cz; dkim=pass (1024-bit key) header.d=suse.cz header.i=@suse.cz header.b=l6Fil9/c; dkim=permerror (0-bit key) header.d=suse.cz header.i=@suse.cz header.b=8tYGTVVJ; dkim=pass (1024-bit key) header.d=suse.cz header.i=@suse.cz header.b=l6Fil9/c; dkim=permerror (0-bit key) header.d=suse.cz header.i=@suse.cz header.b=8tYGTVVJ; arc=none smtp.client-ip=195.135.223.131
-Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=suse.cz
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=suse.cz
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 86AD613E02A
+	for <linux-rt-users@vger.kernel.org>; Fri,  1 Aug 2025 13:40:56 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=fail smtp.client-ip=40.107.159.20
+ARC-Seal:i=2; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
+	t=1754055660; cv=fail; b=lC5YghsMimkYHO2Ljhoxlm/q22LBLOzgVyvBXTGG1iLvkxDH1FXr2U+q6u88ZWUGsFVcqpS+N8k4S64iD2uoA6pN+HBEGpWbbpxz5vOBOpSLD+/NVIsEgvHNKILqZFBqcmymmRkqSzL0dQfAhVfnf1XuroadwDn9KY9G2rkOyGo=
+ARC-Message-Signature:i=2; a=rsa-sha256; d=subspace.kernel.org;
+	s=arc-20240116; t=1754055660; c=relaxed/simple;
+	bh=E4BApWCzqBr1LHDkfGQFYkhml1S9K12PUEE1CL4DnCo=;
+	h=From:To:CC:Subject:Date:Message-ID:References:In-Reply-To:
+	 Content-Type:MIME-Version; b=FB/Vt3bwEmTtZaeVVvP7ZkSaGvZEkQYL77bY++yRczCbR3NdlE4v53qpEMi+HPRisahR9sRv9y0XTHa11gTtpdRf0kRmt1fFkMbs2V3rVTh8x60b9q2T9TyiOO3ncwXGl9qUDl9tBNFWD30l4lqbjkhgV9cZ/gYYFK8A/tJdhKY=
+ARC-Authentication-Results:i=2; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=kuka.com; spf=pass smtp.mailfrom=kuka.com; dkim=pass (2048-bit key) header.d=kuka.com header.i=@kuka.com header.b=SXaH21kT; arc=fail smtp.client-ip=40.107.159.20
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=kuka.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=kuka.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=suse.cz header.i=@suse.cz header.b="l6Fil9/c";
-	dkim=permerror (0-bit key) header.d=suse.cz header.i=@suse.cz header.b="8tYGTVVJ";
-	dkim=pass (1024-bit key) header.d=suse.cz header.i=@suse.cz header.b="l6Fil9/c";
-	dkim=permerror (0-bit key) header.d=suse.cz header.i=@suse.cz header.b="8tYGTVVJ"
-Received: from imap1.dmz-prg2.suse.org (unknown [10.150.64.97])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (4096 bits) server-digest SHA256)
-	(No client certificate requested)
-	by smtp-out2.suse.de (Postfix) with ESMTPS id A2A691F7ED;
-	Fri,  1 Aug 2025 12:57:08 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.cz; s=susede2_rsa;
-	t=1754053028; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
-	 mime-version:mime-version:content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references:autocrypt:autocrypt;
-	bh=e+he1+kKKz0LSF03sq2WnJU/BlUAAvBXA99h2cauoms=;
-	b=l6Fil9/cfa3HAzy9Tx+CAe2iI2+rzq2l+0oFEu5702nfbxmQtieUrXcFe2HKzkmGf8YAHj
-	wbddiJvcORR1FmkABEE5DG7KdRzJjwht5fvd5xQimZ4xNHHhIFQ02ktTkzbh8AulM1cY/X
-	9SJLbsIgXbL9SjngUCgGdKTDJgmvkMA=
-DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=suse.cz;
-	s=susede2_ed25519; t=1754053028;
-	h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
-	 mime-version:mime-version:content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references:autocrypt:autocrypt;
-	bh=e+he1+kKKz0LSF03sq2WnJU/BlUAAvBXA99h2cauoms=;
-	b=8tYGTVVJQcEmnE9I9h+raiZy5/IcgpXbhI1n72DRiOcASnlkPGW1Om8w7KSxxPrAk3LUhb
-	ss5TfJBA8tbBGhDw==
-Authentication-Results: smtp-out2.suse.de;
-	none
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.cz; s=susede2_rsa;
-	t=1754053028; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
-	 mime-version:mime-version:content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references:autocrypt:autocrypt;
-	bh=e+he1+kKKz0LSF03sq2WnJU/BlUAAvBXA99h2cauoms=;
-	b=l6Fil9/cfa3HAzy9Tx+CAe2iI2+rzq2l+0oFEu5702nfbxmQtieUrXcFe2HKzkmGf8YAHj
-	wbddiJvcORR1FmkABEE5DG7KdRzJjwht5fvd5xQimZ4xNHHhIFQ02ktTkzbh8AulM1cY/X
-	9SJLbsIgXbL9SjngUCgGdKTDJgmvkMA=
-DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=suse.cz;
-	s=susede2_ed25519; t=1754053028;
-	h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
-	 mime-version:mime-version:content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references:autocrypt:autocrypt;
-	bh=e+he1+kKKz0LSF03sq2WnJU/BlUAAvBXA99h2cauoms=;
-	b=8tYGTVVJQcEmnE9I9h+raiZy5/IcgpXbhI1n72DRiOcASnlkPGW1Om8w7KSxxPrAk3LUhb
-	ss5TfJBA8tbBGhDw==
-Received: from imap1.dmz-prg2.suse.org (localhost [127.0.0.1])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (4096 bits) server-digest SHA256)
-	(No client certificate requested)
-	by imap1.dmz-prg2.suse.org (Postfix) with ESMTPS id 9164713876;
-	Fri,  1 Aug 2025 12:57:08 +0000 (UTC)
-Received: from dovecot-director2.suse.de ([2a07:de40:b281:106:10:150:64:167])
-	by imap1.dmz-prg2.suse.org with ESMTPSA
-	id IXO0IaS5jGiKfQAAD6G6ig
-	(envelope-from <vbabka@suse.cz>); Fri, 01 Aug 2025 12:57:08 +0000
-Message-ID: <c48f2877-4d37-4310-995e-fc5c2ae9a366@suse.cz>
-Date: Fri, 1 Aug 2025 14:57:08 +0200
+	dkim=pass (2048-bit key) header.d=kuka.com header.i=@kuka.com header.b="SXaH21kT"
+ARC-Seal: i=1; a=rsa-sha256; s=arcselector10001; d=microsoft.com; cv=none;
+ b=kqXRC85nktktt6eej0U4EjomyfoQ4VYNJHhk65avV2z5tXCBtjBeR3qQFZIan+Uv+nFgpOu3xX89p9wekpxhjgryQCDDX5SuU3Wfmi0oL9U/jFP26BcNOhfMqXZ7TqHgucmwuV0THwBvyZn0DMljuZZO5BxL0gVDtq5BPhShcsru3aKE6gX/4RO3DIKZmaTiACJmolaA1WHgRQtGgFK8xlJCt+9h71dvjc/BaJCeKOPLkRFDdzQMPEzdC+V2GTee0N8XuHhmPgCUlcnlcCoFikoeRGoDSyo/bZS6CKf5IpkHzKwlHKasWjCIFasiyzsum74+bOcr7cxhlCcic2wg9A==
+ARC-Message-Signature: i=1; a=rsa-sha256; c=relaxed/relaxed; d=microsoft.com;
+ s=arcselector10001;
+ h=From:Date:Subject:Message-ID:Content-Type:MIME-Version:X-MS-Exchange-AntiSpam-MessageData-ChunkCount:X-MS-Exchange-AntiSpam-MessageData-0:X-MS-Exchange-AntiSpam-MessageData-1;
+ bh=FmE2FiadUilQKuPiloP5laFBAVCWpDzAMOhoUj8Sc6U=;
+ b=ywH0FYsIB6hpPCKHj1tmRMO5eg1OywXpLByT/jIo52cbYYZgCVbvKSm5B2KdZTwCa8tOe0bg/LrfIXiYRdpJR6uY6Wo2SCJYbnOjWOLeJhEfcyA8qFDS+VLAkTwbzjyj+zHpBb9Gd7yprE8sQHgUbjbMov8Qt1TDc0uZGBLS6+nKWAd274DKIoj9jveNY5xswT7b5V2O/B6BHCqVEA+Tj1xcCtTTtyxT9gJx+TyYzUc50nu3WIwu//syBbbxqDwmqISJ4ZZlGdX2fgX1hvaKhzP3ur+a91Rkdj3PfEF0vLY1RDTZnGTIQDWHLbwCoq5YjkfTi4cPVOWdbY+lLTYVZQ==
+ARC-Authentication-Results: i=1; mx.microsoft.com 1; spf=pass
+ smtp.mailfrom=kuka.com; dmarc=pass action=none header.from=kuka.com;
+ dkim=pass header.d=kuka.com; arc=none
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=kuka.com; s=selector2;
+ h=From:Date:Subject:Message-ID:Content-Type:MIME-Version:X-MS-Exchange-SenderADCheck;
+ bh=FmE2FiadUilQKuPiloP5laFBAVCWpDzAMOhoUj8Sc6U=;
+ b=SXaH21kTXd2OJQ3KibFortZGcfnBTKGkJF6dvQ+5frgNJSuE1w8JDLVSxipQbahRgoe6YR2yrGL8NqhdYWAGt/RrWFGz0hGuH/HQU04ra1bPeCYI7EmzAzYopd+HFJK48PqXk43VASkOi4snVd/dZPf9rS5iT23o61IJuqnCqM78caeCzTCqjjr5i5q50s1bmUJbYQhMa3pclYmoeHDnQcScYEndRleDtHnVQu7pIQrgwMbzjwK6IiNsHDxdq7mliQHoBPTTfYfdutl7+35wHqZyfajdlfl0jLPmS3ACdisArlMLGkdDVUkKpYJOxbRaM6ntp1fKs9hJhrnH9TDz+Q==
+Received: from DU0PR01MB10385.eurprd01.prod.exchangelabs.com
+ (2603:10a6:10:322::12) by AM7PPFD74AFDFE2.eurprd01.prod.exchangelabs.com
+ (2603:10a6:20f:fff1::7ac) with Microsoft SMTP Server (version=TLS1_2,
+ cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.20.8880.14; Fri, 1 Aug
+ 2025 13:40:50 +0000
+Received: from DU0PR01MB10385.eurprd01.prod.exchangelabs.com
+ ([fe80::27a:7a68:5d97:fae3]) by DU0PR01MB10385.eurprd01.prod.exchangelabs.com
+ ([fe80::27a:7a68:5d97:fae3%5]) with mapi id 15.20.8964.019; Fri, 1 Aug 2025
+ 13:40:50 +0000
+From: Alexander Krabler <Alexander.Krabler@kuka.com>
+To: Vlastimil Babka <vbabka@suse.cz>, Frank van der Linden <fvdl@google.com>,
+	Mike Galbraith <efault@gmx.de>
+CC: "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>,
+	"linux-mm@kvack.org" <linux-mm@kvack.org>, Dennis Schimmel
+	<Dennis.Schimmel@kuka.com>, Daniel Braunwarth <Daniel.Braunwarth@kuka.com>
+Subject: Re: Realtime threads delayed due to kcompactd0
+Thread-Topic: Realtime threads delayed due to kcompactd0
+Thread-Index:
+ AQHb/SUMECAAoxVz1UW75TJas4YXXLRMmU4AgAABygCAAIeOAIAAeK4AgAAXRlmAABqvAIAACbGH
+Date: Fri, 1 Aug 2025 13:40:50 +0000
+Message-ID:
+ <DU0PR01MB10385C08C119276D99A234D978226A@DU0PR01MB10385.eurprd01.prod.exchangelabs.com>
+References:
+ <DU0PR01MB10385345F7153F334100981888259A@DU0PR01MB10385.eurprd01.prod.exchangelabs.com>
+ <CAPTztWYf82p6hq=Q2mVq6_9WTjRaQiH81z4idZL6MZ1PXufPwQ@mail.gmail.com>
+ <71df781c-3ef3-4b26-9ba8-93fc7d4f9eec@suse.cz>
+ <026de9fcd4f0ed17c2df95c4f7c56b878a844012.camel@gmx.de>
+ <25ba0d77-eb61-4efc-b2fc-73878cbd85c1@suse.cz>
+ <DU0PR01MB103857873A56FD121984568148226A@DU0PR01MB10385.eurprd01.prod.exchangelabs.com>
+ <c48f2877-4d37-4310-995e-fc5c2ae9a366@suse.cz>
+In-Reply-To: <c48f2877-4d37-4310-995e-fc5c2ae9a366@suse.cz>
+Accept-Language: de-DE, en-US
+Content-Language: de-DE
+X-MS-Has-Attach:
+X-MS-TNEF-Correlator:
+msip_labels:
+ MSIP_Label_717b8430-11b4-47ed-b1b2-7ef5cdca0b43_Enabled=True;MSIP_Label_717b8430-11b4-47ed-b1b2-7ef5cdca0b43_SiteId=5a5c4bcf-d285-44af-8f19-ca72d454f6f7;MSIP_Label_717b8430-11b4-47ed-b1b2-7ef5cdca0b43_SetDate=2025-08-01T13:40:50.541Z;MSIP_Label_717b8430-11b4-47ed-b1b2-7ef5cdca0b43_Name=Public;MSIP_Label_717b8430-11b4-47ed-b1b2-7ef5cdca0b43_ContentBits=0;MSIP_Label_717b8430-11b4-47ed-b1b2-7ef5cdca0b43_Method=Privileged;
+authentication-results: dkim=none (message not signed)
+ header.d=none;dmarc=none action=none header.from=kuka.com;
+x-ms-publictraffictype: Email
+x-ms-traffictypediagnostic: DU0PR01MB10385:EE_|AM7PPFD74AFDFE2:EE_
+x-ms-office365-filtering-correlation-id: 481ac3c8-14b6-4b96-65c9-08ddd1010788
+x-ms-exchange-senderadcheck: 1
+x-ms-exchange-antispam-relay: 0
+x-microsoft-antispam: BCL:0;ARA:13230040|376014|366016|1800799024|38070700018;
+x-microsoft-antispam-message-info:
+ =?iso-8859-1?Q?LVaoHdkiTc20in7utvq87PZj2CxFF1bGBOWTwFNnBNdKm/5vWyxv4nMKQI?=
+ =?iso-8859-1?Q?8SDPnvIvz/XpdaE804V6gdzwD3wQwev3RsJgJ0ypKAybx10tnXP+i8Bjyr?=
+ =?iso-8859-1?Q?+aFW+I4OW7u1IaDaZWNKViiH6aFxca4rrMz2uvgu+tgrhL5BWydeRXJp7a?=
+ =?iso-8859-1?Q?rMFYWpCQ1V+vOtHW6d0WLIS1hoVw+6OEvF7KVscD6LfG5WpeXxK5Kp15LD?=
+ =?iso-8859-1?Q?0m3Sr5p6vmgm38fxOykZ+/JvGwJcdrFWAjbEeHF+I8KgSn8pX3KRRxgfpF?=
+ =?iso-8859-1?Q?w6HZjHm2FonIciNBJ/Q0sJeeKt8FZRQ+fmlOZc9GcziDtJFfZwqQGeW8Tf?=
+ =?iso-8859-1?Q?B/GfdxFk2cINnaPUoJbe50SRbwn1/96jnezAXZzXExmzpQRu4J8PEjy4Aq?=
+ =?iso-8859-1?Q?DRns/w5H35WCgW5z++AnZ7DyJzIbZxCcqD5gTCyVvh6yQYP618TrLf9DOP?=
+ =?iso-8859-1?Q?bCWPv7MuFeWG8/opds/R+uTAyCD9JBadANmVHhkvqDvtsGQuTZwWAH/K8i?=
+ =?iso-8859-1?Q?TKj/LjIW+3TKdZeC6uIkZF8MKmdzO9YOLqL/a91LwQfmCyTJDjZzpvlDMI?=
+ =?iso-8859-1?Q?Xqj9v+Z/J8IGvSwteWGGdykIE863/U1t3R7uyME7DtZRUY/4OmApwVg/dw?=
+ =?iso-8859-1?Q?ysSxLev/kViUiz8Zb0c5tkwAHseF05fbjZtkZ1JHFuBfH6+iWpbfz/PYEm?=
+ =?iso-8859-1?Q?eL6+vCo5RDKH7HRC9WGF5oyKKpBUh9+xUUjaAtA3REliFwAroClGfEDSDl?=
+ =?iso-8859-1?Q?dz0Q5k1bOPtN3pVsHxji50oJSGKRxvzTu+WsFe1VyWvat8ZZiCgWxkoOoV?=
+ =?iso-8859-1?Q?ksCBr14MhPmWCpHe6eYXbEbErYTNVx884d8nxp0Vvigs9VOO2anO44NhhF?=
+ =?iso-8859-1?Q?LhSLv8X6fa51xUa6VnDudndnMagqJaQgWVtwZ94GLKeLD1SyXeNq79SbO9?=
+ =?iso-8859-1?Q?Fs5yRg53s1a+qE78YtbjpXdT/LGg3KJ/eJURuRDJ2ARtjtYxthcXKCzJMo?=
+ =?iso-8859-1?Q?hY1hHpwATIlOn0+1M8+fKJR/F8I/Snnf/0m3bPG1Awddr4khp3h4PJDL24?=
+ =?iso-8859-1?Q?b7QL4aghFaoI1r7PbTc2Z1rnneo5JE2TUozLV9EA2bZMjGm8edecMdoTX8?=
+ =?iso-8859-1?Q?lMzG4ELgCNWqxKk3wH24JIYyZVXk+m9ej4HPZ3KplkIuYQqaEOEqG5v4y5?=
+ =?iso-8859-1?Q?rbfl1Nu9JuCxYrZk7nYnqJpEVWWgcQn8PtbCzxNzcct2gSVEzUX2TWgRi5?=
+ =?iso-8859-1?Q?MTadE0n6NwFH3S9J3AmqUFfkBbEJP3t8MTHn5KysplSOT0ekWWYD8tkIdA?=
+ =?iso-8859-1?Q?ghNmguL2U+QRs/jEqK21LKyiUgTPFPajdodT0Z67PvPu6/x/c1oSRMlPYo?=
+ =?iso-8859-1?Q?cuV+0rZe/sRxYZ60Dt5B2ADx/8YH62RX0dj4t9kDRKK1CafaZrKB7c99cS?=
+ =?iso-8859-1?Q?kXguXU9jZfswD7VJEslFJpKQCPzPa6IicFud247WbNWGVM2iR9BJBw3Ln7?=
+ =?iso-8859-1?Q?w=3D?=
+x-forefront-antispam-report:
+ CIP:255.255.255.255;CTRY:;LANG:en;SCL:1;SRV:;IPV:NLI;SFV:NSPM;H:DU0PR01MB10385.eurprd01.prod.exchangelabs.com;PTR:;CAT:NONE;SFS:(13230040)(376014)(366016)(1800799024)(38070700018);DIR:OUT;SFP:1101;
+x-ms-exchange-antispam-messagedata-chunkcount: 1
+x-ms-exchange-antispam-messagedata-0:
+ =?iso-8859-1?Q?hqgpI+TOnT3ygyC3hnD2M3IC8hgfEqlQFa+fPK8MFXWIW1tYyHl3lJhF90?=
+ =?iso-8859-1?Q?A4Lqjzo3RXoGNWqTu/7FmsL4X0fXcyp23DKPTIEdATgB7sqBJH/feAAJY9?=
+ =?iso-8859-1?Q?viz6tvVlg/SWsPzjwSY8O3SM1hJq07dFRDqSgalyVXTr6c9O4KuDyjocAd?=
+ =?iso-8859-1?Q?hYuGUEbVNkba2vTO7LpsRNEDnzQ2zc7lRcSHIlbpoT4yJ3rKZdG6KVz6EZ?=
+ =?iso-8859-1?Q?yC6oakm5GbAj7/BaK5tuKum9L1JniojevVIrh0E5NJ3hXGN/SuYSIKP68f?=
+ =?iso-8859-1?Q?EzYq6U0PJJ7R18lfYBFl2p0TpVSrExoPAgwJeQCfTdFQZDr8aEaB3p8smh?=
+ =?iso-8859-1?Q?wlK+BlN/DFP4159AuUa3obCnnWZ189xyuFeGufLAMZbA5BfFoCOvnLnBhY?=
+ =?iso-8859-1?Q?ZxNCpjbUAZUmDRe90M5ccWx7dtHoYkF+0b694fPig3wKAvTzODnLQPZ3MC?=
+ =?iso-8859-1?Q?Q0yc88stIe+ycQqx64l5+DG987cW7sFZ8qftl/mzaEOXS86QmNMlLMZxlA?=
+ =?iso-8859-1?Q?istrHGH/cD8qduJjr6G2VizfZvXjTA/AW2164+QTMlU1NzNTCfsW+WkwRY?=
+ =?iso-8859-1?Q?rhft34euh8QaPHRWTEdb1nU8qamzgNs2jaqsc/O0mGzOAaSrZAZQ3beuds?=
+ =?iso-8859-1?Q?sGvnnzGvq7XQZhXkygIOvAZ30Ku+I87AZaKBbMl3APLXOZv1qH2r2O087W?=
+ =?iso-8859-1?Q?t7GWBoRIpKu9ZypAKzXxo05XxhffWj/ZaACI/bDbJQjV5iXk53H+bniOYS?=
+ =?iso-8859-1?Q?O+QdyKrlPP7255G90Uyrnutac+Td7+p6UGI7rlqHUaa7TMDvjnqTLsiqmA?=
+ =?iso-8859-1?Q?8+UVwsUDiu6MxJqMTRSOKaUygK24f2KGjPbQ8wGz/uw5TcIaighmIHQY0f?=
+ =?iso-8859-1?Q?ED0Gmr5l6Om/yAximlz3IuwRb0mez3Rai1Wxs/Joxf9V8DaveCoHtR4Qhu?=
+ =?iso-8859-1?Q?IzZSvDZIv3UyIpFOtTaSeUjhmd+kkT6fzxEiVU66mrM/XhQIc9ki4yZiOE?=
+ =?iso-8859-1?Q?SI+jriXYtGvmeNNv9Yd0OfQNJQ6rDtDDdtrgsAR47i5+RLw/s1o/Dj9llJ?=
+ =?iso-8859-1?Q?L947bJXc2SqS+HnsNgcVdB+JWaeq/CKxjXoeZPXJIGpqgdPWvav5YyU6ig?=
+ =?iso-8859-1?Q?U/O1+abJwKMaLnGRG0hpp6E8H4Th7XQ/tt/HP81TUsg2eBR4rTXJvgOzEo?=
+ =?iso-8859-1?Q?NyOJaVemqbr8376WqDmtgEjqKW0rbrpQbZ4vMOD3O1ldS/ylcpnz6o+m77?=
+ =?iso-8859-1?Q?PPb6ZcpWyfMM6X35cOq+Gk8L3y4VFCPoM0tXkJpyuEWUpLM7A1RIPaRrAt?=
+ =?iso-8859-1?Q?JaZskh0EB42IBIAmCjA10nsOg460ew1drvxW+A6Pz6H65IW9pgsPab+GAY?=
+ =?iso-8859-1?Q?w0T213hZiH4ycnI4TutWfYfmTXHngVNbY8oBifzMOY7aTz2gqZFRRnKvpw?=
+ =?iso-8859-1?Q?/chALXfgHnl5T/oyrEKB463kwWxc7AGrQVPkVaLQImASYrkomi3hXuvdFM?=
+ =?iso-8859-1?Q?AwuJHQTNm260rNA+y3ssus9QR/0zHxxLxwTgVFDyS+MJk9VwNPUszWC1xq?=
+ =?iso-8859-1?Q?+CWeVOzblElwfOoJW374UIYaQTq34nUHpbtrKHxHjl2WTQmDzXqD8ZYzEm?=
+ =?iso-8859-1?Q?Y1il+AFeY5MkDqCxdJvfhOY/eNRZlzab6a?=
+Content-Type: text/plain; charset="iso-8859-1"
+Content-Transfer-Encoding: quoted-printable
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
 List-Subscribe: <mailto:linux-rt-users+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-User-Agent: Mozilla Thunderbird
-Subject: Re: Realtime threads delayed due to kcompactd0
-Content-Language: en-US
-To: Alexander Krabler <Alexander.Krabler@kuka.com>,
- Mike Galbraith <efault@gmx.de>, Frank van der Linden <fvdl@google.com>
-Cc: "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>,
- "linux-mm@kvack.org" <linux-mm@kvack.org>,
- Dennis Schimmel <Dennis.Schimmel@kuka.com>,
- Daniel Braunwarth <Daniel.Braunwarth@kuka.com>
-References: <DU0PR01MB10385345F7153F334100981888259A@DU0PR01MB10385.eurprd01.prod.exchangelabs.com>
- <CAPTztWYf82p6hq=Q2mVq6_9WTjRaQiH81z4idZL6MZ1PXufPwQ@mail.gmail.com>
- <71df781c-3ef3-4b26-9ba8-93fc7d4f9eec@suse.cz>
- <026de9fcd4f0ed17c2df95c4f7c56b878a844012.camel@gmx.de>
- <25ba0d77-eb61-4efc-b2fc-73878cbd85c1@suse.cz>
- <DU0PR01MB103857873A56FD121984568148226A@DU0PR01MB10385.eurprd01.prod.exchangelabs.com>
-From: Vlastimil Babka <vbabka@suse.cz>
-Autocrypt: addr=vbabka@suse.cz; keydata=
- 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
- m6M14QORSWTLRg==
-In-Reply-To: <DU0PR01MB103857873A56FD121984568148226A@DU0PR01MB10385.eurprd01.prod.exchangelabs.com>
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: 7bit
-X-Spam-Level: 
-X-Spamd-Result: default: False [-4.30 / 50.00];
-	BAYES_HAM(-3.00)[100.00%];
-	NEURAL_HAM_LONG(-1.00)[-1.000];
-	NEURAL_HAM_SHORT(-0.20)[-0.999];
-	MIME_GOOD(-0.10)[text/plain];
-	ARC_NA(0.00)[];
-	DKIM_SIGNED(0.00)[suse.cz:s=susede2_rsa,suse.cz:s=susede2_ed25519];
-	MIME_TRACE(0.00)[0:+];
-	TO_DN_EQ_ADDR_SOME(0.00)[];
-	FREEMAIL_TO(0.00)[kuka.com,gmx.de,google.com];
-	TO_MATCH_ENVRCPT_ALL(0.00)[];
-	FUZZY_RATELIMITED(0.00)[rspamd.com];
-	FREEMAIL_ENVRCPT(0.00)[gmx.de];
-	RCVD_TLS_ALL(0.00)[];
-	RCVD_VIA_SMTP_AUTH(0.00)[];
-	FROM_EQ_ENVFROM(0.00)[];
-	FROM_HAS_DN(0.00)[];
-	TO_DN_SOME(0.00)[];
-	RCVD_COUNT_TWO(0.00)[2];
-	RCPT_COUNT_SEVEN(0.00)[7];
-	MID_RHS_MATCH_FROM(0.00)[];
-	DBL_BLOCKED_OPENRESOLVER(0.00)[imap1.dmz-prg2.suse.org:helo,suse.cz:mid]
-X-Spam-Flag: NO
-X-Spam-Score: -4.30
+X-OriginatorOrg: kuka.com
+X-MS-Exchange-CrossTenant-AuthAs: Internal
+X-MS-Exchange-CrossTenant-AuthSource: DU0PR01MB10385.eurprd01.prod.exchangelabs.com
+X-MS-Exchange-CrossTenant-Network-Message-Id: 481ac3c8-14b6-4b96-65c9-08ddd1010788
+X-MS-Exchange-CrossTenant-originalarrivaltime: 01 Aug 2025 13:40:50.7944
+ (UTC)
+X-MS-Exchange-CrossTenant-fromentityheader: Hosted
+X-MS-Exchange-CrossTenant-id: 5a5c4bcf-d285-44af-8f19-ca72d454f6f7
+X-MS-Exchange-CrossTenant-mailboxtype: HOSTED
+X-MS-Exchange-CrossTenant-userprincipalname: QykkPZyFhNv6+GhYgxOM03Lr6TVR+02QeDzsfEQSvmef9K+madqpfJL71vGze6Y4tv2enwNj89q3L8HOBFjv9dZ4I3Ax1WLiIUkVFeekShk=
+X-MS-Exchange-Transport-CrossTenantHeadersStamped: AM7PPFD74AFDFE2
 
-On 8/1/25 13:23, Alexander Krabler wrote:
-> On 7/31/25 20:35, Frank van der Linden wrote:
->> Not sure what the right thing to do would be. Either explicitly boost
->> the priority of a thread temporarily during migrate_pages_batch, or
->> mitigate the issue by dealing with 'busy' pages more quickly in
->> migrate_pages_batch.
->>
->> - Frank
-> 
-> I think it would help if priority inheritance would kick in as soon as
-> another thread is waiting due to the migration PTE.
-> 
-> 
-> On 8/1/25 11:58, Vlastimil Babka wrote:
->> On 8/1/25 04:46, Mike Galbraith wrote:
->> > On Thu, 2025-07-31 at 20:41 +0200, Vlastimil Babka wrote:
->> >> On 7/31/25 20:34, Frank van der Linden wrote:
->> >> > Not sure what the right thing to do would be. Either explicitly boost
->> >> > the priority of a thread temporarily during migrate_pages_batch, or
->> >> > mitigate the issue by dealing with 'busy' pages more quickly in
->> >> > migrate_pages_batch.
->> >>
->> >> There's a workaround for realtime tasks. If you mlock[all]() their memory,
->> >> setting sysctl vm.compact_unevictable_allowed to 0 should exclude these
->> >> pages from migration by compaction.
->> >
->> > Hm, per documentation that's done automatically for PREEMPT_RT...
->>
->> Oh I see.
-> 
-> Yes, vm.compact_unevictable_allowed is set to 0 in our setup
-> (default as we have CONFIG_PREEMPT_RT).
-> 
->> > On CONFIG_PREEMPT_RT the default value is 0 in order to avoid a page fault, due
->> > to compaction, which would block the task from becoming active until the fault
->> > is resolved.
->>
->> So it's probably the mlock() part missing since that should otherwise apply
->> to kcompactd.
-> 
-> We use mlockall() and I verified the pages have the lo flag set.
-> Which means, that we have exactly the issue this sysctl flag should prevent us from.
+On 8/1/25 14:57, Vlastimil Babka wrote:
+> Hm that means something isn't working as intended. Do the pages have also
+> the unevictable flag?
 
-Hm that means something isn't working as intended. Do the pages have also
-the unevictable flag?
->>
->> > ...but rummaging, seems other stuff can step on it (contiguous alloc?).
->>
->> Yeah, there was time CMA was just something for mobile phone hardware. As
->> usage increases beyond that maybe we'll have to tackle it. Ideally by not
->> having mlock'd pages in CMA areas at all. And if contiguous alloc is
->> attempted outside of CMA areas, respect the sysctl there too.
-> 
-> Yeah, we already thought CMA might somehow influcence our issue.
-> We have 256 MiB of CMA, which our hardware probably uses.
+I have checked /proc/<pid>/smaps.
+Neither the manpage (https://www.man7.org/linux/man-pages/man5/proc_pid_sma=
+ps.5.html)
+nor kernel source code (fs/proc/task_mmu.c show_smap_vma_flags) tells me ab=
+out unevictable flag.
 
-If the problem is kcompactd, it should not be CMA related.
-> Is there a way to tell a process to not allocate pages inside CMA area?
+What exactly do you mean?
 
-I think not at the moment.
+Alexander
+KUKA Deutschland GmbH   Board of Directors: Michael J=FCrgens (Chairman), D=
+irk Busch, Johan Naten, Hui Zhang   Registered Office: Augsburg HRB 14914
 
+This e-mail may contain confidential and/or privileged information. If you =
+are not the intended recipient (or have received this e-mail in error) plea=
+se notify the sender immediately and destroy this e-mail. Any unauthorized =
+copying, disclosure or distribution of contents of this e-mail is strictly =
+forbidden.
+
+Please consider the environment before printing this e-mail.
