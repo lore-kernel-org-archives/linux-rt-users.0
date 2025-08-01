@@ -1,141 +1,209 @@
-Received: from mout.gmx.net (mout.gmx.net [212.227.15.19])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+Received: from smtp-out2.suse.de (smtp-out2.suse.de [195.135.223.131])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 7126F18C034
-	for <linux-rt-users@vger.kernel.org>; Fri,  1 Aug 2025 02:46:28 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=212.227.15.19
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 92AB420F087
+	for <linux-rt-users@vger.kernel.org>; Fri,  1 Aug 2025 09:58:28 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=195.135.223.131
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1754016391; cv=none; b=Casx4aF43pzObh4c92TZMmlV5swf7DoI9b0qsKRgR/yjX2BTqAzkZTtdipERhWP0zIZMqqzeiEgB1rZiQQOVATxDz2dOs/jxLMxKNdT6r3YHWKQIQAoX7eO+BMH/GECNBkTTfAhlxEiG90JqHCFXiOLqwt/b3PENAG8dVoPHg7k=
+	t=1754042310; cv=none; b=cm61WFIrSepH3X7XpOyvhjMuHR4CRn7ZqslWuxY8JUr7TihRkhzftRIjFsefKbbKPgBPBWyjnf3ICJV5F/BYhZeiKwIQXLPvX+ZQw6EBZj6nsyezskJKbS9rvIfe9afgq8hfH1xMXsR6bbgK0wRIyW8HYmQF0x03L85vzk5mjts=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1754016391; c=relaxed/simple;
-	bh=jo7Y29oe76XgtueZgw8z9jTf3nI46rw0Ba7wztDJPnE=;
-	h=Message-ID:Subject:From:To:Cc:Date:In-Reply-To:References:
-	 Content-Type:MIME-Version; b=osO/QqgXctkv38r0KdCoGzCWW7QGXGecvifUDN7dTQRX7zxIvCRelNWEe57LC8BOjynGr2ivqw66zGjk5rZIpbEHYD/cp0OSzlzp14oJqlmx1eTkihDiAL8FZ/eWs7tiqC7mSvKNHGF9E8ajk7RVDYQ836w1U8e6yWsPi1Ne1xU=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=gmx.de; spf=pass smtp.mailfrom=gmx.de; dkim=pass (2048-bit key) header.d=gmx.de header.i=efault@gmx.de header.b=NR55NY2X; arc=none smtp.client-ip=212.227.15.19
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=gmx.de
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmx.de
+	s=arc-20240116; t=1754042310; c=relaxed/simple;
+	bh=fwJJ2s1fT1cbbkSvxo/OsZqW+jlN3+8IoSfA8sTbd9o=;
+	h=Message-ID:Date:MIME-Version:Subject:To:Cc:References:From:
+	 In-Reply-To:Content-Type; b=R+DYyQtUhHVyC6iV6hKAhBGKJRrMG9t0nFBFOkEcfUTotq8AwOtkPuAWXkraE5igNjOgMa35Wg5nej8JwB0d0BnA0sad/8HN9VLXGtJ6VF9DJWiBpnlwGZm7d6pWtY8DEpNecworO41yPZ4B+mYNu1ObjjuSLtGTPo3xgyqMa8I=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=suse.cz; spf=pass smtp.mailfrom=suse.cz; dkim=pass (1024-bit key) header.d=suse.cz header.i=@suse.cz header.b=BGeTP7oW; dkim=permerror (0-bit key) header.d=suse.cz header.i=@suse.cz header.b=CyV28xq8; dkim=pass (1024-bit key) header.d=suse.cz header.i=@suse.cz header.b=BGeTP7oW; dkim=permerror (0-bit key) header.d=suse.cz header.i=@suse.cz header.b=CyV28xq8; arc=none smtp.client-ip=195.135.223.131
+Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=suse.cz
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=suse.cz
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmx.de header.i=efault@gmx.de header.b="NR55NY2X"
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=gmx.de;
-	s=s31663417; t=1754016386; x=1754621186; i=efault@gmx.de;
-	bh=OZjzgheKUHHzd1RZo0yhm7HuB0fzrr1IWLPKAHg38yQ=;
-	h=X-UI-Sender-Class:Message-ID:Subject:From:To:Cc:Date:In-Reply-To:
-	 References:Content-Type:Content-Transfer-Encoding:MIME-Version:cc:
-	 content-transfer-encoding:content-type:date:from:message-id:
-	 mime-version:reply-to:subject:to;
-	b=NR55NY2XmGM+B6hp8fDM9b9vOSKRRdnaVjzDc5WpuAQPmaWZpyXNZbBVBqQnfRwN
-	 gHPMO0r0vZi92cV07Lrqt2by/KzyWcoCNkpwezOo8Khp5Rr5ohCUc+BNim/hfeHcC
-	 Wua6IZsMPTYuueWp3g++22WFqA52CCaWRqxed5XFe82PVAnC20fMFzfg/0I5KbIZu
-	 ap/PubPrJmsR+9KDjDk//a/6ZfQyi7whgJ4WEJ8I85TnrhFm9x3pQlOL+5aFKGWzs
-	 K7gE+/YWi9Zh2M4HMJftYoNN5t3wq25OPt8d5Kt8nMWEkDHMlUlwD2WeTYT2LFMFk
-	 RPxniMi+LFAhLSt7jg==
-X-UI-Sender-Class: 724b4f7f-cbec-4199-ad4e-598c01a50d3a
-Received: from homer.fritz.box ([185.146.50.25]) by mail.gmx.net (mrgmx005
- [212.227.17.190]) with ESMTPSA (Nemesis) id 1MbivM-1u5r8G11Is-00o939; Fri, 01
- Aug 2025 04:46:26 +0200
-Message-ID: <026de9fcd4f0ed17c2df95c4f7c56b878a844012.camel@gmx.de>
-Subject: Re: Realtime threads delayed due to kcompactd0
-From: Mike Galbraith <efault@gmx.de>
-To: Vlastimil Babka <vbabka@suse.cz>, Frank van der Linden
- <fvdl@google.com>,  Alexander Krabler <Alexander.Krabler@kuka.com>
-Cc: "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>, 
-	"linux-mm@kvack.org"
-	 <linux-mm@kvack.org>, Dennis Schimmel <Dennis.Schimmel@kuka.com>, Daniel
-	Braunwarth <Daniel.Braunwarth@kuka.com>
-Date: Fri, 01 Aug 2025 04:46:24 +0200
-In-Reply-To: <71df781c-3ef3-4b26-9ba8-93fc7d4f9eec@suse.cz>
-References: 
-	<DU0PR01MB10385345F7153F334100981888259A@DU0PR01MB10385.eurprd01.prod.exchangelabs.com>
-	 <CAPTztWYf82p6hq=Q2mVq6_9WTjRaQiH81z4idZL6MZ1PXufPwQ@mail.gmail.com>
-	 <71df781c-3ef3-4b26-9ba8-93fc7d4f9eec@suse.cz>
-Autocrypt: addr=efault@gmx.de;
- keydata=mQGiBE/h0fkRBACJWa+2g5r12ej5DQZEpm0cgmzjpwc9mo6Jz7PFSkDQGeNG8wGwFzFPKQrLk1JRdqNSq37FgtFDDYlYOzVyO/6rKp0Iar2Oel4tbzlUewaYWUWTTAtJoTC0vf4p9Aybyo9wjor+XNvPehtdiPvCWdONKZuGJHKFpemjXXj7lb9ifwCg7PLKdz/VMBFlvbIEDsweR0olMykD/0uSutpvD3tcTItitX230Z849Wue3cA1wsOFD3N6uTg3GmDZDz7IZF+jJ0kKt9xL8AedZGMHPmYNWD3Hwh2gxLjendZlcakFfCizgjLZF3O7k/xIj7Hr7YqBSUj5Whkbrn06CqXSRE0oCsA/rBitUHGAPguJfgETbtDNqx8RYJA2A/9PnmyAoqH33hMYO+k8pafEgXUXwxWbhx2hlWEgwFovcBPLtukH6mMVKXS4iik9obfPEKLwW1mmz0eoHzbNE3tS1AaagHDhOqnSMGDOjogsUACZjCJEe1ET4JHZWFM7iszyolEhuHbnz2ajwLL9Ge8uJrLATreszJd57u+NhAyEW7QeTWlrZSBHYWxicmFpdGggPGVmYXVsdEBnbXguZGU+iGIEExECACIFAk/h0fkCGyMGCwkIBwMCBhUIAgkKCwQWAgMBAh4BAheAAAoJEMYmACnGfbb41A4AnjscsLm5ep+DSi7Bv8BmmoBGTCRnAJ9oXX0KtnBDttPkgUbaiDX56Z1+crkBDQRP4dH5EAQAtYCgoXJvq8VqoleWvqcNScHLrN4LkFxfGkDdqTyQe/79rDWr8su+8TH1ATZ/k+lC6W+vg7ygrdyOK7egA5u+T/GBA1VN+KqcqGqAEZqCLvjorKVQ6mgb5FfXouSGvtsblbRMireEEhJqIQPndq3DvZbKXHVkKrUBcco4MMGDVucABAsEAKXKCwGVEVuYcM/KdT2htDpziRH4JfUn3Ts2EC6F7rXIQ4NaIA6gAvL6HdD3q
-	y6yrWaxyqUg8CnZF/J5HR+IvRK+vu85xxwSLQsrVONH0Ita1jg2nhUW7yLZer8xrhxIuYCqrMgreo5BAA3+irHy37rmqiAFZcnDnCNDtJ4sz48tiEkEGBECAAkFAk/h0fkCGwwACgkQxiYAKcZ9tvgIMQCeIcgjSxwbGiGn2q/cv8IvHf1r/DIAnivw+bGITqTU7rhgfwe07dhBoIdz
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
-User-Agent: Evolution 3.50.3 
+	dkim=pass (1024-bit key) header.d=suse.cz header.i=@suse.cz header.b="BGeTP7oW";
+	dkim=permerror (0-bit key) header.d=suse.cz header.i=@suse.cz header.b="CyV28xq8";
+	dkim=pass (1024-bit key) header.d=suse.cz header.i=@suse.cz header.b="BGeTP7oW";
+	dkim=permerror (0-bit key) header.d=suse.cz header.i=@suse.cz header.b="CyV28xq8"
+Received: from imap1.dmz-prg2.suse.org (imap1.dmz-prg2.suse.org [IPv6:2a07:de40:b281:104:10:150:64:97])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (4096 bits) server-digest SHA256)
+	(No client certificate requested)
+	by smtp-out2.suse.de (Postfix) with ESMTPS id 10A771F38C;
+	Fri,  1 Aug 2025 09:58:21 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.cz; s=susede2_rsa;
+	t=1754042301; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
+	 mime-version:mime-version:content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references:autocrypt:autocrypt;
+	bh=XSeXoQGGBjQ3qsfMVMRj+BOL1M+cMszW9Zuw5XUauSg=;
+	b=BGeTP7oWISr0is28g1zqquLpkV90ngRr5nuDJxV64VVxDT8WmALza5MLDE0YYXAhJ7UEGn
+	INpJrCxh3w2AHjuLS6RLxamcvhakkziHu8razT5vgcxpa5n9R3tVBbxyIX+SMssIoR0o79
+	64/v+qqWdVSpP0hY7FIzcl9ZiBAXTA0=
+DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=suse.cz;
+	s=susede2_ed25519; t=1754042301;
+	h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
+	 mime-version:mime-version:content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references:autocrypt:autocrypt;
+	bh=XSeXoQGGBjQ3qsfMVMRj+BOL1M+cMszW9Zuw5XUauSg=;
+	b=CyV28xq8IPyLqt+9kllEjgdVYkp1wjYiHUZ3MnYeJwSqKUmffkZHHlf0eUvUXR6lr/DMNB
+	L8kqBs1r847cEUAQ==
+Authentication-Results: smtp-out2.suse.de;
+	dkim=pass header.d=suse.cz header.s=susede2_rsa header.b=BGeTP7oW;
+	dkim=pass header.d=suse.cz header.s=susede2_ed25519 header.b=CyV28xq8
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.cz; s=susede2_rsa;
+	t=1754042301; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
+	 mime-version:mime-version:content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references:autocrypt:autocrypt;
+	bh=XSeXoQGGBjQ3qsfMVMRj+BOL1M+cMszW9Zuw5XUauSg=;
+	b=BGeTP7oWISr0is28g1zqquLpkV90ngRr5nuDJxV64VVxDT8WmALza5MLDE0YYXAhJ7UEGn
+	INpJrCxh3w2AHjuLS6RLxamcvhakkziHu8razT5vgcxpa5n9R3tVBbxyIX+SMssIoR0o79
+	64/v+qqWdVSpP0hY7FIzcl9ZiBAXTA0=
+DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=suse.cz;
+	s=susede2_ed25519; t=1754042301;
+	h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
+	 mime-version:mime-version:content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references:autocrypt:autocrypt;
+	bh=XSeXoQGGBjQ3qsfMVMRj+BOL1M+cMszW9Zuw5XUauSg=;
+	b=CyV28xq8IPyLqt+9kllEjgdVYkp1wjYiHUZ3MnYeJwSqKUmffkZHHlf0eUvUXR6lr/DMNB
+	L8kqBs1r847cEUAQ==
+Received: from imap1.dmz-prg2.suse.org (localhost [127.0.0.1])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (4096 bits) server-digest SHA256)
+	(No client certificate requested)
+	by imap1.dmz-prg2.suse.org (Postfix) with ESMTPS id C04F9138A5;
+	Fri,  1 Aug 2025 09:58:20 +0000 (UTC)
+Received: from dovecot-director2.suse.de ([2a07:de40:b281:106:10:150:64:167])
+	by imap1.dmz-prg2.suse.org with ESMTPSA
+	id ZfC9LbyPjGicQwAAD6G6ig
+	(envelope-from <vbabka@suse.cz>); Fri, 01 Aug 2025 09:58:20 +0000
+Message-ID: <25ba0d77-eb61-4efc-b2fc-73878cbd85c1@suse.cz>
+Date: Fri, 1 Aug 2025 11:58:20 +0200
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
 List-Subscribe: <mailto:linux-rt-users+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-X-Provags-ID: V03:K1:dd9ml/xjV/fyreDw1IhL02nv3C0HFPR0UxyHbaThvfvbXeWPiz8
- sHhdz4k1uAa1c1IMzCy2kTvoParuv9jXitBur/V49W1xZFu33hiGg+/WLHcFloNVUruaPkK
- vY35O4YCLkp1ZPoJyyripwNXynRW7bjy8beWkTf4Ro9A+bREhF+eZs8EUiEMnfVCT8cB3dX
- qIrWEWdvDRRC2csWozmJA==
+User-Agent: Mozilla Thunderbird
+Subject: Re: Realtime threads delayed due to kcompactd0
+Content-Language: en-US
+To: Mike Galbraith <efault@gmx.de>, Frank van der Linden <fvdl@google.com>,
+ Alexander Krabler <Alexander.Krabler@kuka.com>
+Cc: "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>,
+ "linux-mm@kvack.org" <linux-mm@kvack.org>,
+ Dennis Schimmel <Dennis.Schimmel@kuka.com>,
+ Daniel Braunwarth <Daniel.Braunwarth@kuka.com>
+References: <DU0PR01MB10385345F7153F334100981888259A@DU0PR01MB10385.eurprd01.prod.exchangelabs.com>
+ <CAPTztWYf82p6hq=Q2mVq6_9WTjRaQiH81z4idZL6MZ1PXufPwQ@mail.gmail.com>
+ <71df781c-3ef3-4b26-9ba8-93fc7d4f9eec@suse.cz>
+ <026de9fcd4f0ed17c2df95c4f7c56b878a844012.camel@gmx.de>
+From: Vlastimil Babka <vbabka@suse.cz>
+Autocrypt: addr=vbabka@suse.cz; keydata=
+ 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
+ m6M14QORSWTLRg==
+In-Reply-To: <026de9fcd4f0ed17c2df95c4f7c56b878a844012.camel@gmx.de>
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
+X-Spamd-Result: default: False [-4.51 / 50.00];
+	BAYES_HAM(-3.00)[99.99%];
+	NEURAL_HAM_LONG(-1.00)[-1.000];
+	R_DKIM_ALLOW(-0.20)[suse.cz:s=susede2_rsa,suse.cz:s=susede2_ed25519];
+	NEURAL_HAM_SHORT(-0.20)[-1.000];
+	MIME_GOOD(-0.10)[text/plain];
+	MX_GOOD(-0.01)[];
+	RCVD_VIA_SMTP_AUTH(0.00)[];
+	RBL_SPAMHAUS_BLOCKED_OPENRESOLVER(0.00)[2a07:de40:b281:104:10:150:64:97:from];
+	FREEMAIL_ENVRCPT(0.00)[gmx.de];
+	ARC_NA(0.00)[];
+	MIME_TRACE(0.00)[0:+];
+	TO_DN_EQ_ADDR_SOME(0.00)[];
+	TO_DN_SOME(0.00)[];
+	RECEIVED_SPAMHAUS_BLOCKED_OPENRESOLVER(0.00)[2a07:de40:b281:106:10:150:64:167:received];
+	RCPT_COUNT_SEVEN(0.00)[7];
+	FUZZY_RATELIMITED(0.00)[rspamd.com];
+	RCVD_TLS_ALL(0.00)[];
+	FROM_EQ_ENVFROM(0.00)[];
+	FROM_HAS_DN(0.00)[];
+	FREEMAIL_TO(0.00)[gmx.de,google.com,kuka.com];
+	RCVD_COUNT_TWO(0.00)[2];
+	DKIM_SIGNED(0.00)[suse.cz:s=susede2_rsa,suse.cz:s=susede2_ed25519];
+	TO_MATCH_ENVRCPT_ALL(0.00)[];
+	MID_RHS_MATCH_FROM(0.00)[];
+	DKIM_TRACE(0.00)[suse.cz:+]
 X-Spam-Flag: NO
-UI-OutboundReport: notjunk:1;M01:P0:TD4NESOZaj0=;24N7s86a8TZKyYSo8I5YjSFtw2u
- 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
- 4mKruFMLzFA==
+X-Spam-Level: 
+X-Rspamd-Queue-Id: 10A771F38C
+X-Rspamd-Server: rspamd2.dmz-prg2.suse.org
+X-Rspamd-Action: no action
+X-Spam-Score: -4.51
 
-On Thu, 2025-07-31 at 20:41 +0200, Vlastimil Babka wrote:
-> On 7/31/25 20:34, Frank van der Linden wrote:
-> > Not sure what the right thing to do would be. Either explicitly boost
-> > the priority of a thread temporarily during migrate_pages_batch, or
-> > mitigate the issue by dealing with 'busy' pages more quickly in
-> > migrate_pages_batch.
->=20
-> There's a workaround for realtime tasks. If you mlock[all]() their memory=
-,
-> setting sysctl vm.compact_unevictable_allowed to 0 should exclude these
-> pages from migration by compaction.
+On 8/1/25 04:46, Mike Galbraith wrote:
+> On Thu, 2025-07-31 at 20:41 +0200, Vlastimil Babka wrote:
+>> On 7/31/25 20:34, Frank van der Linden wrote:
+>> > Not sure what the right thing to do would be. Either explicitly boost
+>> > the priority of a thread temporarily during migrate_pages_batch, or
+>> > mitigate the issue by dealing with 'busy' pages more quickly in
+>> > migrate_pages_batch.
+>> 
+>> There's a workaround for realtime tasks. If you mlock[all]() their memory,
+>> setting sysctl vm.compact_unevictable_allowed to 0 should exclude these
+>> pages from migration by compaction.
+> 
+> Hm, per documentation that's done automatically for PREEMPT_RT...
 
-Hm, per documentation that's done automatically for PREEMPT_RT...
+Oh I see.
 
-On CONFIG_PREEMPT_RT the default value is 0 in order to avoid a page fault,=
- due
-to compaction, which would block the task from becoming active until the fa=
-ult
-is resolved.
+> On CONFIG_PREEMPT_RT the default value is 0 in order to avoid a page fault, due
+> to compaction, which would block the task from becoming active until the fault
+> is resolved.
 
-...but rummaging, seems other stuff can step on it (contiguous alloc?).
+So it's probably the mlock() part missing since that should otherwise apply
+to kcompactd.
 
-	-Mike
+> ...but rummaging, seems other stuff can step on it (contiguous alloc?).
+
+Yeah, there was time CMA was just something for mobile phone hardware. As
+usage increases beyond that maybe we'll have to tackle it. Ideally by not
+having mlock'd pages in CMA areas at all. And if contiguous alloc is
+attempted outside of CMA areas, respect the sysctl there too.
+
+There are also things like mbind() migrating pages for NUMA locality but I
+assume people just wouldn't try to do that with realtime workloads.
+
+
+> 	-Mike
+
