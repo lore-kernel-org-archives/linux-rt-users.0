@@ -1,208 +1,103 @@
-Received: from smtp-out2.suse.de (smtp-out2.suse.de [195.135.223.131])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from galois.linutronix.de (Galois.linutronix.de [193.142.43.55])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 29EB824E01D
-	for <linux-rt-users@vger.kernel.org>; Fri,  8 Aug 2025 07:37:28 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=195.135.223.131
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id A6AB82698AF;
+	Fri,  8 Aug 2025 08:51:47 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=193.142.43.55
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1754638650; cv=none; b=shnbGKZxwpuAtGeN+wN8Yj7n8DeXXzqBNFZBmtcVOzXDTTBMHhlYYmTgZ0ndm6Ak0jkWsVnCYf0Obzl7zCEiEXLJn8qY/3a0ySI+l+oeERzStpcO08vW828F0DQxAFQSo6BOMTXpgyT54bLDB2fmY0nyKqST/gHsKRiwpABd6iQ=
+	t=1754643109; cv=none; b=SVF+Spmn65rCchupzD2YYFtT/uVlkEbLCTRKndnmynQURB6ebhsvIXS9rDn24574OKJmUDOhDYk7GLEBAk5mP33h9NYNt6ogKBEVT4fXIuhJdJxV91En4K1IKsxSWgWuyLutx6+qBv8RmqYube/9eMwgaty3X2PuMT87SC2QGAU=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1754638650; c=relaxed/simple;
-	bh=1X2D2Ztmp54QkN16m4xKHsndz774RtFkv1wOhbP1aQM=;
-	h=Message-ID:Date:MIME-Version:Subject:To:Cc:References:From:
-	 In-Reply-To:Content-Type; b=N+j4wT8UnFzd2YKtdeIhYeAwfo9a0hF0LIKfpueS5Wnu2XYEbdR1d8cPQZEPLGc4Qa5ScN8y40fP3o96Ihr4LnSve3swghd+w93nddJUj9xhVZzJ5AJ7CP5wZGyVIJvQxdyjYcMpIxVdkynyRa7iczv1itVaRDzyMU4sgEF7aaY=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=suse.cz; spf=pass smtp.mailfrom=suse.cz; dkim=pass (1024-bit key) header.d=suse.cz header.i=@suse.cz header.b=c75AGfge; dkim=permerror (0-bit key) header.d=suse.cz header.i=@suse.cz header.b=TaUAwmBU; dkim=pass (1024-bit key) header.d=suse.cz header.i=@suse.cz header.b=c75AGfge; dkim=permerror (0-bit key) header.d=suse.cz header.i=@suse.cz header.b=TaUAwmBU; arc=none smtp.client-ip=195.135.223.131
-Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=suse.cz
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=suse.cz
+	s=arc-20240116; t=1754643109; c=relaxed/simple;
+	bh=b1RW4sTK5p1w+rHdcQTifriYB02GALUE7xZBNlDNIsE=;
+	h=Date:From:To:Cc:Subject:Message-ID:MIME-Version:Content-Type:
+	 Content-Disposition; b=UO2sIptTiuovzGnq0gPhvtH+VT+GzMQcp9WFvykgV5kuSNpWHdAhpxkYPEy0R2Zq1FOE4bp+1EEDhWIaD87DuxhnFDfuCjgb5n0utm6xbiQF54Q66QThCR5NkBQpTBdFui6LG1TBd1MbnYq+Bhjyp5tGRWQNn9PwYYEtwA/QHf4=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linutronix.de; spf=pass smtp.mailfrom=linutronix.de; dkim=pass (2048-bit key) header.d=linutronix.de header.i=@linutronix.de header.b=shXVqWDx; dkim=permerror (0-bit key) header.d=linutronix.de header.i=@linutronix.de header.b=4H7q8Mr/; arc=none smtp.client-ip=193.142.43.55
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linutronix.de
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=linutronix.de
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=suse.cz header.i=@suse.cz header.b="c75AGfge";
-	dkim=permerror (0-bit key) header.d=suse.cz header.i=@suse.cz header.b="TaUAwmBU";
-	dkim=pass (1024-bit key) header.d=suse.cz header.i=@suse.cz header.b="c75AGfge";
-	dkim=permerror (0-bit key) header.d=suse.cz header.i=@suse.cz header.b="TaUAwmBU"
-Received: from imap1.dmz-prg2.suse.org (unknown [10.150.64.97])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (4096 bits) server-digest SHA256)
-	(No client certificate requested)
-	by smtp-out2.suse.de (Postfix) with ESMTPS id 1AEF65BDB8;
-	Fri,  8 Aug 2025 07:37:27 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.cz; s=susede2_rsa;
-	t=1754638647; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
-	 mime-version:mime-version:content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references:autocrypt:autocrypt;
-	bh=A0p43mgUNO5seTET1xEwfQoW6sHiuh2LO95EYWQKlcY=;
-	b=c75AGfge6HHDH5jdTcEsolec6aCNXOm0BYWa3LenVugzpdfLZlD8i/CYhWo385I32XusSn
-	qoAOiKOHTL86554C5/7u8qXwPJr8wsdhTcjgcCMW/7JzDae6uTNhusiKi/9HiUcTpKsnnb
-	AVZqqvxfCTwqcbzOiyBocnEO9LBt2+E=
-DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=suse.cz;
-	s=susede2_ed25519; t=1754638647;
-	h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
-	 mime-version:mime-version:content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references:autocrypt:autocrypt;
-	bh=A0p43mgUNO5seTET1xEwfQoW6sHiuh2LO95EYWQKlcY=;
-	b=TaUAwmBUBuggXBcN+cGS0SqatEOLWIuV+IbrWWQ6bE+cbMsPRo4UlnrEzTgDrjFyxJ8+pM
-	9krCte1Gjc+rJ9Bw==
-Authentication-Results: smtp-out2.suse.de;
-	none
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.cz; s=susede2_rsa;
-	t=1754638647; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
-	 mime-version:mime-version:content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references:autocrypt:autocrypt;
-	bh=A0p43mgUNO5seTET1xEwfQoW6sHiuh2LO95EYWQKlcY=;
-	b=c75AGfge6HHDH5jdTcEsolec6aCNXOm0BYWa3LenVugzpdfLZlD8i/CYhWo385I32XusSn
-	qoAOiKOHTL86554C5/7u8qXwPJr8wsdhTcjgcCMW/7JzDae6uTNhusiKi/9HiUcTpKsnnb
-	AVZqqvxfCTwqcbzOiyBocnEO9LBt2+E=
-DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=suse.cz;
-	s=susede2_ed25519; t=1754638647;
-	h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
-	 mime-version:mime-version:content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references:autocrypt:autocrypt;
-	bh=A0p43mgUNO5seTET1xEwfQoW6sHiuh2LO95EYWQKlcY=;
-	b=TaUAwmBUBuggXBcN+cGS0SqatEOLWIuV+IbrWWQ6bE+cbMsPRo4UlnrEzTgDrjFyxJ8+pM
-	9krCte1Gjc+rJ9Bw==
-Received: from imap1.dmz-prg2.suse.org (localhost [127.0.0.1])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (4096 bits) server-digest SHA256)
-	(No client certificate requested)
-	by imap1.dmz-prg2.suse.org (Postfix) with ESMTPS id 05D471392A;
-	Fri,  8 Aug 2025 07:37:26 +0000 (UTC)
-Received: from dovecot-director2.suse.de ([2a07:de40:b281:106:10:150:64:167])
-	by imap1.dmz-prg2.suse.org with ESMTPSA
-	id jozkOjaplWhZMQAAD6G6ig
-	(envelope-from <vbabka@suse.cz>); Fri, 08 Aug 2025 07:37:26 +0000
-Message-ID: <c5bd00d6-e6ca-48fd-a11e-c90fa9c50e05@suse.cz>
-Date: Fri, 8 Aug 2025 09:37:26 +0200
+	dkim=pass (2048-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="shXVqWDx";
+	dkim=permerror (0-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="4H7q8Mr/"
+Date: Fri, 8 Aug 2025 10:51:38 +0200
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
+	s=2020; t=1754643100;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type;
+	bh=wM/akm2mz5O9LuaSzkJB0AGXvTlzjCqIWaJkWSq5dic=;
+	b=shXVqWDxNXCeBeFlQr2d5WH91P0JmWpBedRf3xcaazgw2VYECuj6qcLZNBlOfwCbFst8Rk
+	2xaTP7obDYdCC2HwsDZq7jm5z+tGKfYyb8ZCsitTlFXJc/ydg7wBbS8vbRJXIb+XLDo9TY
+	nAV8Zl7sF1Jb4WMf7r7DFUpM/S5KHa+Py7qbYc39ETBYgWCX4ZGoELiZV+qlluwBSEpK5A
+	b41SFNThlsK/Nug8wPhQsAeV8PfvggfbmtPzME+KrVPYZ/c+54wJtGgbGlX6eoBwyc9XK8
+	eYKZp17XqQr46ix1/eORPgRQzn7US+xQGD/uOJnnseeC0lBcm3yBPmwPIq01Mw==
+DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
+	s=2020e; t=1754643100;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type;
+	bh=wM/akm2mz5O9LuaSzkJB0AGXvTlzjCqIWaJkWSq5dic=;
+	b=4H7q8Mr/JhS5RuKLNuKkelp+QLuNxsw+PNWo7nOkPGhY2+WlI8MYgAC7ilIouwNoIDpFyz
+	BnvEqik6lT8tqvBg==
+From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+To: Thomas Gleixner <tglx@linutronix.de>, linux-rt-devel@lists.linux.dev
+Cc: LKML <linux-kernel@vger.kernel.org>, linux-rt-users@vger.kernel.org,
+	Steven Rostedt <rostedt@goodmis.org>
+Subject: [ANNOUNCE] v6.16-rt3
+Message-ID: <20250808085138.jHKxYfUJ@linutronix.de>
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
 List-Subscribe: <mailto:linux-rt-users+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-User-Agent: Mozilla Thunderbird
-Subject: Re: Realtime threads delayed due to kcompactd0
-To: Alexander Krabler <Alexander.Krabler@kuka.com>,
- Hugh Dickins <hughd@google.com>
-Cc: Frank van der Linden <fvdl@google.com>, Mike Galbraith <efault@gmx.de>,
- "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>,
- "linux-mm@kvack.org" <linux-mm@kvack.org>,
- Dennis Schimmel <Dennis.Schimmel@kuka.com>,
- Daniel Braunwarth <Daniel.Braunwarth@kuka.com>
-References: <DU0PR01MB10385345F7153F334100981888259A@DU0PR01MB10385.eurprd01.prod.exchangelabs.com>
- <CAPTztWYf82p6hq=Q2mVq6_9WTjRaQiH81z4idZL6MZ1PXufPwQ@mail.gmail.com>
- <71df781c-3ef3-4b26-9ba8-93fc7d4f9eec@suse.cz>
- <026de9fcd4f0ed17c2df95c4f7c56b878a844012.camel@gmx.de>
- <25ba0d77-eb61-4efc-b2fc-73878cbd85c1@suse.cz>
- <DU0PR01MB103857873A56FD121984568148226A@DU0PR01MB10385.eurprd01.prod.exchangelabs.com>
- <c48f2877-4d37-4310-995e-fc5c2ae9a366@suse.cz>
- <DU0PR01MB10385C08C119276D99A234D978226A@DU0PR01MB10385.eurprd01.prod.exchangelabs.com>
- <33275585-f2db-4779-89f0-3ae24b455a67@suse.cz>
- <771a8fc0-8195-44cc-55ed-c3573d497d2d@google.com>
- <DU0PR01MB10385C55AEAFEBCA2575EAA77822CA@DU0PR01MB10385.eurprd01.prod.exchangelabs.com>
-Content-Language: en-US
-From: Vlastimil Babka <vbabka@suse.cz>
-Autocrypt: addr=vbabka@suse.cz; keydata=
- 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
- m6M14QORSWTLRg==
-In-Reply-To: <DU0PR01MB10385C55AEAFEBCA2575EAA77822CA@DU0PR01MB10385.eurprd01.prod.exchangelabs.com>
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: 8bit
-X-Spamd-Result: default: False [-4.30 / 50.00];
-	BAYES_HAM(-3.00)[99.99%];
-	NEURAL_HAM_LONG(-1.00)[-1.000];
-	NEURAL_HAM_SHORT(-0.20)[-0.999];
-	MIME_GOOD(-0.10)[text/plain];
-	FUZZY_RATELIMITED(0.00)[rspamd.com];
-	RCVD_VIA_SMTP_AUTH(0.00)[];
-	FREEMAIL_ENVRCPT(0.00)[gmx.de];
-	ARC_NA(0.00)[];
-	RCVD_TLS_ALL(0.00)[];
-	MIME_TRACE(0.00)[0:+];
-	TO_DN_EQ_ADDR_SOME(0.00)[];
-	RCPT_COUNT_SEVEN(0.00)[8];
-	MID_RHS_MATCH_FROM(0.00)[];
-	DKIM_SIGNED(0.00)[suse.cz:s=susede2_rsa,suse.cz:s=susede2_ed25519];
-	FROM_HAS_DN(0.00)[];
-	FREEMAIL_CC(0.00)[google.com,gmx.de,vger.kernel.org,kvack.org,kuka.com];
-	TO_DN_SOME(0.00)[];
-	FROM_EQ_ENVFROM(0.00)[];
-	TO_MATCH_ENVRCPT_ALL(0.00)[];
-	RCVD_COUNT_TWO(0.00)[2];
-	DBL_BLOCKED_OPENRESOLVER(0.00)[imap1.dmz-prg2.suse.org:helo]
-X-Spam-Flag: NO
-X-Spam-Level: 
-X-Spam-Score: -4.30
+Content-Type: text/plain; charset=utf-8
+Content-Disposition: inline
 
-On 8/7/25 17:49, Alexander Krabler wrote:
-> On Thu, 7 Aug 2025 14:21, Hugh Dickins wrote:
->> But another idea has just this moment occurred to me: anon THP splitting
->> is another user of migration entries.  Is it possible that kcompactd is
->> not actually the cause of Alexander's issue, but that his RT tasks have
->> (bad news! shouldn't be allowed) got anon THPs in them?
-> 
-> No, we don't have transparent hugepages enabled.
-> (From Kconfig, this seems not even possible together with PREEMPT_RT.)
-> 
-> From ftrace events (first message in this thread), we know that kcompactd0
-> finally wakes our realtime thread(s).
-> 
-> Given the information I got from here, the comment on the code [1]
-> and an older commit message [2], I suspect CMA somehow influences our problem.
+Dear RT folks!
 
-However, kcompactd doesn't perform CMA allocations, only compaction, in a
-mode that does not include ISOLATE_UNEVICTABLE. So this is weird.
+I'm pleased to announce the v6.16-rt3 patch set. 
 
-> If there is anything we should enable for better diagnosis (e.g. more ftrace events),
-> we would be willing to try that out.
-> 
-> [1] https://elixir.bootlin.com/linux/v6.16/source/mm/compaction.c#L1136
-> [2] https://git.kernel.org/pub/scm/linux/kernel/git/stable/linux.git/commit/?id=e46a28790e594c0876d1a84270926abf75460f61
-> 
-> Thanks,
-> Alexander
-> 
-> --
-> KUKA Deutschland GmbH   Board of Directors: Michael Jürgens (Chairman), Dirk Busch, Johan Naten, Hui Zhang   Registered Office: Augsburg HRB 14914
-> 
-> This e-mail may contain confidential and/or privileged information. If you are not the intended recipient (or have received this e-mail in error) please notify the sender immediately and destroy this e-mail. Any unauthorized copying, disclosure or distribution of contents of this e-mail is strictly forbidden.
-> 
-> Please consider the environment before printing this e-mail.
+Changes since v6.16-rt2:
 
+  - A patch to the i915 to recognize atomic context in a timeout
+    function.
+
+Known issues
+    - Yoann Congal reported a bit spinlock in dm_exception_table_lock().
+        https://lore.kernel.org/all/Z8GTjqgDe_5EkE3t@P-ASN-ECS-830T8C3.local
+
+The delta patch against v6.16-rt2 is appended below and can be found here:
+ 
+     https://cdn.kernel.org/pub/linux/kernel/projects/rt/6.16/incr/patch-6.16-rt2-rt3.patch.xz
+
+You can get this release via the git tree at:
+
+    https://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-rt-devel.git v6.16-rt3
+
+The RT patch against v6.16 can be found here:
+
+    https://cdn.kernel.org/pub/linux/kernel/projects/rt/6.16/older/patch-6.16-rt3.patch.xz
+
+The split quilt queue is available at:
+
+    https://cdn.kernel.org/pub/linux/kernel/projects/rt/6.16/older/patches-6.16-rt3.tar.xz
+
+Sebastian
+
+diff --git a/drivers/gpu/drm/i915/gt/intel_engine_cs.c b/drivers/gpu/drm/i915/gt/intel_engine_cs.c
+index b721bbd233567..f5a6143ea8a24 100644
+--- a/drivers/gpu/drm/i915/gt/intel_engine_cs.c
++++ b/drivers/gpu/drm/i915/gt/intel_engine_cs.c
+@@ -1609,7 +1609,7 @@ u64 intel_engine_get_last_batch_head(const struct intel_engine_cs *engine)
+ 
+ static unsigned long stop_timeout(const struct intel_engine_cs *engine)
+ {
+-	if (in_atomic() || irqs_disabled()) /* inside atomic preempt-reset? */
++	if (in_atomic() || irqs_disabled() || rcu_preempt_depth()) /* inside atomic preempt-reset? */
+ 		return 0;
+ 
+ 	/*
+diff --git a/localversion-rt b/localversion-rt
+index c3054d08a1129..1445cd65885cd 100644
+--- a/localversion-rt
++++ b/localversion-rt
+@@ -1 +1 @@
+--rt2
++-rt3
