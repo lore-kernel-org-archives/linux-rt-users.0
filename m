@@ -1,85 +1,77 @@
-Received: from relay3-d.mail.gandi.net (relay3-d.mail.gandi.net [217.70.183.195])
+Received: from galois.linutronix.de (Galois.linutronix.de [193.142.43.55])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id E5ACB2FD7B8
-	for <linux-rt-users@vger.kernel.org>; Wed, 13 Aug 2025 21:06:46 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=217.70.183.195
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 90109244693;
+	Fri, 15 Aug 2025 13:58:01 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=193.142.43.55
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1755119210; cv=none; b=q2oE4T2DaNZwpRSN5NvucM7vZGvFEx7O3pwRN6uiwU+TW2FLYy3Ac7dqkA/oJ7MIBG2H6SCnZ3JHllYAd4H2ayOB4P2UBeK/NTCi/yoOORLlQGYGzJYXSjW3Sko3vybJJoiHRlCU/T2oPCekkOqcrcQLgNQ45OKDZ4JexC17pus=
+	t=1755266284; cv=none; b=azplKoBHkfW6vMdrpdENGCy/9AON+3vqpcOTabdu8n0+LzfAn3Msbk7Zc6wrfEbjpaXXoOWvLMNDgfSYj6cPIwPYzgL5GEPn1tmzCSVhwXbQxyo1JiGaHgOAc2HlUxwAFLsuLonxG6jpLP5zq0jp51NNG/PVrEfh7UQYrT9hemw=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1755119210; c=relaxed/simple;
-	bh=aqeWIAbV8hWo3NympWFVYFly6MnZE99wE+jfXwvDN2k=;
-	h=Date:From:To:Cc:Subject:Message-ID:In-Reply-To:References:
-	 MIME-Version:Content-Type; b=dypuO1R4hm5/bDZN0AOZDFl0Ux8iyrrPN5qxPoYKuwRTXFtQouDlICfI836fvW3c9+FRZF0zvKwkHYAfeZizp6slQzxOQ6vlQZX0cczulsACbZc1uBnItx3wPzzdW4TuS9ScfI5S0L4/yMDiV/efqLM8VqlWD78MDkESxB+3DTY=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=bootlin.com; spf=pass smtp.mailfrom=bootlin.com; dkim=pass (2048-bit key) header.d=bootlin.com header.i=@bootlin.com header.b=fY0MU/n7; arc=none smtp.client-ip=217.70.183.195
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=bootlin.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=bootlin.com
+	s=arc-20240116; t=1755266284; c=relaxed/simple;
+	bh=3i2XwEiUWtcY9tVi2Jo9ocqkzPo9A5lYI1mOmRJOiDQ=;
+	h=Date:From:To:Cc:Subject:Message-ID:MIME-Version:Content-Type:
+	 Content-Disposition; b=Wd5QkZ7rQ8GHfNPErwvf54QjIRkccZsim0exCtCe+tIdW/R7izhdhh3xuNYDltxOA7FSQvAd9p6o8Kj2uqN4cPpA1bWAe7nUJvEG/rOo+LcBg+eIAd+o0T+ixK7358y9r9HmgnouNS898zxDv3d6uhgnmsBWZQU1Yq5nflyjU4M=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linutronix.de; spf=pass smtp.mailfrom=linutronix.de; dkim=pass (2048-bit key) header.d=linutronix.de header.i=@linutronix.de header.b=ZAYDx33I; dkim=permerror (0-bit key) header.d=linutronix.de header.i=@linutronix.de header.b=slhFL3Vu; arc=none smtp.client-ip=193.142.43.55
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linutronix.de
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=linutronix.de
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=bootlin.com header.i=@bootlin.com header.b="fY0MU/n7"
-Received: by mail.gandi.net (Postfix) with ESMTPSA id 138DE1F434;
-	Wed, 13 Aug 2025 21:06:38 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=bootlin.com; s=gm1;
-	t=1755119199;
+	dkim=pass (2048-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="ZAYDx33I";
+	dkim=permerror (0-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="slhFL3Vu"
+Date: Fri, 15 Aug 2025 15:57:57 +0200
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
+	s=2020; t=1755266279;
 	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references;
-	bh=cjt2yicJHLx2/hlZ1Dzeeuvn8rCw1HYIVxWF9whwRqQ=;
-	b=fY0MU/n7nbBRELpvz5VoRhdQtYI/n0E5KK2+6bb4CK4trUgL/IuvOANOeXi4Tj3CGpjV89
-	yuXPvDKWgWUzdvhNPudHnSWCdSmGCAnVcOVnAGnJ6W7JM9Jc3PQFlRq0X4ISPv9pXSfmlv
-	77I1Yk5AzoT+cjuwLMrWM/Y+38JG9emmu/59seOIane/23aG5Vo1YPZrDX5LLjY9bbyG6R
-	DyzLzKhcW0c6jO1IJoYBQhbNAcYeDm51P0FEQFiHwdW4BiU0rEcll2r9T1A4hr8mgJKkJD
-	TSFq/T16o7y+PrJlawmZWE4pvUckimydINtu75QLyT+7sr+rPPilG2HRvjzypw==
-Date: Wed, 13 Aug 2025 23:06:37 +0200
-From: Thomas Petazzoni <thomas.petazzoni@bootlin.com>
-To: John Kacur <jkacur@redhat.com>
-Cc: Sebastian Andrzej Siewior <bigeasy@linutronix.de>, Kurt Kanzenbach
- <kurt@linutronix.de>, Clark Williams <williams@redhat.com>, linux-rt-users
- <linux-rt-users@vger.kernel.org>
-Subject: Re: rt-tests release tarball location
-Message-ID: <20250813230637.19e2293e@windsurf>
-In-Reply-To: <bb91bdda-8a07-1c99-5448-706460fdf1ce@redhat.com>
-References: <20241228114346.6020d6b0@windsurf>
-	<87h66b2c6m.fsf@kurt.kurt.home>
-	<20250107141424.EoC5uS6y@linutronix.de>
-	<f87b2d77-7925-8678-d0fe-9a0d471a38f1@redhat.com>
-	<20250109080555.WpQmRgu0@linutronix.de>
-	<bb91bdda-8a07-1c99-5448-706460fdf1ce@redhat.com>
-Organization: Bootlin
-X-Mailer: Claws Mail 4.3.1 (GTK 3.24.43; x86_64-redhat-linux-gnu)
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type;
+	bh=nyvcUS+/2o+Fhop1KJaZB0aAOwF9swOXW+69NmOfClc=;
+	b=ZAYDx33IOxlrrz+Nw3yhp/YSiYN8FJKNWJKnana9cSzTQEjlfIF/CENaK67cJcTAqEbiCz
+	6rKX5F1y4gg/LZbn+GM6S2S+ugjEx0L3OgVtA7FEC21dpIPfyut/KAqOJT7uJijltQrFni
+	J1kcSmtUJqtEd2G0UY53qIjqsk4hmNeCpb41He4vDo6UrRJgdkUgXvK/HZEZJAGZX+l7xQ
+	t4qaIEs7mai57tl0HZkEmixEEVPvSlVlRTdydzvg0Qf1eSvazTCOTUOoKYo6iYrTXthjRF
+	2Uhm4VBICAe+roWMe2/7txnMgkIe1keZhYsyhSL6E7sHtRdL8yTWoZTQx1zIlw==
+DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
+	s=2020e; t=1755266279;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type;
+	bh=nyvcUS+/2o+Fhop1KJaZB0aAOwF9swOXW+69NmOfClc=;
+	b=slhFL3VuCt4g9zI2YeoqB9lFcLN34mH6MNprjUqIJ2F221NqdlfO5tBqkln3XXKa+zoWHD
+	RMtwCCdOEvhc6vAQ==
+From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+To: Thomas Gleixner <tglx@linutronix.de>, linux-rt-devel@lists.linux.dev
+Cc: LKML <linux-kernel@vger.kernel.org>, linux-rt-users@vger.kernel.org,
+	Steven Rostedt <rostedt@goodmis.org>
+Subject: [ANNOUNCE] v6.17-rc1-rt1
+Message-ID: <20250815135757.yZK2felP@linutronix.de>
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
 List-Subscribe: <mailto:linux-rt-users+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
-X-GND-State: clean
-X-GND-Score: -100
-X-GND-Cause: gggruggvucftvghtrhhoucdtuddrgeeffedrtdefgddufeelvdehucetufdoteggodetrfdotffvucfrrhhofhhilhgvmecuifetpfffkfdpucggtfgfnhhsuhgsshgtrhhisggvnecuuegrihhlohhuthemuceftddunecusecvtfgvtghiphhivghnthhsucdlqddutddtmdenucfjughrpeffhffvvefukfgjfhhoofggtgfgsehtjeertdertddvnecuhfhrohhmpefvhhhomhgrshcurfgvthgriiiiohhnihcuoehthhhomhgrshdrphgvthgriiiiohhnihessghoohhtlhhinhdrtghomheqnecuggftrfgrthhtvghrnhepledtgedvjeehgeetgfeufffglefhkedvfeduveeiieelteeliedtfefguefggffhnecuffhomhgrihhnpegsohhothhlihhnrdgtohhmnecukfhppedvrgdtudemtggsudekmeekieegugemvddutddtmegrtddtfhemheelsgefmeegfhdvmeeifegusgenucevlhhushhtvghrufhiiigvpedtnecurfgrrhgrmhepihhnvghtpedvrgdtudemtggsudekmeekieegugemvddutddtmegrtddtfhemheelsgefmeegfhdvmeeifegusgdphhgvlhhopeifihhnughsuhhrfhdpmhgrihhlfhhrohhmpehthhhomhgrshdrphgvthgriiiiohhnihessghoohhtlhhinhdrtghomhdpnhgspghrtghpthhtohephedprhgtphhtthhopehjkhgrtghurhesrhgvughhrghtrdgtohhmpdhrtghpthhtohepsghighgvrghshieslhhinhhuthhrohhnihigrdguvgdprhgtphhtthhopehkuhhrtheslhhinhhut
- hhrohhnihigrdguvgdprhgtphhtthhopeifihhllhhirghmshesrhgvughhrghtrdgtohhmpdhrtghpthhtoheplhhinhhugidqrhhtqdhushgvrhhssehvghgvrhdrkhgvrhhnvghlrdhorhhg
-X-GND-Sasl: thomas.petazzoni@bootlin.com
+Content-Type: text/plain; charset=utf-8
+Content-Disposition: inline
 
-Hello John,
+Dear RT folks!
 
-On Fri, 10 Jan 2025 11:46:01 -0500 (EST)
-John Kacur <jkacur@redhat.com> wrote:
+I'm pleased to announce the v6.17-rc1-rt1 patch set. 
 
-> This option seems the least disruptive from my point of view.
-> I am now keeping all versions including the current version in
-> /pub/linux/utils/rt-tests/older
+Changes since v6.16-rt3
 
-I am getting back to you on this, because the latest version is not in
-the /older/ subfolder, i.e the 2.9 version is not in the older/ folder.
+  - Updatet to v6.17-rc1
 
-Would it be possible to place it here, so that its URL is stable
-over time? 
+Known issues
+    - Yoann Congal reported a bit spinlock in dm_exception_table_lock().
+        https://lore.kernel.org/all/Z8GTjqgDe_5EkE3t@P-ASN-ECS-830T8C3.local
 
-Thanks a lot!
+You can get this release via the git tree at:
 
-Thomas
--- 
-Thomas Petazzoni, co-owner and CEO, Bootlin
-Embedded Linux and Kernel engineering and training
-https://bootlin.com
+    https://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-rt-devel.git v6.17-rc1-rt1
+
+The RT patch against v6.17-rc1 can be found here:
+
+    https://cdn.kernel.org/pub/linux/kernel/projects/rt/6.17/older/patch-6.17-rc1-rt1.patch.xz
+
+The split quilt queue is available at:
+
+    https://cdn.kernel.org/pub/linux/kernel/projects/rt/6.17/older/patches-6.17-rc1-rt1.tar.xz
+
+Sebastian
