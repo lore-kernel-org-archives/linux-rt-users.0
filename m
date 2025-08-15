@@ -1,77 +1,48 @@
-Received: from galois.linutronix.de (Galois.linutronix.de [193.142.43.55])
+Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 90109244693;
-	Fri, 15 Aug 2025 13:58:01 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=193.142.43.55
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id AF7041B87C0;
+	Fri, 15 Aug 2025 21:51:25 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1755266284; cv=none; b=azplKoBHkfW6vMdrpdENGCy/9AON+3vqpcOTabdu8n0+LzfAn3Msbk7Zc6wrfEbjpaXXoOWvLMNDgfSYj6cPIwPYzgL5GEPn1tmzCSVhwXbQxyo1JiGaHgOAc2HlUxwAFLsuLonxG6jpLP5zq0jp51NNG/PVrEfh7UQYrT9hemw=
+	t=1755294685; cv=none; b=k71to6QHWvjKaqUhklX+0LjBk+qbCPckjwlG3gwxhGfIqYjCZE0o2FEHwcIWR684ziIu1wjMduEfOGp7OBLm+Tiu4YMGns5iFv/hea8UvU4TJG2HNNk5g2ELfDR/ZAxrDmOBG/CTowX3mn4L1w6NWvLJdl9/O3IfOKzndzetOmA=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1755266284; c=relaxed/simple;
-	bh=3i2XwEiUWtcY9tVi2Jo9ocqkzPo9A5lYI1mOmRJOiDQ=;
-	h=Date:From:To:Cc:Subject:Message-ID:MIME-Version:Content-Type:
-	 Content-Disposition; b=Wd5QkZ7rQ8GHfNPErwvf54QjIRkccZsim0exCtCe+tIdW/R7izhdhh3xuNYDltxOA7FSQvAd9p6o8Kj2uqN4cPpA1bWAe7nUJvEG/rOo+LcBg+eIAd+o0T+ixK7358y9r9HmgnouNS898zxDv3d6uhgnmsBWZQU1Yq5nflyjU4M=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linutronix.de; spf=pass smtp.mailfrom=linutronix.de; dkim=pass (2048-bit key) header.d=linutronix.de header.i=@linutronix.de header.b=ZAYDx33I; dkim=permerror (0-bit key) header.d=linutronix.de header.i=@linutronix.de header.b=slhFL3Vu; arc=none smtp.client-ip=193.142.43.55
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linutronix.de
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=linutronix.de
-Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="ZAYDx33I";
-	dkim=permerror (0-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="slhFL3Vu"
-Date: Fri, 15 Aug 2025 15:57:57 +0200
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
-	s=2020; t=1755266279;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type;
-	bh=nyvcUS+/2o+Fhop1KJaZB0aAOwF9swOXW+69NmOfClc=;
-	b=ZAYDx33IOxlrrz+Nw3yhp/YSiYN8FJKNWJKnana9cSzTQEjlfIF/CENaK67cJcTAqEbiCz
-	6rKX5F1y4gg/LZbn+GM6S2S+ugjEx0L3OgVtA7FEC21dpIPfyut/KAqOJT7uJijltQrFni
-	J1kcSmtUJqtEd2G0UY53qIjqsk4hmNeCpb41He4vDo6UrRJgdkUgXvK/HZEZJAGZX+l7xQ
-	t4qaIEs7mai57tl0HZkEmixEEVPvSlVlRTdydzvg0Qf1eSvazTCOTUOoKYo6iYrTXthjRF
-	2Uhm4VBICAe+roWMe2/7txnMgkIe1keZhYsyhSL6E7sHtRdL8yTWoZTQx1zIlw==
-DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
-	s=2020e; t=1755266279;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type;
-	bh=nyvcUS+/2o+Fhop1KJaZB0aAOwF9swOXW+69NmOfClc=;
-	b=slhFL3VuCt4g9zI2YeoqB9lFcLN34mH6MNprjUqIJ2F221NqdlfO5tBqkln3XXKa+zoWHD
-	RMtwCCdOEvhc6vAQ==
-From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-To: Thomas Gleixner <tglx@linutronix.de>, linux-rt-devel@lists.linux.dev
-Cc: LKML <linux-kernel@vger.kernel.org>, linux-rt-users@vger.kernel.org,
-	Steven Rostedt <rostedt@goodmis.org>
-Subject: [ANNOUNCE] v6.17-rc1-rt1
-Message-ID: <20250815135757.yZK2felP@linutronix.de>
+	s=arc-20240116; t=1755294685; c=relaxed/simple;
+	bh=pSVjxAJ7wLLSVmnGrWhrWVz53jkWHqx2HLMr3EHa6SA=;
+	h=From:Subject:Date:Message-ID:To; b=ArwuxAHKz9swGakBB1/wXAdga+ULEbdZGhk/RgDz8h2IVSTtU8fubiWQpIC6bUM0mToYdreetRjhakNhIvWkdOqVehJeF4bvm1hqXVeaKmWLfvh4wuhOEM0RC3sV2XoRZ7a+DXNHUyA6UQ7Ln+XiJ8hRZdsc6RjTNU0wFX9BsHk=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id 1CAF1C4CEEB;
+	Fri, 15 Aug 2025 21:51:25 +0000 (UTC)
+From: Clark Williams <williams@redhat.com>
+Subject: [ANNOUNCE] 6.6.101-rt59
+Date: Fri, 15 Aug 2025 21:50:47 -0000
+Message-ID: <175529464749.438234.18305308246120433084@demetrius>
+To: LKML <linux-kernel@vger.kernel.org>,linux-rt-users <linux-rt-users@vger.kernel.org>,Steven Rostedt <rostedt@goodmis.org>,Thomas Gleixner <tglx@linutronix.de>,Carsten Emde <C.Emde@osadl.org>,John Kacur <jkacur@redhat.com>,Sebastian Andrzej Siewior <bigeasy@linutronix.de>,Daniel Wagner <daniel.wagner@suse.com>,Tom Zanussi <tom.zanussi@linux.intel.com>,Clark Williams <williams@redhat.com>,Pavel Machek <pavel@denx.de>,Joseph Salisbury <joseph.salisbury@oracle.com>,Luis Claudio R. Goncalves <lgoncalv@redhat.com>
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
 List-Subscribe: <mailto:linux-rt-users+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
-MIME-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Disposition: inline
 
-Dear RT folks!
+Hello RT-list!
 
-I'm pleased to announce the v6.17-rc1-rt1 patch set. 
-
-Changes since v6.16-rt3
-
-  - Updatet to v6.17-rc1
-
-Known issues
-    - Yoann Congal reported a bit spinlock in dm_exception_table_lock().
-        https://lore.kernel.org/all/Z8GTjqgDe_5EkE3t@P-ASN-ECS-830T8C3.local
+I'm pleased to announce the 6.6.101-rt59 stable release.
 
 You can get this release via the git tree at:
 
-    https://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-rt-devel.git v6.17-rc1-rt1
+  git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
 
-The RT patch against v6.17-rc1 can be found here:
+  branch: v6.6-rt
+  Head SHA1: 60cd74b07c62041e678aaf0bdb49e3c542033e8c
 
-    https://cdn.kernel.org/pub/linux/kernel/projects/rt/6.17/older/patch-6.17-rc1-rt1.patch.xz
+Or to build 6.6.101-rt59 directly, the following patches should be applied:
 
-The split quilt queue is available at:
+  https://www.kernel.org/pub/linux/kernel/v6.x/linux-6.6.tar.xz
 
-    https://cdn.kernel.org/pub/linux/kernel/projects/rt/6.17/older/patches-6.17-rc1-rt1.tar.xz
+  https://www.kernel.org/pub/linux/kernel/v6.x/patch-6.6.101.xz
 
-Sebastian
+  https://www.kernel.org/pub/linux/kernel/projects/rt/6.6/patch-6.6.101-rt59.patch.xz
+
+
+Enjoy!
+Clark
