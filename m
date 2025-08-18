@@ -1,104 +1,112 @@
-Received: from mail-qt1-f175.google.com (mail-qt1-f175.google.com [209.85.160.175])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 246B02DC33A
-	for <linux-rt-users@vger.kernel.org>; Sun, 17 Aug 2025 14:27:15 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.160.175
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id AA00721171D
+	for <linux-rt-users@vger.kernel.org>; Mon, 18 Aug 2025 19:18:31 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1755440839; cv=none; b=TkUnUiuW+aqfVKsrLY7Q8CapMHmQK/BxAOartoS1Zf3lif+HkQJYP+18GYdZ4dQxavxDGI+DU8hfBuGybX1u0U8s+4s74sIyIVpuiv2AlAehMDi8F2Otqk2DqNWfRzIWfSQFdiDlxsoca7McrK2emEzxI+j4sD4A2Fd4uB+qulk=
+	t=1755544713; cv=none; b=Xlfw2cwhxMDoSHuHZq0xQkarb1dK8EvJ5uNc1SpAPx6M7iDZo9Vt+J3gn90+xqXMuuvQpcgr+c5koRHyMo3t8rAMILMt9m4lx9EX4+YAiJ9OcHHVDM7vLbzaBWz1uvdEzGXngqwfpvaTSQoplkfFBOafRGm9fc5/DPULXEvaXek=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1755440839; c=relaxed/simple;
-	bh=lDpq8I98j7ygHtJNnQA9whbnrtcvMAxLIsDOkN+5U5c=;
-	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 Content-Type:Content-Disposition:In-Reply-To; b=LElf9ZS+ZZl+eoMOWSn+Jvsb8RwDDlrD/CsVTqY+fuipyZi8wlPsuxUW843KUT+JQyC6qCEWPirlccrKLr+xjZ07BuRmiK+hanFm6xqWHHKBMS+psyaESYg4pdbMx1mg/3FdJEXg+vd4+7Q/QLL2WnxdFaJAlS61aqD4PCSPsWs=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=rowland.harvard.edu; spf=fail smtp.mailfrom=g.harvard.edu; dkim=pass (2048-bit key) header.d=rowland.harvard.edu header.i=@rowland.harvard.edu header.b=WOddVjmw; arc=none smtp.client-ip=209.85.160.175
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=rowland.harvard.edu
-Authentication-Results: smtp.subspace.kernel.org; spf=fail smtp.mailfrom=g.harvard.edu
+	s=arc-20240116; t=1755544713; c=relaxed/simple;
+	bh=dsd0VwrwJpSfhtt/4o54ldUy6Kx1SU28U9FNHOc8zrA=;
+	h=Date:From:To:cc:Subject:In-Reply-To:Message-ID:References:
+	 MIME-Version:Content-Type; b=tQctfev2myWJXNNm2JZ3+wXbPbcCgNBbiL9lb8uerSK9PojxRuqcfXnq7CqwmEXqgZ9HWyHx/1FwcJojwNSutz8J8U1t+DywufmLvk1kNDdt6Pct6tJVMs8QamCwKJBtM3abGIAbdffcqzck1V35Wp7+UUkaX5RocB1RAX0zTbc=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=C/EJ5wZH; arc=none smtp.client-ip=170.10.129.124
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=rowland.harvard.edu header.i=@rowland.harvard.edu header.b="WOddVjmw"
-Received: by mail-qt1-f175.google.com with SMTP id d75a77b69052e-4b109bd3f9fso44619531cf.2
-        for <linux-rt-users@vger.kernel.org>; Sun, 17 Aug 2025 07:27:15 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=rowland.harvard.edu; s=google; t=1755440835; x=1756045635; darn=vger.kernel.org;
-        h=in-reply-to:content-disposition:mime-version:references:message-id
-         :subject:cc:to:from:date:from:to:cc:subject:date:message-id:reply-to;
-        bh=maDtJ/OnwRzl2mzIghqGwSPF8ovKhpPVT9edc4eCiH8=;
-        b=WOddVjmwX1cayKg/mSl88CsPX8QnfbVX4kuBoisupimerSVu6XvtpA8bg90gE4R/QW
-         M+1d89Gkhhwi75mL6bOhMtvOGIVy9ttl4pdtr3p7NL6+Km1Vz7NnEtksa124k/kPCZQg
-         szKZywRJcN64r8BJnxHVK1v6WDq7U7mkj8l8WU5jKKszOzjZFaGnvRJxLe8S0l+Q0v+H
-         Te0VRODB+dINAY0TNRRDYW0HLIam68oPG1VMfqwLBc7eHM2W62wXRQ5zn847phdSxkaU
-         gvTdGnaN5DzuKsVgqk2qNwjEOfRwM+IJI931iVUWQLZfR6uiDm06irgg0wfuw+isyuQH
-         vCeg==
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="C/EJ5wZH"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1755544710;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 in-reply-to:in-reply-to:references:references;
+	bh=IsZfVy+rOo/5KWxxvxBgVedZjzlddxshrwNUqRaEJik=;
+	b=C/EJ5wZHDWJC7WkiHUg8ue3EqbeRRN7+ToOkHi22QZClDxD4dQxfiZY1Q8gYtqX5TZIQfO
+	XMnE+r8rXg+lFOMxDdb4RiFjPju6Y8/h0FNMZ2whz3/WctBqBcf4wipCjOn2lN0Jhk7ns4
+	5f5jiQKDy7QqKeq+ymd/J2Ntx8fPOoI=
+Received: from mail-qt1-f198.google.com (mail-qt1-f198.google.com
+ [209.85.160.198]) by relay.mimecast.com with ESMTP with STARTTLS
+ (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
+ us-mta-549-HsLmZtaAM6WEPeaRDz9y7Q-1; Mon, 18 Aug 2025 15:18:29 -0400
+X-MC-Unique: HsLmZtaAM6WEPeaRDz9y7Q-1
+X-Mimecast-MFC-AGG-ID: HsLmZtaAM6WEPeaRDz9y7Q_1755544709
+Received: by mail-qt1-f198.google.com with SMTP id d75a77b69052e-4b109912dd8so43910611cf.0
+        for <linux-rt-users@vger.kernel.org>; Mon, 18 Aug 2025 12:18:29 -0700 (PDT)
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1755440835; x=1756045635;
-        h=in-reply-to:content-disposition:mime-version:references:message-id
-         :subject:cc:to:from:date:x-gm-message-state:from:to:cc:subject:date
-         :message-id:reply-to;
-        bh=maDtJ/OnwRzl2mzIghqGwSPF8ovKhpPVT9edc4eCiH8=;
-        b=IM4cgFsYyYi+eRIC0IUVrrHdaX8V/SUlaa0cIMx6qHbvedCLXsjqalctj1XxHd3+D/
-         hv477+NSPJUxZC8ymuSgdOon2Fu1bCQNhMq90M0L5Imaq28KC8Z25hw2vjg7vuWXbJgB
-         be3b4y15rIU/GI8dZkVzoL98IgpoHH8FJN6XRK3sZrHpE+9cVC8mEF0kOGcPvCKZRuZs
-         dPLNoqxQ0uOQd5l2DwiKpKXS/G0/hvSPUaxtay9PP/T1DIYYBDVRFEJfmM+x4NDL6xha
-         cBgJyY9FTQan4wXI2+mMuAVVkZCAwToICuzOSif+kSaXoU4UOXbDsCg4WZefilTexsek
-         c+Lw==
-X-Forwarded-Encrypted: i=1; AJvYcCXexP3nPU726C+9XvkeQiMAOpmwNWid4dYmn2ny8U+xIY3wtP3T5j0tHZn1R2GOSkk4t62kLsv6BbxRosdD1Q==@vger.kernel.org
-X-Gm-Message-State: AOJu0Yy2B6aP9tvfY6NbUpzjRXi7Q9Z6wg87RIlYIkuS9EAWaTfBihtD
-	njmbiRYA+vYe1+ZiriFzNephUx17IclpmS+1YufRcjFH2237xSP1t5BbVvPnIEL0F0Th+vXTaTl
-	Y1JY=
-X-Gm-Gg: ASbGncvqxBZwwl8xniElyJx7vzyGjXaIUMD3pDwHV99siXU3rRNJ1oPO8n5WByIemlJ
-	BOnRqUxGmTZX1GgKgAaxwe4K/aqhkONfIr9HSGzFLA7xyYokFdIHD8JbCua9f8ASIF6NZ/4pSQ5
-	EB9exWPLcKY33YcdJdAIS8K4BxBsUQY7XWw9QA1qeN/rrMfUBKck2EXUlbJREytxYLnsZ1Srhp2
-	W08ERe64CTVF7x+ifWstUeGcg57cTNIi4YXPjjAemqh4uCWXgCFa4/yGR4lb2+zBtj3CyTPs1JZ
-	oY72FrrYFyxMcYljiUrd7AJInNcqAqb6/I0FH6vIJS7vDnknt4+iXjZZPwBv64cx6seNYamX8ER
-	uKNxjYjeggciGF0zCHPIJyFNao1zKKtDXBwCY1A==
-X-Google-Smtp-Source: AGHT+IE7mcvpDwN6PKRambQsOmtvuGU5trnDeiipWqjRmMVW9O5h9Q9S2jd9sA9uj5EzwPmhQmqFRQ==
-X-Received: by 2002:a05:622a:4c17:b0:4b0:710d:3cbd with SMTP id d75a77b69052e-4b11e060063mr103987241cf.7.1755440835014;
-        Sun, 17 Aug 2025 07:27:15 -0700 (PDT)
-Received: from rowland.harvard.edu ([2601:19b:681:fd10::f777])
-        by smtp.gmail.com with ESMTPSA id d75a77b69052e-4b11ddd8727sm37627401cf.39.2025.08.17.07.27.13
+        d=1e100.net; s=20230601; t=1755544709; x=1756149509;
+        h=mime-version:references:message-id:in-reply-to:subject:cc:to:from
+         :date:x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
+        bh=IsZfVy+rOo/5KWxxvxBgVedZjzlddxshrwNUqRaEJik=;
+        b=BgMmlX9c11F9/p/F0IbKfnH/5lWqiFvGTtEKkOdkJ194iW+kmS90tDapaj5p8Fnipk
+         Mm5JikDxSRLiAT9ImzFlpszMogrMHRRrlDlSG2KnyDNtBHEOf8JPkm+1kaUgCApZpyus
+         w8Ac4bugRQvozD7l3TMOfWX7a/TRd3y42IjDPldY78uXPWezWI1SmD+hl0w6DpQBYqEv
+         G0PfmzeGqTctveHCNPtl/dcF6pWbT1KHJ72VFTlGg56yiBmV1JVIf40rS05iStJQbkZK
+         oLl6dV/+muUaJkFU1Xs7o2T56rSImMqVwHxuDBS0DUUzQamCn4qpLD0nkGsQwuMpiRe5
+         34Tw==
+X-Forwarded-Encrypted: i=1; AJvYcCWc02qpmrb3dNPWJs6N/uIOs+ch7d5ydBoKjsnqeHC1IROhNGnpVnQ8OG3aRoNfpOM1YWcA2g7dYmCGxWstIQ==@vger.kernel.org
+X-Gm-Message-State: AOJu0Yx1R+Z7bTPlW4mR5w7oKqtQWPgrBIdWuumK9B/CyloE1yv1QYHD
+	7Y7DA2Li51g1UqtQfLK45rYYoaCLh+dCzIkkvW/pXd+OMXUXSSMoHibbPoYket/zx+ZBOowBdf+
+	m0UxWnTpyH6dEMVyoK9zUz3AVusBG+LAOv8b0Y98Wbb3Azb3eyTehUZqBWCibxKvoRrw8
+X-Gm-Gg: ASbGncsoaS3Se3rErv/IqxlrPZEoblt9KlnernDrKFQWrjT8QTHt+bSP7yRy/0JtZio
+	JFG9RXAp7MzjTypdNOhmNydh3vRUYwQUpGuSOPkj5Nrr0u2vYyVVGhbmBNQGuOIG7DpGdi19jab
+	GU9jbD+XLoQ3FQN2ayZV7gY+rB+zuAU7jTsMMp9dT1mEu+B83p2/NrKAo516G+Ia7RdVO04Dwi6
+	UZnXasTjjQt9PdynfY215G48vMUafdYYqBoqDvGa0VNiqhdZXO2NHXF/jzdlBK38kj4R7bK2J1r
+	Mqm3f2z4mJiTITF+9W+wBzdc63+IUeFapNBCq+WIklAoIXw4rg7qy9J6gTRjV2B0wIiiZTk/s3W
+	o+UVWBXALXz5r
+X-Received: by 2002:a05:622a:4808:b0:4ab:5277:a5ab with SMTP id d75a77b69052e-4b2855f68afmr3952831cf.6.1755544708704;
+        Mon, 18 Aug 2025 12:18:28 -0700 (PDT)
+X-Google-Smtp-Source: AGHT+IEYJhHPCMzQA9T5uFknUXxou402xmRIfZWV1rd6ocJWA9xKDYYiuLzvvDIPfXXKp13C+7EX4w==
+X-Received: by 2002:a05:622a:4808:b0:4ab:5277:a5ab with SMTP id d75a77b69052e-4b2855f68afmr3952351cf.6.1755544708292;
+        Mon, 18 Aug 2025 12:18:28 -0700 (PDT)
+Received: from fionn (bras-base-rdwyon0604w-grc-10-70-49-165-78.dsl.bell.ca. [70.49.165.78])
+        by smtp.gmail.com with ESMTPSA id af79cd13be357-7e87e192272sm638271285a.42.2025.08.18.12.18.27
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Sun, 17 Aug 2025 07:27:14 -0700 (PDT)
-Date: Sun, 17 Aug 2025 10:27:11 -0400
-From: Alan Stern <stern@rowland.harvard.edu>
-To: Yunseong Kim <ysk@kzalloc.com>
-Cc: linux-usb@vger.kernel.org, gregkh@linuxfoundation.org,
-	Andrey Konovalov <andreyknvl@google.com>,
-	Shuah Khan <skhan@linuxfoundation.org>,
-	Thomas Gleixner <tglx@linutronix.de>,
-	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-	Clark Williams <clrkwllms@kernel.org>,
-	Steven Rostedt <rostedt@goodmis.org>,
-	linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org,
-	syzkaller@googlegroups.com
-Subject: Re: [BUG] usbip: vhci: Sleeping function called from invalid context
- in vhci_urb_enqueue on PREEMPT_RT
-Message-ID: <2bf33071-e05e-4b89-b149-30b90888606f@rowland.harvard.edu>
-References: <c6c17f0d-b71d-4a44-bcef-2b65e4d634f7@kzalloc.com>
- <f6cdf21a-642f-458c-85c1-0c2e1526f539@rowland.harvard.edu>
- <28544110-3021-43da-b32e-9785c81a42c1@kzalloc.com>
- <1088432b-b433-4bab-a927-69e55d9eb433@rowland.harvard.edu>
+        Mon, 18 Aug 2025 12:18:27 -0700 (PDT)
+Date: Mon, 18 Aug 2025 15:18:26 -0400 (EDT)
+From: John Kacur <jkacur@redhat.com>
+To: Thomas Petazzoni <thomas.petazzoni@bootlin.com>
+cc: Sebastian Andrzej Siewior <bigeasy@linutronix.de>, 
+    Kurt Kanzenbach <kurt@linutronix.de>, Clark Williams <williams@redhat.com>, 
+    linux-rt-users <linux-rt-users@vger.kernel.org>
+Subject: Re: rt-tests release tarball location
+In-Reply-To: <20250813230637.19e2293e@windsurf>
+Message-ID: <af905835-5920-366d-c41c-749555f95200@redhat.com>
+References: <20241228114346.6020d6b0@windsurf> <87h66b2c6m.fsf@kurt.kurt.home> <20250107141424.EoC5uS6y@linutronix.de> <f87b2d77-7925-8678-d0fe-9a0d471a38f1@redhat.com> <20250109080555.WpQmRgu0@linutronix.de> <bb91bdda-8a07-1c99-5448-706460fdf1ce@redhat.com>
+ <20250813230637.19e2293e@windsurf>
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
 List-Subscribe: <mailto:linux-rt-users+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-In-Reply-To: <1088432b-b433-4bab-a927-69e55d9eb433@rowland.harvard.edu>
+Content-Type: text/plain; charset=US-ASCII
 
-On Sat, Aug 16, 2025 at 10:16:34AM -0400, Alan Stern wrote:
-> So it looks like we should be using a different function instead of 
-> local_irq_disable().  We need something which in a non-RT build will 
-> disable interrupts on the local CPU, but in an RT build will merely 
-> disable preemption.  (In fact, every occurrence of local_irq_disable() 
-> in the USB subsystem probably should be changed in this way.)
 
-Or maybe what we need is something that in a non-RT build will disable 
-local interrupts and in an RT build will do nothing.  (I suspect that RT 
-kernels won't like it if we call spin_lock() while preemption is 
-disabled.)
 
-> Is there such a function?
+On Wed, 13 Aug 2025, Thomas Petazzoni wrote:
 
-Alan Stern
+> Hello John,
+> 
+> On Fri, 10 Jan 2025 11:46:01 -0500 (EST)
+> John Kacur <jkacur@redhat.com> wrote:
+> 
+> > This option seems the least disruptive from my point of view.
+> > I am now keeping all versions including the current version in
+> > /pub/linux/utils/rt-tests/older
+> 
+> I am getting back to you on this, because the latest version is not in
+> the /older/ subfolder, i.e the 2.9 version is not in the older/ folder.
+> 
+> Would it be possible to place it here, so that its URL is stable
+> over time? 
+> 
+> Thanks a lot!
+> 
+> Thomas
+> -- 
+
+Done. Updating my scripts too.
+
+John Kacur
+
