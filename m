@@ -1,65 +1,44 @@
-Received: from mail-qk1-f177.google.com (mail-qk1-f177.google.com [209.85.222.177])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from galois.linutronix.de (Galois.linutronix.de [193.142.43.55])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id BBCF82253AE
-	for <linux-rt-users@vger.kernel.org>; Tue, 19 Aug 2025 14:12:36 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.222.177
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 3A5A5283CAF;
+	Tue, 19 Aug 2025 14:57:04 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=193.142.43.55
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1755612758; cv=none; b=qHzEtMnHIJiQQS0k2N6v67puDMBrCvbeMjRVAcdKspGQe1gIUHz0wgXQKcuk0GOQn4fe+UREFICo0YL11Anq/YfV/8aC4MqSkOVGYOyZr+Qk3rjr8xrmcJuWfhzpDn5ZFum98zikfcTrOHfBZ9naDHL16LkJiebPVF7ravdzhnw=
+	t=1755615426; cv=none; b=tGFC2W284dw+Pe9df+CXvzXCA77spL3BZe2JGNz2jQAyHHAQyJx7teaVbFoh0bEsnT/ZnYAsNoly2CTw/lfh3A+KP76Oxqe9hBbjPhsycdr1OEwptTVrZ0DQOATHSJmlBu0HwhIBkuhtKWG/01P9VX4AeHAHUgLdWslcZUfI+6c=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1755612758; c=relaxed/simple;
-	bh=gt4mRYfjODV9zhqfPjnfdU89Lq3jwQVRdixAwLEWLSw=;
+	s=arc-20240116; t=1755615426; c=relaxed/simple;
+	bh=jTRC/CHJntYVtBQIVMAGSv4VOFd+4rvA3L2Yn4gMfMw=;
 	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 Content-Type:Content-Disposition:In-Reply-To; b=HA6HH+4oy801cV49DlLMi09vHt6TjiOHhG2mTsDOa68fmfyK9SWX6YvNsYAP6pKfxAgCgsrK+iA+SV1hy8hCXfu0h8FDAID112VI52tWra4iWttE4PTBBboh1/dbQ6XwyjAAbCjnoFIiP8KhtP7FfGLVb9CyWBdrivUXzN3Hmyo=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=rowland.harvard.edu; spf=fail smtp.mailfrom=g.harvard.edu; dkim=pass (2048-bit key) header.d=rowland.harvard.edu header.i=@rowland.harvard.edu header.b=TFfy3k/r; arc=none smtp.client-ip=209.85.222.177
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=rowland.harvard.edu
-Authentication-Results: smtp.subspace.kernel.org; spf=fail smtp.mailfrom=g.harvard.edu
+	 Content-Type:Content-Disposition:In-Reply-To; b=Zhfw5flNhsITXMwhr1EiW1HoUSAYnIXULRZSrsu10bg5Zw/T3dxShnA0YaNljDABu6SkKD4nPyrty8VJU0FX+1TtUA2f5CjC5XSjDO6HFIjxIylHeyLSnxwjGZqc2hHdMX+0uii3aY+XjZPrTOfOyZHMgRiZG2tquVKYmXLP/Ek=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linutronix.de; spf=pass smtp.mailfrom=linutronix.de; dkim=pass (2048-bit key) header.d=linutronix.de header.i=@linutronix.de header.b=XBPDLe0f; dkim=permerror (0-bit key) header.d=linutronix.de header.i=@linutronix.de header.b=pS+8WlJ5; arc=none smtp.client-ip=193.142.43.55
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linutronix.de
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=linutronix.de
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=rowland.harvard.edu header.i=@rowland.harvard.edu header.b="TFfy3k/r"
-Received: by mail-qk1-f177.google.com with SMTP id af79cd13be357-7e8705415ceso635066285a.1
-        for <linux-rt-users@vger.kernel.org>; Tue, 19 Aug 2025 07:12:36 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=rowland.harvard.edu; s=google; t=1755612756; x=1756217556; darn=vger.kernel.org;
-        h=in-reply-to:content-disposition:mime-version:references:message-id
-         :subject:cc:to:from:date:from:to:cc:subject:date:message-id:reply-to;
-        bh=bDLwUY8c5UikKYG43v+aAUoS5K12CXkZu1S6tpWU6eg=;
-        b=TFfy3k/rnhuwPkiNn4niFNUXwgmnpl7DS6gFMh18k8UWlbgbmf52NdHiFYbB1xjydb
-         wCJ8p3YuHFEkvLlTWoju5a+eHqH9DGz3Hbiif4xV9o9NRpsNjOArzd4M9YvD8VP75ZJX
-         pkDOzeFkrTfwpYv+dwmZ45w6j0PVnOoFVlUotxpoU5EiXMIQkDlxBuFLS/CODJVeQqVl
-         k2B0iiPHVSDMd355ILgBmMiJ2OxKEf95gtQPrCvxudYLMzuAgQiqJgejHHcARvVrKaGA
-         TBtvv0JrFfzEQD9NazxIe/YBHGEyTcHnvSc2Nw8HDkbzcJ2GJdX/JDfZf0O4a5rGMrxI
-         pooA==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1755612756; x=1756217556;
-        h=in-reply-to:content-disposition:mime-version:references:message-id
-         :subject:cc:to:from:date:x-gm-message-state:from:to:cc:subject:date
-         :message-id:reply-to;
-        bh=bDLwUY8c5UikKYG43v+aAUoS5K12CXkZu1S6tpWU6eg=;
-        b=c7utc1YGqdjJPXZGAhza6VLIM45lk2Wmkx5iZDMmkUdHrP5pU2m9AJgDuUl9P9Bu35
-         oIlV0+WVJazXCS5PV9AxcU911mpsA2o+95LXGw7t9Wvd42R1agKk8XjUwg58QknINMvX
-         tkGLnYA4kbFWYDWluZ4j0i+A1TzYkiyXTrwWRwZ5kB2PIVHFYuzlAzH2BIT5AJm6VNDQ
-         Z/YZonnCDyqDP7hb2SsYuLptz0v42M+6kro65rHzqSqgxd5IXgqyOeDc/dpixAXucejT
-         YC/z15u207WpMetnzX7JFBldwXg8ufwPqf8VJkb4Bwbi/H7wT/bCZRiLVvwTrng/tdqK
-         DAnw==
-X-Forwarded-Encrypted: i=1; AJvYcCWBKX4y7mIZanzCg8B1BWtmfUcg3h71q3EYOZhoc1LvRFO7X1HW/U6Hk4oaxTXnLnvb2AD7B+lAzd6mQGpM+g==@vger.kernel.org
-X-Gm-Message-State: AOJu0Yy0MF116DnoDAQjlS0h9gOwZtCwFFguDvpKtW43k+mm8CvIRlu8
-	A0Ak9PEp5moTBhJQMXOEHtKL2nYO14XJ7qER2T89kH1UXuY6q8Gf/4hTjK4bIjc89g==
-X-Gm-Gg: ASbGnct0DhCK8VHehBxcqAZPBYBvecxa4A/VoTF3sfSbfN6azURl2OWESBySC9N7Z6U
-	ZmmopU4Llq3TJABxGdZhI92Y01dqnQNkedzSUhaqWNVbZQX499/0t+xgpEASJbIdZfG9lFRwNP+
-	efTUsSQl3w/7F9KwJgY4Ah6kG8jqscszCJDH6yWP5ioZxr2IvPCKQTAOD1ynSdmLOwi8m35AKfY
-	nox7R/lO7cifGPXicRuLm6EQoy5Y71TPXW5/3/uYHmhFrwshvAc2QLQ7zM5cN//3O3sxrQGUI5n
-	ajVRAIikUrQmdg1NfZjO28nltL9+M2BGtiUCuF3FXsxyfQcj3SLbHRm6SsHlGgXx0zcl68tjYcl
-	EJLdz/UdEZsLAmxrlg4h546MVAvY=
-X-Google-Smtp-Source: AGHT+IHQg04DWf8DLLAvL7X03CUOIZTn7DoQBqcIlAoSiqB7A22l6EHFGlPS13+38MuE7eItCA2s6w==
-X-Received: by 2002:a05:620a:1a1f:b0:7e9:f17f:65b8 with SMTP id af79cd13be357-7e9f3361b7amr352563585a.39.1755612755346;
-        Tue, 19 Aug 2025 07:12:35 -0700 (PDT)
-Received: from rowland.harvard.edu ([2601:19b:681:fd10::fa48])
-        by smtp.gmail.com with ESMTPSA id af79cd13be357-7e87e066da8sm771292885a.25.2025.08.19.07.12.33
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Tue, 19 Aug 2025 07:12:34 -0700 (PDT)
-Date: Tue, 19 Aug 2025 10:12:31 -0400
-From: Alan Stern <stern@rowland.harvard.edu>
-To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+	dkim=pass (2048-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="XBPDLe0f";
+	dkim=permerror (0-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="pS+8WlJ5"
+Date: Tue, 19 Aug 2025 16:57:00 +0200
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
+	s=2020; t=1755615423;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 in-reply-to:in-reply-to:references:references;
+	bh=7fcGAbJPPdGZvSLVrtBanIpB5dI4uHVka3XSy/P+gA8=;
+	b=XBPDLe0fihzaCCfT5pSO53u96LHBo7uzmoa5bB9bv22RWOZ0eVnRBOIoXe98ff/e8PT0wI
+	mhthpjVcYpV90s/o5QvxRvtGnTJcN2H7jwDKz2ezq1IC6DYosgszQSOj8AZR6rCLGl3f7S
+	wDAi9K2a/WgdD+YmtNkgL4C9d1KESvtWt5Tv/TqmGtMCasIyY0iaH6bx1Nnhg0n+XPHQIN
+	AbItO/ZONX4jDmIskQjHDgGlM8Xwz50tYndwI7c6STP2TxlgdefXTdhlV4CCjQdPawL534
+	FqEl7d3x2aGNJchINbfzx4Edsvx8Pm1Hs7UPmG4TF0fZELygfr1SvARXl4KdZg==
+DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
+	s=2020e; t=1755615423;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 in-reply-to:in-reply-to:references:references;
+	bh=7fcGAbJPPdGZvSLVrtBanIpB5dI4uHVka3XSy/P+gA8=;
+	b=pS+8WlJ5up5SYgONcsS9fwRHHqpFdrbk9QbJm/n8kzF1IRzAe5hMxbfHUKOgN9Zw3Nl5Tn
+	AGGboCVmDy/vYiAQ==
+From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+To: Alan Stern <stern@rowland.harvard.edu>
 Cc: Yunseong Kim <ysk@kzalloc.com>, linux-usb@vger.kernel.org,
 	gregkh@linuxfoundation.org,
 	Andrey Konovalov <andreyknvl@google.com>,
@@ -71,76 +50,101 @@ Cc: Yunseong Kim <ysk@kzalloc.com>, linux-usb@vger.kernel.org,
 	syzkaller@googlegroups.com
 Subject: Re: [BUG] usbip: vhci: Sleeping function called from invalid context
  in vhci_urb_enqueue on PREEMPT_RT
-Message-ID: <49ee1b8a-d47a-42df-aa64-d0d62798c45b@rowland.harvard.edu>
+Message-ID: <20250819145700.sIWRW7Oe@linutronix.de>
 References: <c6c17f0d-b71d-4a44-bcef-2b65e4d634f7@kzalloc.com>
  <f6cdf21a-642f-458c-85c1-0c2e1526f539@rowland.harvard.edu>
  <28544110-3021-43da-b32e-9785c81a42c1@kzalloc.com>
  <1088432b-b433-4bab-a927-69e55d9eb433@rowland.harvard.edu>
  <2bf33071-e05e-4b89-b149-30b90888606f@rowland.harvard.edu>
  <20250819110457.I46wiKTe@linutronix.de>
+ <49ee1b8a-d47a-42df-aa64-d0d62798c45b@rowland.harvard.edu>
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
 List-Subscribe: <mailto:linux-rt-users+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=utf-8
 Content-Disposition: inline
-In-Reply-To: <20250819110457.I46wiKTe@linutronix.de>
+In-Reply-To: <49ee1b8a-d47a-42df-aa64-d0d62798c45b@rowland.harvard.edu>
 
-On Tue, Aug 19, 2025 at 01:04:57PM +0200, Sebastian Andrzej Siewior wrote:
-> On 2025-08-17 10:27:11 [-0400], Alan Stern wrote:
-> > On Sat, Aug 16, 2025 at 10:16:34AM -0400, Alan Stern wrote:
-> > > So it looks like we should be using a different function instead of 
-> > > local_irq_disable().  We need something which in a non-RT build will 
-> > > disable interrupts on the local CPU, but in an RT build will merely 
-> > > disable preemption.  (In fact, every occurrence of local_irq_disable() 
-> > > in the USB subsystem probably should be changed in this way.)
-> > 
-> > Or maybe what we need is something that in a non-RT build will disable 
-> > local interrupts and in an RT build will do nothing.  (I suspect that RT 
-> > kernels won't like it if we call spin_lock() while preemption is 
-> > disabled.)
+On 2025-08-19 10:12:31 [-0400], Alan Stern wrote:
+> > We could use some API that accidentally does what you ask for. There
+> > would be local_lock_t where local_lock_irq() does that.
+> > What about moving the completion callback to softirq by setting HCD_BH?
 > 
-> This is the local_irq_disable() in vhci_urb_enqueue() before
-> usb_hcd_giveback_urb() is invoked. It was added in 9e8586827a706
-> ("usbip: vhci_hcd: fix calling usb_hcd_giveback_urb() with irqs
-> enabled").
-> The warning that fixed back then was 
-> |         if (WARN_ON(in_task() && kcov_mode_enabled(mode))) {
-> which was kernel/kcov.c:834 as of v5.9-rc8 (as of report the mentioned
-> in the commit).
-> local_irq_disable() does not change the preemption counter so I am a bit
-> puzzled why this did shut the warning.
+> You're missing the point.
 > 
-> > > Is there such a function?
+> There are several places in the USB stack that disable local interrupts.  
+
+But *why*? You need locking due to SMP. So it should be simply to avoid
+irqrestore()/ irqsave() during unlock/lock or to avoid deadlocks if a
+callback is invoked from IRQ and process context and the callback
+handler does simply spin_lock() (without the _irq suffix).
+The latter shouldn't be problem due to commit
+	ed194d1367698 ("usb: core: remove local_irq_save() around ->complete() handler")
+
+So if completing the URB tasklet/ softirq context works for ehci/ xhci
+without creating any warning, it should also work for vhci, dummy_hcd.
+Only RH code completes directly, everything else is shifted to softirq
+context (for ehci/HCD_BH).
+
+> The idea was that -- on a non-RT system, which was all we had at the 
+> time -- spin_lock_irqsave() is logically equivalent to a combination of 
+> local_irq_save() and spin_lock().  Similarly, spin_lock_irq() is 
+> logically equivalent to local_irq_disable() plus spin_lock().
 > 
-> We could use some API that accidentally does what you ask for. There
-> would be local_lock_t where local_lock_irq() does that.
-> What about moving the completion callback to softirq by setting HCD_BH?
+> So code was written which, for various reasons, used local_irq_save() 
+> (or local_irq_disable()) and spin_lock() instead of spin_lock_irqsave() 
+> (or spin_lock_irq()).  But now we see that in RT builds, this 
+> equivalency is not valid.  Instead, spin_lock_irqsave(flags) is 
+> logically equivalent to "flags = 0" plus spin_lock() (and 
+> spin_lock_irq() is logically equivalent to a nop plus spin_lock()).  At 
+> least, that's how the material quoted earlier by Yunseong defines it.
+> 
+> Therefore, throughout the USB stack, we should replace calls to 
+> local_irq_save() and local_irq_disable() with functions that behave like 
+> the original in non-RT builds but do nothing in RT builds.  We shouldn't 
+> just worry about this one spot.
 
-You're missing the point.
+| git grep -E 'local_irq_save|local_irq_disable' drivers/usb/ | wc -l
+| 21
+of which 10 are in pxa udc. The only one I am a bit concerned about is
+the one in usb_hcd_pci_remove() and I think we had reports and patches
+but somehow nothing did happen and I obviously forgot.
 
-There are several places in the USB stack that disable local interrupts.  
-The idea was that -- on a non-RT system, which was all we had at the 
-time -- spin_lock_irqsave() is logically equivalent to a combination of 
-local_irq_save() and spin_lock().  Similarly, spin_lock_irq() is 
-logically equivalent to local_irq_disable() plus spin_lock().
+> I would expect that RT already defines functions which do this, but I 
+> don't know their names.
 
-So code was written which, for various reasons, used local_irq_save() 
-(or local_irq_disable()) and spin_lock() instead of spin_lock_irqsave() 
-(or spin_lock_irq()).  But now we see that in RT builds, this 
-equivalency is not valid.  Instead, spin_lock_irqsave(flags) is 
-logically equivalent to "flags = 0" plus spin_lock() (and 
-spin_lock_irq() is logically equivalent to a nop plus spin_lock()).  At 
-least, that's how the material quoted earlier by Yunseong defines it.
+We don't have anything where
+	local_irq_disable()
+	spin_lock()
 
-Therefore, throughout the USB stack, we should replace calls to 
-local_irq_save() and local_irq_disable() with functions that behave like 
-the original in non-RT builds but do nothing in RT builds.  We shouldn't 
-just worry about this one spot.
+can be mapped to something equivalent other than
+	spin_lock_irq()
 
-I would expect that RT already defines functions which do this, but I 
-don't know their names.
+I was running around and kept changing code so that we don't end up in
+this scenario where we need to disable interrupts for some reason but on
+RT we don't.
 
-Alan Stern
+The closest thing we have is local_lock_irq() which maps to
+local_irq_disable() on !PREEMPT_RT systems. But I would prefer to avoid
+it because it serves a different purpose.
+What works is something like
+	spin_lock_irqsave();
+	spin_unlock();
+	$SOMETHING
+	spin_lock();
+	spin_unlock_irqestore().
+
+The question is why should $SOMETHING be invoked with disabled
+interrupts if the function was called from process context.
+
+If your concern is a missing _irqsave() in the callback then this
+shouldn't be an issue. If it is the wrong context from kcov's point of
+view then making the driver complete in tasklet should fix it since it
+would match what ehci/ xhci does. 
+
+> Alan Stern
+
+Sebastian
