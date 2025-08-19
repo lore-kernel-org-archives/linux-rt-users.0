@@ -1,76 +1,115 @@
-Received: from smtpout-03.galae.net (smtpout-03.galae.net [185.246.85.4])
+Received: from galois.linutronix.de (Galois.linutronix.de [193.142.43.55])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 9890878F36
-	for <linux-rt-users@vger.kernel.org>; Mon, 18 Aug 2025 19:35:11 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=185.246.85.4
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id C83073451D2;
+	Tue, 19 Aug 2025 10:21:27 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=193.142.43.55
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1755545716; cv=none; b=nuVMWRaJOPv1Me1IISkf0nWLXGYOg1xJ5qbYwOm2y2eRvGh/EdOHMg8Fjxjlu3i9z8boAPD1CfxUPUCRqAe2e+uuCQOJB95JLK5eRCxxji88Zg92FTkXQRDYxBXKAsS7ayxQrco9vWnh5qC6WOR77mM+W7OoHmKboH9O1o8fgcY=
+	t=1755598889; cv=none; b=NVSHbh7cpqHLKQfLz4tOoqsFnIQrlyyywyxazKJAJxwBEAh1r9D+Wg/ovo25os2wI0j136Uvg43iR/KLM89W1YRgKop7lCF5RH89wXOH7F4oU7reglGwUgJYVchK48bfflLcS8NifqeDjjDIunkAfXObrjp1JkZ3ick3Yzd5rko=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1755545716; c=relaxed/simple;
-	bh=m8KKijx+LNJZK2QL8CNWAZGWpgLVUPX4F88CrIO8oIY=;
-	h=Date:From:To:Cc:Subject:Message-ID:In-Reply-To:References:
-	 MIME-Version:Content-Type; b=nlU7eyLP2CaYXxKwXOunZrasJXVy1D/tM5Z/GRWBoEOM1vkTlFZk1WwuWM34T44t0kAW5eVRoUWWmQSXiHRC595oNn5772iwt45zb2DBqjinKoRoGfyTz0CwMGuXa684E5ktMlaakCw60xHylUb4CORNI03veddaDK7q7JqpCYs=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=bootlin.com; spf=pass smtp.mailfrom=bootlin.com; dkim=pass (2048-bit key) header.d=bootlin.com header.i=@bootlin.com header.b=JQ0yBL5l; arc=none smtp.client-ip=185.246.85.4
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=bootlin.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=bootlin.com
+	s=arc-20240116; t=1755598889; c=relaxed/simple;
+	bh=rRqk9njGn48z615Rr5gmeoeW2PcgQLl2A9aZ7ED0mu0=;
+	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
+	 Content-Type:Content-Disposition:In-Reply-To; b=O8DRgE+JzY2KHkfhEmkVk+p7oaNqwAxWvcELnSRbAoIBcldSegeV5bfKZqKl8bD6L18MpbFBU0VgBwomuIC8hFPwYwcer61gQioaLEP4tRg1onraSgPjOF9e7Wj5ewicHA2JbNq0mPGWhQsnDWMXKTrhJlz/YJsayA9o/nydtSU=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linutronix.de; spf=pass smtp.mailfrom=linutronix.de; dkim=pass (2048-bit key) header.d=linutronix.de header.i=@linutronix.de header.b=LQM38gBg; dkim=permerror (0-bit key) header.d=linutronix.de header.i=@linutronix.de header.b=C3SPVIau; arc=none smtp.client-ip=193.142.43.55
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linutronix.de
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=linutronix.de
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=bootlin.com header.i=@bootlin.com header.b="JQ0yBL5l"
-Received: from smtpout-01.galae.net (smtpout-01.galae.net [212.83.139.233])
-	by smtpout-03.galae.net (Postfix) with ESMTPS id B88924E405A3
-	for <linux-rt-users@vger.kernel.org>; Mon, 18 Aug 2025 19:25:12 +0000 (UTC)
-Received: from mail.galae.net (mail.galae.net [212.83.136.155])
-	by smtpout-01.galae.net (Postfix) with ESMTPS id 77512606A6;
-	Mon, 18 Aug 2025 19:25:12 +0000 (UTC)
-Received: from [127.0.0.1] (localhost [127.0.0.1]) by localhost (Mailerdaemon) with ESMTPSA id 06F6D1C22C561;
-	Mon, 18 Aug 2025 21:25:03 +0200 (CEST)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=bootlin.com; s=dkim;
-	t=1755545111; h=from:subject:date:message-id:to:cc:mime-version:content-type:
-	 content-transfer-encoding:in-reply-to:references;
-	bh=cIkCNtNlkipIDoQTMysSj6ltPg3uQxvhAUHTgBppA/E=;
-	b=JQ0yBL5lx+ZXh82r3oCXAOEVj/D5vmWqAQC3vlvE7z52+riTra0dmypTbgFS8SdXz9OwGu
-	VT6a3lngIbyuERtX/5UCYisI9HHbFAp7qWZEuA7WHSv3XU/0DM4AO63gYC0eDBSqIyXPTW
-	ijkzp8TtV2bPNWFLKc4j0kEY0ZcPJ9cXb94HpHOrkcRRsqH3QD8CBgSD1bwLB3XaAh8OwH
-	/m7VmryBDr7ox3fBRP/4IE5xzckvyhXIVTELuJm86HLmVEHBaZTeGe8OYgkGXj2RpbTILX
-	RHd1R5v+OzmVGzZtYqkQ5TUv+VKIAIaR9WL7A5olF6IcWTzVJMckCmGmifeSHA==
-Date: Mon, 18 Aug 2025 21:24:58 +0200
-From: Thomas Petazzoni <thomas.petazzoni@bootlin.com>
-To: John Kacur <jkacur@redhat.com>
-Cc: Sebastian Andrzej Siewior <bigeasy@linutronix.de>, Kurt Kanzenbach
- <kurt@linutronix.de>, Clark Williams <williams@redhat.com>, linux-rt-users
- <linux-rt-users@vger.kernel.org>
-Subject: Re: rt-tests release tarball location
-Message-ID: <20250818212458.5b22df0b@windsurf>
-In-Reply-To: <af905835-5920-366d-c41c-749555f95200@redhat.com>
-References: <20241228114346.6020d6b0@windsurf>
-	<87h66b2c6m.fsf@kurt.kurt.home>
-	<20250107141424.EoC5uS6y@linutronix.de>
-	<f87b2d77-7925-8678-d0fe-9a0d471a38f1@redhat.com>
-	<20250109080555.WpQmRgu0@linutronix.de>
-	<bb91bdda-8a07-1c99-5448-706460fdf1ce@redhat.com>
-	<20250813230637.19e2293e@windsurf>
-	<af905835-5920-366d-c41c-749555f95200@redhat.com>
-Organization: Bootlin
-X-Mailer: Claws Mail 4.3.1 (GTK 3.24.43; x86_64-redhat-linux-gnu)
+	dkim=pass (2048-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="LQM38gBg";
+	dkim=permerror (0-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="C3SPVIau"
+Date: Tue, 19 Aug 2025 12:21:24 +0200
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
+	s=2020; t=1755598885;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 in-reply-to:in-reply-to:references:references;
+	bh=sd1NbSqSUSHxU54jSrNDalpf8ONqHH3DQZD09RzfBWM=;
+	b=LQM38gBgcRmJF24jHmc27bvLn2Hk60/XBsuvIDxQL1tNWGFMTDOcWKDLI1R1VR+zgEbuDR
+	kmgaWDboqqCGL13CztQRHciWdDP3T92S3jMj2Dmzdx6Q2MklTay9ZNbm4rFcXSqvA4+gO6
+	YEqqlVA3m1Gzmu9afnW9M/sc8i2NB7TrHcL7m9sxxWFoPWglVQ02FFzQ8vPwuqbf3xYHVR
+	YyI2V+hp9wi6wKu2XGFEkW2yyFKg63x9bMwYUkS9Hnh4IlcUwZxiUq++7WUjLYp7nOBd2r
+	KBmfZ79K7Bis/G1J43bObMZhvCZHlaIg0GGningphQQcoJ3PGo2lI9g20Ok1OA==
+DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
+	s=2020e; t=1755598885;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 in-reply-to:in-reply-to:references:references;
+	bh=sd1NbSqSUSHxU54jSrNDalpf8ONqHH3DQZD09RzfBWM=;
+	b=C3SPVIauGLe8408fq+HxrmLRQrTutc2xTJUFDGY1HmP8Y3pwo2fiFWHg/YS7DyJMPwGMr+
+	91AEgGX19OnrXPDA==
+From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+To: Nam Cao <namcao@linutronix.de>
+Cc: Yunseong Kim <ysk@kzalloc.com>, gregkh@linuxfoundation.org,
+	stern@rowland.harvard.edu, linux-usb@vger.kernel.org,
+	Thomas Gleixner <tglx@linutronix.de>,
+	Clark Williams <clrkwllms@kernel.org>,
+	Steven Rostedt <rostedt@goodmis.org>,
+	Marcello Sylvester Bauer <sylv@sylv.io>,
+	Krzysztof Kozlowski <krzysztof.kozlowski@linaro.org>,
+	Uwe =?utf-8?Q?Kleine-K=C3=B6nig?= <u.kleine-koenig@baylibre.com>,
+	Al Viro <viro@zeniv.linux.org.uk>, andreyknvl@gmail.com,
+	Austin Kim <austindh.kim@gmail.com>, linux-rt-users@vger.kernel.org,
+	linux-kernel@vger.kernel.org, syzkaller@googlegroups.com
+Subject: Re: [BUG] usb: gadget: dummy_hcd: Sleeping function called from
+ invalid context in dummy_dequeue on PREEMPT_RT
+Message-ID: <20250819102124.O6E7YfEJ@linutronix.de>
+References: <5b337389-73b9-4ee4-a83e-7e82bf5af87a@kzalloc.com>
+ <20250816065933.EPwBJ0Sd@linutronix.de>
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
 List-Subscribe: <mailto:linux-rt-users+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
-X-Last-TLS-Session-Version: TLSv1.3
+Content-Type: text/plain; charset=utf-8
+Content-Disposition: inline
+In-Reply-To: <20250816065933.EPwBJ0Sd@linutronix.de>
 
-On Mon, 18 Aug 2025 15:18:26 -0400 (EDT)
-John Kacur <jkacur@redhat.com> wrote:
+On 2025-08-16 08:59:33 [+0200], Nam Cao wrote:
+> diff --git a/drivers/usb/gadget/udc/dummy_hcd.c b/drivers/usb/gadget/udc/dummy_hcd.c
+> index 21dbfb0b3bac..a4653c919664 100644
+> --- a/drivers/usb/gadget/udc/dummy_hcd.c
+> +++ b/drivers/usb/gadget/udc/dummy_hcd.c
+> @@ -765,8 +765,7 @@ static int dummy_dequeue(struct usb_ep *_ep, struct usb_request *_req)
+>  	if (!dum->driver)
+>  		return -ESHUTDOWN;
+>  
+> -	local_irq_save(flags);
+> -	spin_lock(&dum->lock);
+> +	spin_lock_irqsave(&dum->lock, flags);
+>  	list_for_each_entry(iter, &ep->queue, queue) {
+>  		if (&iter->req != _req)
+>  			continue;
+> @@ -776,15 +775,16 @@ static int dummy_dequeue(struct usb_ep *_ep, struct usb_request *_req)
+>  		retval = 0;
+>  		break;
+>  	}
+> -	spin_unlock(&dum->lock);
+> +	spin_unlock_irqrestore(&dum->lock, flags);
 
-> Done. Updating my scripts too.
+The two above are fine.
 
-Thanks a lot, much appreciated!
+>  	if (retval == 0) {
+>  		dev_dbg(udc_dev(dum),
+>  				"dequeued req %p from %s, len %d buf %p\n",
+>  				req, _ep->name, _req->length, _req->buf);
+> +		local_irq_save(flags);
+>  		usb_gadget_giveback_request(_ep, _req);
+> +		local_irq_restore(flags);
 
-Thomas
--- 
-Thomas Petazzoni, co-owner and CEO, Bootlin
-Embedded Linux and Kernel engineering and training
-https://bootlin.com
+This is not. I don't see the need for it. The queue part does
+	spin_lock_irqsave()
+	spin_unlock();
+	usb_gadget_giveback_request()
+	spin_lock();
+	spin_unlock_irqrestore();
+
+and keeps the interrupts disabled during callback invocation. This seems
+to be just to unify the code vs the else path.
+
+>  	}
+> -	local_irq_restore(flags);
+>  	return retval;
+>  }
+
+Sebastian
