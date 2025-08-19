@@ -1,60 +1,61 @@
 Received: from galois.linutronix.de (Galois.linutronix.de [193.142.43.55])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id C83073451D2;
-	Tue, 19 Aug 2025 10:21:27 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 4B8D1277815;
+	Tue, 19 Aug 2025 11:05:02 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=193.142.43.55
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1755598889; cv=none; b=NVSHbh7cpqHLKQfLz4tOoqsFnIQrlyyywyxazKJAJxwBEAh1r9D+Wg/ovo25os2wI0j136Uvg43iR/KLM89W1YRgKop7lCF5RH89wXOH7F4oU7reglGwUgJYVchK48bfflLcS8NifqeDjjDIunkAfXObrjp1JkZ3ick3Yzd5rko=
+	t=1755601503; cv=none; b=ZWb5DjQr8inPjY0dF/KMiXWZMYcfZp0gr1EbRWYjSujMooqnFMpDqxTOs9E9/Iwp6mC6pAjhWEkn5MeWpnQ1/01WUK+ioUMXkhlOnqqG9oDv/PDHCKyPTCOj1yi19pQ+kB8MMtEh3hh93xtuLx+XdwJZZPgdbkwIb+netmqqH20=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1755598889; c=relaxed/simple;
-	bh=rRqk9njGn48z615Rr5gmeoeW2PcgQLl2A9aZ7ED0mu0=;
+	s=arc-20240116; t=1755601503; c=relaxed/simple;
+	bh=rHEaaqol+wq/PQNpycnOEkWJjXBDEIgMozYeYNpptek=;
 	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 Content-Type:Content-Disposition:In-Reply-To; b=O8DRgE+JzY2KHkfhEmkVk+p7oaNqwAxWvcELnSRbAoIBcldSegeV5bfKZqKl8bD6L18MpbFBU0VgBwomuIC8hFPwYwcer61gQioaLEP4tRg1onraSgPjOF9e7Wj5ewicHA2JbNq0mPGWhQsnDWMXKTrhJlz/YJsayA9o/nydtSU=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linutronix.de; spf=pass smtp.mailfrom=linutronix.de; dkim=pass (2048-bit key) header.d=linutronix.de header.i=@linutronix.de header.b=LQM38gBg; dkim=permerror (0-bit key) header.d=linutronix.de header.i=@linutronix.de header.b=C3SPVIau; arc=none smtp.client-ip=193.142.43.55
+	 Content-Type:Content-Disposition:In-Reply-To; b=Xw8zfuzxM7hDu7ouIbZPQfwpqBUOCj4eRfcokAcDXDtklh6jQIdzM+pEJueHT9+5gnGiA1aFH71OGo32++zOHUazLvM8sKBvXRyyQjSQ3k3hC+chcHhkWiwEKlXD0M95NyFCXr3O37eQMKQhLbSI+PGZPK/z7N3ZdAPHaK8Gfho=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linutronix.de; spf=pass smtp.mailfrom=linutronix.de; dkim=pass (2048-bit key) header.d=linutronix.de header.i=@linutronix.de header.b=2PGxiU+u; dkim=permerror (0-bit key) header.d=linutronix.de header.i=@linutronix.de header.b=5se6tVPg; arc=none smtp.client-ip=193.142.43.55
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linutronix.de
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=linutronix.de
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="LQM38gBg";
-	dkim=permerror (0-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="C3SPVIau"
-Date: Tue, 19 Aug 2025 12:21:24 +0200
+	dkim=pass (2048-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="2PGxiU+u";
+	dkim=permerror (0-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="5se6tVPg"
+Date: Tue, 19 Aug 2025 13:04:57 +0200
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
-	s=2020; t=1755598885;
+	s=2020; t=1755601499;
 	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
 	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
 	 in-reply-to:in-reply-to:references:references;
-	bh=sd1NbSqSUSHxU54jSrNDalpf8ONqHH3DQZD09RzfBWM=;
-	b=LQM38gBgcRmJF24jHmc27bvLn2Hk60/XBsuvIDxQL1tNWGFMTDOcWKDLI1R1VR+zgEbuDR
-	kmgaWDboqqCGL13CztQRHciWdDP3T92S3jMj2Dmzdx6Q2MklTay9ZNbm4rFcXSqvA4+gO6
-	YEqqlVA3m1Gzmu9afnW9M/sc8i2NB7TrHcL7m9sxxWFoPWglVQ02FFzQ8vPwuqbf3xYHVR
-	YyI2V+hp9wi6wKu2XGFEkW2yyFKg63x9bMwYUkS9Hnh4IlcUwZxiUq++7WUjLYp7nOBd2r
-	KBmfZ79K7Bis/G1J43bObMZhvCZHlaIg0GGningphQQcoJ3PGo2lI9g20Ok1OA==
+	bh=Rqh3iYHKlyPINsf7PNaMKXhkXHfqA7fwYANjIihyFuo=;
+	b=2PGxiU+uGZFhhZWRgEV6eDHVadp7vpBOd/pefe7KSysvMbHwAbF4+NXL5oABADTgbMpkjU
+	TyKYJWyE4BWkezRelUcknyX0OZFo19U0oH2H1z4EOB+Qpneh43nt5Z7iBPXeZtaAhe8CgG
+	5Ti0slD3PtCuCIHgXST7K1Vf8FYyI2TNU80belu8Vk3Tqmw69ZwGDFdMhaITLjVJfCb+Fr
+	J+lB5FuodjS9NTj//aU3bYOsSHQ7RWBE51NeoEzD8cH5/NWBuKRP/UExrDxM6D/m6hNM/A
+	g8cej4XsXNonz3/Si8Co99KN1caAlal3vHP+XUAKLppqhbq/KuIgEUyNZPh/OA==
 DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
-	s=2020e; t=1755598885;
+	s=2020e; t=1755601499;
 	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
 	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
 	 in-reply-to:in-reply-to:references:references;
-	bh=sd1NbSqSUSHxU54jSrNDalpf8ONqHH3DQZD09RzfBWM=;
-	b=C3SPVIauGLe8408fq+HxrmLRQrTutc2xTJUFDGY1HmP8Y3pwo2fiFWHg/YS7DyJMPwGMr+
-	91AEgGX19OnrXPDA==
+	bh=Rqh3iYHKlyPINsf7PNaMKXhkXHfqA7fwYANjIihyFuo=;
+	b=5se6tVPgpJvj7sc17yngQFEUN4QaEDbpZOW0Pgsk2c0A0XpF+IolQhNVQOHmHuYywA7PHJ
+	AAtH0F/yK0ZBrnCg==
 From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-To: Nam Cao <namcao@linutronix.de>
-Cc: Yunseong Kim <ysk@kzalloc.com>, gregkh@linuxfoundation.org,
-	stern@rowland.harvard.edu, linux-usb@vger.kernel.org,
+To: Alan Stern <stern@rowland.harvard.edu>
+Cc: Yunseong Kim <ysk@kzalloc.com>, linux-usb@vger.kernel.org,
+	gregkh@linuxfoundation.org,
+	Andrey Konovalov <andreyknvl@google.com>,
+	Shuah Khan <skhan@linuxfoundation.org>,
 	Thomas Gleixner <tglx@linutronix.de>,
 	Clark Williams <clrkwllms@kernel.org>,
 	Steven Rostedt <rostedt@goodmis.org>,
-	Marcello Sylvester Bauer <sylv@sylv.io>,
-	Krzysztof Kozlowski <krzysztof.kozlowski@linaro.org>,
-	Uwe =?utf-8?Q?Kleine-K=C3=B6nig?= <u.kleine-koenig@baylibre.com>,
-	Al Viro <viro@zeniv.linux.org.uk>, andreyknvl@gmail.com,
-	Austin Kim <austindh.kim@gmail.com>, linux-rt-users@vger.kernel.org,
-	linux-kernel@vger.kernel.org, syzkaller@googlegroups.com
-Subject: Re: [BUG] usb: gadget: dummy_hcd: Sleeping function called from
- invalid context in dummy_dequeue on PREEMPT_RT
-Message-ID: <20250819102124.O6E7YfEJ@linutronix.de>
-References: <5b337389-73b9-4ee4-a83e-7e82bf5af87a@kzalloc.com>
- <20250816065933.EPwBJ0Sd@linutronix.de>
+	linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org,
+	syzkaller@googlegroups.com
+Subject: Re: [BUG] usbip: vhci: Sleeping function called from invalid context
+ in vhci_urb_enqueue on PREEMPT_RT
+Message-ID: <20250819110457.I46wiKTe@linutronix.de>
+References: <c6c17f0d-b71d-4a44-bcef-2b65e4d634f7@kzalloc.com>
+ <f6cdf21a-642f-458c-85c1-0c2e1526f539@rowland.harvard.edu>
+ <28544110-3021-43da-b32e-9785c81a42c1@kzalloc.com>
+ <1088432b-b433-4bab-a927-69e55d9eb433@rowland.harvard.edu>
+ <2bf33071-e05e-4b89-b149-30b90888606f@rowland.harvard.edu>
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
@@ -63,53 +64,38 @@ List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
 Content-Type: text/plain; charset=utf-8
 Content-Disposition: inline
-In-Reply-To: <20250816065933.EPwBJ0Sd@linutronix.de>
+In-Reply-To: <2bf33071-e05e-4b89-b149-30b90888606f@rowland.harvard.edu>
 
-On 2025-08-16 08:59:33 [+0200], Nam Cao wrote:
-> diff --git a/drivers/usb/gadget/udc/dummy_hcd.c b/drivers/usb/gadget/udc/dummy_hcd.c
-> index 21dbfb0b3bac..a4653c919664 100644
-> --- a/drivers/usb/gadget/udc/dummy_hcd.c
-> +++ b/drivers/usb/gadget/udc/dummy_hcd.c
-> @@ -765,8 +765,7 @@ static int dummy_dequeue(struct usb_ep *_ep, struct usb_request *_req)
->  	if (!dum->driver)
->  		return -ESHUTDOWN;
->  
-> -	local_irq_save(flags);
-> -	spin_lock(&dum->lock);
-> +	spin_lock_irqsave(&dum->lock, flags);
->  	list_for_each_entry(iter, &ep->queue, queue) {
->  		if (&iter->req != _req)
->  			continue;
-> @@ -776,15 +775,16 @@ static int dummy_dequeue(struct usb_ep *_ep, struct usb_request *_req)
->  		retval = 0;
->  		break;
->  	}
-> -	spin_unlock(&dum->lock);
-> +	spin_unlock_irqrestore(&dum->lock, flags);
+On 2025-08-17 10:27:11 [-0400], Alan Stern wrote:
+> On Sat, Aug 16, 2025 at 10:16:34AM -0400, Alan Stern wrote:
+> > So it looks like we should be using a different function instead of 
+> > local_irq_disable().  We need something which in a non-RT build will 
+> > disable interrupts on the local CPU, but in an RT build will merely 
+> > disable preemption.  (In fact, every occurrence of local_irq_disable() 
+> > in the USB subsystem probably should be changed in this way.)
+> 
+> Or maybe what we need is something that in a non-RT build will disable 
+> local interrupts and in an RT build will do nothing.  (I suspect that RT 
+> kernels won't like it if we call spin_lock() while preemption is 
+> disabled.)
 
-The two above are fine.
+This is the local_irq_disable() in vhci_urb_enqueue() before
+usb_hcd_giveback_urb() is invoked. It was added in 9e8586827a706
+("usbip: vhci_hcd: fix calling usb_hcd_giveback_urb() with irqs
+enabled").
+The warning that fixed back then was 
+|         if (WARN_ON(in_task() && kcov_mode_enabled(mode))) {
+which was kernel/kcov.c:834 as of v5.9-rc8 (as of report the mentioned
+in the commit).
+local_irq_disable() does not change the preemption counter so I am a bit
+puzzled why this did shut the warning.
 
->  	if (retval == 0) {
->  		dev_dbg(udc_dev(dum),
->  				"dequeued req %p from %s, len %d buf %p\n",
->  				req, _ep->name, _req->length, _req->buf);
-> +		local_irq_save(flags);
->  		usb_gadget_giveback_request(_ep, _req);
-> +		local_irq_restore(flags);
+> > Is there such a function?
 
-This is not. I don't see the need for it. The queue part does
-	spin_lock_irqsave()
-	spin_unlock();
-	usb_gadget_giveback_request()
-	spin_lock();
-	spin_unlock_irqrestore();
+We could use some API that accidentally does what you ask for. There
+would be local_lock_t where local_lock_irq() does that.
+What about moving the completion callback to softirq by setting HCD_BH?
 
-and keeps the interrupts disabled during callback invocation. This seems
-to be just to unify the code vs the else path.
-
->  	}
-> -	local_irq_restore(flags);
->  	return retval;
->  }
+> Alan Stern
 
 Sebastian
