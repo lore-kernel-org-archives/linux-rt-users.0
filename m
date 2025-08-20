@@ -1,64 +1,52 @@
-Received: from galois.linutronix.de (Galois.linutronix.de [193.142.43.55])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 651F623ED75
-	for <linux-rt-users@vger.kernel.org>; Wed, 20 Aug 2025 14:29:23 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=193.142.43.55
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id E3457322A30
+	for <linux-rt-users@vger.kernel.org>; Wed, 20 Aug 2025 16:18:25 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1755700165; cv=none; b=ATITEF/pf9XKbPZ3mYaciTBaOO7oDupOY55K8COBQoLuYJOwMEJTau9E18Q7u3RohSOAVmKkvpzACQjcA4FrrmJMl9xkI9VBaGLVM3ZrIdbxRIeqDfcn0ScnL60jYU5uSHMLNlIEcnfm7I0/m9Ug6a8r8DdOepI7MEcPfQLsKlw=
+	t=1755706707; cv=none; b=KzzIhUID3MjhIN6FfE6MUKNq+PK0tRavFsWhKLngUtzWYS8MNPnC5oQuF2kGnPnZx+gfCK2f7/yGNZNrFCnuKgfCWFRZd9+4A2mxp8xXZu/T8hLWhjYoBB1E9bSzwWY/sIHAMiu+QzKIw15m4G3wlsqy33Gm831sVKAOB9wuxYQ=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1755700165; c=relaxed/simple;
-	bh=a4thEGY7t2Ebr0cfXIZ9XanDPfm973C5EqY78k0FlIA=;
-	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 Content-Type:Content-Disposition:In-Reply-To; b=m/YSdoKGLZdZZdrqmKVLdK1UKFzfX/4Ju+lNzyOZX+Tg8vYu1+f8V2ePe6JVElRjWX5glcC0NdkEwIsIOSK+tI5tSujhac1y9VMPoVKSLdEtu5BS56NrDAJ4oHuu6FPcsiGFDIWPFE30tdI4dYPrHxjaVeBjoy5u6mfuaDiFjqk=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linutronix.de; spf=pass smtp.mailfrom=linutronix.de; dkim=pass (2048-bit key) header.d=linutronix.de header.i=@linutronix.de header.b=kiDI7Vli; dkim=permerror (0-bit key) header.d=linutronix.de header.i=@linutronix.de header.b=GX6oukrz; arc=none smtp.client-ip=193.142.43.55
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linutronix.de
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=linutronix.de
+	s=arc-20240116; t=1755706707; c=relaxed/simple;
+	bh=2M3GBFaRe0biSGosasF1XQPuuB0Su0l5FwhdDCOyY6o=;
+	h=Date:From:To:Cc:Subject:Message-ID:MIME-Version:Content-Type:
+	 Content-Disposition; b=XgCZlx7u7Tx74g+TK1xYVqIb9myptmf4HQk5UXmOP3MirlMuIQzrpBZEw7R++PVzxyLNBXNej8JkRow3uSR1UJRlf3PWr34sq0sYwp7TAuJAzGzNErhAlEW68CVRoKZXHD/7/6ZU4UGIwGzowtiz5ZskdS1JBzz8EObhKWZkD4w=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=JZ/6BY1i; arc=none smtp.client-ip=170.10.133.124
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="kiDI7Vli";
-	dkim=permerror (0-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="GX6oukrz"
-Date: Wed, 20 Aug 2025 16:29:19 +0200
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
-	s=2020; t=1755700161;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 in-reply-to:in-reply-to:references:references;
-	bh=0R9AQPmRbYMvwJGQyRIbyAyWRhXxzoL6fzlgh2yodPw=;
-	b=kiDI7VlipbXXRaLgH6llw4hWvYZTSC0MYIHjxPF9zn0IvqSu0nrVhUpfqPpwuB+arQ9H8T
-	qu97srbNgSLoa9NmKR3Hng7Z1iyNUdZRQjAFAkCqr4KNhGAhOOflvm4lFInNcRSrHy8caY
-	iGeLUCQK+/BAzAguAn1UdUqaKzp3sttj5t+fFTeN0Xu4r5cLwhWGgjGRAxmklWAAFWfrLG
-	A/ShHeEf/ZyKeMSi0kH538TnLjzhHcEBjMSSXnB+WESut09CXlpFb4R4YcXLvnqj+Po2gR
-	voJYYYgovR6U9WXYNta4fqVhkRXG4GR4kAhsx4GG3vgVT9gLvsyJQlp11Bov2A==
-DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
-	s=2020e; t=1755700161;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 in-reply-to:in-reply-to:references:references;
-	bh=0R9AQPmRbYMvwJGQyRIbyAyWRhXxzoL6fzlgh2yodPw=;
-	b=GX6oukrz3GoLun30KHSeZSUOQ5ufHTWdFAU1fEFVzDePZtuPJyFIz7+lwJrcYXwUUBkRP0
-	wP/QPnUwsAlMVgCw==
-From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-To: Vlastimil Babka <vbabka@suse.cz>
-Cc: Alexander Krabler <Alexander.Krabler@kuka.com>,
-	Hugh Dickins <hughd@google.com>,
-	Frank van der Linden <fvdl@google.com>,
-	Mike Galbraith <efault@gmx.de>,
-	"linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>,
-	"linux-mm@kvack.org" <linux-mm@kvack.org>,
-	Dennis Schimmel <Dennis.Schimmel@kuka.com>,
-	Daniel Braunwarth <Daniel.Braunwarth@kuka.com>
-Subject: Re: Realtime threads delayed due to kcompactd0
-Message-ID: <20250820142919.HTybedrl@linutronix.de>
-References: <71df781c-3ef3-4b26-9ba8-93fc7d4f9eec@suse.cz>
- <026de9fcd4f0ed17c2df95c4f7c56b878a844012.camel@gmx.de>
- <25ba0d77-eb61-4efc-b2fc-73878cbd85c1@suse.cz>
- <DU0PR01MB103857873A56FD121984568148226A@DU0PR01MB10385.eurprd01.prod.exchangelabs.com>
- <c48f2877-4d37-4310-995e-fc5c2ae9a366@suse.cz>
- <DU0PR01MB10385C08C119276D99A234D978226A@DU0PR01MB10385.eurprd01.prod.exchangelabs.com>
- <33275585-f2db-4779-89f0-3ae24b455a67@suse.cz>
- <771a8fc0-8195-44cc-55ed-c3573d497d2d@google.com>
- <DU0PR01MB10385C55AEAFEBCA2575EAA77822CA@DU0PR01MB10385.eurprd01.prod.exchangelabs.com>
- <c5bd00d6-e6ca-48fd-a11e-c90fa9c50e05@suse.cz>
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="JZ/6BY1i"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1755706704;
+	h=from:from:reply-to:reply-to:subject:subject:date:date:
+	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
+	 content-type:content-type; bh=+lbz0YupMVvrNrX/YcsMAFjqYwsJBBXdb5v0klucEoY=;
+	b=JZ/6BY1iTYBrS+Qyn7mGUzULFCcJxszV2mLJhUJRANteaVyxJKlJyPWXTNWUPU3QnBJGTJ
+	4jPzSvkUno/82M9FcLzPHo2g3WFS7b1YYYs57RLaUNso6Mrx4gMIqDHhu/VlOSvIwJz5RQ
+	zWHGJ5YWsEjsVwy6pWRTCuT1pkPeuIw=
+Received: from mx-prod-mc-04.mail-002.prod.us-west-2.aws.redhat.com
+ (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
+ relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-338-ngOhNavlPuG33hUFAiEn8A-1; Wed,
+ 20 Aug 2025 12:18:23 -0400
+X-MC-Unique: ngOhNavlPuG33hUFAiEn8A-1
+X-Mimecast-MFC-AGG-ID: ngOhNavlPuG33hUFAiEn8A_1755706702
+Received: from mx-prod-int-06.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-06.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.93])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
+	(No client certificate requested)
+	by mx-prod-mc-04.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 5B8DD1955D69
+	for <linux-rt-users@vger.kernel.org>; Wed, 20 Aug 2025 16:18:22 +0000 (UTC)
+Received: from localhost (unknown [10.22.88.234])
+	by mx-prod-int-06.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTP id A16171800447;
+	Wed, 20 Aug 2025 16:18:21 +0000 (UTC)
+Date: Wed, 20 Aug 2025 12:18:20 -0400
+From: Derek Barbosa <debarbos@redhat.com>
+To: williams@redhat.com, jkacur@redhat.com
+Cc: linux-rt-users@vger.kernel.org, oleg@redhat.com, shichen@redhat.com
+Subject: [PATCH] ssdd: mitigate tracee starvation
+Message-ID: <wljofbc7n4h6pav3tnvjgl6if7mdkkwep3uvja3etew2dyptbx@tyxiungtvg4r>
+Reply-To: debarbos@redhat.com
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
@@ -67,41 +55,60 @@ List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
 Content-Type: text/plain; charset=utf-8
 Content-Disposition: inline
-In-Reply-To: <c5bd00d6-e6ca-48fd-a11e-c90fa9c50e05@suse.cz>
+X-Scanned-By: MIMEDefang 3.4.1 on 10.30.177.93
 
-On 2025-08-08 09:37:26 [+0200], Vlastimil Babka wrote:
-> > Given the information I got from here, the comment on the code [1]
-> > and an older commit message [2], I suspect CMA somehow influences our problem.
-> 
-> However, kcompactd doesn't perform CMA allocations, only compaction, in a
-> mode that does not include ISOLATE_UNEVICTABLE. So this is weird.
+When ssdd is invoked with nforks > 100 && niters == 10000 on a tuned,
+realtime kernel, the following error messages can be seen:
 
-As per smaps, the RT task should have all VMAs listed as "lo". If use
-mlock() then something like an accidental fork() would remove it.
-Otherwise it should be there.
+forktest#4/8719: EXITING, ERROR: wait on PTRACE_SINGLESTEP #385: no SIGCHLD seen (signal count == 0), signo 5
+forktest#1/8716: EXITING, ERROR: wait on PTRACE_SINGLESTEP #398: no SIGCHLD seen (signal count == 0), signo 5
+forktest#6/8721: EXITING, ERROR: wait on PTRACE_SINGLESTEP #385: no SIGCHLD seen (signal count == 0), signo 5
+forktest#10/8725: EXITING, ERROR: wait on PTRACE_SINGLESTEP #388: no SIGCHLD seen (signal count == 0), signo 5
+forktest#11/8726: EXITING, ERROR: wait on PTRACE_SINGLESTEP #388: no SIGCHLD seen (signal count == 0), signo 5
+forktest#12/8727: EXITING, ERROR: wait on PTRACE_SINGLESTEP #389: no SIGCHLD seen (signal count == 0), signo 5
+forktest#14/8729: EXITING, ERROR: wait on PTRACE_SINGLESTEP #389: no SIGCHLD seen (signal count == 0), signo 5
+forktest#15/8730: EXITING, ERROR: wait on PTRACE_SINGLESTEP #389: no SIGCHLD seen (signal count == 0), signo 5
 
-At the time of the fault you could add something like
+This behavior is caused by ptrace_stop() being unable to sleep after taking
+tasklist_lock().
 
-| diff --git a/mm/memory.c b/mm/memory.c
-| --- a/mm/memory.c
-| +++ b/mm/memory.c
-| @@ -4476,6 +4476,12 @@ vm_fault_t do_swap_page(struct vm_fault *vmf)
-|         entry = pte_to_swp_entry(vmf->orig_pte);
-|         if (unlikely(non_swap_entry(entry))) {
-|                 if (is_migration_entry(entry)) {
-| +
-| +                       if (!strcmp("tRealtime", current->comm)) {
-| +                               trace_printk("Migrated: 0x%lx VMA flags: %lx\n",
-| +                                            vmf->address, vma->vm_flags);
-| +                       }
-| +
-|                         migration_entry_wait(vma->vm_mm, vmf->pmd,
-|                                              vmf->address);
-|                 } else if (is_device_exclusive_entry(entry)) {
+As forktest() generates "niter" PTRACE_SINGLESTEP's for nforks, in the event
+where nforks >= 100, the sporadic test failures caused by missing SIGCHLDs
+indicates that the tracees are unable to effectively wait for their asynchronous
+signals to arrive --as denoted in the previous sleeps for check_sigchld().
 
-to see address is gone. Not sure if the PTE flags are of any help here.
-Is it easily possible on the other side (isolate_migratepages(), right?)
-to figure out which task a certain address space/ page belongs to? So
-would if a "bad" page is considered for migration.
+Therefore, by performing an addtional sleep() in check_sigchld(), we give the
+tracee enough CPU time to call do_notify_parent_cldstop()->send_signal_locked().
 
-Sebastian
+The observed behavior after appling this patch mitigates the aforementioned
+issue in scenarios with a high number of nforks.
+
+Suggested-by: Oleg Nesterov <oleg@redhat.com>
+Signed-off-by: Derek Barbosa <debarbos@redhat.com>
+---
+ src/ssdd/ssdd.c | 9 +++++++++
+ 1 file changed, 9 insertions(+)
+
+diff --git a/src/ssdd/ssdd.c b/src/ssdd/ssdd.c
+index 50f7424..7fdb039 100644
+--- a/src/ssdd/ssdd.c
++++ b/src/ssdd/ssdd.c
+@@ -145,6 +145,15 @@ static int check_sigchld(void)
+ 	for (i = 0; i < 10 && !got_sigchld; i++)
+ 		usleep(16000); /* 160 + 150 = 310 msecs */
+ 
++        /*
++         * In the _worst case scenario_ where the signal still
++         * has not arrived: the tracee is starved or
++	 * preempted, and needs more CPU time.
++         */
++        if(!got_sigchld){
++		sleep(1);
++	}
++
+ 	return got_sigchld;
+ }
+ 
+-- 
+2.50.0
+
