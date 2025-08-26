@@ -1,71 +1,63 @@
-Received: from mail-pl1-f178.google.com (mail-pl1-f178.google.com [209.85.214.178])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from galois.linutronix.de (Galois.linutronix.de [193.142.43.55])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 0D31E189BB6
-	for <linux-rt-users@vger.kernel.org>; Sat, 23 Aug 2025 12:40:30 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.214.178
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id AC19227D77B;
+	Tue, 26 Aug 2025 08:43:26 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=193.142.43.55
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1755952833; cv=none; b=PMXsoCt5nIYiTKOyoOmGbs/4qYZiq0s95GEkxgQGAG3sZRqCTCorrv4JREy/sis9RzpHmxkQElDPBIapdeQXunX3x/stF4kGfUynLTHp6Op575k0ZAbCYXorUtpjd9iYYsRMcrltG2dDjIc9mTmyMxhHtCPJc9IKXJy+bDQfFK4=
+	t=1756197808; cv=none; b=Q9LFk/inLzRiHdNWgvf9IKMozM5L9DXUWCXA6t8HOpeVQifx3iuWia6QBmWQk7IjQUK9iiKu0eTgI/LPc16DHDdJcljMuYoZFQW8BYChycE3hKLco60d9TW0QbNqgqHI9lznJo2NX7N1E3nmJ0DsE2kpmcqjiKbg6D1tw959/9E=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1755952833; c=relaxed/simple;
-	bh=VLfvut5V96kW6rArTq9/56uYtB9Rj5vzGtkrfWvSNOY=;
+	s=arc-20240116; t=1756197808; c=relaxed/simple;
+	bh=y4dwqQVgtSX6sPHPMwAuaPOfXvlILwfzYILH/VuFM1w=;
 	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 Content-Type:Content-Disposition:In-Reply-To; b=mQalF/n5yt4KM/hUI2ziUktz18dhBQ6po4KQu5aXnAPQ57oN7EmcDfdUHY+R6kWYXzMb9eJ/sNc0KGRs1LKSYcYkclYb7MLL7KYC0yU6jUoPJcOwSUciXCWWyD2J2PjqIOdB2X0VUtBw8JSk5IeVuGBH2mOFVBxObEDuy7veT6I=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=FD/OziDr; arc=none smtp.client-ip=209.85.214.178
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
+	 Content-Type:Content-Disposition:In-Reply-To; b=ghkiV2tPuhG2E9Rr90EgWVpQp7UpO1wqngxQKSWBe//6yFoxXsPtw7e+vDttWx6mVaCbVCJTOqyWKTuaOYBepWX3nGQrHaer3BpTsBxYIeL/CpsOke58Mqf6EzlkjepYbGnor9P0hG4vuC2TLQ6uriNokiDTUArDy3hZSjDadAM=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linutronix.de; spf=pass smtp.mailfrom=linutronix.de; dkim=pass (2048-bit key) header.d=linutronix.de header.i=@linutronix.de header.b=EvcL5yqR; dkim=permerror (0-bit key) header.d=linutronix.de header.i=@linutronix.de header.b=T32aPWHZ; arc=none smtp.client-ip=193.142.43.55
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linutronix.de
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=linutronix.de
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="FD/OziDr"
-Received: by mail-pl1-f178.google.com with SMTP id d9443c01a7336-2445827be70so28096675ad.3
-        for <linux-rt-users@vger.kernel.org>; Sat, 23 Aug 2025 05:40:30 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1755952830; x=1756557630; darn=vger.kernel.org;
-        h=in-reply-to:content-disposition:mime-version:references:message-id
-         :subject:cc:to:from:date:from:to:cc:subject:date:message-id:reply-to;
-        bh=NP3mVPdKEg8OEyswXwhBPnkPCMczAVgjaizwcSUFkTU=;
-        b=FD/OziDrlSDPw1+R2Ou8occjLCav6OlSWwLS6cUPcN9OV2GQH5feG+U+WmKFt/XwpF
-         h8CG9ADFN+YwMzOckWQRiND2SsPk1aSpQ23pIiN3W8IfCJT9yqx6PwC1BlO6x6B1IDn4
-         kbrNHtjCW3YsH6tnZ9r567mOT9/6zOYoxU3vC19VvrvAvpkj3DVayYnZBIrK3ftZ1F8x
-         6Tc9AbAAD1f/IiGoSX+jb6qbFXI/EZI03AHAKdYw3A1a/70fXnAEjz1hAnSdPqWa4mVa
-         DwMhS5nnYyjljGDKzuZSWgfgIokS1fWgFqJV5BWdJW0B737LbAcXXBNqvuDob+Xw1XQd
-         MMiw==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1755952830; x=1756557630;
-        h=in-reply-to:content-disposition:mime-version:references:message-id
-         :subject:cc:to:from:date:x-gm-message-state:from:to:cc:subject:date
-         :message-id:reply-to;
-        bh=NP3mVPdKEg8OEyswXwhBPnkPCMczAVgjaizwcSUFkTU=;
-        b=fE1HSTl+r8wPbOYznrP/Dgk3UG3qvTKgh9ZlbJO0Ev2IkLEyFrwOrP3SlreRaIkzpR
-         qH3ksGikIx0p7IRVxOqkwCNh3M8ITmXSiKS2xBcwkNtHbSJBLWM4mKS4ogXQECyotCuX
-         eJhxBJ4N3jstyZvbaYkvZNX1kiGlYkAJDz5awZeu1FkZqu4Qj31/WQ1Sbn32uKrKD2Be
-         bjtwA2lmHfpg5Nil+xs518gyiqx34juCZyBCE+vsL8TRmynDloDFCwBKEdlr9q7V+LbS
-         id25aEJNDbuFt+za14SQO5tHVVYVSScPQiRBqEoVPf/hZGrG8SNOue/YUo7UaGVodItk
-         +MfA==
-X-Gm-Message-State: AOJu0YyaFoD8+I1ajGHnWwelOHEWUnkqp4hQUYTexU4SVnKulZCuwbe6
-	MVHhjYVRIZNgobGDKowIfWq2D331jOT5tLE29JVzseILV+H9rZFgl3AS6EcRaFuf
-X-Gm-Gg: ASbGncukm8FQJvDI5JYA/3hR5QOBve+UmnZRgCcHe6ULhTOrRug8plnN3OBDbq69Eo2
-	SVoaPaXtABQwm4YFKuj6cCv0i6nTE0zS3rjRn7IlOXOKNYtPEGA3edJvg2VI5vQld4TiPyxouLc
-	C0f9Y1/kNI6bpxZ9FU/liaK5a/+gIErHmeVh5iyaeB3BdFvUO8Q8zr+tAE1eyHfGUE1D/2Dtdvu
-	6ssqaqoElsWXg7SAyoCMI2QgmhfWUDT2mgwP/IYecW9rmV0bh7xwYF2tbNlNgHg9yCNDjzeH0Za
-	GzXuRSAGh3KdIjdRCvXNH3yCfR6ZqwGmJdPDbcY1Hdvirx1YcMp5PZ8xjx/NXCWul2PSlNqOqFm
-	AkLA5s4JmS3HJXMxNGnwK1x9e3y43CQKncx3UQAvoEoDOCESmPvHpJ2v/jZ8/5B0PiNQuaACDKq
-	661AwcjmQ7oP77
-X-Google-Smtp-Source: AGHT+IEuM1c6CethfNt33kr87fXnm1dxziZGZkngC1akZF5DksxI7AjihV0teJzk82LFOIXMaw3Mfw==
-X-Received: by 2002:a17:903:943:b0:234:d778:13fa with SMTP id d9443c01a7336-2462ee53d3bmr95302895ad.26.1755952829785;
-        Sat, 23 Aug 2025 05:40:29 -0700 (PDT)
-Received: from eric-acer (36-225-90-82.dynamic-ip.hinet.net. [36.225.90.82])
-        by smtp.gmail.com with ESMTPSA id d9443c01a7336-2466885f2c1sm21650685ad.73.2025.08.23.05.40.28
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Sat, 23 Aug 2025 05:40:29 -0700 (PDT)
-Date: Sat, 23 Aug 2025 20:40:26 +0800
-From: Cheng-Yang Chou <yphbchou0911@gmail.com>
-To: williams@redhat.com, jkacur@redhat.com
-Cc: linux-rt-users@vger.kernel.org, jserv@ccns.ncku.edu.tw
-Subject: Re: [PATCH v2 0/8] Fix -Wunused-result warnings by checking return
- values
-Message-ID: <aKm2uqtfTyB0vrDc@eric-acer>
-References: <20250726091837.493915-1-yphbchou0911@gmail.com>
- <aJTTm--AyLQWFmHi@eric-acer>
+	dkim=pass (2048-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="EvcL5yqR";
+	dkim=permerror (0-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="T32aPWHZ"
+Date: Tue, 26 Aug 2025 10:43:20 +0200
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
+	s=2020; t=1756197804;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 in-reply-to:in-reply-to:references:references;
+	bh=vW0GsgV7Ep6s4XIArheKm/LdDZZmdIK5t24jU+6kggw=;
+	b=EvcL5yqRd2AKS+Y8UMGkM5b9exWowZdlqZLZFId2q0cdJEUZ6rCghtwN2F2RL6mtYmm2BD
+	i+8+vbOBOVH+dQaEBkunBVi3JNeRGkUgQ+KNqcz2chZS1YkSfOzFoUdKhvt5D0OnZQzSxF
+	nTQkh3syh8J7XKjIAuYIpgzGXxanKF5RGamHo3bttlX9HMf2RlUDG1MCwU/eiz/0N6duPz
+	YZPYnd5iUeYHFSy+kSUTLv5EiXIn5oYkR1qXgX3j+hte5JQdtDUSsPqhMSfuyppcG5PCu8
+	iPchwwOW9ixRj+h+8Y7xiRB4BwGYZQeFWF8jDdosveKfYLqhRhluQ0D0gF1xgw==
+DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
+	s=2020e; t=1756197804;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 in-reply-to:in-reply-to:references:references;
+	bh=vW0GsgV7Ep6s4XIArheKm/LdDZZmdIK5t24jU+6kggw=;
+	b=T32aPWHZdJeTw+a5UJKU3WD36z2iBIV7xYlqQ6KAqP2pHQwPD7bhFhGgVpi2WefMqunUNQ
+	ps8p7jmoDxApSYCg==
+From: Nam Cao <namcao@linutronix.de>
+To: Christian Brauner <brauner@kernel.org>,
+	Linus Torvalds <torvalds@linux-foundation.org>,
+	Xi Ruoyao <xry111@xry111.site>,
+	Frederic Weisbecker <frederic@kernel.org>,
+	Valentin Schneider <vschneid@redhat.com>,
+	Alexander Viro <viro@zeniv.linux.org.uk>, Jan Kara <jack@suse.cz>,
+	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+	John Ogness <john.ogness@linutronix.de>,
+	K Prateek Nayak <kprateek.nayak@amd.com>,
+	Clark Williams <clrkwllms@kernel.org>,
+	Steven Rostedt <rostedt@goodmis.org>, linux-fsdevel@vger.kernel.org,
+	linux-kernel@vger.kernel.org, linux-rt-devel@lists.linux.dev,
+	linux-rt-users@vger.kernel.org, Joe Damato <jdamato@fastly.com>,
+	Martin Karsten <mkarsten@uwaterloo.ca>,
+	Jens Axboe <axboe@kernel.dk>
+Cc: stable@vger.kernel.org
+Subject: Re: [PATCH v4 1/1] eventpoll: Replace rwlock with spinlock
+Message-ID: <20250826084320.XeTd6XAK@linutronix.de>
+References: <cover.1752581388.git.namcao@linutronix.de>
+ <ec92458ea357ec503c737ead0f10b2c6e4c37d47.1752581388.git.namcao@linutronix.de>
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
@@ -74,26 +66,37 @@ List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Content-Disposition: inline
-In-Reply-To: <aJTTm--AyLQWFmHi@eric-acer>
+In-Reply-To: <ec92458ea357ec503c737ead0f10b2c6e4c37d47.1752581388.git.namcao@linutronix.de>
 
-On Fri, Aug 08, 2025 at 12:26:03AM +0800, Cheng-Yang Chou wrote:
-> On Sat, Jul 26, 2025 at 05:18:29PM +0800, Cheng-Yang Chou wrote:
-> > This v2 series adds proper commit messages and addresses coding style
-> > warnings previously reported by checkpatch.pl.
-> > 
-> > All patches have been verified with checkpatch.pl and show no errors
-> > or warnings.
-> > 
-> > Changes in v2:
-> >  - Add commit messages to all patches
-> >  - Ensure all patches pass checkpatch cleanly
-> >  - Link to v1: https://lore.kernel.org/all/20250712134213.58582-1-yphbchou0911@gmail.com/
+On Tue, Jul 15, 2025 at 02:46:34PM +0200, Nam Cao wrote:
+> The ready event list of an epoll object is protected by read-write
+> semaphore:
 > 
-> Hi Clark and John,
+>   - The consumer (waiter) acquires the write lock and takes items.
+>   - the producer (waker) takes the read lock and adds items.
 > 
-> Gentle ping.
+> The point of this design is enabling epoll to scale well with large number
+> of producers, as multiple producers can hold the read lock at the same
+> time.
+> 
+> Unfortunately, this implementation may cause scheduling priority inversion
+> problem. Suppose the consumer has higher scheduling priority than the
+> producer. The consumer needs to acquire the write lock, but may be blocked
+> by the producer holding the read lock. Since read-write semaphore does not
+> support priority-boosting for the readers (even with CONFIG_PREEMPT_RT=y),
+> we have a case of priority inversion: a higher priority consumer is blocked
+> by a lower priority producer. This problem was reported in [1].
+> 
+> Furthermore, this could also cause stall problem, as described in [2].
+> 
+> Fix this problem by replacing rwlock with spinlock.
 
-Gentle ping.
+Hi Christian,
 
-Thanks
--chengyang
+May I know your plan with this patch? Are you still waiting for something?
+
+You may still understandably be paranoid about epoll due to the last
+regression. But it's been weeks, and this patch is quite simple, so I start
+to wonder if it is forgotten.
+
+Nam
