@@ -1,53 +1,75 @@
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id C6FE021FF55
-	for <linux-rt-users@vger.kernel.org>; Wed, 27 Aug 2025 17:33:36 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 254CF1D54D8
+	for <linux-rt-users@vger.kernel.org>; Wed,  3 Sep 2025 01:06:52 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1756316019; cv=none; b=Bbqs2SI+5Ycuytf4uA2yonNK8SIUJqqcVitupW2TPHuflGDhI3w+FWL6J6pFls3V13s2RZ0lfARbf9f9UyDlvqY+ModHadfzreuiF7YoQaOBriAzTiW0JvsYW94jiCRMFphiru2OvF2TFnNTKT3uU3PMD/8DYxyBo7EmdGBxsPE=
+	t=1756861614; cv=none; b=avYPhu5rfynp3Z2hkl0osbgcFpLZ8UuQ03d8RrQWaw9dkdzFh6Vwpw76lT6PuMbwMQ8TU6bgFUgrJSF6tN5Pj6s4Gl8H5qLAIqAd4nN2S6Q8AjgV2tkwFQ4h8bharVsu4DDZYv2rT6zBQVr+PcEZGI3WkexPcbnHA9QPiAu+nLw=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1756316019; c=relaxed/simple;
-	bh=PVs+IM1MVAKRZqPyhiUxEfM9XGRZ3VlretXDrboqkkQ=;
+	s=arc-20240116; t=1756861614; c=relaxed/simple;
+	bh=mUhrPt+ooiUPxNnIz9UEcZj0YdIIDFA9/ZETvtcoKPg=;
 	h=Date:From:To:Cc:Subject:Message-ID:MIME-Version:Content-Type:
-	 Content-Disposition; b=DFDYu9bTkFInn7qAHcQkOOwfDG7OCY6gVsy4WyfGr3Z1gP2110xtFRLLu39t6g+qa0gMQioNlix1Uabt5ukIIzpXm8r1a1Q6ovZC3BdF9hbHZ4krUZjRTWv75A3hXejFGvl1V9WeFQ1ZvMqyhOd4OdSz/dc4rEPVpBxIFJDVn70=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=aQ4EjwuS; arc=none smtp.client-ip=170.10.133.124
+	 Content-Disposition; b=cL38JrV6hK7pixdCMCKAeV4Q5hH4WiCX7Un5/Gj2mxiSP/IQgXALoMExNma8fQbxQqrTChi1WbO6pCUDCrYfa6+BrA+bWcJUpDSq3X4NpHvwOVMXsjfWe1+m5sc3kyNPlrGCtXHdG3tqDbRVS/On9lFymw1xxPURTcrRSlmAvlM=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=HbFUNtxV; arc=none smtp.client-ip=170.10.133.124
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="aQ4EjwuS"
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="HbFUNtxV"
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1756316015;
-	h=from:from:reply-to:reply-to:subject:subject:date:date:
-	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
-	 content-type:content-type; bh=bHGqlPEaLullJ119D4tGDm9KbXfTUxZY+l3ci4JRAiQ=;
-	b=aQ4EjwuSpsK1Y94U+WX0ko2VW0M8XjACyfBAHMq1GNpzva6UwjnvvALnZrLfL/NzN5J1A2
-	MUQ2bRaGwWIbEYTMEf4yQEjyJu7kmNg+vXXfzxRXGviP/I5l/jwORUEyb8q7QiKWFa1hVY
-	vaErppINwJf8a6SjAR8jpbVzQLwAaIQ=
-Received: from mx-prod-mc-02.mail-002.prod.us-west-2.aws.redhat.com
- (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
- relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-652-L-6hpLrvOjCrCAp-T-tB5g-1; Wed,
- 27 Aug 2025 13:33:34 -0400
-X-MC-Unique: L-6hpLrvOjCrCAp-T-tB5g-1
-X-Mimecast-MFC-AGG-ID: L-6hpLrvOjCrCAp-T-tB5g_1756316013
-Received: from mx-prod-int-08.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-08.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.111])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
-	(No client certificate requested)
-	by mx-prod-mc-02.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 3CAAA19560A2
-	for <linux-rt-users@vger.kernel.org>; Wed, 27 Aug 2025 17:33:33 +0000 (UTC)
-Received: from localhost (unknown [10.22.81.106])
-	by mx-prod-int-08.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTP id 657E1180028B;
-	Wed, 27 Aug 2025 17:33:32 +0000 (UTC)
-Date: Wed, 27 Aug 2025 13:33:31 -0400
-From: Derek Barbosa <debarbos@redhat.com>
-To: williams@redhat.com, jkacur@redhat.com
-Cc: linux-rt-users@vger.kernel.org, crwood@redhat.com, oleg@redhat.com, 
-	shichen@redhat.com
-Subject: [PATCH V2] ssdd: mitigate tracee starvation
-Message-ID: <io62jswvggk4khvbknhvo5wisdpccyn3vjppbauwesvmt7kks3@gdffjm3gnuku>
-Reply-To: debarbos@redhat.com
+	s=mimecast20190719; t=1756861612;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding;
+	bh=pd04II+gtAp6QJKNc4+oIabvQjLWvmjk9px/GSFu11Q=;
+	b=HbFUNtxVVkhJVQE5tCZepto1qk5WRDD+l0w//nwq/0p7ZEX7B5INpHa4ccDhrd+VGwMMWP
+	cnCCOqQsjGdTd5qS4VS8TPkO44A4hwRW8M7Lo6jUQv4n2ffmSXkOajW/NeccmrtNuyebhW
+	fUN33SN5aVr27SKnQsb2yl89lxnzCIo=
+Received: from mail-qv1-f69.google.com (mail-qv1-f69.google.com
+ [209.85.219.69]) by relay.mimecast.com with ESMTP with STARTTLS
+ (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
+ us-mta-76-r3xZbnWzM3KxMexNwzuVtQ-1; Tue, 02 Sep 2025 21:06:50 -0400
+X-MC-Unique: r3xZbnWzM3KxMexNwzuVtQ-1
+X-Mimecast-MFC-AGG-ID: r3xZbnWzM3KxMexNwzuVtQ_1756861610
+Received: by mail-qv1-f69.google.com with SMTP id 6a1803df08f44-70d7c7e972eso119300956d6.3
+        for <linux-rt-users@vger.kernel.org>; Tue, 02 Sep 2025 18:06:50 -0700 (PDT)
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20230601; t=1756861610; x=1757466410;
+        h=content-transfer-encoding:content-disposition:mime-version
+         :message-id:subject:cc:to:from:date:x-gm-message-state:from:to:cc
+         :subject:date:message-id:reply-to;
+        bh=pd04II+gtAp6QJKNc4+oIabvQjLWvmjk9px/GSFu11Q=;
+        b=ssL3A02B8NFbg5W6Hb1njJjk5w2ZnIrnLGoXmt4aBm5HhN/bqER6o3hDY1+7FZuSl3
+         8oSyT7d1BPHGRR+50UF6HHCehbz1m61qBPxnmN/SNwwIKH6PtlkbE5KmMxEwsPHprAVJ
+         fxxyK53nAjFLGlr7jQnvzH+dgtl1t8/CZa1hJvJ/tdoi1kM4AFrnVRv5QSK2zq5fswrf
+         zcMgKUpibNIaE0X/F0LbPITM5Wa85LAAqKLtkUKs7lRNkIrsX7+UM2SlPfBNAjD7p+St
+         yfhpli02QKW0mKOj86XcCiCbn+z8VdqUgpxA4SHrkgdxKxhaiOBbTeBRLIBxKg/XwpTt
+         GKLg==
+X-Gm-Message-State: AOJu0Yy9YDIjUjug+p+GMaCLKEu/+ZMD6JnfG3sdg8rWW2208s47hbO5
+	6I9zCmXg/WDMpFblZD/+dUM0Z6HWOq1C7OrrmkcD9ui5Meaf5axtBzBku1BwcZ+KeLiC+MtOWPW
+	cRT5a+nADLpLo+HwbbXdF4zw4puTzlLfovkBA2/GmtBP5M+HzmpQaTQoBQwrl4k6LNXmk
+X-Gm-Gg: ASbGncuiaEEaagqpuBY/IM/ylb6mJPRDRixDyidrMurCEDAewKKjE7knn2Kxv65onVx
+	zur9xoD5gbpZaEcbtLA1b3AyFpgF5mVqk2raX1kJezDCFN3OKBUnAZbMyZ83jJVNi9WU9TzNzMz
+	tARjWhu7WnLeqpdd0WqtecHWHuYLoNKKDduo7ZvuCIn8CjYcjtke9dt30dLL6ttBhcgO+KTAzhj
+	LtNhxNPImVSTq+e+bZ/uo5+nkuPlAtYbYKRQ0qyOoq/+YK7X95qaQmiigSsOiVnhAqN0m4rOuuF
+	c5q54u/AxA0xAodGWoIy1JgL2bg5wt+pVN29PA==
+X-Received: by 2002:a05:6214:240c:b0:70d:6de2:50d3 with SMTP id 6a1803df08f44-70fac97a438mr153662806d6.64.1756861610130;
+        Tue, 02 Sep 2025 18:06:50 -0700 (PDT)
+X-Google-Smtp-Source: AGHT+IFzee57nHzBtAsn0nJq/EMv89+QEsCTtKjNIKDHBC6it9slLastT1A1NPyiBfIPVXmTZLiQsg==
+X-Received: by 2002:a05:6214:240c:b0:70d:6de2:50d3 with SMTP id 6a1803df08f44-70fac97a438mr153662666d6.64.1756861609682;
+        Tue, 02 Sep 2025 18:06:49 -0700 (PDT)
+Received: from thinkpad2024 ([71.217.50.216])
+        by smtp.gmail.com with ESMTPSA id 6a1803df08f44-720ac16de47sm20920266d6.15.2025.09.02.18.06.48
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Tue, 02 Sep 2025 18:06:49 -0700 (PDT)
+Date: Tue, 2 Sep 2025 21:06:47 -0400
+From: "John B. Wyatt IV" <jwyatt@redhat.com>
+To: Clark Williams <williams@redhat.com>, John Kacur <jkacur@redhat.com>
+Cc: linux-rt-users@vger.kernel.org,
+	kernel-rts-sst <kernel-rts-sst@redhat.com>,
+	Arnaldo Carvalho de Melo <acme@redhat.com>
+Subject: RFC: Replacing rtctl style profile files with JSON
+Message-ID: <aLeUp2F2sZaamoOu@thinkpad2024>
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
@@ -56,174 +78,37 @@ List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
 Content-Type: text/plain; charset=utf-8
 Content-Disposition: inline
-X-Scanned-By: MIMEDefang 3.4.1 on 10.30.177.111
+Content-Transfer-Encoding: 8bit
 
-When ssdd is invoked with nforks > 100 && niters == 10000 on a tuned,
-realtime kernel, the following error messages can be seen:
+Hello linux-rt-users,
 
-forktest#4/8719: EXITING, ERROR: wait on PTRACE_SINGLESTEP #385: no SIGCHLD seen (signal count == 0), signo 5
-forktest#1/8716: EXITING, ERROR: wait on PTRACE_SINGLESTEP #398: no SIGCHLD seen (signal count == 0), signo 5
-forktest#6/8721: EXITING, ERROR: wait on PTRACE_SINGLESTEP #385: no SIGCHLD seen (signal count == 0), signo 5
-forktest#10/8725: EXITING, ERROR: wait on PTRACE_SINGLESTEP #388: no SIGCHLD seen (signal count == 0), signo 5
-forktest#11/8726: EXITING, ERROR: wait on PTRACE_SINGLESTEP #388: no SIGCHLD seen (signal count == 0), signo 5
-forktest#12/8727: EXITING, ERROR: wait on PTRACE_SINGLESTEP #389: no SIGCHLD seen (signal count == 0), signo 5
-forktest#14/8729: EXITING, ERROR: wait on PTRACE_SINGLESTEP #389: no SIGCHLD seen (signal count == 0), signo 5
-forktest#15/8730: EXITING, ERROR: wait on PTRACE_SINGLESTEP #389: no SIGCHLD seen (signal count == 0), signo 5
+This email could also be titled: "Does anyone use profile saving and loading in Tuna?" :-)
 
-This behavior is caused by ptrace_stop() being unable to sleep after
-taking tasklist_lock().
+Internally an issue came up that pointed out saving a profile printed a message about rtctl and how 'save' and 'apply' were ambiguous. The same profile could not be loaded without errors. I was able to reproduce similar errors by loading the example.conf file included in the Tuna source code. It 'errored' out with warnings ‘Error File contains no section headers’.
 
-As forktest() generates "niter" PTRACE_SINGLESTEP's for nforks, in the
-rare event where nforks exceeds the defaults by a large order of
-magnitude, the sporadic test failures caused by missing SIGCHLDs
-indicates that the tracees are unable to effectively wait for their
-asynchronous signals to arrive --as denoted in the previous sleeps for
-check_sigchld().
+The naming for these files is also inconsistent in tuna: the gui calls the files profiles, tuna save calls them ‘kthreads sched tunables’, the ‘tuna apply’ has error messages calling them config files.
 
-Therefore, by performing an sigtimedwait() in check_sigchld(), we
-give the tracee enough CPU time to call
-do_notify_parent_cldstop()->send_signal_locked().
+I propose cleaning up and replacing the rtctl style format with JSON files or removing the profile saving and resuming completely from tuna. The older ‘tuna apply’ loading code will be depreciated and kept for a while so users can have time to migrate.
 
-The observed behavior after appling this patch mitigates the
-aforementioned issue in scenarios with a high number of nforks.
+Tuna requires root access to set profile settings. A barely used parser is a security issue. The load parser also requires a bit of a rework as it currently treats both errors and warnings the same way. See checkConfigFile and loadTuna. [1] rtctl has not been maintained in over a decade and not included in major distributions. I see no point in making sure files generated by Tuna work with rtctl or if they even work now (or if I can even compile rtctl these days). These arguments justify replacing, or removing, the profile functionality.
 
-Suggested-by: Oleg Nesterov <oleg@redhat.com>
-Suggested-by: Crystal Wood <crwood@redhat.com>
-Signed-off-by: Derek Barbosa <debarbos@redhat.com>
----
-V1 -> V2: Addressed review comments, removed usleep() in favor of
-sigtimedwait().
+The gui has a nice interface for managing profiles, the values in the profile, and even correcting issues in a load profile that ‘tuna apply’ does not do (loadTuna is not used). I can imagine users may want to use this to test and tune their systems.
 
- src/ssdd/ssdd.c | 72 ++++++++++++++++++++++++++++++++++++-------------
- 1 file changed, 53 insertions(+), 19 deletions(-)
+It has a few bugs too: if you create a new profile from the gui, the tab to actually set values disappears. The buttons may not respond properly. It even froze while I was trying to screen share.
 
-diff --git a/src/ssdd/ssdd.c b/src/ssdd/ssdd.c
-index 50f7424..0089678 100644
---- a/src/ssdd/ssdd.c
-+++ b/src/ssdd/ssdd.c
-@@ -30,6 +30,7 @@
- #include <getopt.h>
- #include <string.h>
- #include <signal.h>
-+#include <time.h>
- #include <errno.h>
- 
- #include <sys/types.h>
-@@ -67,7 +68,7 @@ static const char *get_state_name(int state)
- static int quiet;
- static char jsonfile[MAX_PATH];
- 
--static int got_sigchld;
-+volatile int got_sigchld;
- 
- enum option_value { OPT_NFORKS=1, OPT_NITERS, OPT_HELP, OPT_JSON, OPT_QUIET };
- 
-@@ -127,24 +128,36 @@ static int do_wait(pid_t *wait_pid, int *ret_sig)
- 	return STATE_UNKNOWN;
- }
- 
--static int check_sigchld(void)
-+static int check_sigchld(sigset_t* set)
- {
--	int i;
--	/*
--	 * The signal is asynchronous so give it some
--	 * time to arrive.
--	 */
--	for (i = 0; i < 10 && !got_sigchld; i++)
--		usleep(1000); /* 10 msecs */
--	for (i = 0; i < 10 && !got_sigchld; i++)
--		usleep(2000); /* 20 + 10 = 30 msecs */
--	for (i = 0; i < 10 && !got_sigchld; i++)
--		usleep(4000); /* 40 + 30 = 70 msecs */
--	for (i = 0; i < 10 && !got_sigchld; i++)
--		usleep(8000); /* 80 + 70 = 150 msecs */
--	for (i = 0; i < 10 && !got_sigchld; i++)
--		usleep(16000); /* 160 + 150 = 310 msecs */
- 
-+	struct timespec timeout;
-+	timeout.tv_sec = 10;
-+	timeout.tv_nsec = 0;
-+	int recv_sig = 0;
-+
-+        /*
-+         * Check the handler flag, then if need be, wait for the signal to
-+         * arrive
-+         */
-+        if(!got_sigchld) {
-+		recv_sig = sigtimedwait(set, NULL, &timeout);
-+	}
-+
-+	if(sigprocmask(SIG_UNBLOCK, set, NULL) == -1){
-+		printf("EXITING, ERROR: "
-+		       "unable to mask signal set\n");
-+		exit(1);
-+	}
-+
-+	if (recv_sig == -1){
-+		printf("EXITING, ERROR: "
-+		       "Timeout: no signal recieved in 10 seconds\n");
-+		exit(1);
-+	} else if (recv_sig == SIGCHLD){
-+		got_sigchld = 1;
-+	}
-+	
- 	return got_sigchld;
- }
- 
-@@ -195,6 +208,20 @@ static int forktests(int testid)
- 		exit(1);
- 	}
- 
-+	/*
-+	 * Block the signal before it is generated
-+	 * Ensures we can synchronously wait for it.
-+	 */
-+	sigset_t set;
-+	sigemptyset(&set);
-+	sigaddset(&set, SIGCHLD);
-+
-+	if (sigprocmask(SIG_BLOCK, &set, NULL) == -1){
-+		printf("EXITING, ERROR: "
-+		       "unable to mask signal set\n");
-+		exit(1);
-+	}
-+
- 	/*
- 	 * Attach to the child.
- 	 */
-@@ -224,7 +251,7 @@ static int forktests(int testid)
- 		       ret_sig);
- 		exit(1);
- 	}
--	if (!check_sigchld()) {
-+	if (!check_sigchld(&set)) {
- 		printf("forktest#%d/%d: EXITING, ERROR: "
- 		       "wait on PTRACE_ATTACH saw a SIGCHLD count of %d, should be 1\n",
- 		       testid, getpid(), got_sigchld);
-@@ -238,6 +265,13 @@ static int forktests(int testid)
- 	 * step the tracee.
- 	 */
- 	for (i = 0; i < nsteps; i++) {
-+
-+		if (sigprocmask(SIG_BLOCK, &set, NULL) == -1){
-+			printf("EXITING, ERROR: "
-+			       "unable to mask signal set\n");
-+			exit(1);
-+		}
-+
- 		pstatus = ptrace(PTRACE_SINGLESTEP, child, NULL, NULL);
- 
- 		if (pstatus) {
-@@ -271,7 +305,7 @@ static int forktests(int testid)
- 			       testid, getpid(), i, ret_sig);
- 			exit(1);
- 		}
--		if (!check_sigchld()) {
-+		if (!check_sigchld(&set)) {
- 			printf("forktest#%d/%d: EXITING, ERROR: "
- 			       "wait on PTRACE_SINGLESTEP #%d: no SIGCHLD seen "
- 			       "(signal count == 0), signo %d\n",
+'save' and 'apply' subcommands should also be renamed to 'save_profile' and 'load_profile'.
+
+Mentions of rtctl should be removed except for a comment that Tuna was intended to replace rtctl in the manpage.
+
+JSON is suggested because the two built in choices for Python are JSON or XML. I would like to avoid adding an external dependency on another library. JSON is a widely used format that gets test coverage with cpython. XML is more complicated and less often used these days.
+
+Please sound off. Are there users that still use profile saving and resuming? How do you use it? Do you use the command line or the gui? If you use profiles, are you willing to test the new code?
+
+[1] https://git.kernel.org/pub/scm/utils/tuna/tuna.git/tree/tuna/config.py#n394
+
 -- 
-2.50.0
+Sincerely,
+John Wyatt
+Software Engineer, Core Kernel
+Red Hat
 
