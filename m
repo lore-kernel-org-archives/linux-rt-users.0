@@ -1,154 +1,119 @@
-Received: from OS0P286CU011.outbound.protection.outlook.com (mail-japanwestazolkn19010013.outbound.protection.outlook.com [52.103.66.13])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id BDF8F8F40
-	for <linux-rt-users@vger.kernel.org>; Thu,  4 Sep 2025 05:37:35 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=fail smtp.client-ip=52.103.66.13
-ARC-Seal:i=2; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1756964257; cv=fail; b=NKf6PYB1yMw+1P9qqZzsue3sts0vLB7qjnd5JiEeCrbEtKULQODJhYbePFbRQsk0P1B0hJTWt492mKW+DobbtCmOB6lklIOlqDLlQDv6YXQJY7qP8jynGz9YfSMB61XYhrFb0vfXKYs9XsMM7Y4jMwB/YGiCjBdyA0QDiuxA6/o=
-ARC-Message-Signature:i=2; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1756964257; c=relaxed/simple;
-	bh=/3RNC1t3RFj9EEHsqESzkf9crUPcFFcLMHGPZL0g9m0=;
-	h=From:To:Cc:Subject:Date:Message-ID:Content-Type:MIME-Version; b=svNRRhb0PDWbSN25cjw7NWRv6Niy09H8Zc2N63IwQX6XoNDkzf49L+gHFfB9WASzEeeK19EIf34bcFYOKU4Pn/gIDJudCPkNU9dtmnyeyG594tE891hXPjh155s7XFdmIF/7lurkXVdpPHJeq8OE/dPUxHdxzVzne/skD7R4hfo=
-ARC-Authentication-Results:i=2; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=outlook.com; spf=pass smtp.mailfrom=outlook.com; dkim=pass (2048-bit key) header.d=outlook.com header.i=@outlook.com header.b=SYPCzz9q; arc=fail smtp.client-ip=52.103.66.13
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=outlook.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=outlook.com
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 03AEF4A3C
+	for <linux-rt-users@vger.kernel.org>; Thu,  4 Sep 2025 14:21:46 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
+ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
+	t=1756995708; cv=none; b=CPmYv8OzuCBY4esJW10nHqt4xvm0w86ZSzkRBXY6V9BlD/igXVYJuFBUiML5Kby78c0tcSqului8TF3bX4eMm5w7rrALkGEmjQBLm3YRDmq3u6cHFe65JMSsQ07cZIiPJ9Bh7PuhPCubFVDgFQ8JKSCXwQlNp+i5j8CMYlYxumw=
+ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
+	s=arc-20240116; t=1756995708; c=relaxed/simple;
+	bh=Dy7Rd6n72zPh2uMay2T7FL5dIAC5fJnhoWKuHz28blU=;
+	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=DYG4d/AKVYgqYcjNIkLjHVePbAMjZr+1yQaywet71eE2828ugYlPWvrdfhtz/jQ32iLf2Cl2y2kEGdALH4m2JFZHLkaPCr+Iq+LWS1wt6xh4aLqPZNx+E2EZNSoe1ABnLYyb13G1AnwQ2bpBFMdmKuLz6ct5SnoxhyRDQibBECk=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=HMO+gD2I; arc=none smtp.client-ip=170.10.129.124
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=outlook.com header.i=@outlook.com header.b="SYPCzz9q"
-ARC-Seal: i=1; a=rsa-sha256; s=arcselector10001; d=microsoft.com; cv=none;
- b=rhPXbk55mIYQ6TVlzPy/9tD5vt463bRGzmxc5giIaz3TzFQbruSWKnD+70spb46HsGF38ufLZgLMICCdpjQYWVyVN3IboJ8kt3J7O4Y0LWcBEErHT8OKfGncDkuBpZEIZPJ4Vt8tqNKhimfv/rWFrzhYp5SuJ8oWYpN1AxH9+//112jJ0Dc9TbHJLdefvJTRzRwlXMxzB1WpDkyEw4eFy9Ud+jWtf7K9GcK1K2XJmPYeYRFWPmSZ3gjKhycvepV92dB7b6MTj9BNT5bllQigaoxvTuB0TjCLVrTUlYbyk/D54kPKXDZg5NGR/nqsOWgt0N750KqUvO75a5PISAVkcw==
-ARC-Message-Signature: i=1; a=rsa-sha256; c=relaxed/relaxed; d=microsoft.com;
- s=arcselector10001;
- h=From:Date:Subject:Message-ID:Content-Type:MIME-Version:X-MS-Exchange-AntiSpam-MessageData-ChunkCount:X-MS-Exchange-AntiSpam-MessageData-0:X-MS-Exchange-AntiSpam-MessageData-1;
- bh=+mZrON8tY/LwRzHtWNLjIPJkKma3ELFEuL/cxPwFNwk=;
- b=AR/essL3FqnE+mwroZJTf0Lr7v+hBcavWIcfJQRzD8gwdnNIBpgCfom9nZmgPPWiDLtUL9I+5teYyAZ7b8aCHIWFVMB8NFugI6wkB0GoZ8DT6gqSHa42uC+mb9by2SCw7VlA2RUYXgi/GdtPj3U8QP4i2lPvrtqBputM4/mfX0SF2ehC33VPsSCBFU1alGIA5UTQnywxa4ohT8DBSGmrYVROMTGU2HW1RUuEVMj2gAdvxGgw0yEnWxyoxFftLq/+qLsud61dsebeRSuH3BQ8nzbtqKhrw0hwmkztkU8jKffPVrV19W7hyLc4t+syNtnvGW3AqrXoOgHpmu/PLg4PUg==
-ARC-Authentication-Results: i=1; mx.microsoft.com 1; spf=none; dmarc=none;
- dkim=none; arc=none
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=outlook.com;
- s=selector1;
- h=From:Date:Subject:Message-ID:Content-Type:MIME-Version:X-MS-Exchange-SenderADCheck;
- bh=+mZrON8tY/LwRzHtWNLjIPJkKma3ELFEuL/cxPwFNwk=;
- b=SYPCzz9qOXRuSU/sNf/EHxU9RJWGJ6I/ErwnLEII5PKtzRfXugkkW7CwUdRzRqPPd5C9aexWAwCcxzBlTIEd7dGVWVQ+bhWc9rOD40Zf+RCpb8IJbtkxDylKKzezFoguzGnsOxqMSxognOVX2IuJaR9J32M8zAuAayxWxcahFQ+zDMdUYjZ9RRrsd9y/84s0MV2Q5EEr9Mbu08XEIwmNCm2ACGBQ2i3YG//ygQDQ9qx6nG1UYN84cRPgF+YugbkKbYNKbBVkDoufRTsPeiij8FgDnprhXNYMBgpReIQ4R5J5lhAcCZtfbHkZ8uQJ2Ne1Nsb95MXoNh1yhzBh5DlI+A==
-Received: from TY4PR01MB13887.jpnprd01.prod.outlook.com (2603:1096:405:1fa::9)
- by TYYPR01MB14292.jpnprd01.prod.outlook.com (2603:1096:405:212::12) with
- Microsoft SMTP Server (version=TLS1_2,
- cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.20.9094.18; Thu, 4 Sep
- 2025 05:37:33 +0000
-Received: from TY4PR01MB13887.jpnprd01.prod.outlook.com
- ([fe80::e124:5d3e:8cd:f532]) by TY4PR01MB13887.jpnprd01.prod.outlook.com
- ([fe80::e124:5d3e:8cd:f532%4]) with mapi id 15.20.9094.017; Thu, 4 Sep 2025
- 05:37:33 +0000
-From: literal <literalkernel@outlook.com>
-To: linux-rt-users@vger.kernel.org
-Cc: Haoran Yu <literalkernel@outlook.com>
-Subject: [PATCH] tuna: Update tuna.desktop for cli change
-Date: Thu,  4 Sep 2025 13:37:12 +0800
-Message-ID:
- <TY4PR01MB1388736EE1A868A4D7F4A5A98AC00A@TY4PR01MB13887.jpnprd01.prod.outlook.com>
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="HMO+gD2I"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1756995706;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:
+	 content-transfer-encoding:content-transfer-encoding;
+	bh=ueDHaAzCP7B7bAfsuqWOlkxtdLHlPk8l92ZblXdt11U=;
+	b=HMO+gD2IoSp5l22eyEzsGe4br36fXxHVjMr94lgnGyIGkOIvn0LotW+fiRHnxBzeMahghG
+	lrccx4CqJof6TMn8Hx2cgI+lySzataDwm0VRPuMusU9ECqc+q99wbuzydxhrHFKWjSEa4X
+	xlUZSbPx3Ntxgpt5u0ckeStsEmU4vHI=
+Received: from mail-qt1-f198.google.com (mail-qt1-f198.google.com
+ [209.85.160.198]) by relay.mimecast.com with ESMTP with STARTTLS
+ (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
+ us-mta-677-RJ1q4B2CMsKAmDULxp7Jhw-1; Thu, 04 Sep 2025 10:21:44 -0400
+X-MC-Unique: RJ1q4B2CMsKAmDULxp7Jhw-1
+X-Mimecast-MFC-AGG-ID: RJ1q4B2CMsKAmDULxp7Jhw_1756995704
+Received: by mail-qt1-f198.google.com with SMTP id d75a77b69052e-4b29cdc7417so20351331cf.0
+        for <linux-rt-users@vger.kernel.org>; Thu, 04 Sep 2025 07:21:44 -0700 (PDT)
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20230601; t=1756995704; x=1757600504;
+        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+         :to:from:x-gm-message-state:from:to:cc:subject:date:message-id
+         :reply-to;
+        bh=ueDHaAzCP7B7bAfsuqWOlkxtdLHlPk8l92ZblXdt11U=;
+        b=M2/dKOuGa/vlNZZ7HFayy0H0Wqi+5n1iWgIGBzyFxhyl11yJh1Exu0WGYG3imBQwj0
+         U6ukPFMXK454tHiKnOtBtCXE2IXJNY3ompOhxM2WpTi9AHoKAXUdKzf5BskFl91Vs/Yg
+         wvk+mwmWNhN49NOCPe6IEREOHt0BNvX3y8X0mKIrzcc6oaFa5iIrJQp1c/nBV+jW1WSV
+         DCvHD0RXEGEI68p21IbRXAvskDr1CuOhK4oPNjhGs7N4Kttxtx/DK/n1MEQWwCrcTaPu
+         4yJc4O4Ta6onXSNhnYjAyUOtXG27KPxlfAPgh/ux/Jk66i3Qg2fhgRrcBdqcO3LwsHK8
+         wYkw==
+X-Forwarded-Encrypted: i=1; AJvYcCWSbJTh7jnypK/tLAArU2VhOgmJkZm6JriJ3HF2bNxeALbVoPjPWjPPQwuBCtvrStPHC2W3X6fErtMjtMLQlg==@vger.kernel.org
+X-Gm-Message-State: AOJu0YwCEiOXWYsTfs+kf00RH1zRpV8K0kEACnA5OCmdsWOkoPzw3mit
+	eH1N0YLyqzSkjeffWnfdJTu2MeqrSmas2cIpg1SjE2YzPUo8ya2jlFMzJjHzDcb5yeA9LtHgfx6
+	7XrPiBnTBjUTSrT+3SHYXfm60BNGNW0unFgSbPe5WZsYqwJ8smP0HLZmDAWAhCt+bxH9z
+X-Gm-Gg: ASbGncuysxfyRDUYIp3qZMxbcJRHW1U5UtzE5KYrU1AnDZKHev4Ub1MhnwQXaOy4DAY
+	z2fgqarCb7C9Tt9j2XcrO8RZJpKy1OO6VPDc2V9ROYMMZe2mii1dgaUS3uQ+XaxAKBmv9hQZiuI
+	v3JdcHIAqWdAwX3ea3D8tdwp6c1T/v1MgPYj3KoYpG9Q7wRSBZYgiloJ6Try/eOmkpCXbKJneF8
+	xTSXTymAREegrQl23xWyM6fx6VuuzjGjqRrcRF2B2np/LjLhFmHbS2sTEsCEhUYQZrVZ6PwGWkW
+	LS0mAToI0gT1OzxF9/jJ6k9MrtHY5b/3Fd8HR9FnbpQ/V80p+lAV
+X-Received: by 2002:a05:622a:1111:b0:4b2:8ac4:ef5f with SMTP id d75a77b69052e-4b31dc91336mr231935071cf.66.1756995704245;
+        Thu, 04 Sep 2025 07:21:44 -0700 (PDT)
+X-Google-Smtp-Source: AGHT+IECcXgFmnI6gGybziP5HAYZiR+Bc/7cEqd2eGgqM9OfPiN6WuYRdywh+z4E18FBtWSQXr/QFQ==
+X-Received: by 2002:a05:622a:1111:b0:4b2:8ac4:ef5f with SMTP id d75a77b69052e-4b31dc91336mr231934591cf.66.1756995703803;
+        Thu, 04 Sep 2025 07:21:43 -0700 (PDT)
+Received: from thinkpad2024.redhat.com ([71.217.50.216])
+        by smtp.gmail.com with ESMTPSA id d75a77b69052e-4b48f799b83sm29260431cf.45.2025.09.04.07.21.42
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Thu, 04 Sep 2025 07:21:43 -0700 (PDT)
+From: "John B. Wyatt IV" <jwyatt@redhat.com>
+To: "Clark Williams" <williams@redhat.com>,
+	"John Kacur" <jkacur@redhat.com>
+Cc: "John B. Wyatt IV" <jwyatt@redhat.com>,
+	linux-rt-users@vger.kernel.org,
+	kernel-rts-sst <kernel-rts-sst@redhat.com>,
+	"John B. Wyatt IV" <sageofredondo@gmail.com>
+Subject: [PATCH] tuna: Proofreading fixes
+Date: Thu,  4 Sep 2025 10:21:31 -0400
+Message-ID: <20250904142134.41426-1-jwyatt@redhat.com>
 X-Mailer: git-send-email 2.51.0
-Content-Transfer-Encoding: 8bit
-Content-Type: text/plain
-X-ClientProxiedBy: TYCP286CA0084.JPNP286.PROD.OUTLOOK.COM
- (2603:1096:400:2b3::14) To TY4PR01MB13887.jpnprd01.prod.outlook.com
- (2603:1096:405:1fa::9)
-X-Microsoft-Original-Message-ID:
- <20250904053712.10540-1-literalkernel@outlook.com>
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
 List-Subscribe: <mailto:linux-rt-users+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-X-MS-Exchange-MessageSentRepresentingType: 1
-X-MS-PublicTrafficType: Email
-X-MS-TrafficTypeDiagnostic: TY4PR01MB13887:EE_|TYYPR01MB14292:EE_
-X-MS-Office365-Filtering-Correlation-Id: 7f5e21c7-e861-4b30-a679-08ddeb752478
-X-Microsoft-Antispam:
-	BCL:0;ARA:14566002|8022599003|461199028|23021999003|15080799012|21061999006|19110799012|5062599005|5072599009|8060799015|3412199025|440099028|1710799026;
-X-Microsoft-Antispam-Message-Info:
-	=?us-ascii?Q?5iLqCKWDSfyXaHhgDjgQTY6h6dgyxxLCgvz7yRkg+7PVNWuncWTOIGHcyjYw?=
- =?us-ascii?Q?RdzLXz2KyE6GCrGD3Hlb164UsNrnYfBuJNoJJ3w480lPWDl5ETvrJNEk510l?=
- =?us-ascii?Q?tB1JvYWxMHp61P3MxD9tYqO6ofYxurTvgefwjn8OP/wkEJy0e74Ycx/HtK9+?=
- =?us-ascii?Q?6G55nV+Lk6/T+ne16BhCp7dUgfzscZl5T4o5/BHXyad5NVqmvaAWgSMrUIsy?=
- =?us-ascii?Q?nAF6jYb5nMo4FIrXehmQCCHn+GR/Jy1lYVHz549sYI1qUPQvou011usPecBb?=
- =?us-ascii?Q?xeX9CO20b7HaHrLpqaQsxbFD93et1MANI+nR4L40MEORvYYg02dMxQ5Ij1o/?=
- =?us-ascii?Q?aF3EC1KABlQHWRebnqtY79CmlHg9r/lErmgTl1V4lVB4btv2kNY1B1q2VKZb?=
- =?us-ascii?Q?b2R9yJjk3ABQa4C4OefU4Bv5jnAuwkAcNRUUnXcnmYGniv/wtxkdYBUyoB00?=
- =?us-ascii?Q?RfoVdVpFSEUfNWGPd5o2u0/XI6e0w1RtvLRnEaqUqyKumfWGBkI6j1CWRrID?=
- =?us-ascii?Q?GkJc4pIMi4L0zK2ZgsaIr+sGq8znnFKUi0Omx/qHy5Plypa0SCaEyn3M7gdI?=
- =?us-ascii?Q?vUAjD3uDUj5X1Of0ngI0k0z2Y7V5yD3jgkUIyUAb8uxJH83Dy8JytOnc9Zbb?=
- =?us-ascii?Q?VvmQ7RYf6MUcBmXhpTwyaJ72o4JevdP5J0OMAegCZ1oTdOQYYOxCShY0ggjn?=
- =?us-ascii?Q?aNp4pvr27OlDiWcZj9whrZBXdlXzuXik5NwhM1Q7sjitu1wql7gaw5JC6u7w?=
- =?us-ascii?Q?rxVCcaLw3jaZso4Zm+qvoo6XxUnqHKOuOoNO8OblEG6iaQ3dD57a+QzGEBXw?=
- =?us-ascii?Q?hm57dxNJuR05ROpVIhIlMHKEbohFiUqJJrwkrfvGspOfQV9QV70jKHzXzpaE?=
- =?us-ascii?Q?qeVpVjUVklWT1T7aedeYARn164E8lDgAoSKGg1sN9nwK/v7TvN+WldEK5go8?=
- =?us-ascii?Q?lZ9hD8l2OwQaK1D/09qZLiCNkmDxREOx4IrbTM2V8rIcmIsuT4lfbNgHj+zl?=
- =?us-ascii?Q?tqgceK+Az/pbkRSPyyjp+Ki9EpZpaoRtxWxrouv+40ZuKpjfrgTexYUmevBY?=
- =?us-ascii?Q?2qht9nCoQqJ7grU/wbyMqo5mzZ/CoV8G45jH1AtNETqWv2+7daiQRRw4nMzY?=
- =?us-ascii?Q?u2Z2Ew+kp6znfDIotWJL8OzP0weHpDbBfQbrV5PWQBBHkPcxTEBajtEi3M5+?=
- =?us-ascii?Q?XGOusZPO0NQe8hSp6QH1wL9WaziP4UFj1khmAnu1Exj9M+LJWSthhKhDbRs?=
- =?us-ascii?Q?=3D?=
-X-MS-Exchange-AntiSpam-MessageData-ChunkCount: 1
-X-MS-Exchange-AntiSpam-MessageData-0:
-	=?us-ascii?Q?lvksKLJIudXegJYhxveARhsjjUskbCrVsR9D9p3NL60ctScF8DrRx7qr0il4?=
- =?us-ascii?Q?ohES1+HkN/LtLMC70dme7B1TMPyqKKecAuSM9RlWrqlnlmLk3i1eGwvW+ram?=
- =?us-ascii?Q?IVAH09n7YGYMlDR66rpZ+LNbtE8nrufVy9WoXjAZ8DSw+VHarrqkD4xXq7Fq?=
- =?us-ascii?Q?OQQc6KU36+n2I3ISJTPQEr98fi0uLCINxQg+PPpPWtGtMjgVODMMBleax5Vb?=
- =?us-ascii?Q?V4Y7Z0C3s0MuSsIj8lkTvX5qc49KlQO84qs/ywQB2P0XzFDukFpOa80jvOMc?=
- =?us-ascii?Q?HswdeTHGzCw5A9wV6/8aOpZ+5ZBPcJZxv45lDqMeo7wFYGj6YbuEJ4FUyHK/?=
- =?us-ascii?Q?31cFQWEOmuE4kFP6qltlq3+mJ8g3iQvYVSj8sOdxZweyl8abB4SAN6vrxoJN?=
- =?us-ascii?Q?TWQgn0THP8TLAAVg66xyC6P84gSA6xJuyrfDf+ICdABqj1NHDjsPvhmLUFvE?=
- =?us-ascii?Q?56SOAd9koGDz4yHebQzyMcmFQVH8TwtC3TKU3wKqXCw/RX2CXIjVIycmUs4U?=
- =?us-ascii?Q?aWrgiCB60u/BJpUVqvY/7eG5P4ZRLewm09+eGOd26ZdTeErKOnkwnGNVVico?=
- =?us-ascii?Q?WiTAiGcGiybgU6TJLaxlYNR6MJec2rhtVGAAtHfs9rfsgTmAV9iWdJxIj2tV?=
- =?us-ascii?Q?vqnfh7VBIBtd14b+UR6am5DfYU/D3ahaFlQP1mkj6ELvu0W44VAEy0Xjhrfc?=
- =?us-ascii?Q?GYkW135kPYTGfDlFewAogZXRhLiTnve460QLiJg8nztQFG5Oowmlfbhb5F4a?=
- =?us-ascii?Q?SNjjNL0jgyJb7JsYRlzyMN3Wpl/BQVUc6ISD8uhN12EBYlAqsf64f1KpdcGx?=
- =?us-ascii?Q?YcpsmdqloP36/tAVupOZGfvKyTIS3cAroCl0//kKQHbUejr8tSxfkaEXPdOG?=
- =?us-ascii?Q?4MJu3Hv84ttI4OTvpIMI5g49iA3cZ4+XqXGdNuwcZi5T95RVojuKb14sF2M1?=
- =?us-ascii?Q?POlt+usbbgffzsrr6mZOcynyl/t31I1YnQdEi9AzA1HJzf/z/CfijOBaaxs8?=
- =?us-ascii?Q?OLPPmomQ7fU3HugJ1W2UFbxn7StkTZCYFUtnlWvsbpJUdPcispwtph3MO43S?=
- =?us-ascii?Q?zWD3U32blSkSegiIFNwyEAp1k9/HhS3eupK+tVJ5J9Nna148IVeQYmFIHvGI?=
- =?us-ascii?Q?QX7bvhdP9hQYzHWvwfvyIuitP8kPdj1kZM5FJ43hzhT0wvBPnTDfSsERokjC?=
- =?us-ascii?Q?aU9PuWVJNRYoWGhj41OL4aKSp3DHnc9HqmxtCUBtUlweVDRgxPLMwMfI+235?=
- =?us-ascii?Q?iDd1vsNZh4t82AwuhHFEEbreH7sM/5J0B5nDheNIH6Y3COpBu+EdZ8AdTV3I?=
- =?us-ascii?Q?spk701348vDxW8s4hCeq1TqD?=
-X-OriginatorOrg: outlook.com
-X-MS-Exchange-CrossTenant-Network-Message-Id: 7f5e21c7-e861-4b30-a679-08ddeb752478
-X-MS-Exchange-CrossTenant-AuthSource: TY4PR01MB13887.jpnprd01.prod.outlook.com
-X-MS-Exchange-CrossTenant-AuthAs: Internal
-X-MS-Exchange-CrossTenant-OriginalArrivalTime: 04 Sep 2025 05:37:33.5546
- (UTC)
-X-MS-Exchange-CrossTenant-FromEntityHeader: Hosted
-X-MS-Exchange-CrossTenant-Id: 84df9e7f-e9f6-40af-b435-aaaaaaaaaaaa
-X-MS-Exchange-CrossTenant-RMS-PersistedConsumerOrg:
-	00000000-0000-0000-0000-000000000000
-X-MS-Exchange-Transport-CrossTenantHeadersStamped: TYYPR01MB14292
+Content-Transfer-Encoding: 8bit
 
-From: Haoran Yu <literalkernel@outlook.com>
+Fix some small proofreading errors.
 
-commit eba1333c50f8a5eebb12b523c30faffac33681b3
-changed command-line interface.
-This patch going to synchronize with the previous changes.
-
-Signed-off-by: Haoran Yu <literalkernel@outlook.com>
+Signed-off-by: John B. Wyatt IV <jwyatt@redhat.com>
+Signed-off-by: John B. Wyatt IV <sageofredondo@gmail.com>
 ---
- tuna.desktop | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+ etc/tuna/example.conf   | 2 +-
+ tuna/gui/profileview.py | 2 +-
+ 2 files changed, 2 insertions(+), 2 deletions(-)
 
-diff --git a/tuna.desktop b/tuna.desktop
-index 87ca3a3..b5edfe4 100644
---- a/tuna.desktop
-+++ b/tuna.desktop
-@@ -2,7 +2,7 @@
- [Desktop Entry]
- Name=tuna
- GenericName=Application Tuner
--Exec=tuna --gui
-+Exec=tuna gui
- Type=Application
- Terminal=false
- Comment=Thread and IRQ attribute management
+diff --git a/etc/tuna/example.conf b/etc/tuna/example.conf
+index 7bb293e..0d3353f 100644
+--- a/etc/tuna/example.conf
++++ b/etc/tuna/example.conf
+@@ -55,5 +55,5 @@ net.core = core
+ 
+ #special section for this file description
+ [fileDescription]
+-text = This file contain some features for tunning kernel params.Mainly this is example file for demonstrate tuna new features. Params are set as default or most uses value
++text = This file contains some features for tuning kernel params. Mainly this is an example file for demonstrating Tuna's new features. Params are set as default or the most used value.
+ 
+diff --git a/tuna/gui/profileview.py b/tuna/gui/profileview.py
+index 7570bc0..e5022b8 100644
+--- a/tuna/gui/profileview.py
++++ b/tuna/gui/profileview.py
+@@ -104,7 +104,7 @@ class profileview:
+                         "%s\n\n%s\n%s" % \
+                         (_("Config file was changed!"),
+                          _("All changes will be lost"),
+-                         _("Realy continue?"),))
++                         _("Really continue?"),))
+                 ret = dialog.run()
+                 dialog.destroy()
+                 if ret == Gtk.ResponseType.NO:
 -- 
 2.51.0
 
