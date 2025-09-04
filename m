@@ -1,119 +1,128 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 03AEF4A3C
-	for <linux-rt-users@vger.kernel.org>; Thu,  4 Sep 2025 14:21:46 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 1511830499B
+	for <linux-rt-users@vger.kernel.org>; Thu,  4 Sep 2025 17:58:28 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1756995708; cv=none; b=CPmYv8OzuCBY4esJW10nHqt4xvm0w86ZSzkRBXY6V9BlD/igXVYJuFBUiML5Kby78c0tcSqului8TF3bX4eMm5w7rrALkGEmjQBLm3YRDmq3u6cHFe65JMSsQ07cZIiPJ9Bh7PuhPCubFVDgFQ8JKSCXwQlNp+i5j8CMYlYxumw=
+	t=1757008710; cv=none; b=MvWhIzPahrp699b5K67dlC25YDWws089dwpS9EBO8SFRhuXsZNnyMvj+aishrnKVBHsG5RMCYgOilaw/y3yNfUt9K/L8ZQycGjwjCRe9owCsq6gR8YIUZcuUOOkZ1r5XLnZhqAClfhpndPiTTZkuP/yVsQ/8H3odbm2jNfwo8wc=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1756995708; c=relaxed/simple;
-	bh=Dy7Rd6n72zPh2uMay2T7FL5dIAC5fJnhoWKuHz28blU=;
-	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=DYG4d/AKVYgqYcjNIkLjHVePbAMjZr+1yQaywet71eE2828ugYlPWvrdfhtz/jQ32iLf2Cl2y2kEGdALH4m2JFZHLkaPCr+Iq+LWS1wt6xh4aLqPZNx+E2EZNSoe1ABnLYyb13G1AnwQ2bpBFMdmKuLz6ct5SnoxhyRDQibBECk=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=HMO+gD2I; arc=none smtp.client-ip=170.10.129.124
+	s=arc-20240116; t=1757008710; c=relaxed/simple;
+	bh=GFCXiPNxr6FIq1X97+/9s6/CYhA2mYYeDTtgBDxKlTs=;
+	h=Date:From:To:Subject:Message-ID:MIME-Version:Content-Type:
+	 Content-Disposition; b=GXw1E9Sc7aibt7HDbGZwJl8X9rKM17T03+oKq+jku0go0ZOGELfti82c1eVshm77ldgPGXrIRHhvWaQKT1Fwmv2deXRqnRGR7W76EFgIdrmDc1YERY20rkpZCLfckTCGL8Nzb8HYMTr2J+nZ2CFhA+brBJQ9QMuAon2ZYkSoVCk=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=AuOEf76V; arc=none smtp.client-ip=170.10.133.124
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="HMO+gD2I"
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="AuOEf76V"
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1756995706;
+	s=mimecast20190719; t=1757008708;
 	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:
-	 content-transfer-encoding:content-transfer-encoding;
-	bh=ueDHaAzCP7B7bAfsuqWOlkxtdLHlPk8l92ZblXdt11U=;
-	b=HMO+gD2IoSp5l22eyEzsGe4br36fXxHVjMr94lgnGyIGkOIvn0LotW+fiRHnxBzeMahghG
-	lrccx4CqJof6TMn8Hx2cgI+lySzataDwm0VRPuMusU9ECqc+q99wbuzydxhrHFKWjSEa4X
-	xlUZSbPx3Ntxgpt5u0ckeStsEmU4vHI=
-Received: from mail-qt1-f198.google.com (mail-qt1-f198.google.com
- [209.85.160.198]) by relay.mimecast.com with ESMTP with STARTTLS
- (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
- us-mta-677-RJ1q4B2CMsKAmDULxp7Jhw-1; Thu, 04 Sep 2025 10:21:44 -0400
-X-MC-Unique: RJ1q4B2CMsKAmDULxp7Jhw-1
-X-Mimecast-MFC-AGG-ID: RJ1q4B2CMsKAmDULxp7Jhw_1756995704
-Received: by mail-qt1-f198.google.com with SMTP id d75a77b69052e-4b29cdc7417so20351331cf.0
-        for <linux-rt-users@vger.kernel.org>; Thu, 04 Sep 2025 07:21:44 -0700 (PDT)
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1756995704; x=1757600504;
-        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
-         :to:from:x-gm-message-state:from:to:cc:subject:date:message-id
-         :reply-to;
-        bh=ueDHaAzCP7B7bAfsuqWOlkxtdLHlPk8l92ZblXdt11U=;
-        b=M2/dKOuGa/vlNZZ7HFayy0H0Wqi+5n1iWgIGBzyFxhyl11yJh1Exu0WGYG3imBQwj0
-         U6ukPFMXK454tHiKnOtBtCXE2IXJNY3ompOhxM2WpTi9AHoKAXUdKzf5BskFl91Vs/Yg
-         wvk+mwmWNhN49NOCPe6IEREOHt0BNvX3y8X0mKIrzcc6oaFa5iIrJQp1c/nBV+jW1WSV
-         DCvHD0RXEGEI68p21IbRXAvskDr1CuOhK4oPNjhGs7N4Kttxtx/DK/n1MEQWwCrcTaPu
-         4yJc4O4Ta6onXSNhnYjAyUOtXG27KPxlfAPgh/ux/Jk66i3Qg2fhgRrcBdqcO3LwsHK8
-         wYkw==
-X-Forwarded-Encrypted: i=1; AJvYcCWSbJTh7jnypK/tLAArU2VhOgmJkZm6JriJ3HF2bNxeALbVoPjPWjPPQwuBCtvrStPHC2W3X6fErtMjtMLQlg==@vger.kernel.org
-X-Gm-Message-State: AOJu0YwCEiOXWYsTfs+kf00RH1zRpV8K0kEACnA5OCmdsWOkoPzw3mit
-	eH1N0YLyqzSkjeffWnfdJTu2MeqrSmas2cIpg1SjE2YzPUo8ya2jlFMzJjHzDcb5yeA9LtHgfx6
-	7XrPiBnTBjUTSrT+3SHYXfm60BNGNW0unFgSbPe5WZsYqwJ8smP0HLZmDAWAhCt+bxH9z
-X-Gm-Gg: ASbGncuysxfyRDUYIp3qZMxbcJRHW1U5UtzE5KYrU1AnDZKHev4Ub1MhnwQXaOy4DAY
-	z2fgqarCb7C9Tt9j2XcrO8RZJpKy1OO6VPDc2V9ROYMMZe2mii1dgaUS3uQ+XaxAKBmv9hQZiuI
-	v3JdcHIAqWdAwX3ea3D8tdwp6c1T/v1MgPYj3KoYpG9Q7wRSBZYgiloJ6Try/eOmkpCXbKJneF8
-	xTSXTymAREegrQl23xWyM6fx6VuuzjGjqRrcRF2B2np/LjLhFmHbS2sTEsCEhUYQZrVZ6PwGWkW
-	LS0mAToI0gT1OzxF9/jJ6k9MrtHY5b/3Fd8HR9FnbpQ/V80p+lAV
-X-Received: by 2002:a05:622a:1111:b0:4b2:8ac4:ef5f with SMTP id d75a77b69052e-4b31dc91336mr231935071cf.66.1756995704245;
-        Thu, 04 Sep 2025 07:21:44 -0700 (PDT)
-X-Google-Smtp-Source: AGHT+IECcXgFmnI6gGybziP5HAYZiR+Bc/7cEqd2eGgqM9OfPiN6WuYRdywh+z4E18FBtWSQXr/QFQ==
-X-Received: by 2002:a05:622a:1111:b0:4b2:8ac4:ef5f with SMTP id d75a77b69052e-4b31dc91336mr231934591cf.66.1756995703803;
-        Thu, 04 Sep 2025 07:21:43 -0700 (PDT)
-Received: from thinkpad2024.redhat.com ([71.217.50.216])
-        by smtp.gmail.com with ESMTPSA id d75a77b69052e-4b48f799b83sm29260431cf.45.2025.09.04.07.21.42
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Thu, 04 Sep 2025 07:21:43 -0700 (PDT)
-From: "John B. Wyatt IV" <jwyatt@redhat.com>
-To: "Clark Williams" <williams@redhat.com>,
-	"John Kacur" <jkacur@redhat.com>
-Cc: "John B. Wyatt IV" <jwyatt@redhat.com>,
-	linux-rt-users@vger.kernel.org,
-	kernel-rts-sst <kernel-rts-sst@redhat.com>,
-	"John B. Wyatt IV" <sageofredondo@gmail.com>
-Subject: [PATCH] tuna: Proofreading fixes
-Date: Thu,  4 Sep 2025 10:21:31 -0400
-Message-ID: <20250904142134.41426-1-jwyatt@redhat.com>
-X-Mailer: git-send-email 2.51.0
+	 to:to:cc:mime-version:mime-version:content-type:content-type;
+	bh=lYOAUHIKSk6MKKfReIME4+kdHPyD+NO2CYTz0j1NUlY=;
+	b=AuOEf76VLzZQ03rOKCjIiGuqXzqgmclQ7TlSuIx+aBZM8EWvw1hR3YQJo79cQm2V0Bq+A3
+	2anl7SHz2Gv52MlsI6X0ozfG7WfpwV5FHDG3oFRqP1rfPsLBlCQdJmbgAjRtG3aE+W61uA
+	ctFfC+sVdfGFaf2Yjnt03QZBWouxb6M=
+Received: from mx-prod-mc-08.mail-002.prod.us-west-2.aws.redhat.com
+ (ec2-35-165-154-97.us-west-2.compute.amazonaws.com [35.165.154.97]) by
+ relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-450-AIwYyFfTN_6GrXH5niCXbQ-1; Thu,
+ 04 Sep 2025 13:58:24 -0400
+X-MC-Unique: AIwYyFfTN_6GrXH5niCXbQ-1
+X-Mimecast-MFC-AGG-ID: AIwYyFfTN_6GrXH5niCXbQ_1757008703
+Received: from mx-prod-int-06.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-06.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.93])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
+	(No client certificate requested)
+	by mx-prod-mc-08.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 44427180048E;
+	Thu,  4 Sep 2025 17:58:22 +0000 (UTC)
+Received: from localhost (unknown [10.22.82.11])
+	by mx-prod-int-06.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTP id C795F180044F;
+	Thu,  4 Sep 2025 17:58:20 +0000 (UTC)
+Date: Thu, 4 Sep 2025 14:58:19 -0300
+From: "Luis Claudio R. Goncalves" <lgoncalv@redhat.com>
+To: LKML <linux-kernel@vger.kernel.org>,
+	linux-rt-users <linux-rt-users@vger.kernel.org>,
+	stable-rt <stable-rt@vger.kernel.org>,
+	Steven Rostedt <rostedt@goodmis.org>,
+	Thomas Gleixner <tglx@linutronix.de>,
+	Carsten Emde <C.Emde@osadl.org>,
+	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+	Daniel Wagner <daniel.wagner@suse.com>,
+	Clark Williams <williams@redhat.com>,
+	Mark Gross <markgross@kernel.org>, Pavel Machek <pavel@denx.de>,
+	Jeff Brady <jeffreyjbrady@gmail.com>,
+	Jan Kiszka <jan.kiszka@siemens.com>,
+	Luis Goncalves <lgoncalv@redhat.com>
+Subject: [ANNOUNCE] 5.10.241-rt135
+Message-ID: <aLnTO44sihv44T1f@uudg.org>
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
 List-Subscribe: <mailto:linux-rt-users+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+X-Scanned-By: MIMEDefang 3.4.1 on 10.30.177.93
 
-Fix some small proofreading errors.
+Hello RT-list!
 
-Signed-off-by: John B. Wyatt IV <jwyatt@redhat.com>
-Signed-off-by: John B. Wyatt IV <sageofredondo@gmail.com>
+I'm pleased to announce the 5.10.241-rt135 stable release.
+
+This release is just an update to the new stable 5.10.241 version and
+no RT changes have been made.
+
+You can get this release via the git tree at:
+
+  git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
+
+  branch: v5.10-rt
+  Head SHA1: ae9468b2aec045dbfc6541c064db3c57c30d0572
+
+Or to build 5.10.241-rt135 directly, the following patches should be applied:
+
+  https://www.kernel.org/pub/linux/kernel/v5.x/linux-5.10.tar.xz
+
+  https://www.kernel.org/pub/linux/kernel/v5.x/patch-5.10.241.xz
+
+  https://www.kernel.org/pub/linux/kernel/projects/rt/5.10/older/patch-5.10.241-rt135.patch.xz
+
+Signing key fingerprint:
+
+  9354 0649 9972 8D31 D464  D140 F394 A423 F8E6 7C26
+
+All keys used for the above files and repositories can be found on the
+following git repository:
+
+   git://git.kernel.org/pub/scm/docs/kernel/pgpkeys.git
+
+Enjoy!
+Luis
+
+Changes from v5.10.240-rt134:
 ---
- etc/tuna/example.conf   | 2 +-
- tuna/gui/profileview.py | 2 +-
- 2 files changed, 2 insertions(+), 2 deletions(-)
-
-diff --git a/etc/tuna/example.conf b/etc/tuna/example.conf
-index 7bb293e..0d3353f 100644
---- a/etc/tuna/example.conf
-+++ b/etc/tuna/example.conf
-@@ -55,5 +55,5 @@ net.core = core
- 
- #special section for this file description
- [fileDescription]
--text = This file contain some features for tunning kernel params.Mainly this is example file for demonstrate tuna new features. Params are set as default or most uses value
-+text = This file contains some features for tuning kernel params. Mainly this is an example file for demonstrating Tuna's new features. Params are set as default or the most used value.
- 
-diff --git a/tuna/gui/profileview.py b/tuna/gui/profileview.py
-index 7570bc0..e5022b8 100644
---- a/tuna/gui/profileview.py
-+++ b/tuna/gui/profileview.py
-@@ -104,7 +104,7 @@ class profileview:
-                         "%s\n\n%s\n%s" % \
-                         (_("Config file was changed!"),
-                          _("All changes will be lost"),
--                         _("Realy continue?"),))
-+                         _("Really continue?"),))
-                 ret = dialog.run()
-                 dialog.destroy()
-                 if ret == Gtk.ResponseType.NO:
--- 
-2.51.0
+  Merge conflict in kernel/cgroup/cpuset.c: context conflict due to
+  callback_lock being a raw_spin_lock in RT.
+  
+---
+diff --cc kernel/cgroup/cpuset.c
+index 6a61bb8e2669,efe9785c6c13..e9372633d69f
+--- a/kernel/cgroup/cpuset.c
++++ b/kernel/cgroup/cpuset.c
+@@@ -1878,9 -1896,11 +1896,11 @@@ static int update_nodemask(struct cpuse
+  	if (retval < 0)
+  		goto done;
+  
++ 	check_insane_mems_config(&trialcs->mems_allowed);
++ 
+ -	spin_lock_irq(&callback_lock);
+ +	raw_spin_lock_irq(&callback_lock);
+  	cs->mems_allowed = trialcs->mems_allowed;
+ -	spin_unlock_irq(&callback_lock);
+ +	raw_spin_unlock_irq(&callback_lock);
+  
+  	/* use trialcs->mems_allowed as a temp variable */
+  	update_nodemasks_hier(cs, &trialcs->mems_allowed);
 
