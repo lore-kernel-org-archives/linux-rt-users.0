@@ -1,128 +1,251 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+Received: from smtp5-g21.free.fr (smtp5-g21.free.fr [212.27.42.5])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 1511830499B
-	for <linux-rt-users@vger.kernel.org>; Thu,  4 Sep 2025 17:58:28 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 8FA6ECA5E
+	for <linux-rt-users@vger.kernel.org>; Thu,  4 Sep 2025 23:45:49 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=212.27.42.5
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1757008710; cv=none; b=MvWhIzPahrp699b5K67dlC25YDWws089dwpS9EBO8SFRhuXsZNnyMvj+aishrnKVBHsG5RMCYgOilaw/y3yNfUt9K/L8ZQycGjwjCRe9owCsq6gR8YIUZcuUOOkZ1r5XLnZhqAClfhpndPiTTZkuP/yVsQ/8H3odbm2jNfwo8wc=
+	t=1757029553; cv=none; b=hFtlO3VdUcel7gGjhkss31lAomi94GOVCprx9tLHfSlBwYB301gia446acdb2ruI9QjejRKBphDKisIZpDFk67nZ8J3ForjzlRQXsEGDYitH3TF2a7RDxVBv6hvUJzp+3IyN2EfDEL0Vc68aA65TrwgFGjPJPwIw6yUwCU4wD/0=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1757008710; c=relaxed/simple;
-	bh=GFCXiPNxr6FIq1X97+/9s6/CYhA2mYYeDTtgBDxKlTs=;
-	h=Date:From:To:Subject:Message-ID:MIME-Version:Content-Type:
-	 Content-Disposition; b=GXw1E9Sc7aibt7HDbGZwJl8X9rKM17T03+oKq+jku0go0ZOGELfti82c1eVshm77ldgPGXrIRHhvWaQKT1Fwmv2deXRqnRGR7W76EFgIdrmDc1YERY20rkpZCLfckTCGL8Nzb8HYMTr2J+nZ2CFhA+brBJQ9QMuAon2ZYkSoVCk=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=AuOEf76V; arc=none smtp.client-ip=170.10.133.124
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
+	s=arc-20240116; t=1757029553; c=relaxed/simple;
+	bh=trrQ9vFTRbURuzBe42qBpSnJoKu9sp1OQ2w9Rz5PH/M=;
+	h=Message-ID:Date:MIME-Version:To:Cc:From:Subject:Content-Type; b=cxujUOypvsHPVZnF53+mmiJz4zoxDENm0RRripjmh/BPwGbhZiaOkV2tk0hoQmP9Auakqe2qIxP8sp/+Vt8p3qqyzdtu+djQkTfIu9nKpDH/0WpdbGJ6Jo20Ex7YMP45Qxkv15HCITIiWww9RLzsGxlWUstNAJOzgIvtdYG1c4M=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=free.fr; spf=pass smtp.mailfrom=free.fr; dkim=pass (2048-bit key) header.d=free.fr header.i=@free.fr header.b=KDYNkc4E; arc=none smtp.client-ip=212.27.42.5
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=free.fr
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=free.fr
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="AuOEf76V"
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1757008708;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:mime-version:mime-version:content-type:content-type;
-	bh=lYOAUHIKSk6MKKfReIME4+kdHPyD+NO2CYTz0j1NUlY=;
-	b=AuOEf76VLzZQ03rOKCjIiGuqXzqgmclQ7TlSuIx+aBZM8EWvw1hR3YQJo79cQm2V0Bq+A3
-	2anl7SHz2Gv52MlsI6X0ozfG7WfpwV5FHDG3oFRqP1rfPsLBlCQdJmbgAjRtG3aE+W61uA
-	ctFfC+sVdfGFaf2Yjnt03QZBWouxb6M=
-Received: from mx-prod-mc-08.mail-002.prod.us-west-2.aws.redhat.com
- (ec2-35-165-154-97.us-west-2.compute.amazonaws.com [35.165.154.97]) by
- relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-450-AIwYyFfTN_6GrXH5niCXbQ-1; Thu,
- 04 Sep 2025 13:58:24 -0400
-X-MC-Unique: AIwYyFfTN_6GrXH5niCXbQ-1
-X-Mimecast-MFC-AGG-ID: AIwYyFfTN_6GrXH5niCXbQ_1757008703
-Received: from mx-prod-int-06.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-06.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.93])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
-	(No client certificate requested)
-	by mx-prod-mc-08.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 44427180048E;
-	Thu,  4 Sep 2025 17:58:22 +0000 (UTC)
-Received: from localhost (unknown [10.22.82.11])
-	by mx-prod-int-06.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTP id C795F180044F;
-	Thu,  4 Sep 2025 17:58:20 +0000 (UTC)
-Date: Thu, 4 Sep 2025 14:58:19 -0300
-From: "Luis Claudio R. Goncalves" <lgoncalv@redhat.com>
-To: LKML <linux-kernel@vger.kernel.org>,
-	linux-rt-users <linux-rt-users@vger.kernel.org>,
-	stable-rt <stable-rt@vger.kernel.org>,
-	Steven Rostedt <rostedt@goodmis.org>,
-	Thomas Gleixner <tglx@linutronix.de>,
-	Carsten Emde <C.Emde@osadl.org>,
-	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-	Daniel Wagner <daniel.wagner@suse.com>,
-	Clark Williams <williams@redhat.com>,
-	Mark Gross <markgross@kernel.org>, Pavel Machek <pavel@denx.de>,
-	Jeff Brady <jeffreyjbrady@gmail.com>,
-	Jan Kiszka <jan.kiszka@siemens.com>,
-	Luis Goncalves <lgoncalv@redhat.com>
-Subject: [ANNOUNCE] 5.10.241-rt135
-Message-ID: <aLnTO44sihv44T1f@uudg.org>
+	dkim=pass (2048-bit key) header.d=free.fr header.i=@free.fr header.b="KDYNkc4E"
+Received: from [IPV6:2a01:e34:ec24:52e0:a9ac:7419:683:57d6] (unknown [IPv6:2a01:e34:ec24:52e0:a9ac:7419:683:57d6])
+	(Authenticated sender: marc.w.gonzalez@free.fr)
+	by smtp5-g21.free.fr (Postfix) with ESMTPSA id 9A36F60150;
+	Fri,  5 Sep 2025 01:45:31 +0200 (CEST)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=free.fr;
+	s=smtp-20201208; t=1757029542;
+	bh=trrQ9vFTRbURuzBe42qBpSnJoKu9sp1OQ2w9Rz5PH/M=;
+	h=Date:To:Cc:From:Subject:From;
+	b=KDYNkc4Ek0Mfva1auJCHEyr6PjIZ7mm5AMNvIUZyWhOunKnwcKD/C47p2f+xUPOUj
+	 vG61jkjKXYaorG57CHfbKZ2v9iW9KA0T+9uDqEZEncPZUh2K2JbkUH006GvXIwsJ38
+	 vXxkBkaN1WXGTr0xIZQCrB4hoRExXNZHZtI/EUpX5wSmz+WNlFryzsVoR+qFjylmF0
+	 FlA+on2kTiglN2qBPo+lwc49kGnbQKPMCWjSuN61mEL/zPXBvGP/0e210GUmwm5czj
+	 Mask9/NICwVYMc67ItOqTBYLfShTZ9DC4xLlV5LQVeqvBz+kaxnHkm5SRr8xtz3FEL
+	 Te4idhilAH4Rg==
+Message-ID: <5f7496eb-bf62-4cc9-bef0-9cae97a93dca@free.fr>
+Date: Fri, 5 Sep 2025 01:45:31 +0200
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
 List-Subscribe: <mailto:linux-rt-users+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-X-Scanned-By: MIMEDefang 3.4.1 on 10.30.177.93
+User-Agent: Mozilla Thunderbird
+Content-Language: en-US
+To: linux-rt-users@vger.kernel.org
+Cc: Steven Rostedt <rostedt@goodmis.org>, Thomas Gleixner
+ <tglx@linutronix.de>, Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+ Daniel Wagner <daniel.wagner@suse.com>, Clark Williams
+ <williams@redhat.com>, Pavel Machek <pavel@denx.de>,
+ Luis Goncalves <lgoncalv@redhat.com>,
+ John McCalpin <mccalpin@tacc.utexas.edu>
+From: Marc Gonzalez <marc.w.gonzalez@free.fr>
+Subject: Large(ish) variance induced by SCHED_FIFO
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
 
-Hello RT-list!
+Hello everyone,
 
-I'm pleased to announce the 5.10.241-rt135 stable release.
+I am currently *NOT* running a PREEMPT_RT kernel.
 
-This release is just an update to the new stable 5.10.241 version and
-no RT changes have been made.
+I am trying to get reproducible / deterministic / low variance results
+using a vendor kernel (6.8.0-79-generic #79-Ubuntu SMP PREEMPT_DYNAMIC).
 
-You can get this release via the git tree at:
+I have removed all sources of noise / variance I could think of:
 
-  git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
+- SMT is disabled in BIOS
+lscpu reports "Thread(s) per core: 1"
+cat /sys/devices/system/cpu/smt/active returns 0
 
-  branch: v5.10-rt
-  Head SHA1: ae9468b2aec045dbfc6541c064db3c57c30d0572
+- Kernel boots in single user mode
+No GUI, just a text terminal
+Nothing running other than system daemons & bash
 
-Or to build 5.10.241-rt135 directly, the following patches should be applied:
+- Kernel runs with threadirqs command-line parameter
+ISRs run as SCHED_FIFO processes with prio 50
+$ ps -e -o pid,cls,pri,args --sort pri
+    PID CLS PRI COMMAND
+     18  FF 139 [migration/0]
+     23  FF 139 [migration/1]
+     29  FF 139 [migration/2]
+     35  FF 139 [migration/3]
+     19  FF  90 [idle_inject/0]
+     22  FF  90 [idle_inject/1]
+     28  FF  90 [idle_inject/2]
+     34  FF  90 [idle_inject/3]
+     54  FF  90 [irq/9-acpi]
+     62  FF  90 [watchdogd]
+     68  FF  90 [irq/24-PCIe PME]
+     69  FF  90 [irq/24-pciehp]
+     70  FF  90 [irq/24-s-pciehp]
+     71  FF  90 [irq/25-PCIe PME]
+     74  FF  90 [irq/8-rtc0]
+     75  FF  90 [irq/16-ehci_hcd:usb1]
+     82  FF  90 [irq/23-ehci_hcd:usb2]
+    162  FF  90 [irq/26-xhci_hcd]
+    164  FF  90 [irq/28-ahci[0000:00:1f.2]]
+    377  FF  90 [irq/18-i801_smbus]
+    384  FF  90 [irq/29-mei_me]
+    411  FF  90 [card1-crtc0]
+    412  FF  90 [card1-crtc1]
+    413  FF  90 [irq/30-i915]
+    463  FF  90 [irq/31-snd_hda_intel:card0]
+    466  FF  90 [irq/32-snd_hda_intel:card1]
+    335  FF  41 [psimon]
+   1076  FF  41 [psimon]
 
-  https://www.kernel.org/pub/linux/kernel/v5.x/linux-5.10.tar.xz
+- Frequency of CPUs is "pinned" at 3 GHz
+No "turbo boost" (frequency varies with temperature).
+Slightly below nominal freq to avoid temp throttling.
+(Intel Core i5-4590 CPU @ 3.30GHz)
+for I in 0 1 2 3; do
+  echo userspace > /sys/devices/system/cpu/cpu$I/cpufreq/scaling_governor
+  echo   3000000 > /sys/devices/system/cpu/cpu$I/cpufreq/scaling_setspeed
+done
 
-  https://www.kernel.org/pub/linux/kernel/v5.x/patch-5.10.241.xz
+- Program is pinned to CPU #1
+Avoid any cache ping pong.
+Avoid CPU #0 in case it handles more interrupts.
+$ taskset -c 1 ./a.out
 
-  https://www.kernel.org/pub/linux/kernel/projects/rt/5.10/older/patch-5.10.241-rt135.patch.xz
+And the last thing I wanted to do is:
 
-Signing key fingerprint:
+- Run benchmark as SCHED_FIFO 99 to make sure NOTHING could interrupt it
+bench is strictly computational:
+no system calls, no I/O, no sleeping, just number crunching.
 
-  9354 0649 9972 8D31 D464  D140 F394 A423 F8E6 7C26
+However, I noticed that the results have MORE variance when
+the program runs as SCHED_FIFO than when it runs as SCHED_OTHER.
 
-All keys used for the above files and repositories can be found on the
-following git repository:
+Here is my testcase:
 
-   git://git.kernel.org/pub/scm/docs/kernel/pgpkeys.git
+Toy benchmark:
+# define N (1 << 30)
+int main(void)
+{
+	for (volatile int i = 0; i < N; ++i);
+	return 0;
+}
 
-Enjoy!
-Luis
+Compiled with gcc -O3 toy.c
 
-Changes from v5.10.240-rt134:
----
-  Merge conflict in kernel/cgroup/cpuset.c: context conflict due to
-  callback_lock being a raw_spin_lock in RT.
-  
----
-diff --cc kernel/cgroup/cpuset.c
-index 6a61bb8e2669,efe9785c6c13..e9372633d69f
---- a/kernel/cgroup/cpuset.c
-+++ b/kernel/cgroup/cpuset.c
-@@@ -1878,9 -1896,11 +1896,11 @@@ static int update_nodemask(struct cpuse
-  	if (retval < 0)
-  		goto done;
-  
-+ 	check_insane_mems_config(&trialcs->mems_allowed);
-+ 
- -	spin_lock_irq(&callback_lock);
- +	raw_spin_lock_irq(&callback_lock);
-  	cs->mems_allowed = trialcs->mems_allowed;
- -	spin_unlock_irq(&callback_lock);
- +	raw_spin_unlock_irq(&callback_lock);
-  
-  	/* use trialcs->mems_allowed as a temp variable */
-  	update_nodemasks_hier(cs, &trialcs->mems_allowed);
+Then I run this script as root:
+#!/bin/bash
+
+CMD="taskset -c 1 ./a.out"
+if [ "$1" = "fifo" ]; then CMD="chrt -f 99 $CMD"; fi
+
+for I in $(seq 1 30); do
+  T0=$(date "+%s.%N")
+  $CMD
+  T1=$(date "+%s.%N")
+  echo "$T1-$T0" | bc -l
+done
+
+Once without fifo (SCHED_OTHER), once with fifo (SCHED_FIFO).
+
+(Full results at the end of the message)
+
+For SCHED_OTHER:
+MIN_RUNTIME=2.158045784 seconds
+MAX_RUNTIME=2.158515466 seconds
+i.e. all runs are within +/- 109 ppm (MAX-MIN)/(MAX+MIN)
+
+For SCHED_FIFO:
+MIN_RUNTIME=2.247394425 seconds
+MAX_RUNTIME=2.305229091 seconds
+i.e. all runs are within +/- 12700 ppm
+i.e. 100 times WORSE than SCHED_OTHER... :(
+
+HOWEVER, if we sort SCHED_FIFO results, we clearly see 3 "islands":
+first run-time is the minimum outlier = 2.247394425
+21 results in [2.253636818, 2.254797674] => 257 ppm
+ 8 results in [2.304188238, 2.305229091] => 226 ppm
+Still not as good as SCHED_FIFO but nowhere near as bad.
+
+
+Questions I have no answers for at this time:
+
+What could explain this behavior?
+Why several "islands" of results when running as SCHED_FIFO 99?
+Why is the variance still greater within an island?
+
+Thanks for reading me this far!! :)
+
+Regards
+
+
+Raw results for reference:
+
+SCHED_OTHER
+2.158171245
+2.158127633
+2.158129497
+2.158109551
+2.158089224
+2.158515466
+2.158083084
+2.158127232
+2.158282178
+2.158135800
+2.158123891
+2.158045784
+2.158174865
+2.158141835
+2.158184503
+2.158118620
+2.158096101
+2.158150349
+2.158150868
+2.158076309
+2.158179210
+2.158134907
+2.158202927
+2.158108137
+2.158182418
+2.158088121
+2.158095718
+2.158165650
+2.158134169
+2.158119635
+
+SCHED_FIFO
+2.247394425
+2.254726778
+2.305229091
+2.253719228
+2.254658938
+2.254744883
+2.304188238
+2.254670366
+2.254683699
+2.254683326
+2.304284105
+2.253755218
+2.254756793
+2.304288106
+2.254756981
+2.253636818
+2.254797674
+2.304240533
+2.254630310
+2.254659655
+2.254696007
+2.304234345
+2.254739714
+2.254766850
+2.254620088
+2.304224451
+2.254608929
+2.254732058
+2.304227047
+2.254665694
+
 
