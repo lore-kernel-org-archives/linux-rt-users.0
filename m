@@ -1,233 +1,96 @@
-Received: from smtp5-g21.free.fr (smtp5-g21.free.fr [212.27.42.5])
+Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 18BD111713
-	for <linux-rt-users@vger.kernel.org>; Fri,  5 Sep 2025 13:23:23 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=212.27.42.5
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 5BAFA27AC5A;
+	Fri,  5 Sep 2025 13:52:28 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1757078607; cv=none; b=qi6Ula4qPVooZZxG3t9GeJUR2mGWuZFfrJnuAIy+yWm+qx1/ST0L+X1LfkgcoBObNdx0RRu1b1X0Y58CfqVnJWKa8eMMv7h0OXMavTTtiYJ+aU3VvWPGjpU2sh30VS2/o5eVjYbkoDeo7o6P6EBvw1aMICXi0bstKS6hL5wS9JU=
+	t=1757080348; cv=none; b=A+9sRqAxhJo35LoGlU2ZqjEO1EuDbiESoUFwLq9EG2i1qoM1nMpTMBYTjc0r7oR3+MXZdhmdHqlK8xtkb5hW8DBXjjuQfBK0PY+zZbINl8YVa9KzVEI6yX5WlJQ8pnZ4JrZlDJxiEPFI8edM9PLYjfGui1DZvV2GLc3/xM5xbjQ=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1757078607; c=relaxed/simple;
-	bh=MldiG4NSZxqWF9ncIRsagjaNM1QCIIWhSWthJF6wSwU=;
-	h=Message-ID:Date:MIME-Version:From:Subject:To:Cc:References:
-	 In-Reply-To:Content-Type; b=orYCQcPou6/1ntoJkLEV2mUifD9qHjfNXGrBSicMJ7Xr/UVMSrIaIeHSFDpzBdHo4NxQTgcqI0VFJnjrH4aTauIeR/0WrZXLCzYSVNrfTkBP0Ep/w2dTyVcKq/nFCCc58kq6Ql5ZlNWZFG3JnBl938q0nKG/z9iaocbYbWLSQj4=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=free.fr; spf=pass smtp.mailfrom=free.fr; dkim=pass (2048-bit key) header.d=free.fr header.i=@free.fr header.b=bJrzF+3b; arc=none smtp.client-ip=212.27.42.5
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=free.fr
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=free.fr
+	s=arc-20240116; t=1757080348; c=relaxed/simple;
+	bh=dJfF0Rw0L4xSQFtUq3anCWc2bDQRv8Coe7/OfF8Ir/I=;
+	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
+	 MIME-Version:Content-Type; b=QvxMz8pbMZcRKkqyU0cv4K/bn4OoFdBsmDRZpvmjDdde/crvwcNdoFLGLu1UTh7dMSEqlISkLK6NbbPy/4Szl7vGbk42row1EUn0Cs4KBl4P6irqQs6Nmi74oYO+J43EGZb8WanGErreTDR8ydHrjqJp7SnbbYX2b56N1V/qVeU=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=Bsp2NMjD; arc=none smtp.client-ip=10.30.226.201
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=free.fr header.i=@free.fr header.b="bJrzF+3b"
-Received: from [IPV6:2a01:e34:ec24:52e0:f5ae:e894:8298:679c] (unknown [IPv6:2a01:e34:ec24:52e0:f5ae:e894:8298:679c])
-	(Authenticated sender: marc.w.gonzalez@free.fr)
-	by smtp5-g21.free.fr (Postfix) with ESMTPSA id E70F060147;
-	Fri,  5 Sep 2025 15:23:09 +0200 (CEST)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=free.fr;
-	s=smtp-20201208; t=1757078601;
-	bh=MldiG4NSZxqWF9ncIRsagjaNM1QCIIWhSWthJF6wSwU=;
-	h=Date:From:Subject:To:Cc:References:In-Reply-To:From;
-	b=bJrzF+3bwY2TkLaYNfKz/jKRGqWQpTo6MJfbJ43FbMd7OwchDkyI7SrVgQT/mzhjC
-	 AqDx87yKEdLO41yA7CfZx23hb5y8JzV26bu7OzZ9RJXva3kx1y6KHXXWfGvNdCbDVa
-	 4X6b9fa3IzrgFzZR13GQk4mRi2UGWKTil3jU6FCjHHUi+GrgItf/RjqPUNAleJHKGB
-	 jH0JpW18WcSX+fssr6cVhCJrDflHCVfUZGzuoWwTbw++xUJr+WURJRK/b/GJjhyFrR
-	 r70/dRZnQpMjyxYax6YYW3/AmiBl2NF5Fzk3OcrBRjf51Nkal4gO0XNA0BBF5r5xOX
-	 d8ajr241/UMDg==
-Message-ID: <afc4c145-4758-4924-b106-e7844624d269@free.fr>
-Date: Fri, 5 Sep 2025 15:23:09 +0200
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="Bsp2NMjD"
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id DBE52C4CEF1;
+	Fri,  5 Sep 2025 13:52:23 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
+	s=k20201202; t=1757080347;
+	bh=dJfF0Rw0L4xSQFtUq3anCWc2bDQRv8Coe7/OfF8Ir/I=;
+	h=From:To:Cc:Subject:Date:In-Reply-To:References:From;
+	b=Bsp2NMjDEx+QYI95iBU62+tuqV+aboQL/7r+IezDpFXfH0YoWm9FLYiFiv/9RzKYe
+	 rRr/VPIa9mh3/DHl8ca3DxU7+a+3gIjcAOBQ7cXwFeIDGgu1MmWHpa/AK/O9rXTzjW
+	 knK1tkiRc+X8ddpFL0yehZTsH9G00Uw6ZTOwr9gLSEmvPbQ8kx+yH2KOFqjk1HxApE
+	 fBC0GF6IxYnRAXSndRP1tpI2ZMam/sLggsCIpZAdPB6zBf3vHrii5K0ZzmvZGS1VOy
+	 lQ1DaihOMRkjuH2xiCBKMMWNOyF8RqUk6IYCTSmK96hfvjzpqF0RwoDruVGF82Rnx7
+	 nvYVN9BGCk1Gw==
+From: Christian Brauner <brauner@kernel.org>
+To: Nam Cao <namcao@linutronix.de>
+Cc: Christian Brauner <brauner@kernel.org>,
+	Linus Torvalds <torvalds@linux-foundation.org>,
+	Xi Ruoyao <xry111@xry111.site>,
+	Frederic Weisbecker <frederic@kernel.org>,
+	Valentin Schneider <vschneid@redhat.com>,
+	Alexander Viro <viro@zeniv.linux.org.uk>,
+	Jan Kara <jack@suse.cz>,
+	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+	John Ogness <john.ogness@linutronix.de>,
+	K Prateek Nayak <kprateek.nayak@amd.com>,
+	Clark Williams <clrkwllms@kernel.org>,
+	Steven Rostedt <rostedt@goodmis.org>,
+	linux-fsdevel@vger.kernel.org,
+	linux-kernel@vger.kernel.org,
+	linux-rt-devel@lists.linux.dev,
+	linux-rt-users@vger.kernel.org,
+	Joe Damato <jdamato@fastly.com>,
+	Martin Karsten <mkarsten@uwaterloo.ca>,
+	Jens Axboe <axboe@kernel.dk>
+Subject: Re: [PATCH v4 0/1] eventpoll: Fix priority inversion problem
+Date: Fri,  5 Sep 2025 15:52:14 +0200
+Message-ID: <20250905-weltoffen-eintopf-551fba944be9@brauner>
+X-Mailer: git-send-email 2.47.2
+In-Reply-To: <cover.1752581388.git.namcao@linutronix.de>
+References: <cover.1752581388.git.namcao@linutronix.de>
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
 List-Subscribe: <mailto:linux-rt-users+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-User-Agent: Mozilla Thunderbird
-From: Marc Gonzalez <marc.w.gonzalez@free.fr>
-Subject: Re: Large(ish) variance induced by SCHED_FIFO
-To: Daniel Wagner <dwagner@suse.de>
-Cc: linux-rt-users@vger.kernel.org, Steven Rostedt <rostedt@goodmis.org>,
- Thomas Gleixner <tglx@linutronix.de>,
- Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
- Daniel Wagner <daniel.wagner@suse.com>, Clark Williams
- <williams@redhat.com>, Pavel Machek <pavel@denx.de>,
- Luis Goncalves <lgoncalv@redhat.com>,
- John McCalpin <mccalpin@tacc.utexas.edu>
-References: <5f7496eb-bf62-4cc9-bef0-9cae97a93dca@free.fr>
- <ac1ef5df-aa30-4b63-9beb-3e0522dd3cec@flourine.local>
-Content-Language: en-US
-In-Reply-To: <ac1ef5df-aa30-4b63-9beb-3e0522dd3cec@flourine.local>
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="utf-8"
+X-Developer-Signature: v=1; a=openpgp-sha256; l=1303; i=brauner@kernel.org; h=from:subject:message-id; bh=dJfF0Rw0L4xSQFtUq3anCWc2bDQRv8Coe7/OfF8Ir/I=; b=owGbwMvMwCU28Zj0gdSKO4sYT6slMWTsei3im99+fsm+Ceukai8q/BXf6NbE/oFj1qJp63I1d 9yMWe9b3VHKwiDGxSArpsji0G4SLrecp2KzUaYGzBxWJpAhDFycAjAR8W8M/8McY7duPLDX1H3t ZfV8tvhZLyd+6X84xWbJr66ALbfS7Hcy/OHPe+Xx0P1s7LcHFSd2lix2vC71Qtnypcvx1pU8ujN nJLEAAA==
+X-Developer-Key: i=brauner@kernel.org; a=openpgp; fpr=4880B8C9BD0E5106FC070F4F7B3C391EFEA93624
+Content-Transfer-Encoding: 8bit
 
-Hello David :)
-
-On 05/09/2025 10:25, Daniel Wagner wrote:
-
-> On Fri, Sep 05, 2025 at 01:45:31AM +0200, Marc Gonzalez wrote:
->
->> Then I run this script as root:
->> #!/bin/bash
->>
->> CMD="taskset -c 1 ./a.out"
->> if [ "$1" = "fifo" ]; then CMD="chrt -f 99 $CMD"; fi
->>
->> for I in $(seq 1 30); do
->>   T0=$(date "+%s.%N")
->>   $CMD
->>   T1=$(date "+%s.%N")
->>   echo "$T1-$T0" | bc -l
->> done
+On Tue, 15 Jul 2025 14:46:33 +0200, Nam Cao wrote:
+> This v4 is the follow-up to v3 at:
+> https://lore.kernel.org/linux-fsdevel/20250527090836.1290532-1-namcao@linutronix.de/
+> which resolves a priority inversion problem.
 > 
-> This setup is forking processes in order to get timestamps. This
-> gives you uncontrollable variance in the measurement. Use clock_gettime
-> inside your test program.
+> The v3 patch was merged, but then got reverted due to regression.
+> 
+> The direction of v3 was wrong in the first place. It changed the
+> eventpoll's event list to be lockless, making the code harder to read. I
+> stared at the patch again, but still couldn't figure out what the bug is.
+> 
+> [...]
 
-I had already tested your suggestion, and observed it did not
-make any difference. I will test again nonetheless.
+Applied to the vfs-6.18.misc branch of the vfs/vfs.git tree.
+Patches in the vfs-6.18.misc branch should appear in linux-next soon.
 
-(I used CLOCK_MONOTONIC_RAW.)
+Please report any outstanding bugs that were missed during review in a
+new review to the original patch series allowing us to drop it.
 
-NB: if the large variance were induced by getting timestamps outside
-the program, then SCHED_OTHER runs should be similarly impacted
-(however, they are not).
+It's encouraged to provide Acked-bys and Reviewed-bys even though the
+patch has now been applied. If possible patch trailers will be updated.
 
-> Also you might want to reduce the prio to 98.
+Note that commit hashes shown below are subject to change due to rebase,
+trailer updates or similar. If in doubt, please check the listed branch.
 
-May I ask why?
+tree:   https://git.kernel.org/pub/scm/linux/kernel/git/vfs/vfs.git
+branch: vfs-6.18.misc
 
-I'm guessing it's bad(TM) to potentially block the migration task?
-
-I will lower the priority to 90.
-
-Here is my current test code:
-
-#include <stdio.h>
-#include <time.h>
-#define N (1 << 30)
-#define G (1000*1000*1000L)
-int main(void)
-{
-	struct timespec t0, t1;
-	clock_gettime(CLOCK_MONOTONIC_RAW, &t0);
-	for (volatile int i = 0; i < N; ++i);
-	clock_gettime(CLOCK_MONOTONIC_RAW, &t1);
-	long diff = (t1.tv_sec*G + t1.tv_nsec) - (t0.tv_sec*G + t0.tv_nsec);
-	printf("%ld\n", diff);
-	return 0;
-}
-
-associated script:
-
-#!/bin/bash
-CMD="taskset -c 1 ./a.out"
-if [ "$1" = "fifo" ]; then CMD="chrt -f 90 $CMD"; fi
-for I in $(seq 1 30); do $CMD; done
-
-
-The results are the same as before:
-
-SCHED_OTHER
-MIN=2156085411 MAX=2156133420
-All within 11 ppm of the average (EXCELLENT RESULTS)
-
-SCHED_FIFO
-MIN=2205859200 (first run again, how strange)
-MAX=2304868902
-All within 21950 ppm of the average (TERRIBLE RESULTS)
-21950 ppm = 2.2%
-
-Looking at the distribution of SCHED_FIFO again, I notice a pattern:
-first run-time is the minimum outlier = 2.20 seconds
-21 (again!!) results around 2.25 seconds
-8 (again!!) results around 2.30 seconds
-
-BRAIN DUMP:
-"First" run is meaningless.
-First since what? Previous batch of runs?
-In that case, sleeping between runs should work around the issue?
-
-It looks like there is some kind of 50 millisecond quantum
-involved somewhere somehow.
-
-$ grep HZ /boot/config-6.8.0-79-generic 
-CONFIG_NO_HZ_COMMON=y
-# CONFIG_HZ_PERIODIC is not set
-# CONFIG_NO_HZ_IDLE is not set
-CONFIG_NO_HZ_FULL=y
-CONFIG_NO_HZ=y
-# CONFIG_HZ_100 is not set
-# CONFIG_HZ_250 is not set
-# CONFIG_HZ_300 is not set
-CONFIG_HZ_1000=y
-CONFIG_HZ=1000
-
-(Not sure what it means to have CONFIG_NO_HZ_FULL && CONFIG_HZ_1000)
-
-This is driving me crazy.
-I'm all ears if anyone has other suggestions.
-
-Regards
-
-
-Raw results for reference:
-
-SCHED_OTHER
-2156120840
-2156110092
-2156111812
-2156117629
-2156111235
-2156104159
-2156109850
-2156120644
-2156100701
-2156085456
-2156133420
-2156130993
-2156087623
-2156120236
-2156114137
-2156099823
-2156122243
-2156095888
-2156114046
-2156102910
-2156120532
-2156102464
-2156100703
-2156125228
-2156119672
-2156110619
-2156131331
-2156085411
-2156098780
-2156121458
-
-SCHED_FIFO
-2205859200
-2254828687
-2254866765
-2304868902
-2254849969
-2253908545
-2254811821
-2304845457
-2253814019
-2254834900
-2304858026
-2254845905
-2253835350
-2254815775
-2304860984
-2253824572
-2254816525
-2254800880
-2303875283
-2254826189
-2254813961
-2304850479
-2254832102
-2253816865
-2254820633
-2304847552
-2253841768
-2254807812
-2254810662
-2303848123
+[1/1] eventpoll: Replace rwlock with spinlock
+      https://git.kernel.org/vfs/vfs/c/0c43094f8cc9
