@@ -1,89 +1,105 @@
-Received: from smtpfb2-g21.free.fr (smtpfb2-g21.free.fr [212.27.42.10])
-	by smtp.subspace.kernel.org (Postfix) with ESMTP id 9231A2727E3
-	for <linux-rt-users@vger.kernel.org>; Fri,  5 Sep 2025 21:06:57 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=212.27.42.10
+Received: from galois.linutronix.de (Galois.linutronix.de [193.142.43.55])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+	(No client certificate requested)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id A347021D3F3
+	for <linux-rt-users@vger.kernel.org>; Mon,  8 Sep 2025 09:36:03 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=193.142.43.55
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1757106423; cv=none; b=fuqgIXIgC279oLsq/cOYmnfSL+GTAlr4OBp0MOXoUnNjLmxOzVfro0TvLBvjnMe94HTMhR3JmAvMxNj7ZZbpfJIDOFaGxGzdN4nwkuKAAs9Bueq0HnKDc1ZjUBhEf8JG2EX8BkP5jv0X64bRDF1cUswfKSe6UdC2d2rv1E0o/Q8=
+	t=1757324167; cv=none; b=XCdtDqzSO7cUpKa/aSuV6SuDA/zwBD27qJ1VLkLRpx5jw/mxXz8lp6rBMXhp9e3a/XQdaA8o8XKmNd7TTJOrcrWcXBvY1D24AAp5tojDYNwgav70uwHnYluaW/UZua528iEiColZNNJEldEcZrajlzDHi1dKxEjwsnnM4QIqVKY=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1757106423; c=relaxed/simple;
-	bh=hLeyUs4HbLVHjbR9tAefLlQsgf+nDULZO9crKFvMhoA=;
-	h=Message-ID:Date:MIME-Version:Subject:To:Cc:References:From:
-	 In-Reply-To:Content-Type; b=gROWuBd1DOpJRWJnjqj+P4IPOxjAgT5Dx5q96yPhsQPc+9RGp6lhI0j4OT82I3iDwTBsYHjuqdcJrsQ+EoNTj53fwPWKMDnkT1EwwdvhHID8xkXzFla06ACJuCZ74VwCKH0jy8DiDoiFoIUJi64qWCMrbO4KOIaS0beWmvzqcNU=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=free.fr; spf=pass smtp.mailfrom=free.fr; dkim=pass (2048-bit key) header.d=free.fr header.i=@free.fr header.b=LVk+uaiI; arc=none smtp.client-ip=212.27.42.10
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=free.fr
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=free.fr
+	s=arc-20240116; t=1757324167; c=relaxed/simple;
+	bh=Zu4d+5WdEEQ+vgX8XhTDb30oJnASoAwEexXKzTI4Wqs=;
+	h=From:To:Cc:Subject:In-Reply-To:References:Date:Message-ID:
+	 MIME-Version:Content-Type; b=IhWAxPUeanBEDkEaLx3ibH2Li7KceHlMZH6HI1VBwq/K01cdZSHq81aGGz+RHFtOUgvhcdZaDOKoNZ/MZK349OgudI2/G+YUgGcTnY0f4pUlvV43mDSZ/SMvPIAgrqkN6ErwNIkuu92P9TstsOnqPke3POiWpwsvZTEGgfGuBJ0=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linutronix.de; spf=pass smtp.mailfrom=linutronix.de; dkim=pass (2048-bit key) header.d=linutronix.de header.i=@linutronix.de header.b=hoMcVyUy; dkim=permerror (0-bit key) header.d=linutronix.de header.i=@linutronix.de header.b=7Ned0q29; arc=none smtp.client-ip=193.142.43.55
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linutronix.de
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=linutronix.de
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=free.fr header.i=@free.fr header.b="LVk+uaiI"
-Received: from smtp2-g21.free.fr (smtp2-g21.free.fr [212.27.42.2])
-	by smtpfb2-g21.free.fr (Postfix) with ESMTP id 146B54C1CB
-	for <linux-rt-users@vger.kernel.org>; Fri,  5 Sep 2025 23:06:03 +0200 (CEST)
-Received: from [IPV6:2a01:e34:ec24:52e0:186c:6bb4:fc0e:4183] (unknown [IPv6:2a01:e34:ec24:52e0:186c:6bb4:fc0e:4183])
-	(Authenticated sender: marc.w.gonzalez@free.fr)
-	by smtp2-g21.free.fr (Postfix) with ESMTPSA id 7BA9E2003B4;
-	Fri,  5 Sep 2025 23:05:44 +0200 (CEST)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=free.fr;
-	s=smtp-20201208; t=1757106355;
-	bh=hLeyUs4HbLVHjbR9tAefLlQsgf+nDULZO9crKFvMhoA=;
-	h=Date:Subject:To:Cc:References:From:In-Reply-To:From;
-	b=LVk+uaiICKEYH4bQZqNx6PhaY10Wi6mLSE2u1u2e97DY+AvrXnuTgXmFrT8NsdZYT
-	 j6Zv3gZp5ZJgi4zia9BsldYoDafrjpZgyzqbb0EyRYXiVQfgebU4HSvjo8KKwvSLoz
-	 UmGrMunZVVAZIudGp6Tin4ouIU76cQtoAMjo3nhO1LGMgwbuZdvMpeAOtohYZEtXgP
-	 2V/Pvsr9jigJowb3QbmIydygjqoE8j73lgNf5oW+GKH+3eqiukErlWZN8x/CP/Ylk1
-	 mufwgelK4cy6XF89/KJk1ugXDtKHJ1Cs+CqBSVea+5zxyXpCu7lsBfpeTsxF7YuoHh
-	 8+RdHVTTE9QYQ==
-Message-ID: <f6fcc6da-07ff-4014-b883-aa1d99a3e794@free.fr>
-Date: Fri, 5 Sep 2025 23:05:43 +0200
+	dkim=pass (2048-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="hoMcVyUy";
+	dkim=permerror (0-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="7Ned0q29"
+From: John Ogness <john.ogness@linutronix.de>
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
+	s=2020; t=1757324161;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 in-reply-to:in-reply-to:references:references;
+	bh=MNEzy6jsnkSX/5Dj+dP6WwlonvGBXIJ9uMu8giG/mZs=;
+	b=hoMcVyUygkA9tE43NXRS4Gmi8yXW4egG32RGgqwoeBwj0Nz1+oMd6UFdrq3zekSgX6VK1L
+	Jw8qFQSEAtu5GMKsytwvEOAzcK15qOyO7PnqTQ+VVuOM3VpD8tNimzSG1GONxIar+PHAc0
+	7whpToUbbPmB1gZ5uWbh5nA7iiko2etFBobUeQ654PU2FqWbhT0w0hMr0gJ9xuaDHBZN6G
+	oAD8ws+uSe7vX8KLT8bFrFD0ToPhclTGw28PpO6/EmZ5JFxMDgXT4LiIz+mAoPetEV1pEz
+	F+vMibtpObMo+2sX3+JRTxyWgJHSDwh15n1mMAzPpj9CJz6yWN9o2wn6wpP/Ew==
+DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
+	s=2020e; t=1757324161;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 in-reply-to:in-reply-to:references:references;
+	bh=MNEzy6jsnkSX/5Dj+dP6WwlonvGBXIJ9uMu8giG/mZs=;
+	b=7Ned0q29SaiJTnQZfjwUsvrlAOnVXUDLnn1F9+hwq7eEagUcXAjx7u6bvlktzI82ZdH57r
+	1XbccGjKgq3sSrAg==
+To: Marc Gonzalez <marc.w.gonzalez@free.fr>, Daniel Wagner <dwagner@suse.de>
+Cc: linux-rt-users@vger.kernel.org, Steven Rostedt <rostedt@goodmis.org>,
+ Thomas Gleixner <tglx@linutronix.de>, Sebastian Andrzej Siewior
+ <bigeasy@linutronix.de>, Daniel Wagner <daniel.wagner@suse.com>, Clark
+ Williams <williams@redhat.com>, Pavel Machek <pavel@denx.de>, Luis
+ Goncalves <lgoncalv@redhat.com>, John McCalpin <mccalpin@tacc.utexas.edu>
+Subject: Re: Large(ish) variance induced by SCHED_FIFO
+In-Reply-To: <3f1d4229-a95c-4d99-a98f-249d9e488b32@free.fr>
+References: <5f7496eb-bf62-4cc9-bef0-9cae97a93dca@free.fr>
+ <ac1ef5df-aa30-4b63-9beb-3e0522dd3cec@flourine.local>
+ <afc4c145-4758-4924-b106-e7844624d269@free.fr>
+ <841polf13z.fsf@jogness.linutronix.de>
+ <42c5fb53-d423-41a5-80d9-557ff2a3e804@free.fr>
+ <84ldmsevcm.fsf@jogness.linutronix.de>
+ <3f1d4229-a95c-4d99-a98f-249d9e488b32@free.fr>
+Date: Mon, 08 Sep 2025 11:42:00 +0206
+Message-ID: <84ldmp8ewv.fsf@jogness.linutronix.de>
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
 List-Subscribe: <mailto:linux-rt-users+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-User-Agent: Mozilla Thunderbird
-Subject: Re: Large(ish) variance induced by SCHED_FIFO
-To: Leon Woestenberg <leon@sidebranch.com>
-Cc: linux-rt-users@vger.kernel.org, Steven Rostedt <rostedt@goodmis.org>,
- Thomas Gleixner <tglx@linutronix.de>,
- Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
- Daniel Wagner <daniel.wagner@suse.com>, Clark Williams
- <williams@redhat.com>, Pavel Machek <pavel@denx.de>,
- Luis Goncalves <lgoncalv@redhat.com>,
- John McCalpin <mccalpin@tacc.utexas.edu>
-References: <5f7496eb-bf62-4cc9-bef0-9cae97a93dca@free.fr>
- <CAMjhiJiVDmnx+pgpvtAy=KarHexjsYs+T9tSkpGvppjqFdtmiw@mail.gmail.com>
-Content-Language: en-US
-From: Marc Gonzalez <marc.w.gonzalez@free.fr>
-In-Reply-To: <CAMjhiJiVDmnx+pgpvtAy=KarHexjsYs+T9tSkpGvppjqFdtmiw@mail.gmail.com>
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain
 
-Hello Leon :)
+On 2025-09-05, Marc Gonzalez <marc.w.gonzalez@free.fr> wrote:
+>>> Could you provide some insight as to why CLOCK_MONOTONIC is preferable?
+>> 
+>> CLOCK_MONOTONIC is tracking in time units as defined by humans.
+>> CLOCK_MONOTONIC_RAW is tracking in time units defined by some hardware.
+>
+> I'm not sure I understand what that implies.
+>
+> Eventually, clock_gettime stores whatever it measured in struct timespec,
+> with tv_sec & tv_nsec, right?
 
-On 05/09/2025 18:18, Leon Woestenberg wrote:
+I would phrase it differently, but generally speaking, correct.
 
-> On Fri, 5 Sep 2025 at 01:45, Marc Gonzalez wrote:
-> 
->> I am trying to get reproducible / deterministic / low variance results
->> using a vendor kernel (6.8.0-79-generic #79-Ubuntu SMP PREEMPT_DYNAMIC).
-> 
-> Is that your end goal or is your question maybe an XY question?
-> If so please describe X.
+> Are you saying that if I have 2 identical timespecs,
+> one from CLOCK_MONOTONIC, one from CLOCK_MONOTONIC_RAW,
+> they might not measure the same time interval?
 
-I need a rudimentary (but accurate) benchmark framework,
-to measure the impact of micro-optimizations on codes.
-These optimizations are expected to make programs 0-3% faster,
-so the framework should have the lowest variance possible,
-otherwise I can't discern the result from the noise.
+I assume you mean 2 _sets_ of timespecs (so that you have 2 intervals to
+compare). Correct.
 
-> Or just include the measurement inside the program using CLOCK_MONOTONIC.
+> Are you perhaps saying that NTP can (ever so slightly) tweak
+> a clock to bring its frequency closer to "reality", but if
+> CLOCK_MONOTONIC_RAW ignores such tweaks, it might count time
+> slightly too fast or too slow?
 
-David suggested that as well, but it was not the source of the problem.
+Correct.
 
-John pointed out the culprit:
-/proc/sys/kernel/sched_rt_runtime_us
+This is also valid for other clocks. For example, the kernel logs
+(printk) and ftrace default to the CPU local clock. These timestamps
+cannot be compared to CLOCK_MONOTONIC timestamps... just as
+CLOCK_MONOTONIC_RAW timestamps cannot be compared to CLOCK_MONOTONIC
+timestamps.
 
-https://www.kernel.org/doc/html/latest/scheduler/sched-rt-group.html
+There are still reasons why CLOCK_MONOTONIC_RAW might be
+interesting. For example, if you want a very stable timesource to
+compare intervals, but do not care so much about the real world time
+lengths of those intervals (i.e. where is the greatest latency vs. what
+is the value of the greatest latency). Although even here, I doubt
+CLOCK_MONOTONIC_RAW has a practical advantage over CLOCK_MONOTONIC.
 
-Regards
-
-
+John
