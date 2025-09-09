@@ -1,59 +1,87 @@
-Received: from smtp2-g21.free.fr (smtp2-g21.free.fr [212.27.42.2])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+Received: from smtp-out1.suse.de (smtp-out1.suse.de [195.135.223.130])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id C844C322C6C
-	for <linux-rt-users@vger.kernel.org>; Tue,  9 Sep 2025 11:08:48 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=212.27.42.2
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id DC03F1B78F3
+	for <linux-rt-users@vger.kernel.org>; Tue,  9 Sep 2025 11:21:15 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=195.135.223.130
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1757416132; cv=none; b=T+T4zWTrJmE3gqiTy+AptBNDYtjDKVcbtt765Q7iP33SmSMqzMVK46FLNocDzR2MUTHb1VAbwzdOzuFXjAp9mgMakWrHYG/Qy3bk6hr1Bcg2Et7YD+6/VX8Q7GYWBoASUkKn13znytXqX2tixdGUBsQaJd6BuXq5w+Zh0EczY2Q=
+	t=1757416877; cv=none; b=DCV22G30+J5r2FVaWa8JYJb7GJjS3IcOLbn0uTTAmdZnswUjPctRZjw4yCYX7bW+AqkcJtfAYGLC3lbSlNRNytOQuvb156kGuR6wxaA+irFKhd6acmKktcyyWhcxPmE96wYptVKnx1tFvqQ3yWUCXqRo7zzIh/07Q2oqQ1b237E=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1757416132; c=relaxed/simple;
-	bh=nhIecU59x38KNeQT2MswMC7bKEvDevUDXNj72m4Fp9U=;
-	h=Message-ID:Date:MIME-Version:Subject:From:To:Cc:References:
-	 In-Reply-To:Content-Type; b=ZzF+JPU9RMVBF3MUuf/MVcM3pg5szvUbtExq+t+AYxFgvIw1Yk1/gQFvuTJXn15Mpw4PJXr9m4a/+IXyACRkvEq0Lz3ESf6E6cuN28GJPEQyAUfYyZEluwE5m3Hp3xIqansyP7r10+Nad+RCg9Ni0ujlW1WuGhzUChq8g+gkDLc=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=free.fr; spf=pass smtp.mailfrom=free.fr; dkim=pass (2048-bit key) header.d=free.fr header.i=@free.fr header.b=e8d0JeM3; arc=none smtp.client-ip=212.27.42.2
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=free.fr
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=free.fr
+	s=arc-20240116; t=1757416877; c=relaxed/simple;
+	bh=VpYODHn/H9g4IphktpFYO9V2iZw71rIvpkd61jGXoIc=;
+	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
+	 Content-Type:Content-Disposition:In-Reply-To; b=IkdmonjiolDEX9FygU+ncMNH9nTqbFn2AJY0CpjR5RCgV7n9SyfkZs/YwrSCoaChvWc5a4TaM1oQamzljAgAgsfE9ey8Do9MuhKZWp8zboxbi9hcjyGNLWoOesB5Nc/D9i4lSnmCOUV+TOFs3wX9AU/nKtcLVvTrlESOhcZrAN0=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=suse.de; spf=pass smtp.mailfrom=suse.de; dkim=pass (1024-bit key) header.d=suse.de header.i=@suse.de header.b=FL3OaVwX; dkim=permerror (0-bit key) header.d=suse.de header.i=@suse.de header.b=pzI1p6yH; dkim=pass (1024-bit key) header.d=suse.de header.i=@suse.de header.b=J5prGLAA; dkim=permerror (0-bit key) header.d=suse.de header.i=@suse.de header.b=TyltVeqt; arc=none smtp.client-ip=195.135.223.130
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=suse.de
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=suse.de
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=free.fr header.i=@free.fr header.b="e8d0JeM3"
-Received: from [IPV6:2a01:e34:ec24:52e0:4e45:8447:d6c0:1a95] (unknown [IPv6:2a01:e34:ec24:52e0:4e45:8447:d6c0:1a95])
-	(Authenticated sender: marc.w.gonzalez@free.fr)
-	by smtp2-g21.free.fr (Postfix) with ESMTPSA id C6F3E2003D3;
-	Tue,  9 Sep 2025 13:08:31 +0200 (CEST)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=free.fr;
-	s=smtp-20201208; t=1757416127;
-	bh=nhIecU59x38KNeQT2MswMC7bKEvDevUDXNj72m4Fp9U=;
-	h=Date:Subject:From:To:Cc:References:In-Reply-To:From;
-	b=e8d0JeM3IFJpWfYyh+BgzAAonxU+J7kjwfxhl3VtuCnWCyr59kDq3Jgtn4NdS5mCM
-	 Fk4ec4ssiK61cQscJcWgjvy9GvuwMESDYYzI/wtXsyWpIzVeyL6PY3eiahUiebA8GC
-	 sF4yifSX5gAUona7segD8T+EjbOoDiKS+qeCTVcfeSjmNn86KzL2KxmuidXWiZ8Hj0
-	 vEMbr99NB22nuFn/ql5+HSCG5PrlWAjxpIlRXT2mOQ3SPOA1wc9QSXDC7AbRHM77i9
-	 n3lXv95+ElEUfoZPduIJ6oPiwblOU/dCx7/1gQGFzv+8fSwEVhAXOFyMqoWx7HG0Uh
-	 GkICNy1wlhHGw==
-Message-ID: <0d87e3c3-8de1-4d98-802e-a292f63f1bf1@free.fr>
-Date: Tue, 9 Sep 2025 13:08:31 +0200
-Precedence: bulk
-X-Mailing-List: linux-rt-users@vger.kernel.org
-List-Id: <linux-rt-users.vger.kernel.org>
-List-Subscribe: <mailto:linux-rt-users+subscribe@vger.kernel.org>
-List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
-MIME-Version: 1.0
-User-Agent: Mozilla Thunderbird
+	dkim=pass (1024-bit key) header.d=suse.de header.i=@suse.de header.b="FL3OaVwX";
+	dkim=permerror (0-bit key) header.d=suse.de header.i=@suse.de header.b="pzI1p6yH";
+	dkim=pass (1024-bit key) header.d=suse.de header.i=@suse.de header.b="J5prGLAA";
+	dkim=permerror (0-bit key) header.d=suse.de header.i=@suse.de header.b="TyltVeqt"
+Received: from imap1.dmz-prg2.suse.org (unknown [10.150.64.97])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (4096 bits) server-digest SHA256)
+	(No client certificate requested)
+	by smtp-out1.suse.de (Postfix) with ESMTPS id E410D33751;
+	Tue,  9 Sep 2025 11:21:13 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.de; s=susede2_rsa;
+	t=1757416874; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
+	 mime-version:mime-version:content-type:content-type:
+	 in-reply-to:in-reply-to:references:references;
+	bh=o/wLJfJW7fDRhF8DyBKfFtUGe+MrbfXnX9W1eJnXlTo=;
+	b=FL3OaVwX188qlNSZQ+SCNML69stM+bPGBaeak35MSjR6CH+MRyM1HIKv+doUKyPneZQAXQ
+	2ia2x1y5HKZ2XkXhhcRMxG16qTo72ZaPSfi30xX4yAu8Rhd3ykDYScSbkC7n/x7aZLSp/f
+	voALoZrKZ/2tmKWCJ2JTOW52YwhuhI4=
+DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=suse.de;
+	s=susede2_ed25519; t=1757416874;
+	h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
+	 mime-version:mime-version:content-type:content-type:
+	 in-reply-to:in-reply-to:references:references;
+	bh=o/wLJfJW7fDRhF8DyBKfFtUGe+MrbfXnX9W1eJnXlTo=;
+	b=pzI1p6yHhylFHzeApha2AOH4qsFEEM9sgSLt8uZMEzw+r72VW6lzgEwzK/A7DPDV3abB4m
+	Z8X2viIviKVQ3PBA==
+Authentication-Results: smtp-out1.suse.de;
+	none
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.de; s=susede2_rsa;
+	t=1757416873; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
+	 mime-version:mime-version:content-type:content-type:
+	 in-reply-to:in-reply-to:references:references;
+	bh=o/wLJfJW7fDRhF8DyBKfFtUGe+MrbfXnX9W1eJnXlTo=;
+	b=J5prGLAAWA8VTZcBc+wkCMmR2OlOFvYmBYKkYXd5RwrLfyFQLiZx2acPX9jmdgvnn0ygSq
+	h8e0rX3ZAzWApGD/bCe6+0M5kyM7oVmrk51EtjYGhJrbyUYjhDR2eALpNZehdC4BaXutH3
+	Y9lVmL+IhjJM1UruBSmIajXfkSM35Cg=
+DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=suse.de;
+	s=susede2_ed25519; t=1757416873;
+	h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
+	 mime-version:mime-version:content-type:content-type:
+	 in-reply-to:in-reply-to:references:references;
+	bh=o/wLJfJW7fDRhF8DyBKfFtUGe+MrbfXnX9W1eJnXlTo=;
+	b=TyltVeqtfk7XHx6H0Jw97aAycD+tqlpfZKcVMXgznchP48qp6P9Ve5GEYn4/AIxPiax/1z
+	r2Js5sJJNAnSg6AQ==
+Received: from imap1.dmz-prg2.suse.org (localhost [127.0.0.1])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (4096 bits) server-digest SHA256)
+	(No client certificate requested)
+	by imap1.dmz-prg2.suse.org (Postfix) with ESMTPS id CEC5E1365E;
+	Tue,  9 Sep 2025 11:21:13 +0000 (UTC)
+Received: from dovecot-director2.suse.de ([2a07:de40:b281:106:10:150:64:167])
+	by imap1.dmz-prg2.suse.org with ESMTPSA
+	id yeoEMakNwGhNMwAAD6G6ig
+	(envelope-from <dwagner@suse.de>); Tue, 09 Sep 2025 11:21:13 +0000
+Date: Tue, 9 Sep 2025 13:21:13 +0200
+From: Daniel Wagner <dwagner@suse.de>
+To: Marc Gonzalez <marc.w.gonzalez@free.fr>
+Cc: linux-rt-users@vger.kernel.org, 
+	John Ogness <john.ogness@linutronix.de>, Leon Woestenberg <leon@sidebranch.com>, 
+	Steven Rostedt <rostedt@goodmis.org>, Thomas Gleixner <tglx@linutronix.de>, 
+	Sebastian Andrzej Siewior <bigeasy@linutronix.de>, Clark Williams <williams@redhat.com>, 
+	Pavel Machek <pavel@denx.de>, Luis Goncalves <lgoncalv@redhat.com>, 
+	John McCalpin <mccalpin@tacc.utexas.edu>, Frederic Weisbecker <fweisbec@gmail.com>, 
+	Ingo Molnar <mingo@kernel.org>, Masami Hiramatsu <mhiramat@kernel.org>
 Subject: Re: Unexplained variance in run-time of trivial program
-From: Marc Gonzalez <marc.w.gonzalez@free.fr>
-To: linux-rt-users@vger.kernel.org
-Cc: Daniel Wagner <dwagner@suse.de>, John Ogness <john.ogness@linutronix.de>,
- Leon Woestenberg <leon@sidebranch.com>, Steven Rostedt
- <rostedt@goodmis.org>, Thomas Gleixner <tglx@linutronix.de>,
- Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
- Clark Williams <williams@redhat.com>, Pavel Machek <pavel@denx.de>,
- Luis Goncalves <lgoncalv@redhat.com>,
- John McCalpin <mccalpin@tacc.utexas.edu>,
- Frederic Weisbecker <fweisbec@gmail.com>, Ingo Molnar <mingo@kernel.org>,
- Masami Hiramatsu <mhiramat@kernel.org>
-References: <5f7496eb-bf62-4cc9-bef0-9cae97a93dca@free.fr>
- <ac1ef5df-aa30-4b63-9beb-3e0522dd3cec@flourine.local>
- <afc4c145-4758-4924-b106-e7844624d269@free.fr>
+Message-ID: <79de8d5e-bf07-4c24-89e1-1ed5bfab9361@flourine.local>
+References: <afc4c145-4758-4924-b106-e7844624d269@free.fr>
  <841polf13z.fsf@jogness.linutronix.de>
  <42c5fb53-d423-41a5-80d9-557ff2a3e804@free.fr>
  <84ldmsevcm.fsf@jogness.linutronix.de>
@@ -62,160 +90,78 @@ References: <5f7496eb-bf62-4cc9-bef0-9cae97a93dca@free.fr>
  <3fe55967-b4fa-4bc1-ae2b-58b5d1bbf3ea@free.fr>
  <d5f3d4c1-714b-46d4-99e6-c71ebf64e76b@flourine.local>
  <3220a6ab-19e5-4705-865a-1e1c37b67ccf@free.fr>
-Content-Language: en-US
-In-Reply-To: <3220a6ab-19e5-4705-865a-1e1c37b67ccf@free.fr>
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: 7bit
+ <0d87e3c3-8de1-4d98-802e-a292f63f1bf1@free.fr>
+Precedence: bulk
+X-Mailing-List: linux-rt-users@vger.kernel.org
+List-Id: <linux-rt-users.vger.kernel.org>
+List-Subscribe: <mailto:linux-rt-users+subscribe@vger.kernel.org>
+List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
+MIME-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+In-Reply-To: <0d87e3c3-8de1-4d98-802e-a292f63f1bf1@free.fr>
+X-Spamd-Result: default: False [-4.30 / 50.00];
+	BAYES_HAM(-3.00)[99.99%];
+	NEURAL_HAM_LONG(-1.00)[-1.000];
+	NEURAL_HAM_SHORT(-0.20)[-1.000];
+	MIME_GOOD(-0.10)[text/plain];
+	MISSING_XM_UA(0.00)[];
+	RCVD_TLS_ALL(0.00)[];
+	RCVD_VIA_SMTP_AUTH(0.00)[];
+	RCPT_COUNT_TWELVE(0.00)[14];
+	MIME_TRACE(0.00)[0:+];
+	ARC_NA(0.00)[];
+	FUZZY_RATELIMITED(0.00)[rspamd.com];
+	FREEMAIL_ENVRCPT(0.00)[free.fr,gmail.com];
+	DKIM_SIGNED(0.00)[suse.de:s=susede2_rsa,suse.de:s=susede2_ed25519];
+	FROM_HAS_DN(0.00)[];
+	FREEMAIL_CC(0.00)[vger.kernel.org,linutronix.de,sidebranch.com,goodmis.org,redhat.com,denx.de,tacc.utexas.edu,gmail.com,kernel.org];
+	FREEMAIL_TO(0.00)[free.fr];
+	FROM_EQ_ENVFROM(0.00)[];
+	TO_MATCH_ENVRCPT_ALL(0.00)[];
+	RCVD_COUNT_TWO(0.00)[2];
+	TO_DN_SOME(0.00)[]
+X-Spam-Flag: NO
+X-Spam-Level: 
+X-Spam-Score: -4.30
 
-On 08/09/2025 20:40, Marc Gonzalez wrote:
-
-> On 08/09/2025 18:02, Daniel Wagner wrote:
+> I note that IRQs 25 & 30 are still effectively pinned to CPU3,
+> despite the smp_aff setting.
 > 
->> On Mon, Sep 08, 2025 at 05:42:58PM +0200, Marc Gonzalez wrote:
->>
->>> I've run out of ideas to identify other sources of variance.
->>> (I ran everything in single user mode with nothing else running.)
->>> Perhaps with perf I could identify the source of stalls or bubbles?
->>>
->>> Hoping someone can point me in the right direction.
->>
->> There are few guides out there, explaining the common pitfalls. I
->> suppose you have already found them. Just in case you missed Frederic's
->> excellent blog on CPU isolation:
->>
->> https://www.suse.com/c/cpu-isolation-introduction-part-1/
-> 
-> Thanks for this great link!
-> 
-> Is nohz_full=X a superset of isolcpus=X or are they orthogonal?
+> $ cat /proc/interrupts 
+>            CPU0       CPU1       CPU2       CPU3       
+>   0:         27          0          0          0   IO-APIC   2-edge      timer
+>   8:          0          0          0          0   IO-APIC   8-edge      rtc0
+>   9:          0          4          0          0   IO-APIC   9-fasteoi   acpi
+>  16:          0         25          0          0   IO-APIC  16-fasteoi   ehci_hcd:usb1
+>  18:          0          5          0          0   IO-APIC  18-fasteoi   i801_smbus
+>  23:          0          0         29          0   IO-APIC  23-fasteoi   ehci_hcd:usb2
+>  24:          0          0          0          0  PCI-MSI-0000:00:1c.0   0-edge      PCIe PME, pciehp
+>  25:          0          0          0          0  PCI-MSI-0000:00:1c.3   0-edge      PCIe PME
+>  26:      23328          0          0      37250  PCI-MSI-0000:00:1f.2   0-edge      ahci[0000:00:1f.2]
+>  27:      86091          0          0          0  PCI-MSI-0000:00:14.0   0-edge      xhci_hcd
+>  28:          0          0      51308          0  PCI-MSIX-0000:02:00.0  0-edge      enp2s0
+>  29:          0          0         22          0  PCI-MSI-0000:00:16.0   0-edge      mei_me
+>  30:          0          0          0        604  PCI-MSI-0000:00:1b.0   0-edge      snd_hda_intel:card0
+>  31:     198664          0          0          0  PCI-MSI-0000:00:02.0   0-edge      i915
+>  32:          0        631          0          0  PCI-MSI-0000:00:03.0   0-edge      snd_hda_intel:card1
 
-I am now more confused than ever.
+Many drivers are not isolcpus aware. At least the sound driver could be
+unloaded for you test I suppose.
 
-Following Frederic's guide:
-https://www.suse.com/c/cpu-isolation-practical-example-part-5/
+> Almost exactly 20 ms in excess.
+> Could this be a hint?
+> But there is absolutely NOTHING traced between 4606.628019 & 4606.811832.
 
-If I didn't mess up, CPU3 is now supposed to be fully isolated
-on my 4-core system:
+Ensure your clock source is working correctly and...
 
-$ sudo dmesg | grep "Kernel command line"
-[    0.038445] Kernel command line: BOOT_IMAGE=/boot/vmlinuz-6.8.0-79-generic root=UUID=2aff6d63-a8c6-4ebb-af69-9d2df2852cb0 ro log_buf_len=16M nohz_full=3 isolcpus=3 quiet splash vt.handoff=7
+> I guess either my time source is incorrect.
+> (Next slide in Frederic's guide)
+> OR there is something wonky going on inside CPU3.
 
-I ran echo "0-2" > $IRQ/smp_affinity_list for every IRQ.
+...there is no SMI running on this CPU, and no power management running
+(also in the BIOS settings)
 
-IRQ=0   AFTER SMP_AFF=0-3 EFF_AFF=0
-IRQ=1   AFTER SMP_AFF=0-2 EFF_AFF=0-2
-IRQ=2   AFTER SMP_AFF=0-3 EFF_AFF=
-IRQ=3   AFTER SMP_AFF=0-2 EFF_AFF=0-2
-IRQ=4   AFTER SMP_AFF=0-2 EFF_AFF=0-2
-IRQ=5   AFTER SMP_AFF=0-2 EFF_AFF=0-2
-IRQ=6   AFTER SMP_AFF=0-2 EFF_AFF=0-2
-IRQ=7   AFTER SMP_AFF=0-2 EFF_AFF=0-2
-IRQ=8   AFTER SMP_AFF=0-2 EFF_AFF=0
-IRQ=9   AFTER SMP_AFF=0-2 EFF_AFF=1
-IRQ=10  AFTER SMP_AFF=0-2 EFF_AFF=0-2
-IRQ=11  AFTER SMP_AFF=0-2 EFF_AFF=0-2
-IRQ=12  AFTER SMP_AFF=0-2 EFF_AFF=0-2
-IRQ=13  AFTER SMP_AFF=0-2 EFF_AFF=0-2
-IRQ=14  AFTER SMP_AFF=0-2 EFF_AFF=0-2
-IRQ=15  AFTER SMP_AFF=0-2 EFF_AFF=0-2
-IRQ=16  AFTER SMP_AFF=0-2 EFF_AFF=1
-IRQ=18  AFTER SMP_AFF=0-2 EFF_AFF=1
-IRQ=23  AFTER SMP_AFF=0-2 EFF_AFF=2
-IRQ=24  AFTER SMP_AFF=0-2 EFF_AFF=2
-IRQ=25  AFTER SMP_AFF=0-2 EFF_AFF=3
-IRQ=26  AFTER SMP_AFF=0-2 EFF_AFF=0
-IRQ=27  AFTER SMP_AFF=0-2 EFF_AFF=0
-IRQ=28  AFTER SMP_AFF=0-2 EFF_AFF=2
-IRQ=29  AFTER SMP_AFF=0-2 EFF_AFF=2
-IRQ=30  AFTER SMP_AFF=0-2 EFF_AFF=3
-IRQ=31  AFTER SMP_AFF=0-2 EFF_AFF=0
-IRQ=32  AFTER SMP_AFF=0-2 EFF_AFF=1
+> Looks like IRQs are not the issue here?
 
-I note that IRQs 25 & 30 are still effectively pinned to CPU3,
-despite the smp_aff setting.
-
-$ cat /proc/interrupts 
-           CPU0       CPU1       CPU2       CPU3       
-  0:         27          0          0          0   IO-APIC   2-edge      timer
-  8:          0          0          0          0   IO-APIC   8-edge      rtc0
-  9:          0          4          0          0   IO-APIC   9-fasteoi   acpi
- 16:          0         25          0          0   IO-APIC  16-fasteoi   ehci_hcd:usb1
- 18:          0          5          0          0   IO-APIC  18-fasteoi   i801_smbus
- 23:          0          0         29          0   IO-APIC  23-fasteoi   ehci_hcd:usb2
- 24:          0          0          0          0  PCI-MSI-0000:00:1c.0   0-edge      PCIe PME, pciehp
- 25:          0          0          0          0  PCI-MSI-0000:00:1c.3   0-edge      PCIe PME
- 26:      23328          0          0      37250  PCI-MSI-0000:00:1f.2   0-edge      ahci[0000:00:1f.2]
- 27:      86091          0          0          0  PCI-MSI-0000:00:14.0   0-edge      xhci_hcd
- 28:          0          0      51308          0  PCI-MSIX-0000:02:00.0  0-edge      enp2s0
- 29:          0          0         22          0  PCI-MSI-0000:00:16.0   0-edge      mei_me
- 30:          0          0          0        604  PCI-MSI-0000:00:1b.0   0-edge      snd_hda_intel:card0
- 31:     198664          0          0          0  PCI-MSI-0000:00:02.0   0-edge      i915
- 32:          0        631          0          0  PCI-MSI-0000:00:03.0   0-edge      snd_hda_intel:card1
-
-
-My benchmark is a trivial piece of code:
-- no system calls, no library calls
-- just simple bit twiddling
-- tiny code, tiny data structures, everything fits in L1
-$ size a.out
-   text	   data	    bss	    dec	    hex	filename
-   8549	    632	   1072	  10253	   280d	a.out
-
-Undisturbed, it runs in 2500 nanoseconds
-(with all cores set to tick at 3 GHz).
-
-I run it 2^16 times, so the expected run-time is
-2500*2^16 = 163840000 ns = 163.84 ms
-
-Yet, I've observed AVERAGE run-times of
-2600, 2700, and even 2800 (!!) nanoseconds.
-
-I captured a full trace of this occurrence with
-echo *:* > $TRACING/set_event
-cat $TRACING/per_cpu/cpu$CPU/trace > trace.$CPU
-
-# tracer: nop
-#
-# entries-in-buffer/entries-written: 9743/9743   #P:4
-#
-#                                _-----=> irqs-off/BH-disabled
-#                               / _----=> need-resched
-#                              | / _---=> hardirq/softirq
-#                              || / _--=> preempt-depth
-#                              ||| / _-=> migrate-disable
-#                              |||| /     delay
-#           TASK-PID     CPU#  |||||  TIMESTAMP  FUNCTION
-#              | |         |   |||||     |         |
-          <idle>-0       [003] dN.1.  4606.627286: cpu_idle: state=4294967295 cpu_id=3
-          <idle>-0       [003] dN.1.  4606.627288: rcu_utilization: Start context switch
-          <idle>-0       [003] dN.1.  4606.627288: rcu_utilization: End context switch
-          <idle>-0       [003] d..2.  4606.627290: sched_switch: prev_comm=swapper/3 prev_pid=0 prev_prio=120 prev_state=R ==> next_comm=taskset next_pid=8129 next_prio=0
-          <idle>-0       [003] d..2.  4606.627291: tlb_flush: pages:-1 reason:flush on task switch (0)
-           a.out-8129    [003] ...1.  4606.627304: mm_page_free: page=000000001fef04a8 pfn=0x16a586 order=1
-           ...
-           a.out-8129    [003] d....  4606.628019: user_enter: 
-           a.out-8129    [003] d....  4606.811832: user_exit: 
-
-
-Program starts at 4606.627304
-Program setup lasts until 4606.628019 (~1500 recorded events)
-=> roughly 700 microseconds spent before main()
-which I'm not taking into account in my measurements.
-
-Then program ends at 4606.811832
-=> 183.813 ms instead of the expected 163.84 ms
-
-Almost exactly 20 ms in excess.
-Could this be a hint?
-But there is absolutely NOTHING traced between 4606.628019 & 4606.811832.
-
-I guess either my time source is incorrect.
-(Next slide in Frederic's guide)
-OR there is something wonky going on inside CPU3.
-
-Looks like IRQs are not the issue here?
-No need to investigate why I can't pin IRQs 25 & 30
-elsewhere than CPU3?
-
-Regards
-
+IRQ handling should be visible in the trace.
