@@ -1,55 +1,56 @@
-Received: from galois.linutronix.de (Galois.linutronix.de [193.142.43.55])
+Received: from smtp2-g21.free.fr (smtp2-g21.free.fr [212.27.42.2])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 4ABB623D7FB
-	for <linux-rt-users@vger.kernel.org>; Tue,  9 Sep 2025 12:35:00 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=193.142.43.55
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 0F4573019CD
+	for <linux-rt-users@vger.kernel.org>; Tue,  9 Sep 2025 12:43:12 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=212.27.42.2
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1757421301; cv=none; b=Q38kVkU7Ubp9wp/txa+rEjf4ymABDYRSj+XwhwbQFGuTFmzVeYdyTP5RcYqDCY8R6lzAOojbRX3z4r6n3Z0UmCDr+QyFbpENkf+3OJd/sRVxBzqYfkGuragkjFBiUDmEzlMhalbBZgdyoRD1hiVZfe3lc8mVtJTl7otff8sbyXU=
+	t=1757421796; cv=none; b=ol6Xq5/9OuiOHzLrvRYxLxLvwoyqgfAHQGkkpP7j8S06JHxTQhL/ix3MfL1C5k5Tw8BPNUX0lCdnlMy8nxXLZ+3/58wLlzF/EDI0W3ZwvfmVoGExVztd3RatH1EeXAvt8ucmxjH22v+zIhMZo0tQIh20ntcRxSaz3N5i4XjB+jw=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1757421301; c=relaxed/simple;
-	bh=omKdstwL77RPXtZIEzJXBRsX/3EnRMsRF7nu2mdihMs=;
-	h=From:To:Cc:Subject:In-Reply-To:References:Date:Message-ID:
-	 MIME-Version:Content-Type; b=fAvBhE4r6asF8TFEzyZBDiGVO+S1mMIBmNqd9fP0eSvRi4kOm3UVhPnuxilTlKFkxHYwH3PoMFYTw+TS2/ZtTO51H2T1OCfwQWZKxQEFjH1fGZSYEkO7WLPtaTARUFc0dxXkz3CG8kJujw2mkizc6H9NkVHm0q3Ev7qtZLEZJTg=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linutronix.de; spf=pass smtp.mailfrom=linutronix.de; dkim=pass (2048-bit key) header.d=linutronix.de header.i=@linutronix.de header.b=FMQItb42; dkim=permerror (0-bit key) header.d=linutronix.de header.i=@linutronix.de header.b=X2e6Mxz1; arc=none smtp.client-ip=193.142.43.55
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linutronix.de
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=linutronix.de
+	s=arc-20240116; t=1757421796; c=relaxed/simple;
+	bh=ISRR8FubLV7ki9gsx1kfVdPPMkbkbJ7vQWlgx9Coi00=;
+	h=Message-ID:Date:MIME-Version:Subject:To:Cc:References:From:
+	 In-Reply-To:Content-Type; b=tljDO+pKHWpRxKxb+gfqpQt8QtrZsu4bFfC9TDBCRjKIH8R0/tIh2L+4y1pkO6TtDP5K6fz4PG26cQFO+r3hn014JLt/WF4GyAH12EcD1VrPAnTRYFnmw0CXir9ppIUu/NH0AvygD7VjVWs7+ApKDYWsIffjvY9qcYvfo3yiuhc=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=free.fr; spf=pass smtp.mailfrom=free.fr; dkim=pass (2048-bit key) header.d=free.fr header.i=@free.fr header.b=Oz1yu3+J; arc=none smtp.client-ip=212.27.42.2
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=free.fr
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=free.fr
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="FMQItb42";
-	dkim=permerror (0-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="X2e6Mxz1"
-From: John Ogness <john.ogness@linutronix.de>
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
-	s=2020; t=1757421298;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 in-reply-to:in-reply-to:references:references;
-	bh=omKdstwL77RPXtZIEzJXBRsX/3EnRMsRF7nu2mdihMs=;
-	b=FMQItb422JjDZeZx2wo/yCybobtGu+LVkiDJBBYUJzEqLxEWzMqkyWtZwb5DOBXRJ+rVFL
-	LwGOZjpUBu7Ubu4KXiUJS88MrsvLbZuHX/hM9wy2+V9D+LTJSnNh4te2AoJ8Jg4fE6ZER5
-	iZSoDADPLVBHRh4TV9yrRPuIfrJnfGVZR3tH2mNmDTl7PLzbr7cR5aSpzOpvThyq/EjSwX
-	UdNy4NWiFpp7Ozl4kdN0puRq+QvnZIkrShSdSPgdpxrddHUsoWod4Aau3IHpVNLZBBYy2j
-	Q1f5WjdzKJ4aNJCqnkv3qx4aLZtoLInZdrUZQvhm8uo+yHDv0DHjD7N2RReAvA==
-DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
-	s=2020e; t=1757421298;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 in-reply-to:in-reply-to:references:references;
-	bh=omKdstwL77RPXtZIEzJXBRsX/3EnRMsRF7nu2mdihMs=;
-	b=X2e6Mxz177hfO5TSwM33+qiApv+YbFcIySdJrQSWGZKtIj4sLLoTle6qVyIuR5B+E2Ai/2
-	NRcLFU6krTwoAvDA==
-To: Marc Gonzalez <marc.w.gonzalez@free.fr>, linux-rt-users@vger.kernel.org
-Cc: Daniel Wagner <dwagner@suse.de>, Leon Woestenberg <leon@sidebranch.com>,
- Steven Rostedt <rostedt@goodmis.org>, Thomas Gleixner
- <tglx@linutronix.de>, Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
- Clark Williams <williams@redhat.com>, Pavel Machek <pavel@denx.de>, Luis
- Goncalves <lgoncalv@redhat.com>, John McCalpin <mccalpin@tacc.utexas.edu>,
+	dkim=pass (2048-bit key) header.d=free.fr header.i=@free.fr header.b="Oz1yu3+J"
+Received: from [IPV6:2a01:e34:ec24:52e0:4e45:8447:d6c0:1a95] (unknown [IPv6:2a01:e34:ec24:52e0:4e45:8447:d6c0:1a95])
+	(Authenticated sender: marc.w.gonzalez@free.fr)
+	by smtp2-g21.free.fr (Postfix) with ESMTPSA id AD3CE2003CE;
+	Tue,  9 Sep 2025 14:42:54 +0200 (CEST)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=free.fr;
+	s=smtp-20201208; t=1757421791;
+	bh=ISRR8FubLV7ki9gsx1kfVdPPMkbkbJ7vQWlgx9Coi00=;
+	h=Date:Subject:To:Cc:References:From:In-Reply-To:From;
+	b=Oz1yu3+Jw/c0vTV0X+fZAulqnmI9bCfPY2aYdetQuNwMFE7ftgAgNILoGnyDYHMyM
+	 QjIlq80Y8aXasNru368l7PxSJBaiNHRfVUUGtro1deWZ1LkMXxb96lbp4V745/E5Jf
+	 NwNzoTvMZl/xfyJUbzF6F1z2IyW8i0Kfk8PNRFGwZYtOJPPIVHsrnms8xViLZxCq80
+	 B+lHsvZUOrgj7kybpqpjq3StuQRvXFOX5unTOUMZ2Fy2scSrekZF40Wtd4VBvjw3u9
+	 g6aKid9FeAnoK2hAfAlXA/qvbVoeKfGJcFg8Ub9eA+iRjrBkZWvsB6ukLhOoCNzO61
+	 zz1cGEGtSyIQw==
+Message-ID: <1e374b4f-5410-4986-8849-ed2e8acdc23f@free.fr>
+Date: Tue, 9 Sep 2025 14:42:54 +0200
+Precedence: bulk
+X-Mailing-List: linux-rt-users@vger.kernel.org
+List-Id: <linux-rt-users.vger.kernel.org>
+List-Subscribe: <mailto:linux-rt-users+subscribe@vger.kernel.org>
+List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
+MIME-Version: 1.0
+User-Agent: Mozilla Thunderbird
+Subject: Re: Unexplained variance in run-time of trivial program
+To: Daniel Wagner <dwagner@suse.de>
+Cc: linux-rt-users@vger.kernel.org, John Ogness <john.ogness@linutronix.de>,
+ Leon Woestenberg <leon@sidebranch.com>, Steven Rostedt
+ <rostedt@goodmis.org>, Thomas Gleixner <tglx@linutronix.de>,
+ Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+ Clark Williams <williams@redhat.com>, Pavel Machek <pavel@denx.de>,
+ Luis Goncalves <lgoncalv@redhat.com>,
+ John McCalpin <mccalpin@tacc.utexas.edu>,
  Frederic Weisbecker <fweisbec@gmail.com>, Ingo Molnar <mingo@kernel.org>,
  Masami Hiramatsu <mhiramat@kernel.org>
-Subject: Re: Unexplained variance in run-time of trivial program
-In-Reply-To: <0d87e3c3-8de1-4d98-802e-a292f63f1bf1@free.fr>
-References: <5f7496eb-bf62-4cc9-bef0-9cae97a93dca@free.fr>
- <ac1ef5df-aa30-4b63-9beb-3e0522dd3cec@flourine.local>
- <afc4c145-4758-4924-b106-e7844624d269@free.fr>
+References: <afc4c145-4758-4924-b106-e7844624d269@free.fr>
  <841polf13z.fsf@jogness.linutronix.de>
  <42c5fb53-d423-41a5-80d9-557ff2a3e804@free.fr>
  <84ldmsevcm.fsf@jogness.linutronix.de>
@@ -59,30 +60,83 @@ References: <5f7496eb-bf62-4cc9-bef0-9cae97a93dca@free.fr>
  <d5f3d4c1-714b-46d4-99e6-c71ebf64e76b@flourine.local>
  <3220a6ab-19e5-4705-865a-1e1c37b67ccf@free.fr>
  <0d87e3c3-8de1-4d98-802e-a292f63f1bf1@free.fr>
-Date: Tue, 09 Sep 2025 14:40:57 +0206
-Message-ID: <84ms73kdn2.fsf@jogness.linutronix.de>
-Precedence: bulk
-X-Mailing-List: linux-rt-users@vger.kernel.org
-List-Id: <linux-rt-users.vger.kernel.org>
-List-Subscribe: <mailto:linux-rt-users+subscribe@vger.kernel.org>
-List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
-MIME-Version: 1.0
-Content-Type: text/plain
+ <79de8d5e-bf07-4c24-89e1-1ed5bfab9361@flourine.local>
+Content-Language: en-US
+From: Marc Gonzalez <marc.w.gonzalez@free.fr>
+In-Reply-To: <79de8d5e-bf07-4c24-89e1-1ed5bfab9361@flourine.local>
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
 
-On 2025-09-09, Marc Gonzalez <marc.w.gonzalez@free.fr> wrote:
-> I captured a full trace of this occurrence with
-> echo *:* > $TRACING/set_event
-> cat $TRACING/per_cpu/cpu$CPU/trace > trace.$CPU
+On 09/09/2025 13:21, Daniel Wagner wrote:
 
-...
+>> I note that IRQs 25 & 30 are still effectively pinned to CPU3,
+>> despite the smp_aff setting.
+>>
+>> $ cat /proc/interrupts 
+>>            CPU0       CPU1       CPU2       CPU3       
+>>   0:         27          0          0          0   IO-APIC   2-edge      timer
+>>   8:          0          0          0          0   IO-APIC   8-edge      rtc0
+>>   9:          0          4          0          0   IO-APIC   9-fasteoi   acpi
+>>  16:          0         25          0          0   IO-APIC  16-fasteoi   ehci_hcd:usb1
+>>  18:          0          5          0          0   IO-APIC  18-fasteoi   i801_smbus
+>>  23:          0          0         29          0   IO-APIC  23-fasteoi   ehci_hcd:usb2
+>>  24:          0          0          0          0  PCI-MSI-0000:00:1c.0   0-edge      PCIe PME, pciehp
+>>  25:          0          0          0          0  PCI-MSI-0000:00:1c.3   0-edge      PCIe PME
+>>  26:      23328          0          0      37250  PCI-MSI-0000:00:1f.2   0-edge      ahci[0000:00:1f.2]
+>>  27:      86091          0          0          0  PCI-MSI-0000:00:14.0   0-edge      xhci_hcd
+>>  28:          0          0      51308          0  PCI-MSIX-0000:02:00.0  0-edge      enp2s0
+>>  29:          0          0         22          0  PCI-MSI-0000:00:16.0   0-edge      mei_me
+>>  30:          0          0          0        604  PCI-MSI-0000:00:1b.0   0-edge      snd_hda_intel:card0
+>>  31:     198664          0          0          0  PCI-MSI-0000:00:02.0   0-edge      i915
+>>  32:          0        631          0          0  PCI-MSI-0000:00:03.0   0-edge      snd_hda_intel:card1
+> 
+> Many drivers are not isolcpus aware. At least the sound driver could be
+> unloaded for your test I suppose.
 
-> But there is absolutely NOTHING traced between 4606.628019 & 4606.811832.
+I don't quite understand.
+Do these drivers explicitly request that their ISR run on CPU3?
+Why doesn't the kernel just run these ISRs on a non-isolated core?
 
-I recommend using the function tracer:
+>> Almost exactly 20 ms in excess.
+>> Could this be a hint?
+>> But there is absolutely NOTHING traced between 4606.628019 & 4606.811832.
+> 
+> Ensure your clock source is working correctly and...
+> 
+>> I guess either my time source is incorrect.
+>> (Next slide in Frederic's guide)
+>> OR there is something wonky going on inside CPU3.
+> 
+> ...there is no SMI running on this CPU, and no power management running
+> (also in the BIOS settings)
 
-# echo function > $TRACING/current_tracer
+Actually, I'm 99.9% sure that clock source accuracy & SMM are red herrings.
 
-It should not affect your timings for pure-userspace code. This should
-catch any unintentional kernel activity.
+If I replace my code with this one:
 
-John
+	mov $(1<<12), %eax
+1:	dec %ecx
+	dec %ecx
+	dec %eax
+	jnz 1b
+
+which runs in ~2735 nanoseconds at 3 Ghz
+(2 cycles per iteration * 4096 iterations = 8192 cycles
+8192 cycles / 3 = 2730 nanoseconds)
+
+Running this trivial baseline benchmark 2^16 times should take
+2735 ns * 2^16 = 179.241 ms
+
+And if I run the loop 1000 times, and sort by run-time, I observe
+MIN=179.374211 ms
+MAX=179.406745 ms
+So worst-case is only 166 microseconds worse than expected
+(contrast this to 20 MILLIseconds for my code, 120 times worse)
+
+It seems something is randomly stalling the pipeline on CPU3.
+This feels like thermal throttling maybe?
+Is that supposed to be logged somewhere?
+But why would my program throttle & not the trivial baseline benchmark?
+
+Regards
+
