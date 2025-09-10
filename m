@@ -1,105 +1,103 @@
-Received: from smtp2-g21.free.fr (smtp2-g21.free.fr [212.27.42.2])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 83CB91C68F
-	for <linux-rt-users@vger.kernel.org>; Tue,  9 Sep 2025 20:31:07 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=212.27.42.2
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id E6B3837160
+	for <linux-rt-users@vger.kernel.org>; Wed, 10 Sep 2025 00:16:38 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1757449870; cv=none; b=TidU17QQST2P5Bie3YuEi5SIIWigvLVXdFu/+ZawiGN+0wuSi1TLxBxqkT1TQ4r4hzaWJ/ecTfrD2W/mtP4PeUHsbynthhq2d0GCsBfQpDTDiCFmXXP+PlASJ5Sf1yNIfC9FtclFTdUiSGFnxQiyaJ+i/RwokFrYPZaPPxItYXE=
+	t=1757463400; cv=none; b=ssHw1HdUPY7QMaBbfj0p3MgK6c40rAJq+pzR8lAWRaDzlcmQUV0zLM5a8Cp34ujQezxSjtuz/6HpSgGold0zbMEVzSc/bl59rY3tZL1vzLrXfKO1cS9rQX28IzgZWy+PbVN72O4cahe3IXxtanZwZ0jJvqn+5A1E2V5yu+RVgWM=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1757449870; c=relaxed/simple;
-	bh=MD1fOlM/vu5DkR1RKNAHkON3FC10aD8CwVsi82B/67s=;
-	h=Message-ID:Date:MIME-Version:Subject:To:Cc:References:From:
-	 In-Reply-To:Content-Type; b=NYLhSJSTqSDtD+vmnZSPh8eT8xGaxA7kP2nkaDRBbbyniU2T69Wejk4ELh9vT/OlcBet72dxbmsRn8KmsdTqHF+fewZDZTup17wBgZ7eJCY+JE+5wdItjhuNQl2MW7XTRNrZp6kGoqPnCGRiG7Rb93zeNProkxK/t9XG9ZMopOU=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=free.fr; spf=pass smtp.mailfrom=free.fr; dkim=pass (2048-bit key) header.d=free.fr header.i=@free.fr header.b=c81iXbHv; arc=none smtp.client-ip=212.27.42.2
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=free.fr
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=free.fr
+	s=arc-20240116; t=1757463400; c=relaxed/simple;
+	bh=jE0+8Pm3ucz6ihmMOGP2buLTGmVRol7Mf7pHdZ4YxqY=;
+	h=Date:From:To:Subject:Message-ID:MIME-Version:Content-Type:
+	 Content-Disposition; b=VYFKXhVAQTmnRCoH3fbUwolBZ3a6URULvbAg33OPyTLqj4g+AFeofS8try3Q7i8dxuu34HvrwqD7DpmNbJnDyYM8GYq5Z8hXYWXxrrSBrZWXoHf292I6ZhQsuk8q40kjV6qI4U2C8VjeiA0DjBHaA51dIN2HBLuVc+ZvHCO8hAE=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=UNU3nwSE; arc=none smtp.client-ip=170.10.133.124
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=free.fr header.i=@free.fr header.b="c81iXbHv"
-Received: from [IPV6:2a01:e34:ec24:52e0:4e45:8447:d6c0:1a95] (unknown [IPv6:2a01:e34:ec24:52e0:4e45:8447:d6c0:1a95])
-	(Authenticated sender: marc.w.gonzalez@free.fr)
-	by smtp2-g21.free.fr (Postfix) with ESMTPSA id 0BC442003C1;
-	Tue,  9 Sep 2025 22:30:49 +0200 (CEST)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=free.fr;
-	s=smtp-20201208; t=1757449865;
-	bh=MD1fOlM/vu5DkR1RKNAHkON3FC10aD8CwVsi82B/67s=;
-	h=Date:Subject:To:Cc:References:From:In-Reply-To:From;
-	b=c81iXbHvPfShjqdwIq5rMNEuYXuyMTK1TRYJg+gesB5rBs3lv3nEfGLlYLspF6IRw
-	 Ht4dwBwtWtRGm8xFZxGZyWTQADh/oMuSwlymMT8Qa4b1f6q0FOM74X6rocD/FQkq5K
-	 VcmUuPXsP5x5qHlYz3hGLH89nMV1p49v2a3F8XBWBzT/q64JRAy/7IIcBWUvlmTuFJ
-	 wMXdIqzW1hwN7zQc0IQeCC50t6mxeAp3OLT/N0BN9AEy8OH39f8pcTRlM4JHzswZyW
-	 OadAn1oezmhqTIj+/+FhJmXAv+WcGV6gWdIkq4MEFxdVDmtuY72s8esvOZoGqzANYK
-	 tGVP9a+ImwItQ==
-Message-ID: <41b7c365-62c2-4bfa-acd7-db73dc9f94f0@free.fr>
-Date: Tue, 9 Sep 2025 22:30:49 +0200
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="UNU3nwSE"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1757463397;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:mime-version:mime-version:content-type:content-type;
+	bh=reiZcYS1rs95iqH9ENKEpho/m1+5VWQZYJCHL88x2mY=;
+	b=UNU3nwSEZOUWqKl8vUVvyR+MznN+nM2uqoGe3oo71mOKYG1mcRTufkNPDUQ1L2W2dY0EMT
+	lwWd1yJnG3PPupWZA62670i935NHl9MbNEnMscd46SyxE6FgirZqMd4nQHhIXkyfXufTt7
+	X1LL38bgzNNRBx8s7Y2O3+39+KCXxwo=
+Received: from mx-prod-mc-06.mail-002.prod.us-west-2.aws.redhat.com
+ (ec2-35-165-154-97.us-west-2.compute.amazonaws.com [35.165.154.97]) by
+ relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-612-93VqpowYNW2A2ZpOfyKRvQ-1; Tue,
+ 09 Sep 2025 20:16:34 -0400
+X-MC-Unique: 93VqpowYNW2A2ZpOfyKRvQ-1
+X-Mimecast-MFC-AGG-ID: 93VqpowYNW2A2ZpOfyKRvQ_1757463393
+Received: from mx-prod-int-01.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-01.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.4])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
+	(No client certificate requested)
+	by mx-prod-mc-06.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 573D8180029E;
+	Wed, 10 Sep 2025 00:16:32 +0000 (UTC)
+Received: from localhost (unknown [10.22.81.43])
+	by mx-prod-int-01.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTP id 63C003000198;
+	Wed, 10 Sep 2025 00:16:30 +0000 (UTC)
+Date: Tue, 9 Sep 2025 21:16:28 -0300
+From: "Luis Claudio R. Goncalves" <lgoncalv@redhat.com>
+To: LKML <linux-kernel@vger.kernel.org>,
+	linux-rt-users <linux-rt-users@vger.kernel.org>,
+	stable-rt <stable-rt@vger.kernel.org>,
+	Steven Rostedt <rostedt@goodmis.org>,
+	Thomas Gleixner <tglx@linutronix.de>,
+	Carsten Emde <C.Emde@osadl.org>,
+	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+	Daniel Wagner <daniel.wagner@suse.com>,
+	Clark Williams <williams@redhat.com>,
+	Mark Gross <markgross@kernel.org>, Pavel Machek <pavel@denx.de>,
+	Jeff Brady <jeffreyjbrady@gmail.com>,
+	Jan Kiszka <jan.kiszka@siemens.com>,
+	Luis Goncalves <lgoncalv@redhat.com>
+Subject: [ANNOUNCE] 5.10.242-rt136
+Message-ID: <aMDDXPp0Wn8Wslym@uudg.org>
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
 List-Subscribe: <mailto:linux-rt-users+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-User-Agent: Mozilla Thunderbird
-Subject: Re: Unexplained variance in run-time of trivial program
-To: Leon Woestenberg <leon@sidebranch.com>
-Cc: John Ogness <john.ogness@linutronix.de>, linux-rt-users@vger.kernel.org,
- Daniel Wagner <dwagner@suse.de>, Steven Rostedt <rostedt@goodmis.org>,
- Thomas Gleixner <tglx@linutronix.de>,
- Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
- Clark Williams <williams@redhat.com>, Pavel Machek <pavel@denx.de>,
- Luis Goncalves <lgoncalv@redhat.com>,
- John McCalpin <mccalpin@tacc.utexas.edu>,
- Frederic Weisbecker <fweisbec@gmail.com>, Ingo Molnar <mingo@kernel.org>,
- Masami Hiramatsu <mhiramat@kernel.org>
-References: <5f7496eb-bf62-4cc9-bef0-9cae97a93dca@free.fr>
- <ac1ef5df-aa30-4b63-9beb-3e0522dd3cec@flourine.local>
- <afc4c145-4758-4924-b106-e7844624d269@free.fr>
- <841polf13z.fsf@jogness.linutronix.de>
- <42c5fb53-d423-41a5-80d9-557ff2a3e804@free.fr>
- <84ldmsevcm.fsf@jogness.linutronix.de>
- <3f1d4229-a95c-4d99-a98f-249d9e488b32@free.fr>
- <84ldmp8ewv.fsf@jogness.linutronix.de>
- <3fe55967-b4fa-4bc1-ae2b-58b5d1bbf3ea@free.fr>
- <d5f3d4c1-714b-46d4-99e6-c71ebf64e76b@flourine.local>
- <3220a6ab-19e5-4705-865a-1e1c37b67ccf@free.fr>
- <0d87e3c3-8de1-4d98-802e-a292f63f1bf1@free.fr>
- <84ms73kdn2.fsf@jogness.linutronix.de>
- <11dfa501-e280-4b50-a593-a4b153019b40@free.fr>
- <ddb85a49-934b-4c11-ac2a-c8a562e76e7e@free.fr>
- <CAMjhiJjMOQN-nWd+KP4JBBNHf20M+J2fXAuTTvowXctJgvGOcQ@mail.gmail.com>
-Content-Language: en-US
-From: Marc Gonzalez <marc.w.gonzalez@free.fr>
-In-Reply-To: <CAMjhiJjMOQN-nWd+KP4JBBNHf20M+J2fXAuTTvowXctJgvGOcQ@mail.gmail.com>
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+X-Scanned-By: MIMEDefang 3.4.1 on 10.30.177.4
 
-On 9/9/25 21:34, Leon Woestenberg wrote:
+Hello RT-list!
 
-> Basically, you are reverse-tuning a multicore CPU system,
-> that is heavily optimized for time-sharing and overall
-> system throughput, back to act like bare-metal single-application.
-> You can get close, but you will never reach the determinism
-> of say, an Cortex-R(ealtime) Core.
+I'm pleased to announce the 5.10.242-rt136 stable release.
 
-This ignores the fact that I've been testing 2 programs:
+This release is just an update to the new stable 5.10.242 version and
+no RT-specific changes have been performed.
 
-- P1, toy code that just calls dec 3 times in a tight loop
-- P2, a few memory accesses, everything fits in L1
+You can get this release via the git tree at:
 
-I then loop P1 & P2 2^16 times to compute their average run-time.
+  git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
 
-Over thousands of runs, RUNTIME_P1 is ALWAYS the same (within 30 ppm)
+  branch: v5.10-rt
+  Head SHA1: e9649d7c452c4703d354f6bf1acc06107009aa67
 
-Over thousands of runs, RUNTIME_P2 varies by up to 12 PERCENT (!!) = 122k ppm
+Or to build 5.10.242-rt136 directly, the following patches should be applied:
 
-Since P1 runs fine without ANY jitter, the problem cannot be
-something inherent to the system itself, such as
-- SMM
-- IRQs firing randomly
-- drifting, jittery, jumping time source
+  https://www.kernel.org/pub/linux/kernel/v5.x/linux-5.10.tar.xz
 
-The problem appears to be something inherent to P2.
-(Either the whole core is slowed down perhaps by thermal throttling,
-or something is causing huge pipeline stalls.)
+  https://www.kernel.org/pub/linux/kernel/v5.x/patch-5.10.242.xz
 
-Regards
+  https://www.kernel.org/pub/linux/kernel/projects/rt/5.10/older/patch-5.10.242-rt136.patch.xz
+
+Signing key fingerprint:
+
+  9354 0649 9972 8D31 D464  D140 F394 A423 F8E6 7C26
+
+All keys used for the above files and repositories can be found on the
+following git repository:
+
+   git://git.kernel.org/pub/scm/docs/kernel/pgpkeys.git
+
+Enjoy!
+Luis
 
