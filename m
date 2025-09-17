@@ -1,103 +1,110 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+Received: from mail-qt1-f177.google.com (mail-qt1-f177.google.com [209.85.160.177])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id E1E6F30DD31
-	for <linux-rt-users@vger.kernel.org>; Tue, 16 Sep 2025 15:14:19 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 643942773E9
+	for <linux-rt-users@vger.kernel.org>; Wed, 17 Sep 2025 16:49:23 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.160.177
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1758035661; cv=none; b=X1LKASzkoWQpW98+q45kZeQ8wJ2OqSKqkLOJCt8KqXAtm14yKOR7xPV2eIZBoMt6JUtP4NmgtIp+62u0TQGlm80yxCCrHJU6Kr0U86Floxt5cKIZcbjFcOZH2Rb9pNLE1EtjpXxJtHSJsq+sGBS2zlTXNzICkgzn459Oc3a2Yjg=
+	t=1758127764; cv=none; b=QcNzd65HgEvZswG3jIQ72esuP7xEsECHFFfq7k/Y9zTT+wYaWlDjkG3Wlh7MHpN263EGc48EQFtatKUnqLd74VS2sKbDPokotH2p/+0ghH6Vxix0awW+46/PDfA6fytrt8/QNHEHfLZmOCVH4B4LoFBNeLxmWF1VPXmpcfJT/8Q=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1758035661; c=relaxed/simple;
-	bh=TF6yDTkTIFtB1LLtZfYKERR2ZcwJswQ2soyQcfqzZhs=;
-	h=Date:From:To:Subject:Message-ID:MIME-Version:Content-Type:
-	 Content-Disposition; b=PKaY1U1fmD2oFrLSINphs2Qhmch9QMfvlk0+dAbAKndcO+dI1b+nvKgupg+uAtjsVIKMkTXkv80pGZ7B01EU7ehNL4/MsyjJsg+Km9NvNWTFrLWpa2tE5Swm4DZpJLgJrgvXacFoN1xnYXidElDx9FZA6SfUzWnve11RtVrSJ4Y=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=QAbuB6Jv; arc=none smtp.client-ip=170.10.133.124
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
+	s=arc-20240116; t=1758127764; c=relaxed/simple;
+	bh=HvoU4zDNaqFl329ojXFUk8oIRip3zFiPr59JU4Wysz8=;
+	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=sclpbYifslnaVIKCRLiLXsK62SgW0cQAlWJAe51AoL5wGQ/ZQbULd5mXKDYwSJAK7QMtrceAV8WhFesOrnuIY4uoMp0ShnwokPIiwAqj23oM62z+ZuDgc+n91AaW2liGd8V6LGDFYpvSh3odwxZAe11WYzrgN3NI3seUOaiYfeM=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=fail (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=dx23DKLo; arc=none smtp.client-ip=209.85.160.177
+Authentication-Results: smtp.subspace.kernel.org; dmarc=fail (p=quarantine dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="QAbuB6Jv"
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1758035659;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:mime-version:mime-version:content-type:content-type;
-	bh=wn6ssVhWxqRhAb1qyW/68AnLxAzdOlSixZFYsqgN2sI=;
-	b=QAbuB6JvOVMa5G5rsw1/41woSRPVMH7+z2BPvJ66wzcTqtKTfJbe9fK+aBTDL0F7tXteDa
-	hBgmiom50lFEzTnEax9xfKDOsr3ZXUUQQbf9GW7+3mCG0juQp+w9nwRDMV8SBPKs/Ts2fq
-	DJZ58BlbYjz9/uDMlP0q2/WfDdbvrK4=
-Received: from mx-prod-mc-08.mail-002.prod.us-west-2.aws.redhat.com
- (ec2-35-165-154-97.us-west-2.compute.amazonaws.com [35.165.154.97]) by
- relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-602-a_ehIVgMPaaPBiBcjv1HsA-1; Tue,
- 16 Sep 2025 11:14:15 -0400
-X-MC-Unique: a_ehIVgMPaaPBiBcjv1HsA-1
-X-Mimecast-MFC-AGG-ID: a_ehIVgMPaaPBiBcjv1HsA_1758035653
-Received: from mx-prod-int-08.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-08.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.111])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
-	(No client certificate requested)
-	by mx-prod-mc-08.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 88C3D180047F;
-	Tue, 16 Sep 2025 15:14:12 +0000 (UTC)
-Received: from localhost (unknown [10.22.80.155])
-	by mx-prod-int-08.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTP id 59A141800586;
-	Tue, 16 Sep 2025 15:14:11 +0000 (UTC)
-Date: Tue, 16 Sep 2025 12:14:09 -0300
-From: "Luis Claudio R. Goncalves" <lgoncalv@redhat.com>
-To: LKML <linux-kernel@vger.kernel.org>,
-	linux-rt-users <linux-rt-users@vger.kernel.org>,
-	stable-rt <stable-rt@vger.kernel.org>,
-	Steven Rostedt <rostedt@goodmis.org>,
-	Thomas Gleixner <tglx@linutronix.de>,
-	Carsten Emde <C.Emde@osadl.org>,
-	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-	Daniel Wagner <daniel.wagner@suse.com>,
-	Clark Williams <williams@redhat.com>,
-	Mark Gross <markgross@kernel.org>, Pavel Machek <pavel@denx.de>,
-	Jeff Brady <jeffreyjbrady@gmail.com>,
-	Jan Kiszka <jan.kiszka@siemens.com>,
-	Luis Goncalves <lgoncalv@redhat.com>
-Subject: [ANNOUNCE] 5.10.244-rt138
-Message-ID: <aMl-wduCwQOAp3cU@uudg.org>
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="dx23DKLo"
+Received: by mail-qt1-f177.google.com with SMTP id d75a77b69052e-4b7a40c7fc2so480321cf.2
+        for <linux-rt-users@vger.kernel.org>; Wed, 17 Sep 2025 09:49:23 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20230601; t=1758127762; x=1758732562; darn=vger.kernel.org;
+        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+         :to:from:sender:from:to:cc:subject:date:message-id:reply-to;
+        bh=+9PM2dqVs194jWxsxuM6nZhE2oAjqozZ4eNO4TLqzRI=;
+        b=dx23DKLoEu1LMX0P4jNNNLQAHFKQOQn49HSTZU86d617Pvf1uLHKd4LlvVKkLzH8tK
+         Ud2BL6eYbUphAeJngq40Be+tpek70y1SPnyeYo9ZDGDILb+uG4o9kmqxzEPqIbVB8p24
+         IrGet8sIrRf+riRB0t1PQnwb3gUMupSvE6e7r8BkuGY7XYfjmQag8NK7cGYTvwhFLMMA
+         NO6NU1NdtFVk6Cw73Fg9wx2Y6lXsRpNchDhkUC2vP+gIApCjJF8ZFf8M7qnk3ZBsWHNB
+         l2gegWhN6C+rmtCuA7oHrNF8QLevI8EZkXsKZO2yMW/Kga90jUPenglY/GKr+bBoFr94
+         zklQ==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20230601; t=1758127762; x=1758732562;
+        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+         :to:from:sender:x-gm-message-state:from:to:cc:subject:date
+         :message-id:reply-to;
+        bh=+9PM2dqVs194jWxsxuM6nZhE2oAjqozZ4eNO4TLqzRI=;
+        b=CQnSbTsHdVzvllHR9yaCx3zZ/sWVbS7oAux6/r3cOnvz4JNYRq6UTFIsiwaMpOAIET
+         eY6kPWT+w62w44dOMsQV8rKZRuo+tMu7w8vBS1+AL1tVNtApI3il5jbW3eW/Sl/rxgv6
+         ej5Ouc8HsSd372xqO5JiVJWI5ZtKNz1mCFp0L+i4Iil2pI1qjsaO0kAAvwj1PXJEKUTP
+         iS7P/sAfWSIEu857HYJ3yWe1jOQ0gA4wVcIHuwfDxd/G3SzJA7qUSyY4BAl15zRVrbvi
+         J/TYWpe+S2TePbUzxsHlY5v1N1MR4QrLsuIcyRHBNWuObQmZphTdMNZ62EyYRNGdm2GY
+         wIrA==
+X-Gm-Message-State: AOJu0YwtdFLNIIOXjpvyu1d1uhkGvFWJ3iTd/I1Zw3q9l0jJ/tmPr8sH
+	yrtEwngqDSNd7lUwRGHYWIrzl+gEDgjd71tAxdFLfFW79MD26O6NEQQGZMSZwiwi
+X-Gm-Gg: ASbGncs4gfomWXzftNRJq6mSUHU7jBcUOYo/SubVVMqG5NHBDwxChvJfF6HHT0xK+EQ
+	Ek5DKNoGSkVn6KZn6WgAguxZQ1MRuAj859UPWihdJdjdRtQ99qDquWv615wQ0cu8chdh2ovqXLu
+	JcvtiMX7qFuZPZE2izpbqizvMuLbspJzwnJ/g3CgtxWgYB6WNYxAIxdPLkudQ+5icEXJ/mE3SHe
+	kT7To9HnWp8NLW2pDzStlo7LPQq2wc3dJSXrMl6kpvlTY6f3nyUKYriWXzDwS6gAm13Z/ABPBUm
+	kfgHVnKcFzYfndSRwVDU1GsUWPKbgb0uSAeEuVMHnBQ1y/KnQpy7A0AWDhCZy9qOIIsoGFZ+8L+
+	FdoVHDPsWexAcUVUrrtMjwQnn93Vp+drxXR64NAg/NbJOLqX6PA9gmcl9O+9dXvtmtLAxngUJp0
+	xbqPrkjvK3l0yA
+X-Google-Smtp-Source: AGHT+IElM4YJAfGWJKDQALKhjORAobuSH0f8/+XVtaNGuVcvnuiIBCZwu2I1LC7qvR5lPS1c5QLOYA==
+X-Received: by 2002:a05:622a:491:b0:4b5:edd3:ddd6 with SMTP id d75a77b69052e-4ba6c6b42a5mr30687951cf.82.1758127761825;
+        Wed, 17 Sep 2025 09:49:21 -0700 (PDT)
+Received: from fionn.redhat.com (bras-base-rdwyon0604w-grc-06-70-50-116-186.dsl.bell.ca. [70.50.116.186])
+        by smtp.gmail.com with ESMTPSA id d75a77b69052e-4bda1ccc19dsm1206161cf.14.2025.09.17.09.49.21
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Wed, 17 Sep 2025 09:49:21 -0700 (PDT)
+Sender: John Kacur <jkacur@gmail.com>
+From: John Kacur <jkacur@redhat.com>
+To: linux-rt-users <linux-rt-users@vger.kernel.org>
+Cc: John Wyatt <jwyatt@redhat.com>,
+	John Kacur <jkacur@redhat.com>
+Subject: [PATCH] tuna: Add -U and -K to the spread command
+Date: Wed, 17 Sep 2025 12:49:00 -0400
+Message-ID: <20250917164900.69529-1-jkacur@redhat.com>
+X-Mailer: git-send-email 2.49.0
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
 List-Subscribe: <mailto:linux-rt-users+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-X-Scanned-By: MIMEDefang 3.4.1 on 10.30.177.111
+Content-Transfer-Encoding: 8bit
 
-Hello RT-list!
+commit 4e10e5b34593052e6ce4a166796b10c72f978efd
+add the feature
+	-U, --no_uthreads	Operations will not affect user threads
+	-K, --no_kthreads	Operations will not affect kernel
+threads
 
-I'm pleased to announce the 5.10.244-rt138 stable release.
+to the move command
 
-You can get this release via the git tree at:
+This also works for the spread command but the arguments need to be
+added. Without this you also get an
+AttributeError: 'Namespace' object has no attribute 'uthreads'
 
-This release is just an update to the new stable 5.10.244 version and
-no RT-specific changes have been made.
+Fix this by adding the options to the spread group for argparse.
 
-  git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
+Signed-off-by: John Kacur <jkacur@redhat.com>
+---
+ tuna-cmd.py | 2 ++
+ 1 file changed, 2 insertions(+)
 
-  branch: v5.10-rt
-  Head SHA1: 54256839470a39c368c97be0344d72f6f8749307
-
-Or to build 5.10.244-rt138 directly, the following patches should be applied:
-
-  https://www.kernel.org/pub/linux/kernel/v5.x/linux-5.10.tar.xz
-
-  https://www.kernel.org/pub/linux/kernel/v5.x/patch-5.10.244.xz
-
-  https://www.kernel.org/pub/linux/kernel/projects/rt/5.10/older/patch-5.10.244-rt138.patch.xz
-
-Signing key fingerprint:
-
-  9354 0649 9972 8D31 D464  D140 F394 A423 F8E6 7C26
-
-All keys used for the above files and repositories can be found on the
-following git repository:
-
-   git://git.kernel.org/pub/scm/docs/kernel/pgpkeys.git
-
-Enjoy!
-Luis
+diff --git a/tuna-cmd.py b/tuna-cmd.py
+index d0a3e6b7dbf8..9f5ce918054d 100755
+--- a/tuna-cmd.py
++++ b/tuna-cmd.py
+@@ -183,6 +183,8 @@ def gen_parser():
+     spread_group.add_argument('-N', '--nohz_full', **MODS['nohz_full'])
+     spread.add_argument('-t', '--threads', **MODS['threads'])
+     spread.add_argument('-q', '--irqs', **MODS['irqs'])
++    spread.add_argument('-U', '--no_uthreads', **MODS['no_uthreads'])
++    spread.add_argument('-K', '--no_kthreads', **MODS['no_kthreads'])
+ 
+     priority.add_argument('priority', **POS['priority'])
+     priority.add_argument('-t', '--threads', **MODS['threads'], required=True)
+-- 
+2.49.0
 
