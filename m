@@ -1,76 +1,77 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 4D4722820DA
-	for <linux-rt-users@vger.kernel.org>; Thu, 18 Sep 2025 17:56:35 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id AA096213237
+	for <linux-rt-users@vger.kernel.org>; Thu, 18 Sep 2025 18:06:23 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1758218198; cv=none; b=Fbu+FLOvtTu/HDhIhGP/Y4b+yXv2tKKB6jZJ+ZMkhSDIXUqywqpD2R9SNRvdcEvttd8J04UteiNQbFNi51XqvkhhQC2l26lvu26ghlgUWvlpLYH9kk/+3jBXbi854i/MDR9K2dAk1h1/Jl2ePgt6vJhS+qcCLtg5mGH0HoYbDZU=
+	t=1758218785; cv=none; b=fpdA4wyemQP3pnuH3JorxAr+8sZf0hQ+3EVa1hI163YoeB1nGbLqU54+Nxd640+kfZPpfuncBl5xL8h0/8VJ2KPJK5D3/Ej6vQvUzkwIImDYnQIuB6W55iROmaVx4Q2F65WxzsWR+GPsFm4751/R02dld3DNG+RQyTf+KOkhWQQ=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1758218198; c=relaxed/simple;
-	bh=gONnM9Uk9ggkNDV2JEkqgXQyiyFy+wwGt5W5121C2g0=;
+	s=arc-20240116; t=1758218785; c=relaxed/simple;
+	bh=YtI0uMSK9JTGVNLrzvnnXN5zPOrU8iQ0D65qkUijErs=;
 	h=Date:From:To:cc:Subject:In-Reply-To:Message-ID:References:
-	 MIME-Version:Content-Type; b=Qrun2c6b3La1J7VjOOAyQdV/ToQeBdb+7RQbRofiFBeI8CyNBDZvfffMpqGchwCE2El5OP29Bkm6ExWpkHk9cV/sQDqGz3gCjp1JJ92qkjmup1M5wi451ZEhEptQjiAwBUqAbMabQyRf8FRGU7jzjLTtp+Hhfwc4WhWRkEXdZ9o=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=Wz9ukkKX; arc=none smtp.client-ip=170.10.133.124
+	 MIME-Version:Content-Type; b=uNselteTUVKVSzC+q3DpF2R0YxkYWO4BTBlChajIiUrl0nXiDxlctBjoOb3cfpuN9tlSh8tc95bTCP3uSAXJQiifRSfhYkdksmaMbGmzFJWEnHzXwICxJPB6PxuNjolsfZnkA408sArq96PbE8juHL64sk40qTV02hkZ0iJZRGM=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=UHMF6riZ; arc=none smtp.client-ip=170.10.129.124
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="Wz9ukkKX"
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="UHMF6riZ"
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1758218195;
+	s=mimecast20190719; t=1758218782;
 	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
 	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
 	 in-reply-to:in-reply-to:references:references;
-	bh=CXyvGViztE+p6D5wH0bih4ZQvMjJSTec04FIr/MKvYw=;
-	b=Wz9ukkKXVbqIrRYydenOAuvxwiLNduAT9K8aCauhYQ7Sm7i4lMb8ckSzgzyN3dfZ2B6Qh4
-	IlKXJoj1zgkEGDeosMhE1+VD3J2vR8q5T0A7kuJnctDnspfo5kyrL2l5+49BvPBrMndZn0
-	c1DKXBzyHU+5Si/XmK4nkR50P+1tBpE=
-Received: from mail-qt1-f200.google.com (mail-qt1-f200.google.com
- [209.85.160.200]) by relay.mimecast.com with ESMTP with STARTTLS
+	bh=LO7Iw/MFp6PLLZ8vuSs+XWoaKQLmpk925vsKAlIlttU=;
+	b=UHMF6riZ4ktQJlGObmGZo8j/+g00YTNMC2mXyQ+azb/qfggyTVh5Yyg2wsh4y/bXdpQfCJ
+	7G5sP4gSuVCquzp4hJlFm/snJWEvEcQCBQ+dOoxwwyZqnn5Rvd9ttwNThDnuxFBlKfY1+5
+	s4DkunkmWx3CpTSGrBlLyTKxsxoH66o=
+Received: from mail-qk1-f198.google.com (mail-qk1-f198.google.com
+ [209.85.222.198]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
- us-mta-644-Z4WjHSFaOuurvUCe9mV-zg-1; Thu, 18 Sep 2025 13:56:33 -0400
-X-MC-Unique: Z4WjHSFaOuurvUCe9mV-zg-1
-X-Mimecast-MFC-AGG-ID: Z4WjHSFaOuurvUCe9mV-zg_1758218192
-Received: by mail-qt1-f200.google.com with SMTP id d75a77b69052e-4b7ad72bc9fso24789101cf.0
-        for <linux-rt-users@vger.kernel.org>; Thu, 18 Sep 2025 10:56:32 -0700 (PDT)
+ us-mta-619-DXR8i3djMre5uVuiLFfOjg-1; Thu, 18 Sep 2025 14:06:21 -0400
+X-MC-Unique: DXR8i3djMre5uVuiLFfOjg-1
+X-Mimecast-MFC-AGG-ID: DXR8i3djMre5uVuiLFfOjg_1758218781
+Received: by mail-qk1-f198.google.com with SMTP id af79cd13be357-8063443ef8cso359994685a.1
+        for <linux-rt-users@vger.kernel.org>; Thu, 18 Sep 2025 11:06:21 -0700 (PDT)
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1758218192; x=1758822992;
+        d=1e100.net; s=20230601; t=1758218781; x=1758823581;
         h=mime-version:references:message-id:in-reply-to:subject:cc:to:from
          :date:x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
-        bh=CXyvGViztE+p6D5wH0bih4ZQvMjJSTec04FIr/MKvYw=;
-        b=k4FCkQBj89xXHWSTnvB/ZnmQ/+fwtecEveXAkRdmfMJeYHelBACW4P/ZKgWAKfoFNF
-         mf2IphFC/BFO5ReN5E3XYVBY1scWouxHk9K3XdbU1sInGH4HM6lBsfiEWlBYWxKPTWmz
-         tuNjdR7kOq2UwPll/8WlitxTcv+EPBu1mdT7JKoP0dermHs4J3w1IrVTPtm+wc/tKCTh
-         Fo5HVybsVUIuEG8ZWyVRKHRcH5YNZY4N9CzqNHq9KSp/PGDqWtXF0A+lAznwbnhfGB2L
-         8xnnhVTzIudLq7gxdYwG9S6/KCujj+6MIE97lTNYzd496XYHZ8FTttOkNezk3jvqg/VB
-         ivuw==
-X-Forwarded-Encrypted: i=1; AJvYcCXH8zWcX5ESURc87q0BWRgFZmtEYLEq0NK6l74nIgSyNSculq8qPupax+TX2Ss5oP+GhBDl9fkFeYOGOxCxAQ==@vger.kernel.org
-X-Gm-Message-State: AOJu0YzWENMKScIMwepEKDSF7pxnzFkvlA2HcO74twdfZ+8OLTzQVfEF
-	jgPN9llhrr73Y9VkDQoyrSZQuLl021zm7JQ/Uv2uZ5IvXSDU4RTL55TYxS1qvIz8SKLKGsM+LKX
-	Chaee8O5PzjjxjCT7l4nz9q9R/BZTv5tgW7Hc79ZhyU6FGd6rXCNVa3vpoVI/Rihop4ce
-X-Gm-Gg: ASbGncsd0tdaa+76Bj2oQWpeNg5n7vaI1HWsqpeXqXQ/28WVFqtfzYr+SnCWGXjciNW
-	F1K/7gH0NNTKy9Qc4TUOEqOEQkpCul/SRN41jVhjzz66SWSW2uWC2FkLOPIVy6CyaS4/kkIylsL
-	fv7uO8JEWdS+RW8ZOAfJ/xVbFdrUjZLS7kvoIzyPh1REc33a/daGJGruRu3fGd2z5ni1AlFghAH
-	yF9cVLJBVzu3IReyqVgZ1xuFDOor+TF8911jcxF23fuQelQJKyrDeUwmsQJ4TDKMmEjVJXTZ9sd
-	/Cw2l4GjCBMQ7pvLjEwnN6Snhw==
-X-Received: by 2002:a05:622a:5:b0:4b7:5de3:3046 with SMTP id d75a77b69052e-4c0720adaddmr2687151cf.49.1758218192172;
-        Thu, 18 Sep 2025 10:56:32 -0700 (PDT)
-X-Google-Smtp-Source: AGHT+IEcYeXU6PAjM93gbgN7paIo1VZgIrXll1wWGx4yomzIdmDV3dXJ6ywzC4IWliSBXR0FwiTSgg==
-X-Received: by 2002:a05:622a:5:b0:4b7:5de3:3046 with SMTP id d75a77b69052e-4c0720adaddmr2686801cf.49.1758218191751;
-        Thu, 18 Sep 2025 10:56:31 -0700 (PDT)
+        bh=LO7Iw/MFp6PLLZ8vuSs+XWoaKQLmpk925vsKAlIlttU=;
+        b=QQeRyBoTbwNkRZZVaPR++6fZ8FtNYHVAB70Vh3ThNCnnB3KTRPIaWDuI2ZM6ny0ezf
+         P6GWsCe1iU+cZM/G798lu90RCl7ms9oqDWunannolot64S4z3cOHwgPLO0NoVRRrBDBA
+         RmbQk3QG7C68Z4NkUGBjjmbVw+X4FymMFMwhFRYBNhGB1dJOoCxihcexBpHqTltZWOo6
+         M0J6n9uHvF+uN/0Go+akjUM63iXm2bwQ8moA0K3JD/d1/c237Zyw+rYTkBog1AaeidfL
+         dS433xqUL8ujHlkWtWu3qJwXhHpqZxft57f6zvjz9nWY9xDpEelwe7qa28q/6GxIOFe+
+         xMfA==
+X-Forwarded-Encrypted: i=1; AJvYcCVcTI5ggMnuiYTSj9mcvHJ142l+jNdJs8CeJpPvRYDgzpNhpMOGBz3nN+OsCU+QnX2d5SSfZqgPK21c+ZmJfQ==@vger.kernel.org
+X-Gm-Message-State: AOJu0YwBd2iwWQ4kWwSljp4WW2mglREFNLDBOqryIfKDKNQccHZkUVwx
+	sRlyWPJOpROi5tndlzEtlImRvGrS9dY/T4zmi9w/d0PcMvNj1OPRyceGFKjLrICcbDxpFJfwQ0z
+	BykHS7kflnl/sGVQR/igfSxBwU9/jW0rIiiQoEpDK3kC/Ujygp9clcGuoVf0Udg+dlvJR
+X-Gm-Gg: ASbGncsxlv5bsJFVnsrCBILrprSHOoG48fMEAYRTpdk8zAcLYQJ3uyCkQdxDX3PaBkR
+	lcfhvF9Ob74b58557dF4HtaRlWnTNA5buhavnvrHv/ZhQjuA0s0zxPRSdK8tPPTd912ducKfNpf
+	mmKTIBk8rjKwNW2fDDssFsQw12DpyjFCPPdSQDJ62agQQveD//JC+y04kjNZEpx8F+p4+kl7tVC
+	jtcv5QctXhjZUW8lvTCqUwtFeeFkJg8BAWZ0nkCLtnOdS9sBT3aRRMl9VPB2mqLptOTURubOIo1
+	WeDDYqtS2FICVW4bbrNZgzURlw==
+X-Received: by 2002:a05:620a:17a3:b0:82b:54f:5b8a with SMTP id af79cd13be357-83bac4afa51mr71215285a.75.1758218778946;
+        Thu, 18 Sep 2025 11:06:18 -0700 (PDT)
+X-Google-Smtp-Source: AGHT+IFmL6w8mZIEvo4yqDTwwyMt4ck5g5aAN1nn9eYS5DnOG8qQzyBQp2QVrPBuluwnsdnmqDF1cA==
+X-Received: by 2002:a05:620a:17a3:b0:82b:54f:5b8a with SMTP id af79cd13be357-83bac4afa51mr71210885a.75.1758218778542;
+        Thu, 18 Sep 2025 11:06:18 -0700 (PDT)
 Received: from fionn ([70.53.55.167])
-        by smtp.gmail.com with ESMTPSA id d75a77b69052e-4bda1fc418dsm16733371cf.12.2025.09.18.10.56.30
+        by smtp.gmail.com with ESMTPSA id d75a77b69052e-4bda86b3a15sm16716421cf.24.2025.09.18.11.06.17
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Thu, 18 Sep 2025 10:56:31 -0700 (PDT)
-Date: Thu, 18 Sep 2025 13:56:19 -0400 (EDT)
+        Thu, 18 Sep 2025 11:06:17 -0700 (PDT)
+Date: Thu, 18 Sep 2025 14:06:06 -0400 (EDT)
 From: John Kacur <jkacur@redhat.com>
-To: Tomas Glozar <tglozar@redhat.com>
-cc: Clark Williams <williams@redhat.com>, 
-    Linux RT Users <linux-rt-users@vger.kernel.org>
-Subject: Re: [PATCH] rteval: Introduce E2E tests with output checking
-In-Reply-To: <20250725090201.32656-1-tglozar@redhat.com>
-Message-ID: <6f2a6564-ecf0-e77e-2ccf-5250eddab97f@redhat.com>
-References: <20250725090201.32656-1-tglozar@redhat.com>
+To: "John B. Wyatt IV" <jwyatt@redhat.com>
+cc: Clark Williams <williams@redhat.com>, linux-rt-users@vger.kernel.org, 
+    kernel-rts-sst <kernel-rts-sst@redhat.com>, 
+    "John B. Wyatt IV" <sageofredondo@gmail.com>
+Subject: Re: [PATCH] tuna: Add common virtual envs gitignores
+In-Reply-To: <20250813200839.82200-1-jwyatt@redhat.com>
+Message-ID: <3c66730b-a473-f103-bf13-cc19d312880d@redhat.com>
+References: <20250813200839.82200-1-jwyatt@redhat.com>
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
@@ -81,67 +82,60 @@ Content-Type: text/plain; charset=US-ASCII
 
 
 
-On Fri, 25 Jul 2025, Tomas Glozar wrote:
+On Wed, 13 Aug 2025, John B. Wyatt IV wrote:
 
-> Currently, rteval has two kinds of tests:
-> - Unit tests, embedded directly in code, and run by
->   unit-tests/unittest.py.
-> - End-to-end tests, implemented in Makefile targets runit, load, and
->   sysreport.
+> Virtual environments are a common method to develop in the Python world.
+> The virtual environment directories are ignored.
 > 
-> Introduce a new test suite in folder e2e-tests/ (analogically to
-> unit-tests) that uses Test::Harness ("prove" command) together with a
-> simple test engine adopted from RTLA.
+> Copied partially from https://github.com/github/gitignore/blob/main/Python.gitignore
 > 
-> The test suite runs rteval in a temporary folder for each test case,
-> collects its exit value and output, and validates both according to the
-> test specification. grep is used to check the output, optionally with
-> custom flags. rteval.conf is generated individually based on the test
-> specification of each case.
+> License of copied text: CC0-1.0 (Public Domain declaration)
+> https://github.com/github/gitignore/blob/main/LICENSE
 > 
-> Three test sets are implemented in the commit:
-> - "basic", running base checks without any specific modules or module
->   options. Replaces "make runit".
-> - "loads", testing various kinds of loads, including their options.
-> - "measurement", testing both cyclictest and timerlat.
+> Signed-off-by: John B. Wyatt IV <jwyatt@redhat.com>
+> Signed-off-by: John B. Wyatt IV <sageofredondo@gmail.com>
+> ---
+>  .gitignore | 10 ++++++++++
+>  1 file changed, 10 insertions(+)
 > 
-> The latter two check in rteval output whether the command run by rteval
-> corresponds to the rteval options and to the specified load or
-> measurement, if possible.
+> diff --git a/.gitignore b/.gitignore
+> index 29b00a0..1fa5bbd 100644
+> --- a/.gitignore
+> +++ b/.gitignore
+> @@ -2,3 +2,13 @@
+>  *~
+>  *.swp
+>  tags
+> +
+> +# Environments
+> +.env
+> +.envrc
+> +.venv
+> +env/
+> +venv/
+> +ENV/
+> +env.bak/
+> +venv.bak/
+> -- 
+> 2.50.1
 > 
-> "make runit" and "make load" targets are depracated with a warning;
-> "make sysreport" is kept until sysreport tests are added to the new test
-> suite.
+> 
 > 
 
-Interesting.
-Note the correct spelling is "deprecated"
+I ran in a python virtual environment and only got an env directory which 
+I deleted at the end. Are you actually using this, or is this just 
+theorectically something we might want to add?
 
-I'm not sure we want to deprecate runit and loads, they have different 
-purposes. I often run in a non-rt environment and without tuned if I'm 
-just testing functionality and not performance, and I got this after 
-running make check (skipping some of the output before that)
+Granted, I didn't do anything complicated with this
 
-# Output match failed: "Command: rtla timerlat hist -p1100 -P f:95 -u 
--c[0-9|-]+ -E3500 --no-summary -T1 -t=trace.txt"
-e2e-tests/measurement.t .. Failed 6/19 subtests 
+I also understand you are trying to do your due dilligence by referencing
+where you copied this from, but then pulling in another license to do so.
+This is going to cause me headaches for something kind of trivial.
 
-Test Summary Report
--------------------
-e2e-tests/loads.t      (Wstat: 0 Tests: 8 Failed: 1)
-  Failed test:  5
-e2e-tests/measurement.t (Wstat: 0 Tests: 19 Failed: 6)
-  Failed tests:  13-14, 16-19
-Files=3, Tests=33, 308 wallclock secs ( 0.06 usr  0.00 sys + 146.20 cusr 
-281.79 csys = 428.05 CPU)
-Result: FAIL
-make: *** [Makefile:22: check] Error 1
+I'd rather not have a lot of patches creating churn in something like 
+.gitignore, if we start using this a lot and it becomes more convenient to 
+add somethings here, then fine, but then figure it out yourself, and don't 
+copy from somewhere else. I think we'll just ignore this for now please.
 
-How do I identify which test is test number 5?
-Am I failing tests because of performance reasons or because the tests 
-expect an environment different from mine?
-
-Thanks
-
-John Kacur
+John
 
