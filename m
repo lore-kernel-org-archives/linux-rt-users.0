@@ -1,334 +1,147 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 1C61F306B3F
-	for <linux-rt-users@vger.kernel.org>; Wed, 17 Sep 2025 21:36:04 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 4D4722820DA
+	for <linux-rt-users@vger.kernel.org>; Thu, 18 Sep 2025 17:56:35 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1758144967; cv=none; b=czr41ldlj0uB5e2nuZuEDG9FE7BI4xzMrm/hCKx5iZ20SWE/DpwlBhKndwqQDwK29sXDNSCiydNVPEuHBQcmRb8dLcNtwpuCflYRyJUCAhDXIZYxLBns9Hdn1uheS+kbNI4yiuucFLM9BP4l+ZzmCAZfpL5Tc7FVDEGD1/wdV50=
+	t=1758218198; cv=none; b=Fbu+FLOvtTu/HDhIhGP/Y4b+yXv2tKKB6jZJ+ZMkhSDIXUqywqpD2R9SNRvdcEvttd8J04UteiNQbFNi51XqvkhhQC2l26lvu26ghlgUWvlpLYH9kk/+3jBXbi854i/MDR9K2dAk1h1/Jl2ePgt6vJhS+qcCLtg5mGH0HoYbDZU=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1758144967; c=relaxed/simple;
-	bh=q8H9H1kfxrsYke3od9cxkG4YSqjhgRsQ5a9oEPjTYxA=;
-	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=G0LTD+MDNz0omp0x+OZXcWUoUox6NiDgpqkWYECv0k64laISQ01UHLBknptghqQtl5uKWC0gpFAXYp9VDyDqj/XXAlmrjQHSK8aMLLrzuFPxyoAQoch0qOzm0PChKXJaV3zW42aJZ1cYf5KXkGkK5KtZ/qvk4X7CVCcmUuEiy9s=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=EzvzOQQG; arc=none smtp.client-ip=170.10.129.124
+	s=arc-20240116; t=1758218198; c=relaxed/simple;
+	bh=gONnM9Uk9ggkNDV2JEkqgXQyiyFy+wwGt5W5121C2g0=;
+	h=Date:From:To:cc:Subject:In-Reply-To:Message-ID:References:
+	 MIME-Version:Content-Type; b=Qrun2c6b3La1J7VjOOAyQdV/ToQeBdb+7RQbRofiFBeI8CyNBDZvfffMpqGchwCE2El5OP29Bkm6ExWpkHk9cV/sQDqGz3gCjp1JJ92qkjmup1M5wi451ZEhEptQjiAwBUqAbMabQyRf8FRGU7jzjLTtp+Hhfwc4WhWRkEXdZ9o=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=Wz9ukkKX; arc=none smtp.client-ip=170.10.133.124
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="EzvzOQQG"
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="Wz9ukkKX"
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1758144963;
+	s=mimecast20190719; t=1758218195;
 	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:
-	 content-transfer-encoding:content-transfer-encoding;
-	bh=oFzMYvN1U25yNiAfLtKOsud/hnRtyR0cTFu4ZqQZG6I=;
-	b=EzvzOQQGb6P6ybeQ8le7qNFZXfgQIK4upqS53y7YuIot+IJ2nLJUDPxJLJuZbfBCvfhbmi
-	mcw/VaW47iBm3LPRHuJdkos7wVFSR8DdBnQ/ydHlvSY00n54EDE3SST1Udp4tn2afVFyRm
-	b5bVQL8i0UXQXdg1P8/lkydHmq9PZNo=
-Received: from mail-qk1-f200.google.com (mail-qk1-f200.google.com
- [209.85.222.200]) by relay.mimecast.com with ESMTP with STARTTLS
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 in-reply-to:in-reply-to:references:references;
+	bh=CXyvGViztE+p6D5wH0bih4ZQvMjJSTec04FIr/MKvYw=;
+	b=Wz9ukkKXVbqIrRYydenOAuvxwiLNduAT9K8aCauhYQ7Sm7i4lMb8ckSzgzyN3dfZ2B6Qh4
+	IlKXJoj1zgkEGDeosMhE1+VD3J2vR8q5T0A7kuJnctDnspfo5kyrL2l5+49BvPBrMndZn0
+	c1DKXBzyHU+5Si/XmK4nkR50P+1tBpE=
+Received: from mail-qt1-f200.google.com (mail-qt1-f200.google.com
+ [209.85.160.200]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
- us-mta-621-Zfn_BjFsMGaUZMPInrfReg-1; Wed, 17 Sep 2025 17:36:02 -0400
-X-MC-Unique: Zfn_BjFsMGaUZMPInrfReg-1
-X-Mimecast-MFC-AGG-ID: Zfn_BjFsMGaUZMPInrfReg_1758144961
-Received: by mail-qk1-f200.google.com with SMTP id af79cd13be357-8163f552e5aso120457385a.3
-        for <linux-rt-users@vger.kernel.org>; Wed, 17 Sep 2025 14:36:02 -0700 (PDT)
+ us-mta-644-Z4WjHSFaOuurvUCe9mV-zg-1; Thu, 18 Sep 2025 13:56:33 -0400
+X-MC-Unique: Z4WjHSFaOuurvUCe9mV-zg-1
+X-Mimecast-MFC-AGG-ID: Z4WjHSFaOuurvUCe9mV-zg_1758218192
+Received: by mail-qt1-f200.google.com with SMTP id d75a77b69052e-4b7ad72bc9fso24789101cf.0
+        for <linux-rt-users@vger.kernel.org>; Thu, 18 Sep 2025 10:56:32 -0700 (PDT)
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1758144961; x=1758749761;
-        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
-         :to:from:x-gm-message-state:from:to:cc:subject:date:message-id
-         :reply-to;
-        bh=oFzMYvN1U25yNiAfLtKOsud/hnRtyR0cTFu4ZqQZG6I=;
-        b=v4QWeVpdLh0uBJPbJXJGJ09v33zM/TICPWyajLU3kpb+yEcg4flmp9E34n+GK33gz3
-         LfgnTbSR3R0it+6Euj3JFsZGASjX4zLJRHEZ27e2sdOFjxjOfhYDHVl0dnCAgwinFNqF
-         HUHN2Bcg/1WidhTuohEngB+KfbMW+e2peaCrFBN5CVSyAmw2HWg0Jvz8CVSmne0W/pF9
-         giZhUY8goI3kkw9WeV/ilufQ/jAtB5ZUYXmx+9r7ylGZHYhA5uNDgjyN5e5gGRvy44at
-         sDZ0kbKTpMaxxhimOeLx6mPiL8wiKMLd+Unmc5TN7V7e8RdzSTnRd/64wqHc48nhdJ+C
-         VdYg==
-X-Forwarded-Encrypted: i=1; AJvYcCU3eHWpNHjTQ0bR6HBhVl0268N3n082BkwbFJQbMGEqqRJCKbKEEV+dq/dZwl5kCjGF/IGqILmuhRfGjWno9w==@vger.kernel.org
-X-Gm-Message-State: AOJu0YytVpOlHux+apy1e5js41CwL/6EbDFR9LFxBf0SYkvIxwizwO56
-	D0IaAwL1YXZHDiPAaP3zYFTOFSJBzqGlXUDmbgmqEVSaomq9fD5Jwe0OFGyuglLpJbZupfAUV1a
-	9ygN6Jo9VSMzZ3qDJPCIw9xU/qQlhUADhcy7+t0m/sjXp+ZKmO7paqEJ+Sd3+Zl1wC6nx
-X-Gm-Gg: ASbGncsqIlhtu+NP24kNOezpEgZZWiSyoTA3JMostatumCOZVl6JrEQLR2nXdrxSD8N
-	+7pKafPWzHTiilziAEG4WN8P5WoJqnPtp83T+qStsC4Kf0j3wlcuuZ9F4prmvp+6CUMK1qSAf75
-	NO1YR+mwGHSF23lEAGZKAGp4DrNhHbAd54Ug1GJB1NNOJGK3kmPJcf/Vp9DqY9ikeUTb00/t2tG
-	yaufucnD8N0MON/ye6SxCdMHyWzZTztDCfc4WS4SH2iNWujZefBK4fKE7UjGSVLxHnY/V74/hwd
-	0Iji2o0iVcIJn4rNU+dHR8cPiXn42iB62yWV
-X-Received: by 2002:a05:620a:2981:b0:7fe:8292:187e with SMTP id af79cd13be357-831153044a9mr439670385a.60.1758144961495;
-        Wed, 17 Sep 2025 14:36:01 -0700 (PDT)
-X-Google-Smtp-Source: AGHT+IGgrDf8gJYhUIJzEwTULltCfyH7s4S4m39eiaKlOlt3E68DHH7VRkVThpprANoB2Pldaly3LA==
-X-Received: by 2002:a05:620a:2981:b0:7fe:8292:187e with SMTP id af79cd13be357-831153044a9mr439667685a.60.1758144961015;
-        Wed, 17 Sep 2025 14:36:01 -0700 (PDT)
-Received: from thinkpad2024 ([71.217.38.49])
-        by smtp.gmail.com with ESMTPSA id af79cd13be357-836262b5592sm50656385a.2.2025.09.17.14.36.00
+        d=1e100.net; s=20230601; t=1758218192; x=1758822992;
+        h=mime-version:references:message-id:in-reply-to:subject:cc:to:from
+         :date:x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
+        bh=CXyvGViztE+p6D5wH0bih4ZQvMjJSTec04FIr/MKvYw=;
+        b=k4FCkQBj89xXHWSTnvB/ZnmQ/+fwtecEveXAkRdmfMJeYHelBACW4P/ZKgWAKfoFNF
+         mf2IphFC/BFO5ReN5E3XYVBY1scWouxHk9K3XdbU1sInGH4HM6lBsfiEWlBYWxKPTWmz
+         tuNjdR7kOq2UwPll/8WlitxTcv+EPBu1mdT7JKoP0dermHs4J3w1IrVTPtm+wc/tKCTh
+         Fo5HVybsVUIuEG8ZWyVRKHRcH5YNZY4N9CzqNHq9KSp/PGDqWtXF0A+lAznwbnhfGB2L
+         8xnnhVTzIudLq7gxdYwG9S6/KCujj+6MIE97lTNYzd496XYHZ8FTttOkNezk3jvqg/VB
+         ivuw==
+X-Forwarded-Encrypted: i=1; AJvYcCXH8zWcX5ESURc87q0BWRgFZmtEYLEq0NK6l74nIgSyNSculq8qPupax+TX2Ss5oP+GhBDl9fkFeYOGOxCxAQ==@vger.kernel.org
+X-Gm-Message-State: AOJu0YzWENMKScIMwepEKDSF7pxnzFkvlA2HcO74twdfZ+8OLTzQVfEF
+	jgPN9llhrr73Y9VkDQoyrSZQuLl021zm7JQ/Uv2uZ5IvXSDU4RTL55TYxS1qvIz8SKLKGsM+LKX
+	Chaee8O5PzjjxjCT7l4nz9q9R/BZTv5tgW7Hc79ZhyU6FGd6rXCNVa3vpoVI/Rihop4ce
+X-Gm-Gg: ASbGncsd0tdaa+76Bj2oQWpeNg5n7vaI1HWsqpeXqXQ/28WVFqtfzYr+SnCWGXjciNW
+	F1K/7gH0NNTKy9Qc4TUOEqOEQkpCul/SRN41jVhjzz66SWSW2uWC2FkLOPIVy6CyaS4/kkIylsL
+	fv7uO8JEWdS+RW8ZOAfJ/xVbFdrUjZLS7kvoIzyPh1REc33a/daGJGruRu3fGd2z5ni1AlFghAH
+	yF9cVLJBVzu3IReyqVgZ1xuFDOor+TF8911jcxF23fuQelQJKyrDeUwmsQJ4TDKMmEjVJXTZ9sd
+	/Cw2l4GjCBMQ7pvLjEwnN6Snhw==
+X-Received: by 2002:a05:622a:5:b0:4b7:5de3:3046 with SMTP id d75a77b69052e-4c0720adaddmr2687151cf.49.1758218192172;
+        Thu, 18 Sep 2025 10:56:32 -0700 (PDT)
+X-Google-Smtp-Source: AGHT+IEcYeXU6PAjM93gbgN7paIo1VZgIrXll1wWGx4yomzIdmDV3dXJ6ywzC4IWliSBXR0FwiTSgg==
+X-Received: by 2002:a05:622a:5:b0:4b7:5de3:3046 with SMTP id d75a77b69052e-4c0720adaddmr2686801cf.49.1758218191751;
+        Thu, 18 Sep 2025 10:56:31 -0700 (PDT)
+Received: from fionn ([70.53.55.167])
+        by smtp.gmail.com with ESMTPSA id d75a77b69052e-4bda1fc418dsm16733371cf.12.2025.09.18.10.56.30
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Wed, 17 Sep 2025 14:36:00 -0700 (PDT)
-From: "John B. Wyatt IV" <jwyatt@redhat.com>
-To: "Clark Williams" <williams@redhat.com>,
-	"John Kacur" <jkacur@redhat.com>
-Cc: "John B. Wyatt IV" <jwyatt@redhat.com>,
-	linux-rt-users@vger.kernel.org,
-	kernel-rts-sst <kernel-rts-sst@redhat.com>,
-	"John B. Wyatt IV" <sageofredondo@gmail.com>
-Subject: [PATCH] tuna: Remove broken testuna
-Date: Wed, 17 Sep 2025 17:35:49 -0400
-Message-ID: <20250917213551.12944-1-jwyatt@redhat.com>
-X-Mailer: git-send-email 2.51.0
+        Thu, 18 Sep 2025 10:56:31 -0700 (PDT)
+Date: Thu, 18 Sep 2025 13:56:19 -0400 (EDT)
+From: John Kacur <jkacur@redhat.com>
+To: Tomas Glozar <tglozar@redhat.com>
+cc: Clark Williams <williams@redhat.com>, 
+    Linux RT Users <linux-rt-users@vger.kernel.org>
+Subject: Re: [PATCH] rteval: Introduce E2E tests with output checking
+In-Reply-To: <20250725090201.32656-1-tglozar@redhat.com>
+Message-ID: <6f2a6564-ecf0-e77e-2ccf-5250eddab97f@redhat.com>
+References: <20250725090201.32656-1-tglozar@redhat.com>
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
 List-Subscribe: <mailto:linux-rt-users+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
+Content-Type: text/plain; charset=US-ASCII
 
-This script relies on the older, incompatible Tuna syntax, and
-rtctl which is no longer packaged for most distributions. No one
-has complained so remove it since the changes to update it would
-be extensive with no users.
 
-Signed-off-by: John B. Wyatt IV <jwyatt@redhat.com>
-Signed-off-by: John B. Wyatt IV <sageofredondo@gmail.com>
----
- testuna | 230 --------------------------------------------------------
- 1 file changed, 230 deletions(-)
- delete mode 100755 testuna
 
-diff --git a/testuna b/testuna
-deleted file mode 100755
-index cb98640..0000000
---- a/testuna
-+++ /dev/null
-@@ -1,230 +0,0 @@
--#!/bin/bash
--# Regression tests for tuna
--# (c) 2008 Red Hat Inc.
--# Arnaldo Carvalho de Melo <acme@redhat.com>
--# SPDX-License-Identifier: GPL-2.0-only
--
--dprint() {
--	[ -n "$VERBOSE" ] && echo $1
--}
--
--ktpidof() {
--	echo $(ps ax -To pid,cmd | grep "\[$1.*\]" | head -1 | cut -d'[' -f 1)
--}
--
--get_rtprio() {
--	echo $(chrt -p $1 | grep priority | cut -d ':' -f 2)
--}
--
--get_policy() {
--	echo $(chrt -p $1 | grep policy | cut -d ':' -f 2)
--}
--
--get_affinity() {
--	echo $(taskset -p $1 | grep 'current affinity' | cut -d ':' -f 2)
--}
--
--get_nr_processors() {
--	echo $(grep -i "^processor.*: " /proc/cpuinfo | tail -1 | cut -d ':' -f 2)
--}
--
--get_nr_cpu_sockets() {
--	echo $(grep "^physical id" /proc/cpuinfo | cut -d: -f2 | sort -u | wc -l)
--}
--
--die() {
--	[ -z "$VERBOSE" ] && echo -n "$2: "
--	echo $1
--	rtctl --file $INITIAL reset
--	taskset -p $INITIAL_INIT_AFFINITY 1 > /dev/null
--	rm -rf $TESTUNA_DIR
--	exit 1
--}
--
--die_with_a_diff() {
--	[ -n "$VERBOSE" ] && diff -u $INITIAL $NEW
--	die "$1"
--}
--
--tuna_save() {
--	tuna --save $TEMPCONF
--	grep -v '^# rtctl --file ' $TEMPCONF > $1
--	rm -f $TEMPCONF
--}
--
--die_if_not_saved() {
--	dprint "$2"
--	tuna_save $NEW
--	(diff -u $INITIAL $NEW | diffstat | \
--	grep -q "[ \t]*1 file changed, $1 insertions*(+), $1 deletions*(-)") ||
--	die_with_a_diff 'FAILED!' "$2"
--}
--
--die_if_conf_changed() {
--	dprint "$1"
--	tuna_save $NEW
--	diff -qu $INITIAL $NEW > /dev/null || die_with_a_diff 'FAILED!' "$1":
--}
--
--die_if_zero() {
--	dprint "$2"
--	[ $1 -eq 0 ] && die 'FAILED!' "$2"
--}
--
--die_if_not_zero() {
--	dprint "$2"
--	[ $1 -ne 0 ] && die 'FAILED!' "$2"
--}
--
--die_if_not_equal() {
--	dprint "$3"
--	[ $1 -ne $2 ] && die 'FAILED!' "$3"
--}
--
--die_if_not_str_equal() {
--	dprint "$3"
--	[ $1 != $2 ] && die 'FAILED!' "$3"
--}
--
--TESTUNA_DIR=$(mktemp -d -t testuna.XXXXXX) || exit 1
--INITIAL=$TESTUNA_DIR/initial.tuna
--INITIAL_INIT_AFFINITY=$(get_affinity 1)
--TEMPCONF=$TESTUNA_DIR/tempnew.tuna
--NEW=$TESTUNA_DIR/new.tuna
--
--[ $# -eq 1 ] && VERBOSE=1
--
--dprint "Saving initial configuration"
--
--tuna_save $INITIAL
--
--TUNA_RPM_VERSION=$(rpm -q --qf "%{version}\n" tuna)
--TUNA_BIN_VERSION=$(tuna --version)
--die_if_not_str_equal "$TUNA_RPM_VERSION" "$TUNA_BIN_VERSION" \
--	"Verifying --version ($TUNA_BIN_VERSION) matches package version ($TUNA_RPM_VERSION)"
--
--rtctl --file $INITIAL reset
--
--die_if_conf_changed "Replaying initial config"
--
--PID=$(ktpidof "watchdog")
--RTPRIO=$(get_rtprio $PID)
--POLICY=$(get_policy $PID)
--POLICY=$(echo ${POLICY:6:1} | tr 'A-Z' 'a-z')
--chrt -$POLICY -p $((RTPRIO - 1)) $PID
--
--die_if_not_saved 1 'Saving changes to a kernel thread priority'
--
--chrt -$POLICY -p $RTPRIO $PID
--
--die_if_conf_changed 'Restoring kernel thread priority'
--
--new_policy=$(echo $POLICY | tr fr rf)
--
--chrt -$new_policy -p $RTPRIO $PID
--
--die_if_not_saved 1 'Changing kernel thread sched policy'
--
--chrt -$POLICY -p $RTPRIO $PID
--
--die_if_conf_changed 'Restoring kernel thread sched policy'
--
--PID=$(ktpidof "kthreadd")
--AFFINITY=$(get_affinity $PID)
--
--taskset -p 0x2 $PID > /dev/null
--
--die_if_not_saved 1 'Changing kernel thread SMP affinity mask'
--
--taskset -p $AFFINITY $PID > /dev/null
--
--die_if_conf_changed 'Restoring kernel thread SMP affinity mask'
--
--NR_PROCESSORS=$(get_nr_processors)
--for PROCESSOR in $(seq 0 $NR_PROCESSORS) ; do
--	taskset -p 0xff 1 > /dev/null
--
--	PROCESSOR_AFFINITY=$(printf "%#x\n" $((1 << PROCESSOR)))
--	tuna --cpu $PROCESSOR --isolate
--
--	AFFINITY=0x$(get_affinity 1)
--
--	die_if_not_zero $((AFFINITY & PROCESSOR_AFFINITY)) "Isolating CPU $PROCESSOR"
--
--	tuna --cpu $PROCESSOR --include
--
--	AFFINITY=0x$(get_affinity 1)
--
--	die_if_zero $((AFFINITY & PROCESSOR_AFFINITY)) "Including CPU $PROCESSOR"
--done
--
--NEW_AFFINITY=$((1 << NR_PROCESSORS | 1))
--
--if [ $NR_PROCESSORS -gt 2 ]; then
--	tuna --cpu=0,$NR_PROCESSORS --isolate
--
--	for PID in $(cd /proc; ls -d [0-9]*) ; do
--		[ -n "$(cat /proc/$PID/cmdline 2> /dev/null)" ] || continue
--		AFFINITY=0x$(get_affinity $PID) || continue
--
--		die_if_not_zero $((AFFINITY & NEW_AFFINITY)) \
--			"Verifying isolation of first and last processor for PID $PID"
--	done
--fi
--
--tuna --cpu=0,$NR_PROCESSORS --include
--
--AFFINITY=0x$(get_affinity 1)
--
--die_if_not_equal $((AFFINITY & NEW_AFFINITY)) $NEW_AFFINITY "Including first and last processor"
--
--taskset -p 0xff 1 > /dev/null
--
--NEW_AFFINITY=$((1 << NR_PROCESSORS | 1))
--
--tuna --cpu=0,$NR_PROCESSORS --thread 1 --move
--
--AFFINITY=0x$(get_affinity 1)
--
--die_if_not_equal $((AFFINITY & NEW_AFFINITY)) $NEW_AFFINITY "Moving init to just first and last processor"
--
--NR_CPU_SOCKETS=$(get_nr_cpu_sockets)
--if [ $NR_CPU_SOCKETS -ge 2 ]; then
--	CPU1_SIBLINGS=$(printf "%d" 0x$(cat /sys/devices/system/cpu/cpu1/topology/core_siblings | cut -d',' -f2))
--	CPU1_SOCKET=$(cat /sys/devices/system/cpu/cpu1/topology/physical_package_id)
--
--	tuna --sockets=$CPU1_SOCKET --isolate
--	AFFINITY=0x$(get_affinity 1)
--	die_if_not_zero $((AFFINITY & CPU1_SIBLINGS)) \
--		"Verifying isolation of socket $CPU1_SOCKET"
--
--	tuna --sockets=$CPU1_SOCKET --include
--	AFFINITY=0x$(get_affinity 1)
--	die_if_not_equal $((AFFINITY & CPU1_SIBLINGS)) $CPU1_SIBLINGS \
--		"Verifying inclusion of socket $CPU1_SOCKET"
--
--	tuna --sockets=$CPU1_SOCKET --isolate
--	tuna --sockets=$CPU1_SOCKET --thread 1 --move
--	AFFINITY=0x$(get_affinity 1)
--	die_if_not_equal $((AFFINITY & CPU1_SIBLINGS)) $CPU1_SIBLINGS "Moving init to CPU socket $CPU1_SOCKET"
--fi
--
--if [ $NR_PROCESSORS -gt 2 ]; then
--	THREAD_PREFIX="watchdog/"
--	PID=$(ps h -C ${THREAD_PREFIX}0 -o pid)
--	RTPRIO=$(get_rtprio $PID)
--	NEW_RTPRIO=$((RTPRIO - 1))
--	tuna -t $THREAD_PREFIX* -p $NEW_RTPRIO
--	for CPU in $(seq 0 $((NR_PROCESSORS - 1))); do
--		PID=$(ps h -C ${THREAD_PREFIX}$CPU -o pid)
--		RTPRIO=$(get_rtprio $PID)
--		die_if_not_equal $RTPRIO $NEW_RTPRIO "Using --thread globbing"
--	done
--fi
--
--taskset -p $INITIAL_INIT_AFFINITY 1 > /dev/null
--rtctl --file $INITIAL reset
--
--echo 'PASS: Healthy tuna, no lead found, eat!'
--
--exit 0
--- 
-2.51.0
+On Fri, 25 Jul 2025, Tomas Glozar wrote:
+
+> Currently, rteval has two kinds of tests:
+> - Unit tests, embedded directly in code, and run by
+>   unit-tests/unittest.py.
+> - End-to-end tests, implemented in Makefile targets runit, load, and
+>   sysreport.
+> 
+> Introduce a new test suite in folder e2e-tests/ (analogically to
+> unit-tests) that uses Test::Harness ("prove" command) together with a
+> simple test engine adopted from RTLA.
+> 
+> The test suite runs rteval in a temporary folder for each test case,
+> collects its exit value and output, and validates both according to the
+> test specification. grep is used to check the output, optionally with
+> custom flags. rteval.conf is generated individually based on the test
+> specification of each case.
+> 
+> Three test sets are implemented in the commit:
+> - "basic", running base checks without any specific modules or module
+>   options. Replaces "make runit".
+> - "loads", testing various kinds of loads, including their options.
+> - "measurement", testing both cyclictest and timerlat.
+> 
+> The latter two check in rteval output whether the command run by rteval
+> corresponds to the rteval options and to the specified load or
+> measurement, if possible.
+> 
+> "make runit" and "make load" targets are depracated with a warning;
+> "make sysreport" is kept until sysreport tests are added to the new test
+> suite.
+> 
+
+Interesting.
+Note the correct spelling is "deprecated"
+
+I'm not sure we want to deprecate runit and loads, they have different 
+purposes. I often run in a non-rt environment and without tuned if I'm 
+just testing functionality and not performance, and I got this after 
+running make check (skipping some of the output before that)
+
+# Output match failed: "Command: rtla timerlat hist -p1100 -P f:95 -u 
+-c[0-9|-]+ -E3500 --no-summary -T1 -t=trace.txt"
+e2e-tests/measurement.t .. Failed 6/19 subtests 
+
+Test Summary Report
+-------------------
+e2e-tests/loads.t      (Wstat: 0 Tests: 8 Failed: 1)
+  Failed test:  5
+e2e-tests/measurement.t (Wstat: 0 Tests: 19 Failed: 6)
+  Failed tests:  13-14, 16-19
+Files=3, Tests=33, 308 wallclock secs ( 0.06 usr  0.00 sys + 146.20 cusr 
+281.79 csys = 428.05 CPU)
+Result: FAIL
+make: *** [Makefile:22: check] Error 1
+
+How do I identify which test is test number 5?
+Am I failing tests because of performance reasons or because the tests 
+expect an environment different from mine?
+
+Thanks
+
+John Kacur
 
