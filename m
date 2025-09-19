@@ -1,75 +1,76 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 916614A3E
-	for <linux-rt-users@vger.kernel.org>; Fri, 19 Sep 2025 18:18:41 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 01D334A3E
+	for <linux-rt-users@vger.kernel.org>; Fri, 19 Sep 2025 18:20:32 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1758305923; cv=none; b=WfYSEJWX00sgnJOGQMJlzuw0DtrAfjAvpeF5gR9QwA+ZY4JtBrWbT7UndWy8c767A80tYjZJ0dahBOOHJMo1a23epQH89Cp6Moc5ecoXusVKBiB2AuQ0rdihSeaZLYStpam2pz3sD9Ixp0CAt3FOyoAM06KOtu/Jx+SH8XfR0dk=
+	t=1758306034; cv=none; b=UjZuLyng9YyqGC6HeyAnx4zW46/rvuGF+vT+XUUUx9S/WEtmLCWrGliVgElF/bGGwTzg87tOcJmFqrCP8o5nly9WkOPQy+8vrmGzyWRpdHpsXsuqHQDInQ96AcNViNir4E3VxZIm5QqMDUaPPPEyYuiKAsy2PyBgFKW2JVvF548=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1758305923; c=relaxed/simple;
-	bh=3vid9Kmx1R3jhuCOg9ETBZqqQMxZb84MX9nCRvjErGg=;
+	s=arc-20240116; t=1758306034; c=relaxed/simple;
+	bh=NSiePzbXiMqlvB0pjR+yuv35MrNkfWKV+OoS68hYsRg=;
 	h=Date:From:To:cc:Subject:In-Reply-To:Message-ID:References:
-	 MIME-Version:Content-Type; b=QDlT7TcWFZFuCElYZ6WQIGldFz8nh9vRWv7rPLOYVKE1+mdbAmJ+QWemq+zmWYzYQ+QHMi0yV/Zk/9pUWkJHCq4dc708n5OoR2fIiUjOR2W9Xf2lb3yxUGPVV9aBBh5K5tdOJID09w6CNptmFXEn0h3L7z96++toI5uKS3DDJ8M=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=Y67E73ka; arc=none smtp.client-ip=170.10.129.124
+	 MIME-Version:Content-Type; b=tFld7SiXjgjCmssXpMOg1BMz0RKtYEhHnaLDN2IRfbYbpaN9uRTyawYBJMawArJ09BE86+k0MLvI3K4J5JPA/MBuPRpUEMiGznqg+tH0eRC7/NhQuRxfvK9pu1y8WTNkGe9jFog7/wmLb4PitEVtNlaFRdHTl0nAMaHDgHM21is=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=eA6PKx2I; arc=none smtp.client-ip=170.10.133.124
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="Y67E73ka"
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="eA6PKx2I"
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1758305920;
+	s=mimecast20190719; t=1758306032;
 	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
 	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
 	 in-reply-to:in-reply-to:references:references;
-	bh=QqX8juXw00RZc2BVx6HXi4OM1OMjtbV+RWK0msFXddY=;
-	b=Y67E73kaLgW7XeoR+79smYtYe1nDVrLZAQvMHNsg2I+XsKLwrHkvSKLDyrbODYffTKnrLO
-	slPiQj1P48S/qNYofPX/NJd/kDTzTKyh0DdnpTsBVnD87PmVQa48yMwlOBHdvgMsbI505k
-	IzAX70ePH67kElxGtLqqrHZ+xaIuRFM=
-Received: from mail-qt1-f199.google.com (mail-qt1-f199.google.com
- [209.85.160.199]) by relay.mimecast.com with ESMTP with STARTTLS
+	bh=k9iXI5/R5rD2mMqzOYTyS69puQj4GfGAZzCrP72enpE=;
+	b=eA6PKx2I3eVL1JyLTdZET91ucO1WlYkDHRve7BTs6raVZ0/GgStwl1Qn5Z2/sTgJChkiAS
+	wUOJpvopHQVYQzM257oCEvh0a6c8SicM02xixZlc2JkElhZ76YNOj2xn0TDmIDf2V1Oqo0
+	eOomj8NcQtr7lkV1m9H04K2L52uRCaw=
+Received: from mail-qv1-f70.google.com (mail-qv1-f70.google.com
+ [209.85.219.70]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
- us-mta-567-_ocp_mFAMS-xeQ9ez0U8VA-1; Fri, 19 Sep 2025 14:18:39 -0400
-X-MC-Unique: _ocp_mFAMS-xeQ9ez0U8VA-1
-X-Mimecast-MFC-AGG-ID: _ocp_mFAMS-xeQ9ez0U8VA_1758305918
-Received: by mail-qt1-f199.google.com with SMTP id d75a77b69052e-4b5f112dafeso57450971cf.1
-        for <linux-rt-users@vger.kernel.org>; Fri, 19 Sep 2025 11:18:39 -0700 (PDT)
+ us-mta-622-ZEXQVgj5NK6rwROnnnPJlw-1; Fri, 19 Sep 2025 14:20:30 -0400
+X-MC-Unique: ZEXQVgj5NK6rwROnnnPJlw-1
+X-Mimecast-MFC-AGG-ID: ZEXQVgj5NK6rwROnnnPJlw_1758306030
+Received: by mail-qv1-f70.google.com with SMTP id 6a1803df08f44-78ea15d3548so23055166d6.1
+        for <linux-rt-users@vger.kernel.org>; Fri, 19 Sep 2025 11:20:30 -0700 (PDT)
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1758305918; x=1758910718;
+        d=1e100.net; s=20230601; t=1758306030; x=1758910830;
         h=mime-version:references:message-id:in-reply-to:subject:cc:to:from
          :date:x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
-        bh=QqX8juXw00RZc2BVx6HXi4OM1OMjtbV+RWK0msFXddY=;
-        b=ICi8ysjzsig3U0UFhWWeBL42hIdGyjdIjmtxDVbMYv6jvI1uPeHosmqaeHyGg7K6rs
-         mZ1uNj+gBuKPVFb7ci0KKKoV0QaK9lP/LFta+5R/8FQ8KpRApCi7ncXid1V0hBsosryX
-         XuZXT48C7rsHNRC6SDo+JFrigqqV06xUMMZTa6BBCStGINTQQubI6JBWclU+uvcj2z62
-         WuJYKB3l3pYGF3CkFCYQPlgklUVCXoi78KiL2szA/LgIB/+WtbWQHSbjdmpEykOmw2PH
-         HkjQEQQh1Epg3e8BADqZZzUf5z4CDIykKNPSoJU8mJO0FHwjy3l/+tINX35ViAm3m/7I
-         x1kA==
-X-Gm-Message-State: AOJu0YzuCCXpunJ/HkkEgeUKa2vJUfO0wS83RwYalR4u4Vg4VE9N9v51
-	6ChXNRHEpJsJi2aigombhCWvYty6YmqAMxgc5xpHX5WsuZtGirKIwR9LvpI4A25gty5I/Hz+4I/
-	XRsw9aDq/DILfnL5jvjQvno64n7rRJ2WpAD90rn0kyiXObuo5ZTAGYIzhblKIZERRBJNn
-X-Gm-Gg: ASbGncsBc2/JcNohIstAGLEbli9FaAUcav8f5nJvvlzsKtNYzwyKxAwlq1ilnkCuD1j
-	bAoCW/NQqTBeF45afpIwM4MJ5QPIPGdX3gpG9qt1UX3enuI8IDuBqr1hAGDI8pKjBWP+1Wj6E+/
-	21Gk8LY1NwPFKvpGT31rGS18YHlwf+v5RS/0W+oapBO8YiwU5WjMVGIy5+0R6bpoiECVE/m8BIv
-	u21oJqBXbimySyXjrolatL8ZSxotzA1XB6ASmJl0mME63sfwBBJN/P6lDxZpo/QUXA7YLT9myOf
-	kOkTNKwY53zyHVq9Q0upQqZYWA==
-X-Received: by 2002:ac8:5d4e:0:b0:4b2:edae:9df2 with SMTP id d75a77b69052e-4c06cdd7df0mr44458471cf.5.1758305918238;
-        Fri, 19 Sep 2025 11:18:38 -0700 (PDT)
-X-Google-Smtp-Source: AGHT+IHA2fZXLLjF5mwiT6RyBRlLgNrcSZGtxwIZuRW4m9I5MJpTdlYxLf2r6IVu/FZCwJmxYZTh+A==
-X-Received: by 2002:ac8:5d4e:0:b0:4b2:edae:9df2 with SMTP id d75a77b69052e-4c06cdd7df0mr44458161cf.5.1758305917718;
-        Fri, 19 Sep 2025 11:18:37 -0700 (PDT)
-Received: from fionn ([70.53.55.167])
-        by smtp.gmail.com with ESMTPSA id d75a77b69052e-4bda1220e29sm33199341cf.9.2025.09.19.11.18.36
+        bh=k9iXI5/R5rD2mMqzOYTyS69puQj4GfGAZzCrP72enpE=;
+        b=J/UhJ8DYxAirW4be0w/IO0m2XTvGehvcOgJ/BNIpTqyFjMw9DMNZWPAyp6ScbFziom
+         yie3JRIlDk3DN55JgyRqNDBo0BaTnunTNme2AT+5f/n9nN1W8SXtX1wPj7NdNa3bfKZQ
+         9owLlIxAxO7xDOg1pkLjcxAxlf/X6NGCpYWbaapHMzSWkvKGBGv3gXVSEtwFuSMGymsA
+         05iLBWz0tXBpPRI9LrYZIh5OZx3/HG6rWzRdsRzDd0gy9soNlVz9c3z1aAKFGp6xzML+
+         fhpzmO2OvylHCGORmI0iiVTqCahks/7okhT3dvnATg8U0jZXC3w23z9iyPckO9bm02Xl
+         7Xaw==
+X-Gm-Message-State: AOJu0YzDzZsZV2ez7KBM8QgqcZoWW5lN6LhUZW3f0QSjPofM36BOkCOn
+	T70AsA2oSMAmdpApdd6Bp2CmrvjRL8ljC0TF6z4l4BO8zxRkNJ6CATecxPNSCVMehtV7lMYTDzI
+	zD1ZGfoGzB9zhAErmRt9O6pKq9mmNmGYolK8Wp6SLPQMsjLzESChe29ik8iANrTI0Oqye
+X-Gm-Gg: ASbGnctAEoq0WcMVsux/VIkcCkezhjqnOKNhHV8fStKvEb9lm7lp/hO8OIxnAbVNYDt
+	uicBdGttMlwKThHa1WBqn9AnyBaz9jJWWXBe8qVuveKIzM6Ht+UC5WW2oSCuHYxi5cUiZWA4VtT
+	3nIh33mxvdeRzQTouPfp8zhWwP4mbkh5ASIlN65L6rSHVqt5BhNMIzupmw4jrwnnrtluO0pil6o
+	CnUP69RJ0Hr/IA+6cXKU1/XJW73nTpoZ1gFsfpkuugh9fPjedT1AtVS17SYUToRRrCiCh6kG8Wu
+	PQ9OHGTDKUeAIIp5Efz3t/QTJDMyoaM0T02Aqx93VBZZ9G1vddPRJoMPU1d5Xui/6+d5raTKG8W
+	zqbIlMWQWyKIc
+X-Received: by 2002:a05:6214:501b:b0:76e:7c27:f040 with SMTP id 6a1803df08f44-7991ec5f13cmr55168396d6.54.1758306029754;
+        Fri, 19 Sep 2025 11:20:29 -0700 (PDT)
+X-Google-Smtp-Source: AGHT+IHAhvcxTpbTgx4/1KPui+LkrTGG7fILKwvRA8hGVbNvBlxojQ0fIUHeWNfBvsQQ7GNNxu9Tjw==
+X-Received: by 2002:a05:6214:501b:b0:76e:7c27:f040 with SMTP id 6a1803df08f44-7991ec5f13cmr55167776d6.54.1758306029051;
+        Fri, 19 Sep 2025 11:20:29 -0700 (PDT)
+Received: from fionn (bras-base-rdwyon0604w-grc-05-70-53-55-167.dsl.bell.ca. [70.53.55.167])
+        by smtp.gmail.com with ESMTPSA id 6a1803df08f44-79347e50865sm32914866d6.33.2025.09.19.11.20.28
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Fri, 19 Sep 2025 11:18:37 -0700 (PDT)
-Date: Fri, 19 Sep 2025 14:18:26 -0400 (EDT)
+        Fri, 19 Sep 2025 11:20:28 -0700 (PDT)
+Date: Fri, 19 Sep 2025 14:20:26 -0400 (EDT)
 From: John Kacur <jkacur@redhat.com>
 To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 cc: linux-rt-users@vger.kernel.org, Clark Williams <williams@redhat.com>, 
     Steven Rostedt <rostedt@goodmis.org>
-Subject: Re: [PATCH 01/10] README: Drop "debug" from the tracing path
-In-Reply-To: <20250903111717.1391196-2-bigeasy@linutronix.de>
-Message-ID: <4a599a1f-51f6-da15-0cfb-02b22a526cb5@redhat.com>
-References: <20250903111717.1391196-1-bigeasy@linutronix.de> <20250903111717.1391196-2-bigeasy@linutronix.de>
+Subject: Re: [PATCH 02/10] rt-utils: Remove mount_debugfs()
+In-Reply-To: <20250903111717.1391196-3-bigeasy@linutronix.de>
+Message-ID: <3f21a3f1-4cf6-5d01-368f-f4157d995a51@redhat.com>
+References: <20250903111717.1391196-1-bigeasy@linutronix.de> <20250903111717.1391196-3-bigeasy@linutronix.de>
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
@@ -82,54 +83,78 @@ Content-Type: text/plain; charset=US-ASCII
 
 On Wed, 3 Sep 2025, Sebastian Andrzej Siewior wrote:
 
-> The tracing interface moved away from debug/ configfs. It moved one
-> level up and the debug sub folder has a compatibility mount which will be
-> removed.
-> While at it I noticed that the -f option is long gone. Take the
-> opportunity to update this, too.
+> The requirement to mount debugfs is very old. It originated from a time
+> where it was "fairly new" and was not mounted by distros at the time.
+> These days debugfs gets mounted during boot and more importantly the
+> tracing directory moved out over 10years ago.
 > 
-> Update the docs accordingly.
+> Don't try to mount debugfs anymore.
 > 
 > Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 > ---
->  README.markdown | 13 +++++++------
->  1 file changed, 7 insertions(+), 6 deletions(-)
+>  src/include/rt-utils.h |  1 -
+>  src/lib/rt-utils.c     | 29 -----------------------------
+>  2 files changed, 30 deletions(-)
 > 
-> diff --git a/README.markdown b/README.markdown
-> index 3ab6ddf53c7ed..617b57e88614f 100644
-> --- a/README.markdown
-> +++ b/README.markdown
-> @@ -57,15 +57,16 @@ then probably be regarded as real-time capable.
+> diff --git a/src/include/rt-utils.h b/src/include/rt-utils.h
+> index f6b3fede06f7b..95964f70a6310 100644
+> --- a/src/include/rt-utils.h
+> +++ b/src/include/rt-utils.h
+> @@ -12,7 +12,6 @@
 >  
->  What, however, if the latency is higher than acceptable? Then, the famous
->  "*latency fighting*" begins. For this purpose, the cyclictest tool provides the
-> -`-b` option that causes a function tracing to be written to
-> -`/sys/kernel/debug/tracing/trace`, if a specified latency threshold was
-> -exceeded, for example:
-> +`--breaktrace` option to halt tracing if the specified latency was exceeded. A
-> +tracer must be configured upfront. The resulting trace can be invastigated in
-> +`/sys/kernel/tracing/trace`, for example:
+>  int check_privs(void);
+>  char *get_debugfileprefix(void);
+> -int mount_debugfs(char *);
+>  int get_tracers(char ***);
+>  int valid_tracer(char *);
 >  
-> -    ./cyclictest -a -t -n -p99 -f -b100
-> +    echo function > /sys/kernel/tracing/current_tracer
-> +    cyclictest -a -t -n -p99 --tracemark --breaktrace 100
+> diff --git a/src/lib/rt-utils.c b/src/lib/rt-utils.c
+> index 6bbd25a8ba53f..7e96950ef9887 100644
+> --- a/src/lib/rt-utils.c
+> +++ b/src/lib/rt-utils.c
+> @@ -99,32 +99,6 @@ char *get_debugfileprefix(void)
+>  	return debugfileprefix;
+>  }
 >  
->  This causes the program to abort execution, if the latency value exceeds 100
->  microseconds; the culprit can then be found in the trace output at
-> -`/sys/kernel/debug/tracing/trace`.
-> +`/sys/kernel/tracing/trace`.
->  The kernel function that was executed just before a latency of more than 100
->  microseconds was detected is marked with an exclamation mark such as
+> -int mount_debugfs(char *path)
+> -{
+> -	char *mountpoint = path;
+> -	char cmd[MAX_PATH];
+> -	char *prefix;
+> -	int ret;
+> -
+> -	/* if it's already mounted just return */
+> -	prefix = get_debugfileprefix();
+> -	if (strlen(prefix) != 0) {
+> -		info(1, "debugfs mountpoint: %s\n", prefix);
+> -		return 0;
+> -	}
+> -	if (!mountpoint)
+> -		mountpoint = "/sys/kernel/debug";
+> -
+> -	sprintf(cmd, "mount -t debugfs debugfs %s", mountpoint);
+> -	ret = system(cmd);
+> -	if (ret != 0) {
+> -		fprintf(stderr, "Error mounting debugfs at %s: %s\n",
+> -			mountpoint, strerror(errno));
+> -		return -1;
+> -	}
+> -	return 0;
+> -}
+> -
+>  static char **tracer_list;
+>  static char *tracer_buffer;
+>  static int num_tracers;
+> @@ -451,9 +425,6 @@ static int trace_file_exists(char *name)
 >  
-> @@ -80,7 +81,7 @@ latency.
->  If the trace output is not obvious, it can be submitted to the OSADL Latency
->  Fight Support Service at
->  [latency-fighters@osadl.org](mailto:latency-fighters@osadl.org).
-> -In addition to the output of `cat /sys/kernel/debug/tracing/trace`, the output
-> +In addition to the output of `cat /sys/kernel/tracing/trace`, the output
->  of `lspci` and the `.config` file that was used to build the kernel in question
->  must be submitted. We are sure you understand that OSADL members will be served
->  first, but we promise to do our best to help everybody to successfully fight
+>  static void debugfs_prepare(void)
+>  {
+> -	if (mount_debugfs(NULL))
+> -		fatal("could not mount debugfs");
+> -
+>  	fileprefix = get_debugfileprefix();
+>  	if (!trace_file_exists("tracing_enabled") &&
+>  	    !trace_file_exists("tracing_on"))
 > -- 
 > 2.51.0
 > 
