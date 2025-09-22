@@ -1,126 +1,119 @@
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 632BB223311
-	for <linux-rt-users@vger.kernel.org>; Fri, 19 Sep 2025 19:14:13 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 036BB2556E
+	for <linux-rt-users@vger.kernel.org>; Mon, 22 Sep 2025 15:50:32 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1758309255; cv=none; b=l45DMZIIJ1jttLG4U7RhDBlvW+NT0qpl6UjNb3iENTI95i6vicuHQUvJcs2bOVulfOMTE2DSESA45CTyzzou7fDmnKQ2GpuqH6OjbnQ6daa/065+/vQwzRtiuvm4/6MmtqV6QMgnjnY7Ay0qTfLLgo1+6bCX2lZwsOaJYZJ1L6Q=
+	t=1758556235; cv=none; b=joU0fZkfIxNudNIT24GkrdavKZqk3EipkuRwPPHxm4O+k8ZnLNCaNdM36W+39+m8PzKtcfXqLLVc8DS9OOyCVu6Y/I2L0jvC5H2dudoqYCwCilM5l4//jR3e+2X8ATgaKo58yaVtnZq6a29U3jBkfj00c4nnSvAlDIfoMKqeX1k=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1758309255; c=relaxed/simple;
-	bh=c4HgYwbxnkM6o/jKgxKAWhg95ZTuy0v/+gOjLiKYfnY=;
-	h=Message-ID:Subject:From:To:Cc:Date:In-Reply-To:References:
-	 Content-Type:MIME-Version; b=QR5AZTVOtkVrIpIgXREnKhq19EPTXPCp2wY/LL3/vJ8BJW0xY9ADjibKd8v6j/cUZY9qNyLBZARHBC7vgwi7R3wtfcHwYmP8aCZHMS507Qp7UJ8IxRW9gjg9MgeioqPLm4QkbYw0MOwUaEOELiu2V/sw0mbiXZVVkgO1h/lknGM=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=iO5JXyNb; arc=none smtp.client-ip=170.10.133.124
+	s=arc-20240116; t=1758556235; c=relaxed/simple;
+	bh=N528JzS6YYZmW82pU1oirNGWNtMcXEvTOJfBimaU4eg=;
+	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
+	 Content-Type:Content-Disposition:In-Reply-To; b=CA/Cg1CIQzOKv03JdBPdHktd5o5eLgt98v3dPGn3iR8jxgQRwbsbP1N0ycW4iZtOkJqXObFpCuDL3FMsXKzhKKSd3CPM9Jn9DelbXJlussp1XzomAC6Qd6Qrrpw4/510Yc+nUQRlkNrsRLCnPPO/PS5B6XmKeg7hwRvClwpJAdQ=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=YLuC4nEW; arc=none smtp.client-ip=170.10.133.124
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="iO5JXyNb"
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="YLuC4nEW"
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1758309252;
+	s=mimecast20190719; t=1758556231;
 	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
 	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references;
-	bh=TR/hBrMdvcQfNhkiIOiJKhAM/L4vfWHY9mq60yMTVXw=;
-	b=iO5JXyNbOmIZ4oGqKIBGqpSnJSH02uNDNPudPkBqW5aKc3ALji7tGRKkW0hX7WuagUE0PB
-	qh4uy97lVrfsbuWsvy1TzQt+NR/LjoR7b978cVHYu0prZ5GaYj8AseFTvAosxJZoSDtx85
-	qCjm1Q98JchymwiU91616k4wBEhlxpg=
+	bh=N528JzS6YYZmW82pU1oirNGWNtMcXEvTOJfBimaU4eg=;
+	b=YLuC4nEWCrwCKfrh6avijkMN//yvMcpDD3PAlrt0xEKrbYpoGXYDnYqtJxWQTMlX0O8cW1
+	vkQIY09ojmAqgIHCsL7C7LRMDIxgKwIxOIXR81TaBhGWWuYdbq1lTXFnCT6ll5ULy2Ytmn
+	/Nz8mWpORPzwNK2itYLAMN4HdYQrBLA=
 Received: from mail-qt1-f198.google.com (mail-qt1-f198.google.com
  [209.85.160.198]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
- us-mta-290-8x8gGpq4NoOhctg9iOVt9A-1; Fri, 19 Sep 2025 15:14:10 -0400
-X-MC-Unique: 8x8gGpq4NoOhctg9iOVt9A-1
-X-Mimecast-MFC-AGG-ID: 8x8gGpq4NoOhctg9iOVt9A_1758309249
-Received: by mail-qt1-f198.google.com with SMTP id d75a77b69052e-4b5d5cc0f25so42291301cf.2
-        for <linux-rt-users@vger.kernel.org>; Fri, 19 Sep 2025 12:14:10 -0700 (PDT)
+ us-mta-360-PQRZa9CzOrqZXOk-j-H6vg-1; Mon, 22 Sep 2025 11:50:30 -0400
+X-MC-Unique: PQRZa9CzOrqZXOk-j-H6vg-1
+X-Mimecast-MFC-AGG-ID: PQRZa9CzOrqZXOk-j-H6vg_1758556230
+Received: by mail-qt1-f198.google.com with SMTP id d75a77b69052e-4b60dd9634dso96046671cf.2
+        for <linux-rt-users@vger.kernel.org>; Mon, 22 Sep 2025 08:50:30 -0700 (PDT)
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1758309249; x=1758914049;
-        h=mime-version:user-agent:content-transfer-encoding:references
-         :in-reply-to:date:cc:to:from:subject:message-id:x-gm-message-state
-         :from:to:cc:subject:date:message-id:reply-to;
-        bh=TR/hBrMdvcQfNhkiIOiJKhAM/L4vfWHY9mq60yMTVXw=;
-        b=T9uvC6wpVpchF5ZZegSObKB26gU1OplMLcZs2iRN1LGHUSn33E7jOO89ClSqQnt8UM
-         TrEMWMjkts4YVf2Lp/ow/4aeWeZnfs7kAY5WiibPKw0wE4RDNRlXGZ4LNt1xprGOQdOR
-         3nPZU19zdWYeNhq0R/8qwY6majH0Ls5DcJLjSC4qUCdWQDZp0nVRiAeWISz8wwaSPYIX
-         FTK1tJASV4uJRph+FKoHTSylgN7dmUWpfGOZbtLq4tMGEz2b6QOdn+77HiiYcut6F76q
-         IziJIHtWD9e8jZBTDeE9d2uqpxmabVopLMVrywyh6D1RBldPTm3RwgqWQ0R2HrkUSAGk
-         v4JQ==
-X-Gm-Message-State: AOJu0Yz0bhdwzpzX42CeT/oibS+38WsuYucX5UYDh1TDPyXMlJ+OA81l
-	HEfHHq4tykdIxAn01ptMOoUv4lcgmI2qc15ACl9NT7JkkpszXwrxRKIESVJJTAgIXyKVIncQHMU
-	Iy8Yf/iaz5bdU+4Nu/iM6Evnt0WE5ePYHlCHZAdvxysh/EYcFZgxzwXg74ubxDXl87Zjv
-X-Gm-Gg: ASbGncuXbsYsZHs7O/qj1TxZq9DA7QT8qa+OSYh4XSSwbM3Ca54zJN71U8idZcMBTci
-	SYSwHaR8kSZCiGqvqSZuWaqAg7P8Acw+TK40RDnZoG1Ea7vNNcmp64q73ri8dmQ1e01QNxJsLMx
-	cd0O+J96PZdzzbNMIKlYjjGSNYflyRioaWWzHb5UW+hJewVl5AsMKMi1LeYSPRst6WoqhGrDyRM
-	fF0TX6ThpqnLPWQ2blRHxGWWJW1a+kepcW8zntEMG69hLX1bIH9Tptfovk+WQrLNEsKluatdqz+
-	sXO5iL2jBXSra2JerlMrKfLN6NGlOMkDDE6imHjXVm5nqDemFdbf9JjRkneAu6dykmzo
-X-Received: by 2002:a05:622a:5c17:b0:4b0:edba:5a47 with SMTP id d75a77b69052e-4c073e88e08mr56845831cf.53.1758309249217;
-        Fri, 19 Sep 2025 12:14:09 -0700 (PDT)
-X-Google-Smtp-Source: AGHT+IGmuuARR3Z3+9Ln4+MduJhHEHtl31WmblQnPayTGV3udGFtcgPa+bqflLZM8tZ0udKMc7H+vw==
-X-Received: by 2002:a05:622a:5c17:b0:4b0:edba:5a47 with SMTP id d75a77b69052e-4c073e88e08mr56845301cf.53.1758309248656;
-        Fri, 19 Sep 2025 12:14:08 -0700 (PDT)
-Received: from crwood-thinkpadp16vgen1.minnmso.csb ([50.145.183.242])
-        by smtp.gmail.com with ESMTPSA id d75a77b69052e-4bdaaa8a962sm32484561cf.53.2025.09.19.12.14.07
+        d=1e100.net; s=20230601; t=1758556230; x=1759161030;
+        h=in-reply-to:content-disposition:mime-version:references:message-id
+         :subject:cc:to:from:date:x-gm-message-state:from:to:cc:subject:date
+         :message-id:reply-to;
+        bh=N528JzS6YYZmW82pU1oirNGWNtMcXEvTOJfBimaU4eg=;
+        b=HBB8hqIHoS0h45yHncg1jfwYExek0RihhGFXYJHILEkugQhnpKLYY78CmU7aaKVzih
+         /zt+jE/2QN47QLs1fTvAuFj3nnoUtPYdOC9OHdIpG/Y5hoH9jAsWgWNaBq3yzRWgzEeh
+         Cvo1jcvsYH1ze/dUUc5083ZqebVBBaGjjYiXnKGMIfmZRoKFpY495gIEHR4939tgSnPo
+         9Ww2a8W8jKhbtgJd/C/dNe1JxtmCYTb/Q3S99edUwpITP8Q6MK9O+hncpk4wnXhyhV9G
+         rLaN65Ac7JW+75lcyUIj/0DAufqRxS5foVqDGOE1u+EbwxXjPJiIYn6/GP4sMEeZwikS
+         2buQ==
+X-Forwarded-Encrypted: i=1; AJvYcCUT14u7HmBTnszfQ3vWmNngZxDR33SclJfd+UYoI4fr4W3RqNIhNzHz0Qh1dwlH7d80Lq6lTkre/wo5m/lTkQ==@vger.kernel.org
+X-Gm-Message-State: AOJu0YzvzfXVtHvaVR4jwfhisPzOxLQx0eYQ9W08iP/PKCeGgsDlBGGl
+	KrMVexemhox/MPxzXN+IQqDppapzJXDe/UzaMDPsiiHMKQujHufO9JPwIU1432HVPpH/NKcrXOz
+	9rEF5ejdGwjPc+DUxn6hDciVsjo+zmsfG29lzRQgX910x11E9XujxG7YQxFp5suyrk4Tg
+X-Gm-Gg: ASbGncv3s6UM18vU3p9ExPHGGesKsxqpbnNRVQyhawNCX/uQqKOCLDeclQX6ypZILf+
+	ZqDLbFdpSzm84/2fDu+i9beKSQKUzy/XGA46t+LqOtIhCCOEtIJdr3349/AC2lrnxtT3jChhOMd
+	iqKKdG5rA27L3Q0IjvWJXiNlpXUdPtoE1ZzEhYwRtjWyn+omrETDveVb3ei/sftNgtl6ZzgOBJH
+	oachxF8vMQf4GIAiEoxfJQP7vsKuXHT5RgUpJmhTDMkPwG1qEqxSIc/CIpW29Or5N/lbVmADGLN
+	7Ry2oiSxTKAJOYQpy7EXGvFvFgKEopmCDF6ipg==
+X-Received: by 2002:a05:622a:5446:b0:4cc:cfc2:1585 with SMTP id d75a77b69052e-4cccfc217bemr31627301cf.23.1758556230001;
+        Mon, 22 Sep 2025 08:50:30 -0700 (PDT)
+X-Google-Smtp-Source: AGHT+IEiXP02nFn/l5DjYlDEHHEaYmD2sKIfPkJ0bl3FBLKJSk115H6wdD8oAq3zQk4+1h4GA9sv6w==
+X-Received: by 2002:a05:622a:5446:b0:4cc:cfc2:1585 with SMTP id d75a77b69052e-4cccfc217bemr31626941cf.23.1758556229451;
+        Mon, 22 Sep 2025 08:50:29 -0700 (PDT)
+Received: from thinkpad2024 ([71.217.38.114])
+        by smtp.gmail.com with ESMTPSA id d75a77b69052e-4cc75130868sm15461321cf.29.2025.09.22.08.50.28
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Fri, 19 Sep 2025 12:14:08 -0700 (PDT)
-Message-ID: <e7e2fc6bba36dda627e557aa319ae5b0ae47294d.camel@redhat.com>
-Subject: Re: [PATCH v3] ssdd: mitigate tracee starvation
-From: Crystal Wood <crwood@redhat.com>
-To: debarbos@redhat.com, williams@redhat.com, jkacur@redhat.com
-Cc: linux-rt-users@vger.kernel.org, oleg@redhat.com, shichen@redhat.com
-Date: Fri, 19 Sep 2025 14:14:07 -0500
-In-Reply-To: <3yq34kwrfmwvhy5la5wutnmbdd6pf4rwnvnvnapegvx7acq7xu@pghcpahcvndz>
-References: 
-	<3yq34kwrfmwvhy5la5wutnmbdd6pf4rwnvnvnapegvx7acq7xu@pghcpahcvndz>
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
-User-Agent: Evolution 3.56.2 (3.56.2-1.fc42) 
+        Mon, 22 Sep 2025 08:50:28 -0700 (PDT)
+Date: Mon, 22 Sep 2025 11:50:26 -0400
+From: "John B. Wyatt IV" <jwyatt@redhat.com>
+To: John Kacur <jkacur@redhat.com>
+Cc: Clark Williams <williams@redhat.com>, linux-rt-users@vger.kernel.org,
+	kernel-rts-sst <kernel-rts-sst@redhat.com>,
+	"John B. Wyatt IV" <sageofredondo@gmail.com>
+Subject: Re: [PATCH] tuna: Add common virtual envs gitignores
+Message-ID: <aNFwQtKJNcLAEsb0@thinkpad2024>
+References: <20250813200839.82200-1-jwyatt@redhat.com>
+ <3c66730b-a473-f103-bf13-cc19d312880d@redhat.com>
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
 List-Subscribe: <mailto:linux-rt-users+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+In-Reply-To: <3c66730b-a473-f103-bf13-cc19d312880d@redhat.com>
 
-On Fri, 2025-09-19 at 14:11 -0400, Derek Barbosa wrote:
-> -static int check_sigchld(void)
-> +static int check_sigchld(sigset_t *set)
->  {
-> -	int i;
-> +
-> +	struct timespec timeout;
-> +
-> +	timeout.tv_sec =3D 10;
-> +	timeout.tv_nsec =3D 0;
-> +	int recv_sig =3D 0;
-> +
->  	/*
-> -	 * The signal is asynchronous so give it some
-> -	 * time to arrive.
-> +	 * Check the handler flag, then if need be, wait for the signal to
-> +	 * arrive
->  	 */
-> -	for (i =3D 0; i < 10 && !got_sigchld; i++)
-> -		usleep(1000); /* 10 msecs */
-> -	for (i =3D 0; i < 10 && !got_sigchld; i++)
-> -		usleep(2000); /* 20 + 10 =3D 30 msecs */
-> -	for (i =3D 0; i < 10 && !got_sigchld; i++)
-> -		usleep(4000); /* 40 + 30 =3D 70 msecs */
-> -	for (i =3D 0; i < 10 && !got_sigchld; i++)
-> -		usleep(8000); /* 80 + 70 =3D 150 msecs */
-> -	for (i =3D 0; i < 10 && !got_sigchld; i++)
-> -		usleep(16000); /* 160 + 150 =3D 310 msecs */
-> +	if (!got_sigchld)
-> +		recv_sig =3D sigtimedwait(set, NULL, &timeout);
-> +
-> +	if (sigprocmask(SIG_UNBLOCK, set, NULL) =3D=3D -1) {
-> +		printf("EXITING, ERROR: unable to mask signal set\n");
-> +		exit(1);
-> +	}
+On Thu, Sep 18, 2025 at 02:06:06PM -0400, John Kacur wrote:
+> I ran in a python virtual environment and only got an env directory which
+> I deleted at the end. Are you actually using this
 
-Why unblock it at this point, versus just leaving it blocked?  When
-would the signal handler ever happen, if we're blocking before the
-signal is generated and consuming it before we unblock?
+Yes. I was using a virtual environment to resolve issues with my
+text editor's linter with GTK. I may need to do other things and
+I want this support in there.
 
--Crystal
+> or is this just
+> theorectically something we might want to add?
+
+Virtual environments are very common in Python projects. I would encourage
+this project to support them. They have a variety of uses including
+testing since you can pull in packages and easily use a different Python
+version.
+
+> I also understand you are trying to do your due dilligence by referencing
+> where you copied this from, but then pulling in another license to do so.
+> This is going to cause me headaches for something kind of trivial.
+
+I understand this can pose some challenges, but, it is a snippet from a file
+that has a Creative Commons public domain declaration from a well known
+company. I suspect there are no license or copyright issues. I wanted to
+include that linkage to provide a source for a code snippet, but we can
+investigate removing the link and attribution. Being in the public
+domain; I believe it should have no attribution requirements. Let me know if
+any copyright or license issues arise.
+
+--
+Sincerely,
+John Wyatt
+Software Engineer, Core Kernel
+Red Hat
 
