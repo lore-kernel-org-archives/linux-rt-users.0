@@ -1,122 +1,124 @@
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id B2415261B6E
-	for <linux-rt-users@vger.kernel.org>; Fri, 26 Sep 2025 11:12:16 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 7324015278E
+	for <linux-rt-users@vger.kernel.org>; Fri, 26 Sep 2025 17:17:00 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1758885139; cv=none; b=OjQzBDde1sBk7c95TsgRPGnvYE7iTlL8WZoIfL80lFiSwBvSXef7apXwL7nyfZg4q00yUA/C6clDqTLF0gmZ39Ghf3S6nJ4vu+j37Cw1mfiqDct33vgPhr5UyhkhAoaV2qw4F3Paygxenz9wfVmngiccVYL1J0TTd/i1bg47tlY=
+	t=1758907022; cv=none; b=H5iSEp5Kp7zkR0O8+FKhoftU3llTZWWWur7kN3rX5vza3PA35EzhNg03+xBfVpdFF9HozLLYwDFZpTxpkbvqkoJfSGQ0XAF3o/maRQUEtWz6uduBN6F5s0NRCwToIjjg1SfZG51tKu6PORtpDeEVUQ0E1F8etwRK1AVzoIOYvqc=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1758885139; c=relaxed/simple;
-	bh=HsnoSGuGmC0v6XR11mmIrTof7Hp/S5baiA3U3JQifTs=;
-	h=MIME-Version:References:In-Reply-To:From:Date:Message-ID:Subject:
-	 To:Cc:Content-Type; b=dYrVl7yJfqiU5PIKOKWLgWnx7uPHDFP11HYq5c8YqL+2Dd7zVV8wBcc7eqC+B7kDnzrFkT6qLS840GNk+ojU1x31H71DFWHe+FK++WPXmN5NmW3f5zIlvIdnazYiDHVR5ixOtxYzqWxo8x8YgJVWCPnZmQ2UxHMnW8ufqaW217I=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=gok43qYR; arc=none smtp.client-ip=170.10.129.124
+	s=arc-20240116; t=1758907022; c=relaxed/simple;
+	bh=giiIVNjBQDci0++ll0l+2lSlsUqzhAlWOGpa2KhFgyU=;
+	h=Date:From:To:cc:Subject:In-Reply-To:Message-ID:References:
+	 MIME-Version:Content-Type; b=WELk6D+hO3fezvbG/BSrzv3uMUr7p9jDNNrjFPklciXs+/F2SZbfj4UQzdGfuCeGglacVis6TThJm2Vynm52QtWWMvpoIZcF42m2ppHEfKAyaZMJlwWvh4Agz6UgpkCgmaGDTBc7hbVO+DaDPeSY9NI0Ja3+O80nhgx+MlWv98M=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=X9yx6Vpg; arc=none smtp.client-ip=170.10.129.124
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="gok43qYR"
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="X9yx6Vpg"
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1758885135;
+	s=mimecast20190719; t=1758907019;
 	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
 	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references;
-	bh=yRRLn7yAZESwvoO3zbtU1eFVV3lM3zZ5dXMuYRW/IfA=;
-	b=gok43qYRLpmDbVr3juC7MQuisPUs/1Hn3BVKMSAnsWnkVCjjun6BQkkat5CkgrMwiZ0oR4
-	TNmHSsZfX6Mh5nF1h7YeECmDslLw80P0U2gW66aBOve5z0fE0t6q2zmtLVV2bw2/mXt8He
-	5efy4zxExjeLNCZA8keNufdKCbn7w8M=
-Received: from mail-ej1-f69.google.com (mail-ej1-f69.google.com
- [209.85.218.69]) by relay.mimecast.com with ESMTP with STARTTLS
+	bh=2J2eyfvUb5mqlckSdhPK3o02GWAQ1uSy3Rla6FpgBlA=;
+	b=X9yx6VpgvMuJqaJhp3Fx0aJlsV8ZWXkLgxDceJsGiLdeHqNEXhaCK7jSXAtphTf6+LiMhO
+	eZBWfCGfV+igjbStJclCIKmMVI/JBw3KzwVgv2tUdaXmkTet88sy6VN8Z3HI5kPx1SCkBH
+	EvypLvr9L95SSm2AR1sw5NN0/CTfQsc=
+Received: from mail-qt1-f199.google.com (mail-qt1-f199.google.com
+ [209.85.160.199]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
- us-mta-539-6xfCnO35OKCGqbdFyB2EIg-1; Fri, 26 Sep 2025 07:12:14 -0400
-X-MC-Unique: 6xfCnO35OKCGqbdFyB2EIg-1
-X-Mimecast-MFC-AGG-ID: 6xfCnO35OKCGqbdFyB2EIg_1758885133
-Received: by mail-ej1-f69.google.com with SMTP id a640c23a62f3a-b335ec149a8so163085266b.1
-        for <linux-rt-users@vger.kernel.org>; Fri, 26 Sep 2025 04:12:14 -0700 (PDT)
+ us-mta-17-AONKa0fmOZOOep-PC0Jdfw-1; Fri, 26 Sep 2025 13:16:56 -0400
+X-MC-Unique: AONKa0fmOZOOep-PC0Jdfw-1
+X-Mimecast-MFC-AGG-ID: AONKa0fmOZOOep-PC0Jdfw_1758907016
+Received: by mail-qt1-f199.google.com with SMTP id d75a77b69052e-4de801c1446so11669481cf.3
+        for <linux-rt-users@vger.kernel.org>; Fri, 26 Sep 2025 10:16:56 -0700 (PDT)
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1758885133; x=1759489933;
-        h=content-transfer-encoding:cc:to:subject:message-id:date:from
-         :in-reply-to:references:mime-version:x-gm-message-state:from:to:cc
-         :subject:date:message-id:reply-to;
-        bh=yRRLn7yAZESwvoO3zbtU1eFVV3lM3zZ5dXMuYRW/IfA=;
-        b=Tg5Yet76ledgv9op4rrNvFY50dSmwecWNe/6+HCcvgm2eAKsKzknkD0JUDkau5UHX/
-         JsJJNa0DvN/kSEOPsHdx00hSmGp1SOYOfoyIYfhymBX5j5pqGYfGEitRmfiLZoygvCCp
-         FFInyAd7WKSsITKPSj7nB65/rLMZA7oUSWLi5lJFzPJHL77yWSl9eTcfn2inzalsxXMz
-         9gvQCk6+uS/Q8eyXpnHcLSwHXuwTD2er12Exgs2dUI3/1UhaByi8OB3etnChQ2ks/cU8
-         HOWPsbpuyAX/+bTU6VX3Bs3mPAM8vF+q/qi/6IevymZA6vJBkUg09zcWlm5+IDOpLBg9
-         myjQ==
-X-Forwarded-Encrypted: i=1; AJvYcCW1iguKzvndiepUdWMt6UkZvCgU2pc+tA2W8MAk5g8iZNNjCUTlLHtBW9ERq6NUgy++N4MNEvy15w6F5gWEtQ==@vger.kernel.org
-X-Gm-Message-State: AOJu0YzFYbU1tQ6ZW3zRI9L+B+2O6Scwm8t7t5zsHt2wZLqcE3VhXixY
-	LcfMx3Sa+lFUMX2ecM3yKyQT+VTKpOelZEMnQ2nSc69MZerX/VSWzgFJX+zjz6fFarJ1n2jCBa2
-	TKXhduIucBDj95a0sOnAfBRNn/t4D1N7P4Uw3eOq5FLjTyUbN47M5P5Yo4/24RWDxuw733puROz
-	MxHq1NRPiDFrVe0n7/6XTyQJ+VX1BUql/NTR46aUrTN18=
-X-Gm-Gg: ASbGncs3PffL2dK8MRUFzb0oxrTG5jhB7CwnWGxhKaKKLofAhOjCh9wlSOgGPicVhRv
-	Vgz1fn2eAovNmSw3VVJnGUGCK6EefTe6tqEe6kA7aBebvwBkoakAaZ6Q3mtH/8WU2Mig5vxYyiT
-	BDFX5AR9E8Wa2MMj6FtL8=
-X-Received: by 2002:a17:906:a24a:b0:b36:4f39:3158 with SMTP id a640c23a62f3a-b364f393739mr392727866b.5.1758885133057;
-        Fri, 26 Sep 2025 04:12:13 -0700 (PDT)
-X-Google-Smtp-Source: AGHT+IFRz/MXN70B3vZ7jWyubfql8OdBW6CmLXhsXgwCuvhJXrbl1pkx0lsr7qNX6aNmTkzLV8f83r2ah2Ip8nkUXic=
-X-Received: by 2002:a17:906:a24a:b0:b36:4f39:3158 with SMTP id
- a640c23a62f3a-b364f393739mr392726166b.5.1758885132625; Fri, 26 Sep 2025
- 04:12:12 -0700 (PDT)
+        d=1e100.net; s=20230601; t=1758907016; x=1759511816;
+        h=mime-version:references:message-id:in-reply-to:subject:cc:to:from
+         :date:x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
+        bh=2J2eyfvUb5mqlckSdhPK3o02GWAQ1uSy3Rla6FpgBlA=;
+        b=og3IMtUCe4Uz2Dl9SYQ6Z1sBtUcEaZSHUeUWvm++BcN6Vcxwwq57uOmRophHOqJlbE
+         t4s/5JS82KORSxh5pB/9kdub3ZO6Pe/ygU3AYqGf0tUfN6N0ogYFs1O03S0mcCcs0rMb
+         6yRsCFJRTDfxQ758MWqerShee1pH2qEqg7dEeKkpLOy3TsFjul696t1nRb+t2NJ9EZGj
+         fDW9sCEm+S7ex8HMDUhnwkM2mWCmTrsHFdKZkLv76qmWVN6GQuU+OfSwLvNCmVQymoHR
+         EU+5rKYCGrhMp1DR/g38Rgf1bEpU43OXT+DJj/0e7KZEC83c/ahoRJRgl4QektDP4zOT
+         b35w==
+X-Forwarded-Encrypted: i=1; AJvYcCWogAxBH+PSvL6ctIgpC6MCSBCRRpPIQAow/C+khIHEPK5PtS9BOYvrg5h8XTaxcR6Wr+JKS+Kqj8Ino2C1uA==@vger.kernel.org
+X-Gm-Message-State: AOJu0YzwUKurWQ2/qJLinFBCLclhL/8xWa9EWw0BEptKGtBJL8pRe8RD
+	7yFAUu5Z9bqQSbA34lNi4os/Kx67G+eatGilMF+j3yT/GH0TDOGq5n+oNTHjbttYnBK4LxlHplr
+	yuk5bGkSSkQE4A61iNqO6xdn5csZacIReSqjEPDs4NkUlTrNXsGLAD250rb6e8hAa/MCv
+X-Gm-Gg: ASbGncsYz5A9v9zFoaGKzyM9AT2exYCKY+YAQwSdV7tE4JBHjt63noPUGetJ5U9ZA1C
+	HoTXZCKqNCaAusib+7GMUROlzdP6KBya5DELr2RuXbE1YbVxhKNIQiT3GAIcTfuql6ULnVFFqD6
+	GrUkLlqIEhaAGh2icVye+gSlsPcGyv08VVFgraYvwNMTRC90gQxj/fqtrzueDzb8oPaIWIkRKcU
+	sl+rq/SxaXDIC6mNlPYt29sYhRX7Ype19S1Y+74fv+43hUVaHMezgT9fIVTjeMXECoD6R60ftnh
+	Dqz0Mn5r5ZH3kQTv8dm4paw5kw==
+X-Received: by 2002:ac8:5a0b:0:b0:4d9:639:e9dc with SMTP id d75a77b69052e-4da4d8e1a79mr121723351cf.84.1758907016196;
+        Fri, 26 Sep 2025 10:16:56 -0700 (PDT)
+X-Google-Smtp-Source: AGHT+IFJTwiltP4+BitPJ36rr0VHv0gWVLMN6k5xtVF8Q0pgbZwohXLcFm+AHt9+TNq0lWmn4YkKmQ==
+X-Received: by 2002:ac8:5a0b:0:b0:4d9:639:e9dc with SMTP id d75a77b69052e-4da4d8e1a79mr121722891cf.84.1758907015754;
+        Fri, 26 Sep 2025 10:16:55 -0700 (PDT)
+Received: from fionn ([70.53.55.167])
+        by smtp.gmail.com with ESMTPSA id d75a77b69052e-4db11cd26ddsm29636431cf.45.2025.09.26.10.16.54
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Fri, 26 Sep 2025 10:16:55 -0700 (PDT)
+Date: Fri, 26 Sep 2025 13:16:43 -0400 (EDT)
+From: John Kacur <jkacur@redhat.com>
+To: Derek Barbosa <debarbos@redhat.com>
+cc: williams@redhat.com, linux-rt-users@vger.kernel.org, crwood@redhat.com, 
+    oleg@redhat.com, shichen@redhat.com
+Subject: Re: [PATCH v3] ssdd: mitigate tracee starvation
+In-Reply-To: <3yq34kwrfmwvhy5la5wutnmbdd6pf4rwnvnvnapegvx7acq7xu@pghcpahcvndz>
+Message-ID: <f39ff2a8-452f-8239-2809-0b30ca67eea9@redhat.com>
+References: <3yq34kwrfmwvhy5la5wutnmbdd6pf4rwnvnvnapegvx7acq7xu@pghcpahcvndz>
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
 List-Subscribe: <mailto:linux-rt-users+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-References: <20250725090201.32656-1-tglozar@redhat.com> <6f2a6564-ecf0-e77e-2ccf-5250eddab97f@redhat.com>
-In-Reply-To: <6f2a6564-ecf0-e77e-2ccf-5250eddab97f@redhat.com>
-From: Tomas Glozar <tglozar@redhat.com>
-Date: Fri, 26 Sep 2025 13:12:01 +0200
-X-Gm-Features: AS18NWDzb1wLKv0lNLL8zk6icI5g4bfmjm4K0tZx93HdKPeZu29sZUwB77J_w50
-Message-ID: <CAP4=nvQQDeKOEPG8E61rv_epTji26A=+BuZNOd8kV=yi=kDw6Q@mail.gmail.com>
-Subject: Re: [PATCH] rteval: Introduce E2E tests with output checking
-To: John Kacur <jkacur@redhat.com>
-Cc: Clark Williams <williams@redhat.com>, Linux RT Users <linux-rt-users@vger.kernel.org>
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset=US-ASCII
 
-=C4=8Dt 18. 9. 2025 v 19:56 odes=C3=ADlatel John Kacur <jkacur@redhat.com> =
-napsal:
->
-> Interesting.
-> Note the correct spelling is "deprecated"
->
 
-Oops. Thanks for noticing that.
 
-> I'm not sure we want to deprecate runit and loads, they have different
-> purposes. I often run in a non-rt environment and without tuned if I'm
-> just testing functionality and not performance, and I got this after
-> running make check (skipping some of the output before that)
->
-> # Output match failed: "Command: rtla timerlat hist -p1100 -P f:95 -u
-> -c[0-9|-]+ -E3500 --no-summary -T1 -t=3Dtrace.txt"
-> e2e-tests/measurement.t .. Failed 6/19 subtests
->
-> Test Summary Report
-> -------------------
-> e2e-tests/loads.t      (Wstat: 0 Tests: 8 Failed: 1)
->   Failed test:  5
-> e2e-tests/measurement.t (Wstat: 0 Tests: 19 Failed: 6)
->   Failed tests:  13-14, 16-19
-> Files=3D3, Tests=3D33, 308 wallclock secs ( 0.06 usr  0.00 sys + 146.20 c=
-usr
-> 281.79 csys =3D 428.05 CPU)
-> Result: FAIL
-> make: *** [Makefile:22: check] Error 1
->
+On Fri, 19 Sep 2025, Derek Barbosa wrote:
 
-> How do I identify which test is test number 5?
-> Am I failing tests because of performance reasons or because the tests
-> expect an environment different from mine?
->
+> When ssdd is invoked with nforks > 100 && niters == 10000 on a tuned,
+> realtime kernel, the following error messages can be seen:
+> 
+> EXITING, ERROR: wait on PTRACE_SINGLESTEP #385: no SIGCHLD seen (signal count == 0), signo 5
+> EXITING, ERROR: wait on PTRACE_SINGLESTEP #398: no SIGCHLD seen (signal count == 0), signo 5
+> EXITING, ERROR: wait on PTRACE_SINGLESTEP #385: no SIGCHLD seen (signal count == 0), signo 5
+> ...
+> 
+> This behavior is caused by ptrace_stop() being unable to sleep after
+> taking tasklist_lock().
+> 
+> As forktest() generates "niter" PTRACE_SINGLESTEP's for nforks, in the
+> rare event where nforks exceeds the defaults by a large order of
+> magnitude, the sporadic test failures caused by missing SIGCHLDs
+> indicates that the tracees are unable to effectively wait for their
+> asynchronous signals to arrive --as denoted in the previous sleeps for
+> check_sigchld().
+> 
+> Therefore, by performing an sigtimedwait() in check_sigchld(), we
+> give the tracee enough CPU time to call
+> do_notify_parent_cldstop()->send_signal_locked().
+> 
+> The observed behavior after appling this patch mitigates the
+> aforementioned issue in scenarios with a high number of nforks.
+> 
+> Suggested-by: Oleg Nesterov <oleg@redhat.com>
+> Suggested-by: Crystal Wood <crwood@redhat.com>
+> Signed-off-by: Derek Barbosa <debarbos@redhat.com>
+> ---
+> V1 -> V2: Addressed review comments, removed usleep() in favor of
+> sigtimedwait().
+> V2 -> V3: Addressed checkpatch.pl complaints.
+> 
+>  src/ssdd/ssdd.c | 65 ++++++++++++++++++++++++++++++++++++-------------
+>  1 file changed, 48 insertions(+), 17 deletions(-)
+> 
 
-The tests should work in any environment, I have to fix that.
-
-Thanks for testing the patch.
-
-Tomas
+Signed-off-by: John Kacur <jkacur@redhat.com>
 
