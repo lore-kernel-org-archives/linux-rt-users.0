@@ -1,341 +1,136 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id D35272222C2
-	for <linux-rt-users@vger.kernel.org>; Fri, 26 Sep 2025 20:17:14 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 43CB32C0290
+	for <linux-rt-users@vger.kernel.org>; Tue, 30 Sep 2025 22:57:38 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1758917838; cv=none; b=KhOdDON3dKsgVfm+HwG87peSeP0CjF3EgZksmDgwwwlZZ6YiyPr7X9EGPln9FWC2+vRywOra8z4vLvG1HVT7Kc3BHWreStuZlIthsefsNek5+fEsnAbrsXZAZaz8JFUJIrTR7xoo9/Ph1G7BGkgs6ts7OYNwE9zpjgAt1/CwPtM=
+	t=1759273061; cv=none; b=CngnnpP+9ei9SexxKBqZiu3UuDJLMNB4j7b6W7qiORZ2+7RxOn1EzL6249a7SUMg26PHUsvGcVk2A1VkzVpkGhrqXJYbWuv5gr+YW0uICXG7oHiQ7PLO2K5wF2RoK0ewIyb/ILLTn5gidvAkszfu17g2OwdLQlQrIPYQal91LUQ=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1758917838; c=relaxed/simple;
-	bh=td68y4RlaNywT6kURw9d0TYJ5MJVVxLBnRJrAz1+vsY=;
-	h=Date:From:To:cc:Subject:In-Reply-To:Message-ID:References:
-	 MIME-Version:Content-Type; b=LxR+GxhH8SQXSsgVtzu3PoErtfojbHOl1QK4ZcTBM9++PK+nHeQxPICgQzK+f/l6wcSsRmdur7BnOvSynU1dbPgiu9iF6YJ5D3EbJqIa3gQYHxTr+IPi6JJdx60L21UMJApWX7hmAc44tbOglV1P7ojdCa92wY4fRmYFQt8j9fI=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=FxbeRvEV; arc=none smtp.client-ip=170.10.129.124
+	s=arc-20240116; t=1759273061; c=relaxed/simple;
+	bh=INBiH3PlynArAtSfipI54Nj5ztK3126CRykleHRsA34=;
+	h=Message-ID:Subject:From:To:Cc:Date:In-Reply-To:References:
+	 Content-Type:MIME-Version; b=QjLqwfM5p+ovvJDLCaFAzuMWMQLFU/1ufjhOnYCncNSANQuRJHhIy5rm1wmvCumiJSLml73zsvPKMfznMyW0BTMBWUzzL+uvOZ2Fc42QxFIb+KaIF5zkYzIidIpIgRbfBiDsBi1qWxeo9q5AM9iHML03Bi6A3TbS0SNy19qXcWs=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=Ad19Glx/; arc=none smtp.client-ip=170.10.133.124
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="FxbeRvEV"
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="Ad19Glx/"
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1758917833;
+	s=mimecast20190719; t=1759273058;
 	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
 	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references;
-	bh=RlZPxc7EZPWe2a6Popk/vSV+gIL/ZB72nwcY1CzEUc0=;
-	b=FxbeRvEVh3n3QH0jDUpdskNHPIgd8L3nrRHt02CtM0Oq4W9HU1mOfzZZ4Zm6jCsbd0hSbx
-	LX7ycoxE/TAA3vB+lQlTA7NEtOY87g8KSUagFPpRWqKXBDC3E4kczb1cvQLCVJlxWk5ZNd
-	CyMY1HySMmsN/cdFFvBY2vaiNCowTh4=
-Received: from mail-qk1-f198.google.com (mail-qk1-f198.google.com
- [209.85.222.198]) by relay.mimecast.com with ESMTP with STARTTLS
+	bh=lTbLwT3UsmoKnTJdg8804mfWWPA9qqsWSxZwWwdopdQ=;
+	b=Ad19Glx/GMneA8p8rj+c/czNVr2nYJMV3kO5Xx/3DVGWmJ1OIfwnSQ1bVLx7vL4xM2sYk8
+	NLG1AzOrgQ0NDLOdr1akmcKHjD44DHIzd7GmWJjAG2VZ8jg/gJI9mVTnzSx8kS77HnDBmq
+	PfN7rrx20w8lytIBpkAS5Th00ClS5vc=
+Received: from mail-qk1-f200.google.com (mail-qk1-f200.google.com
+ [209.85.222.200]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
- us-mta-77-zPlYVJ-UO3if-OsvWme8GQ-1; Fri, 26 Sep 2025 16:17:12 -0400
-X-MC-Unique: zPlYVJ-UO3if-OsvWme8GQ-1
-X-Mimecast-MFC-AGG-ID: zPlYVJ-UO3if-OsvWme8GQ_1758917831
-Received: by mail-qk1-f198.google.com with SMTP id af79cd13be357-85adb6a349cso611545085a.1
-        for <linux-rt-users@vger.kernel.org>; Fri, 26 Sep 2025 13:17:12 -0700 (PDT)
+ us-mta-652-eqp8s6rbPdiTDUqPzigFYg-1; Tue, 30 Sep 2025 18:57:36 -0400
+X-MC-Unique: eqp8s6rbPdiTDUqPzigFYg-1
+X-Mimecast-MFC-AGG-ID: eqp8s6rbPdiTDUqPzigFYg_1759273055
+Received: by mail-qk1-f200.google.com with SMTP id af79cd13be357-84a63a0c496so457496385a.3
+        for <linux-rt-users@vger.kernel.org>; Tue, 30 Sep 2025 15:57:36 -0700 (PDT)
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1758917831; x=1759522631;
-        h=mime-version:references:message-id:in-reply-to:subject:cc:to:from
-         :date:x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
-        bh=RlZPxc7EZPWe2a6Popk/vSV+gIL/ZB72nwcY1CzEUc0=;
-        b=M1gs6VXS1G+79smsGdFitrYwlItsqUuIFYPPzrntxfifT+tXmE/X3IqV76lSDW8Bt6
-         a4j21w9pgdLseQzhb1vm1wEtvdokmRpwHZn1YQxhqzwcUKwBBct+1GjurcP+OuJxSmmu
-         UfF30mL1uw+M4CkQHUhVjJA2rMObSJfYl5Ek3uG3+tEvVqswOXiGC7Vj6dkVmI21+Pic
-         zHtpTbMnQfWHKmO7CFHALHzUjB4UsEZkFmk0eoxArRC1MzOSGw6vMA+cbkJuvFeLEMhP
-         cEPgnWD50nZApckgeNxMZBSzrkgK8YPnFpRkT976x0CGBpjfUy+lxR6RrRmxRZR91RM5
-         lx+g==
-X-Forwarded-Encrypted: i=1; AJvYcCVXDtKek8Lsmxwgw2lbz/vYUGZXzObeZTNHLVC1DFPS8R38ghQxeunLqubABQ2pTiUhupq7ibn+6SKPcSFMgQ==@vger.kernel.org
-X-Gm-Message-State: AOJu0Yy6b2u3okHKNTUTTXM1J8MmRU0Lgd8QkcW/ezEDH/lFsWjtgqh7
-	1KDEkySKXXeimncdkm9VoeWLJ1J6NC7187GhQYEXIzH/xPPFirWdf3QaYjKVDhXZDutsROjV82O
-	re7lGr5fOHCM0YotP8zAOMtA4uQ/+MSj2x3OcbqT6cQASTPqEHlNMFoqiRsb2+e9SH7n/
-X-Gm-Gg: ASbGncvOWtNPebmqflJPo99ugKBUs0Hg+O6QFgu7jeHfTnXdbsmp7+RRbYQI/GvLJ3W
-	wzk+7P6m9mWPMW/Yw+mLnNUcAOD61RPWx5Mhepue4kAVMEtsvan9aw0NJ+Gr0JHEBdgBQlP0xN7
-	IEhqxVXhpAU8jTADwUI2KhUVyqySXs4P8Xw+JrL8/T+uacPnIVEMbVaU+3WMv+YMky3RbJdfYtB
-	250Dv35tezuum5fOy1KrSfxPjyL8JsmOeuIz/4a3t6g01NEkUxsS5yqk6XXaCrq5vYBavyJu+vk
-	YDnt4yPNIolExXKIChHa1hF71xxaGafT8xv4gawfCMxMvVj3tDvt7uh38zBIKyBZFMZ3E5z5nnw
-	dhileJXqhr7Wz
-X-Received: by 2002:a05:620a:4010:b0:844:9c74:e839 with SMTP id af79cd13be357-85ae0dc231fmr1352784285a.22.1758917831458;
-        Fri, 26 Sep 2025 13:17:11 -0700 (PDT)
-X-Google-Smtp-Source: AGHT+IEhf/6u9fcGf72lvHxqZmgqNeLUCYzE18EeoifCjo3usrsAqICHQZQ/dm2GQ2pUqJLASPCnqQ==
-X-Received: by 2002:a05:620a:4010:b0:844:9c74:e839 with SMTP id af79cd13be357-85ae0dc231fmr1352778585a.22.1758917830850;
-        Fri, 26 Sep 2025 13:17:10 -0700 (PDT)
-Received: from fionn (bras-base-rdwyon0604w-grc-05-70-53-55-167.dsl.bell.ca. [70.53.55.167])
-        by smtp.gmail.com with ESMTPSA id af79cd13be357-85c306b5f64sm328605085a.32.2025.09.26.13.17.09
+        d=1e100.net; s=20230601; t=1759273055; x=1759877855;
+        h=mime-version:user-agent:content-transfer-encoding:references
+         :in-reply-to:date:cc:to:from:subject:message-id:x-gm-message-state
+         :from:to:cc:subject:date:message-id:reply-to;
+        bh=lTbLwT3UsmoKnTJdg8804mfWWPA9qqsWSxZwWwdopdQ=;
+        b=tjdxFOaq8R8TRbFb23eCn1bzAA4tpM67M/7uBFTJ7EOStNlvNMzj/ZQrnWbUBT4jca
+         ZMNa4/IjEcA1/Z6E7ST7PCfPD/2qJNMHHL9d9flN9oHjftOdnPhxi/MTff9HN27Xo+0x
+         khIosaV6DGgGZc2iOLfdLfQqGnwMD9ZzpDfwf8DW4m2WyEXhi5JWT4RVRUu16/PmUmzz
+         Pmm7mE2o76blPdi57S5VfY2qqtcwimOml3AeVP13brEOTjnNcVEwOsVpXzR+2lUdqRhR
+         YSaap2ZaVa5T4FHORci+qbyOEAbV1Z0KC5/QXYwEPJ7ZYK/uhubJWyPBOhRonDIvZvqh
+         u9cg==
+X-Forwarded-Encrypted: i=1; AJvYcCXPzhqCbgpV+sEWTO29X/qNtESg2nlMNahcz7W37S3rlVJVKi0XCiXYF2bhMF6Kl2l4DrDx7cHD11W7OkXcew==@vger.kernel.org
+X-Gm-Message-State: AOJu0YwzoVzQbQQZDLPUhzcAL12lz2rKJLZhuV2sOQo53z8E1MI0yQch
+	GUvspz18VRWTkjXAj+EZvqIRF26qIYHA1YiqdjBL8+9Ceabu2fIMtPmLhWbmoPhEnGUPDgFxX2I
+	pNjmhecCYYXJretxyQcqmtXhfGZni9oCHqbFsM85zYXfj/g2I1AMKaI9yWvZdK7LjFkwU
+X-Gm-Gg: ASbGnctYOUadL5KXZgwv4s6+hHtuapsZCWbMxdQK2z8VzC0CIXiA3Nyk/r5BoNfAoQP
+	cAOvklqLab1s/wQb6mQIufNRuQ91/qumiT8E+wbpiVEAQE8gC6eOrRKBF8UJF82TKnAKh2ruCwQ
+	/WlwazjdFLn6S5Q5MRkQurWolRo50NPjnjGdvXbe6wSpmx16USeTXONFbb/vjPaZ9Az31DbD8e6
+	PoeRJMbO5+Eb9Q+pWX7XzTgLwtz5OqT5XbtzXeqVuKuxlYD4woXx4w7Qa42uj/rfJFbFIl9aYxb
+	6bDzScx3zM42yfMQoVqbG9cJBf6Wgk0WLaNv/gzstKOIvJdp8xv2YwXauKCDP2j4PJK5r/EcFNb
+	z
+X-Received: by 2002:a05:620a:2993:b0:857:4e89:87da with SMTP id af79cd13be357-873767a9229mr241363085a.65.1759273055616;
+        Tue, 30 Sep 2025 15:57:35 -0700 (PDT)
+X-Google-Smtp-Source: AGHT+IG3Ckok2mN/FWrHYQSeNRhlJa018m8CL2c5rkRROZ9qvUG4Ly5LOoKo8CEe1I8mROi6EH0dYw==
+X-Received: by 2002:a05:620a:2993:b0:857:4e89:87da with SMTP id af79cd13be357-873767a9229mr241360985a.65.1759273055229;
+        Tue, 30 Sep 2025 15:57:35 -0700 (PDT)
+Received: from crwood-thinkpadp16vgen1.minnmso.csb ([2601:447:c680:2b50:ee6f:85c2:7e3e:ee98])
+        by smtp.gmail.com with ESMTPSA id af79cd13be357-862e20312f8sm889191285a.42.2025.09.30.15.57.34
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Fri, 26 Sep 2025 13:17:10 -0700 (PDT)
-Date: Fri, 26 Sep 2025 16:17:09 -0400 (EDT)
-From: John Kacur <jkacur@redhat.com>
-To: "John B. Wyatt IV" <jwyatt@redhat.com>
-cc: Clark Williams <williams@redhat.com>, linux-rt-users@vger.kernel.org, 
-    kernel-rts-sst <kernel-rts-sst@redhat.com>, 
-    "John B. Wyatt IV" <sageofredondo@gmail.com>
-Subject: Re: [PATCH] tuna: Remove broken testuna
-In-Reply-To: <20250917213551.12944-1-jwyatt@redhat.com>
-Message-ID: <96ee6f1c-c911-d820-5912-f2185007e56c@redhat.com>
-References: <20250917213551.12944-1-jwyatt@redhat.com>
+        Tue, 30 Sep 2025 15:57:34 -0700 (PDT)
+Message-ID: <5a7d763f259deda4bbcfed32982aa876f379649c.camel@redhat.com>
+Subject: Re: [PATCH] rteval: Introduce E2E tests with output checking
+From: Crystal Wood <crwood@redhat.com>
+To: Tomas Glozar <tglozar@redhat.com>
+Cc: John Kacur <jkacur@redhat.com>, Clark Williams <williams@redhat.com>, 
+ Linux RT Users <linux-rt-users@vger.kernel.org>
+Date: Tue, 30 Sep 2025 17:57:34 -0500
+In-Reply-To: <CAP4=nvRXtcYdKLbMn-U9TZ3bv+RV_bMkeVoKTMevv9q5+uK64A@mail.gmail.com>
+References: <20250725090201.32656-1-tglozar@redhat.com>
+	 <43c97d17c3dc4c97a4ec47968c1c52d58c57e4ea.camel@redhat.com>
+	 <CAP4=nvRXtcYdKLbMn-U9TZ3bv+RV_bMkeVoKTMevv9q5+uK64A@mail.gmail.com>
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
+User-Agent: Evolution 3.56.2 (3.56.2-1.fc42) 
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
 List-Subscribe: <mailto:linux-rt-users+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
+
+On Fri, 2025-09-26 at 13:09 +0200, Tomas Glozar wrote:
+> =C4=8Dt 18. 9. 2025 v 21:22 odes=C3=ADlatel Crystal Wood <crwood@redhat.c=
+om> napsal:
+> >=20
+> > Can we just put all the tests in tests/ rather than making this
+> > distinction?  And have the unit tests be something that can be run just
+> > like any other test?
+> >=20
+>=20
+> I agree that the organization is not the best. This patch only deals
+> with end-to-end tests, though. As long as there is a top-level
+> unit-tests/ directory, adding another one named tests/ would be
+> confusing.
+
+I was suggesting putting *all* tests in a single tests/ directory,
+including the unit tests.  So, there wouldn't be a unit-tests/
+directory.
+
+>=20
+> > > +             if [ $exitcode -eq $expected_exitcode ] && [ $grep_resu=
+lt -eq 0 ]
+> > > +             then
+> > > +                     echo "ok $ctr - $1"
+> > > +             else
+> > > +                     echo "not ok $ctr - $1"
+> > > +                     # Add rtla output and exit code as comments in =
+case of failure
+> > > +                     echo "$result" | col -b | while read line; do e=
+cho "# $line"; done
+> > > +                     printf "#\n# exit code %s\n" $exitcode
+> > > +                     [ -n "$expected_output" ] && [ $grep_result -ne=
+ 0 ] && \
+> > > +                             printf "# Output match failed: \"%s\"\n=
+" "$expected_output"
+> > > +             fi
+> >=20
+> > Any reason to not take the updated version of the engine from the rtla
+> > consolidation patchset?
+> >=20
+>=20
+> This patch was sent quite some time ago, I think it was before the
+> updated version of the engine.
+
+Ah, I thought it was a new patch, not a reply to an older patch.
 
 
-
-On Wed, 17 Sep 2025, John B. Wyatt IV wrote:
-
-> This script relies on the older, incompatible Tuna syntax, and
-> rtctl which is no longer packaged for most distributions. No one
-> has complained so remove it since the changes to update it would
-> be extensive with no users.
-> 
-> Signed-off-by: John B. Wyatt IV <jwyatt@redhat.com>
-> Signed-off-by: John B. Wyatt IV <sageofredondo@gmail.com>
-> ---
->  testuna | 230 --------------------------------------------------------
->  1 file changed, 230 deletions(-)
->  delete mode 100755 testuna
-> 
-> diff --git a/testuna b/testuna
-> deleted file mode 100755
-> index cb98640..0000000
-> --- a/testuna
-> +++ /dev/null
-> @@ -1,230 +0,0 @@
-> -#!/bin/bash
-> -# Regression tests for tuna
-> -# (c) 2008 Red Hat Inc.
-> -# Arnaldo Carvalho de Melo <acme@redhat.com>
-> -# SPDX-License-Identifier: GPL-2.0-only
-> -
-> -dprint() {
-> -	[ -n "$VERBOSE" ] && echo $1
-> -}
-> -
-> -ktpidof() {
-> -	echo $(ps ax -To pid,cmd | grep "\[$1.*\]" | head -1 | cut -d'[' -f 1)
-> -}
-> -
-> -get_rtprio() {
-> -	echo $(chrt -p $1 | grep priority | cut -d ':' -f 2)
-> -}
-> -
-> -get_policy() {
-> -	echo $(chrt -p $1 | grep policy | cut -d ':' -f 2)
-> -}
-> -
-> -get_affinity() {
-> -	echo $(taskset -p $1 | grep 'current affinity' | cut -d ':' -f 2)
-> -}
-> -
-> -get_nr_processors() {
-> -	echo $(grep -i "^processor.*: " /proc/cpuinfo | tail -1 | cut -d ':' -f 2)
-> -}
-> -
-> -get_nr_cpu_sockets() {
-> -	echo $(grep "^physical id" /proc/cpuinfo | cut -d: -f2 | sort -u | wc -l)
-> -}
-> -
-> -die() {
-> -	[ -z "$VERBOSE" ] && echo -n "$2: "
-> -	echo $1
-> -	rtctl --file $INITIAL reset
-> -	taskset -p $INITIAL_INIT_AFFINITY 1 > /dev/null
-> -	rm -rf $TESTUNA_DIR
-> -	exit 1
-> -}
-> -
-> -die_with_a_diff() {
-> -	[ -n "$VERBOSE" ] && diff -u $INITIAL $NEW
-> -	die "$1"
-> -}
-> -
-> -tuna_save() {
-> -	tuna --save $TEMPCONF
-> -	grep -v '^# rtctl --file ' $TEMPCONF > $1
-> -	rm -f $TEMPCONF
-> -}
-> -
-> -die_if_not_saved() {
-> -	dprint "$2"
-> -	tuna_save $NEW
-> -	(diff -u $INITIAL $NEW | diffstat | \
-> -	grep -q "[ \t]*1 file changed, $1 insertions*(+), $1 deletions*(-)") ||
-> -	die_with_a_diff 'FAILED!' "$2"
-> -}
-> -
-> -die_if_conf_changed() {
-> -	dprint "$1"
-> -	tuna_save $NEW
-> -	diff -qu $INITIAL $NEW > /dev/null || die_with_a_diff 'FAILED!' "$1":
-> -}
-> -
-> -die_if_zero() {
-> -	dprint "$2"
-> -	[ $1 -eq 0 ] && die 'FAILED!' "$2"
-> -}
-> -
-> -die_if_not_zero() {
-> -	dprint "$2"
-> -	[ $1 -ne 0 ] && die 'FAILED!' "$2"
-> -}
-> -
-> -die_if_not_equal() {
-> -	dprint "$3"
-> -	[ $1 -ne $2 ] && die 'FAILED!' "$3"
-> -}
-> -
-> -die_if_not_str_equal() {
-> -	dprint "$3"
-> -	[ $1 != $2 ] && die 'FAILED!' "$3"
-> -}
-> -
-> -TESTUNA_DIR=$(mktemp -d -t testuna.XXXXXX) || exit 1
-> -INITIAL=$TESTUNA_DIR/initial.tuna
-> -INITIAL_INIT_AFFINITY=$(get_affinity 1)
-> -TEMPCONF=$TESTUNA_DIR/tempnew.tuna
-> -NEW=$TESTUNA_DIR/new.tuna
-> -
-> -[ $# -eq 1 ] && VERBOSE=1
-> -
-> -dprint "Saving initial configuration"
-> -
-> -tuna_save $INITIAL
-> -
-> -TUNA_RPM_VERSION=$(rpm -q --qf "%{version}\n" tuna)
-> -TUNA_BIN_VERSION=$(tuna --version)
-> -die_if_not_str_equal "$TUNA_RPM_VERSION" "$TUNA_BIN_VERSION" \
-> -	"Verifying --version ($TUNA_BIN_VERSION) matches package version ($TUNA_RPM_VERSION)"
-> -
-> -rtctl --file $INITIAL reset
-> -
-> -die_if_conf_changed "Replaying initial config"
-> -
-> -PID=$(ktpidof "watchdog")
-> -RTPRIO=$(get_rtprio $PID)
-> -POLICY=$(get_policy $PID)
-> -POLICY=$(echo ${POLICY:6:1} | tr 'A-Z' 'a-z')
-> -chrt -$POLICY -p $((RTPRIO - 1)) $PID
-> -
-> -die_if_not_saved 1 'Saving changes to a kernel thread priority'
-> -
-> -chrt -$POLICY -p $RTPRIO $PID
-> -
-> -die_if_conf_changed 'Restoring kernel thread priority'
-> -
-> -new_policy=$(echo $POLICY | tr fr rf)
-> -
-> -chrt -$new_policy -p $RTPRIO $PID
-> -
-> -die_if_not_saved 1 'Changing kernel thread sched policy'
-> -
-> -chrt -$POLICY -p $RTPRIO $PID
-> -
-> -die_if_conf_changed 'Restoring kernel thread sched policy'
-> -
-> -PID=$(ktpidof "kthreadd")
-> -AFFINITY=$(get_affinity $PID)
-> -
-> -taskset -p 0x2 $PID > /dev/null
-> -
-> -die_if_not_saved 1 'Changing kernel thread SMP affinity mask'
-> -
-> -taskset -p $AFFINITY $PID > /dev/null
-> -
-> -die_if_conf_changed 'Restoring kernel thread SMP affinity mask'
-> -
-> -NR_PROCESSORS=$(get_nr_processors)
-> -for PROCESSOR in $(seq 0 $NR_PROCESSORS) ; do
-> -	taskset -p 0xff 1 > /dev/null
-> -
-> -	PROCESSOR_AFFINITY=$(printf "%#x\n" $((1 << PROCESSOR)))
-> -	tuna --cpu $PROCESSOR --isolate
-> -
-> -	AFFINITY=0x$(get_affinity 1)
-> -
-> -	die_if_not_zero $((AFFINITY & PROCESSOR_AFFINITY)) "Isolating CPU $PROCESSOR"
-> -
-> -	tuna --cpu $PROCESSOR --include
-> -
-> -	AFFINITY=0x$(get_affinity 1)
-> -
-> -	die_if_zero $((AFFINITY & PROCESSOR_AFFINITY)) "Including CPU $PROCESSOR"
-> -done
-> -
-> -NEW_AFFINITY=$((1 << NR_PROCESSORS | 1))
-> -
-> -if [ $NR_PROCESSORS -gt 2 ]; then
-> -	tuna --cpu=0,$NR_PROCESSORS --isolate
-> -
-> -	for PID in $(cd /proc; ls -d [0-9]*) ; do
-> -		[ -n "$(cat /proc/$PID/cmdline 2> /dev/null)" ] || continue
-> -		AFFINITY=0x$(get_affinity $PID) || continue
-> -
-> -		die_if_not_zero $((AFFINITY & NEW_AFFINITY)) \
-> -			"Verifying isolation of first and last processor for PID $PID"
-> -	done
-> -fi
-> -
-> -tuna --cpu=0,$NR_PROCESSORS --include
-> -
-> -AFFINITY=0x$(get_affinity 1)
-> -
-> -die_if_not_equal $((AFFINITY & NEW_AFFINITY)) $NEW_AFFINITY "Including first and last processor"
-> -
-> -taskset -p 0xff 1 > /dev/null
-> -
-> -NEW_AFFINITY=$((1 << NR_PROCESSORS | 1))
-> -
-> -tuna --cpu=0,$NR_PROCESSORS --thread 1 --move
-> -
-> -AFFINITY=0x$(get_affinity 1)
-> -
-> -die_if_not_equal $((AFFINITY & NEW_AFFINITY)) $NEW_AFFINITY "Moving init to just first and last processor"
-> -
-> -NR_CPU_SOCKETS=$(get_nr_cpu_sockets)
-> -if [ $NR_CPU_SOCKETS -ge 2 ]; then
-> -	CPU1_SIBLINGS=$(printf "%d" 0x$(cat /sys/devices/system/cpu/cpu1/topology/core_siblings | cut -d',' -f2))
-> -	CPU1_SOCKET=$(cat /sys/devices/system/cpu/cpu1/topology/physical_package_id)
-> -
-> -	tuna --sockets=$CPU1_SOCKET --isolate
-> -	AFFINITY=0x$(get_affinity 1)
-> -	die_if_not_zero $((AFFINITY & CPU1_SIBLINGS)) \
-> -		"Verifying isolation of socket $CPU1_SOCKET"
-> -
-> -	tuna --sockets=$CPU1_SOCKET --include
-> -	AFFINITY=0x$(get_affinity 1)
-> -	die_if_not_equal $((AFFINITY & CPU1_SIBLINGS)) $CPU1_SIBLINGS \
-> -		"Verifying inclusion of socket $CPU1_SOCKET"
-> -
-> -	tuna --sockets=$CPU1_SOCKET --isolate
-> -	tuna --sockets=$CPU1_SOCKET --thread 1 --move
-> -	AFFINITY=0x$(get_affinity 1)
-> -	die_if_not_equal $((AFFINITY & CPU1_SIBLINGS)) $CPU1_SIBLINGS "Moving init to CPU socket $CPU1_SOCKET"
-> -fi
-> -
-> -if [ $NR_PROCESSORS -gt 2 ]; then
-> -	THREAD_PREFIX="watchdog/"
-> -	PID=$(ps h -C ${THREAD_PREFIX}0 -o pid)
-> -	RTPRIO=$(get_rtprio $PID)
-> -	NEW_RTPRIO=$((RTPRIO - 1))
-> -	tuna -t $THREAD_PREFIX* -p $NEW_RTPRIO
-> -	for CPU in $(seq 0 $((NR_PROCESSORS - 1))); do
-> -		PID=$(ps h -C ${THREAD_PREFIX}$CPU -o pid)
-> -		RTPRIO=$(get_rtprio $PID)
-> -		die_if_not_equal $RTPRIO $NEW_RTPRIO "Using --thread globbing"
-> -	done
-> -fi
-> -
-> -taskset -p $INITIAL_INIT_AFFINITY 1 > /dev/null
-> -rtctl --file $INITIAL reset
-> -
-> -echo 'PASS: Healthy tuna, no lead found, eat!'
-> -
-> -exit 0
-> -- 
-> 2.51.0
-> 
-> 
-Signed-off-by: John Kacur <jkacur@redhat.com>
+-Crystal
 
