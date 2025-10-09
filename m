@@ -1,71 +1,71 @@
-Received: from mail-qv1-f46.google.com (mail-qv1-f46.google.com [209.85.219.46])
+Received: from mail-qt1-f180.google.com (mail-qt1-f180.google.com [209.85.160.180])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 3B79F1E511
-	for <linux-rt-users@vger.kernel.org>; Thu,  9 Oct 2025 20:27:48 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.219.46
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 4B31E26FDA4
+	for <linux-rt-users@vger.kernel.org>; Thu,  9 Oct 2025 20:27:50 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.160.180
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1760041670; cv=none; b=FmEUqsvUhDufLTpRv4xFjX2DhgqM6HqwAWf4YltQDOKTrA8ASSMLWL/3Ugv2Tu+CphVQNVuXxKpjaQ7tPng9C72710mJA+vjUq6eXi2Qn+LRu6/W/FTWviNRli/J8TCRKbhq7hKM2YFu1Z02niC/FhD6uUdyT7mLgpLc4D4j1zk=
+	t=1760041671; cv=none; b=RalZTq3BGTcGjGrlrRQggAtRnjBiCsMQ5hr0H0SrZ2uI8HEn1CHEgI3adKi0Z6it6L/9oaslKBPAJwwOzNPXgAsmv2kAncFgn4n4vJ68P7QudzWDzVCEliw+zjXtoQRie+XJ7/vT5k0btPusveXwQWqbBdcgXSMeLjzVYWfqZUQ=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1760041670; c=relaxed/simple;
-	bh=fmQMePPaIRdxHpl/EiCPE+HlHVFieRoUbJdfTnb362o=;
+	s=arc-20240116; t=1760041671; c=relaxed/simple;
+	bh=h+dNiEeDY11vEMIvK3PEXFCXYZ9R+DRtk4UE2BAsBJA=;
 	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=u/6eO6estUgDSxkUEhqduXQC7njYUbSaKf+qx3uogL2QKCt/j/xuyIzog2zs3jmQme1Ndkr8a5WTMrxga19LlkkOoTmO4TrSNuhI+UMOvTvYZVhU6YgbHi9t7y/CHPPZ/wOUF93lRDDdKM/M6iBWQHpthS7vUtcqrefbUOmz5ss=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=fail (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=RWVe9PVE; arc=none smtp.client-ip=209.85.219.46
+	 MIME-Version; b=IXfll6B3LyBygxlkfrTqcE7aWpWjHXJfyJjmLJn+6at3E7fOrcqb3pL+EKqtbSX6Sd18aE/fEnUgWUKToTEhDa7ud+NsvdwK/zVvabjkosOYTaPHixAOY6n+vCtfc0kcbhowztWBrIe12kNfRpNHqbyjRfnwp4kF/xrc0ULkzPI=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=fail (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=JGFddr1s; arc=none smtp.client-ip=209.85.160.180
 Authentication-Results: smtp.subspace.kernel.org; dmarc=fail (p=quarantine dis=none) header.from=redhat.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="RWVe9PVE"
-Received: by mail-qv1-f46.google.com with SMTP id 6a1803df08f44-796fe71deecso13114566d6.1
-        for <linux-rt-users@vger.kernel.org>; Thu, 09 Oct 2025 13:27:48 -0700 (PDT)
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="JGFddr1s"
+Received: by mail-qt1-f180.google.com with SMTP id d75a77b69052e-4dac61ed7a5so13761631cf.3
+        for <linux-rt-users@vger.kernel.org>; Thu, 09 Oct 2025 13:27:49 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1760041668; x=1760646468; darn=vger.kernel.org;
+        d=gmail.com; s=20230601; t=1760041669; x=1760646469; darn=vger.kernel.org;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:sender:from:to:cc:subject:date
          :message-id:reply-to;
-        bh=zPBhr8VeX54MJwK5FrWVamao5N3BrOz5+/iCg7KUKvc=;
-        b=RWVe9PVEkIb0BTiJjcZUt9sNrGxp6cWpaYHPKX0p0+cEqt/i0dLT2E+uXOeR43UqWq
-         Voo1G5h14drZCrcyOoj5d6aR+Yar4DaAY7EmYOHRWwpITuGZwMrlVFREOjCHJvK8DwKQ
-         BJOlfUNMF4YGc8XDSy91cV2rOC+NVExXosVdxxbK67ojJ6viZK8gQqviYF4ZsdfRLB/n
-         mJs4F+Ah+78FW5Qb/elZlcDUOz3OumvwFNMi82Imem7aay6L33/ttgv6EYYpnDsESX+v
-         NFdmQYT93GXNr7hzjvCaZXHa0K+DxheY+OeVP5g8rcbu97HXvG1KHnC8F2nZ+HaFnMeM
-         6n6w==
+        bh=u1+e0F/5RqOBq+uztSI5CooRh4XNIxnkjTkvppYN1O4=;
+        b=JGFddr1seD3Q5xouzIKgBwXSQrSCT9ThGuaydn0PxmaLd8EJEPRw7z/FVfAWr6SIBR
+         Q+jQbNRaFwlw/+K/t2GC0YhKBPWEIwdmFtF8iqMmvG62JWa6yIEIrXyPFI4e1HrsTYYX
+         VhgcM9ctFEnSuivX2QvgelR5bi6ZbPYh3pVlko/32F7ew8bYYuzYAuaFulJM9qZRMX7B
+         4iQxU2k6A3Djy56EniJ7F+528BsxA39GV1MfA32zipYpOgn5uuLvPgyHVy2gZUAMTJ02
+         7/qC657khcNe39a4Fizpdjqhv8nCIDPWaOyX+kyESTUZ9tM1nmDPqN4SWvhifWob3BeQ
+         XBEg==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1760041668; x=1760646468;
+        d=1e100.net; s=20230601; t=1760041669; x=1760646469;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:sender:x-gm-message-state:from
          :to:cc:subject:date:message-id:reply-to;
-        bh=zPBhr8VeX54MJwK5FrWVamao5N3BrOz5+/iCg7KUKvc=;
-        b=orp6UGxVkeN0kxssHCH7EGH7ptSC4/2zrwDIJB4YTdO4EWhNZIfVf311KG336asGi/
-         GPpxZbAO7VLWcexprZFboWc2wIzp7wQV9ez6/zsetlWmIFdqWGAz2+B9/P0s7r0DnuSr
-         B5zsMGY7+WtCcu0AH+Lue/QrecKxDaRjSP8INk19d9wP3hNqWUD4zmElVVFqp1iHssBs
-         FKGRmWlryUqM3K4I6NWS/EnLxMgojAYGbRfpp+q2UcsjPNwaXZUpuFlttQLsQvc+r9+3
-         rMW6sbEcJQLKcoEcTyOWhDWgX7eaoFDqJziTf8uzOyEqkw1bEl+63eilkuwfjxeSRclG
-         nF8g==
-X-Gm-Message-State: AOJu0Yys1TDz0PwzOaYwpC7dNTqPl4eG9qzT2vdTP+aNcbx51RHQQl4d
-	08YPY6c90CRG3WKO8383t2ru4v0uQ9gHAxEZlD9WE9LrdL+iPdXCAFf4xg4ZTl5cu+E=
-X-Gm-Gg: ASbGncuINq8akkKX0tQmWgvJsqUbnvZ1/pq6rLk1MCr1hRpbkbrAH90b/g6Gg7OtVyz
-	BuG+iCDpODwpHSoZ0cVA34VyGyj/1AWyRuMkzL31AZqvUbXvoAdBfPk/88eHjrfkqx5lU6CCLdE
-	y8LcOiEg9ddcp6nFXJ4z5t5mtA2kCY3nZ+5AGGSZ4LsW1IgOgqE8QC2Kt8W07EIRtWyh8xVB9o8
-	EcC3GNK6NLTBycKsHJsv6QABTuN+RyyAI9DKxxijvcA1IgVIkduJoLUEMTHPWazfTfLiYifWZ8E
-	dsghp2ILIBDDJaswSjN7kphhAbWZxMaP36OCdiEraXEn4wNdoh5/aVuwMR56CW1X/3YL//Gy9JG
-	X8N3DUsU5b5+GLoiYN1Bf7xW5R1hWpxAQwtqRwvy6DPWaa83bzCBqVAiibTuXZq5iveFAfHSElq
-	nOFX4WS3tspl5dlzuuvSuMcJf7nMdKGs0OnuplAuSNbShSYA==
-X-Google-Smtp-Source: AGHT+IGSQngtU+cBerIjwG06fkC9oMZEn28UK0Bp568LWYbnGnmt5QkwmriYe/uPWoT4R/x1UHDrfQ==
-X-Received: by 2002:a05:6214:1301:b0:7e7:a043:59d1 with SMTP id 6a1803df08f44-87b2ef36f58mr121497536d6.44.1760041667692;
-        Thu, 09 Oct 2025 13:27:47 -0700 (PDT)
+        bh=u1+e0F/5RqOBq+uztSI5CooRh4XNIxnkjTkvppYN1O4=;
+        b=r3iCFDJCfPEywDd+CX3v/BNmOVHQomp0XaEGhQbFJBuXqtDhzBrVObciM3wsTGiYAm
+         5HjloNm13rx63mEm5CCsdKUD6t2clY6JPASlxt0OgLleL793l7BP+JygVrJ6uBUe3wWx
+         raJdLGQQQNsQxygZiD9kW/EwxIvxbN++IcjQlK1AQy1r9eP3JoK3RZJXgqc3vhOxhYSB
+         SeAIxuLb8j+KOxyE6QkU5ojz7318gN7iQw24FhJbk4MCnUBFuJJJeORv2dwGk5e5pM0C
+         xI/AYEexPNgZTN3gdnY7LHZs/dDLSccSzTy9RY+9p1VtplW+6It6VIhlBVKvrKukpa8O
+         e0JQ==
+X-Gm-Message-State: AOJu0YwAXv0jGLHGySvdsgB4m656KwKaDZJyuZjAV3+oKfM/pJuio1CV
+	Snn6gMPy7sm2ipaGmvB3Wv97y1pCrt9uRHz25ywsZYj/dl+GZlWzkXBvUD43W39At64=
+X-Gm-Gg: ASbGncvUVBD8pByTXFRsD7CrfH7PJ+zRAXgi67dfXnN3ekT/ttTolxpX7SqglMUo2/Z
+	21M3uvbR3xPSe2IA9jsBR6JO8f726jUVyjNSnlBoKy+AqBW5zNLKSnjRVv+V8WqECNoSdvK41df
+	5GOAkHBMPi3Z1fxN625kAneK9YeCRHsUNgSqQi8SqPNRBwiJAPJow1Q1Ra6OkG9KZOje2neADFe
+	xMQOODyHF2+jXaRvScX9YRpv/H+jJQR8Rpj1jer5Kyd/GruUth6YBYTFEzJHPquSCihfmZumtke
+	yP4Mts69+IWGIGI8OoWB/Q6y2ML8YLKgwoeNs9fE0QpvNUOpnUMcKQLfEBDSZEKqzZEJnH34cS/
+	gAN8uMDyrgniPKjUWoJsXqiNikCbz0AmKfEZxhaXDRW8Nqhvu3SuHRKNYjcZS5a0Z+4bZtDODSZ
+	y6CRpqeu16OlK/IDCBKJ7DRdF6HdtE1G1i3+Y=
+X-Google-Smtp-Source: AGHT+IGO4QbDYQMxPbAhlZnFztLgrG+HjfYhAmeHS8yRHUia0MpuQ/cWAnd/dzaiy1dIrO7M+WGegw==
+X-Received: by 2002:a05:622a:58cf:b0:4db:7bc2:92b with SMTP id d75a77b69052e-4e6ead54b16mr134008171cf.42.1760041668803;
+        Thu, 09 Oct 2025 13:27:48 -0700 (PDT)
 Received: from fionn.redhat.com (bras-base-rdwyon0604w-grc-05-70-53-55-167.dsl.bell.ca. [70.53.55.167])
-        by smtp.gmail.com with ESMTPSA id 6a1803df08f44-87bc35713ccsm2664286d6.37.2025.10.09.13.27.46
+        by smtp.gmail.com with ESMTPSA id 6a1803df08f44-87bc35713ccsm2664286d6.37.2025.10.09.13.27.47
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Thu, 09 Oct 2025 13:27:46 -0700 (PDT)
+        Thu, 09 Oct 2025 13:27:48 -0700 (PDT)
 Sender: John Kacur <jkacur@gmail.com>
 From: John Kacur <jkacur@redhat.com>
 To: linux-rt-users <linux-rt-users@vger.kernel.org>
 Cc: Clark Williams <williams@redhat.com>,
 	John Kacur <jkacur@redhat.com>
-Subject: [PATCH 3/4] python-linux-procfs: Fix spelling mistakes in comments
-Date: Thu,  9 Oct 2025 16:27:31 -0400
-Message-ID: <20251009202732.57880-3-jkacur@redhat.com>
+Subject: [PATCH 4/4] python-linux-procfs: Bump version to 0.7.4
+Date: Thu,  9 Oct 2025 16:27:32 -0400
+Message-ID: <20251009202732.57880-4-jkacur@redhat.com>
 X-Mailer: git-send-email 2.51.0
 In-Reply-To: <20251009202732.57880-1-jkacur@redhat.com>
 References: <20251009202732.57880-1-jkacur@redhat.com>
@@ -77,36 +77,38 @@ List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 
-- Fix "progate" to "propagate"
-- Fix "sistem" to "system"
-
 Signed-off-by: John Kacur <jkacur@redhat.com>
 ---
- procfs/procfs.py | 4 ++--
- 1 file changed, 2 insertions(+), 2 deletions(-)
+ procfs/procfs.py | 2 +-
+ pyproject.toml   | 2 +-
+ 2 files changed, 2 insertions(+), 2 deletions(-)
 
 diff --git a/procfs/procfs.py b/procfs/procfs.py
-index 7e9459907d5f..c33aa73cd211 100755
+index c33aa73cd211..acb205324d9e 100755
 --- a/procfs/procfs.py
 +++ b/procfs/procfs.py
-@@ -346,7 +346,7 @@ class process:
-                 try:
-                     setattr(self, attr, sclass(self.pid, self.basedir))
-                 except FileNotFoundError:
--                    # The pid has disappeared, progate the error
-+                    # The pid has disappeared, propagate the error
-                     raise
-             elif attr == "cmdline":
-                 self.load_cmdline()
-@@ -602,7 +602,7 @@ class interrupts:
+@@ -15,7 +15,7 @@ import time
+ from functools import reduce
+ from procfs.utilist import bitmasklist
  
-     The information comes from the /proc/interrupts file, documented in
-     'man procfs(5)', for instance, the 'cpu' dict is an array with one entry
--    per CPU present in the sistem, each value being the number of interrupts
-+    per CPU present in the system, each value being the number of interrupts
-     that took place per CPU.
+-VERSION = "0.7.3"
++VERSION = "0.7.4"
  
-     E.g.:
+ def is_s390():
+     """ Return True if running on s390 or s390x """
+diff --git a/pyproject.toml b/pyproject.toml
+index 01c4866add76..0fd6a0294568 100644
+--- a/pyproject.toml
++++ b/pyproject.toml
+@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
+ 
+ [project]
+ name = "python-linux-procfs"
+-version = "0.7.3"
++version = "0.7.4"
+ description = "Linux /proc abstraction classes"
+ readme = "README.md"
+ license = {text = "GPL-2.0-only"}
 -- 
 2.51.0
 
