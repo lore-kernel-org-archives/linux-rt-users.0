@@ -1,118 +1,384 @@
-Received: from mail-qv1-f53.google.com (mail-qv1-f53.google.com [209.85.219.53])
+Received: from mail-qv1-f48.google.com (mail-qv1-f48.google.com [209.85.219.48])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 0C4CF1E511
-	for <linux-rt-users@vger.kernel.org>; Thu,  9 Oct 2025 20:27:45 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.219.53
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id BA16926F2B8
+	for <linux-rt-users@vger.kernel.org>; Thu,  9 Oct 2025 20:27:47 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.219.48
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1760041667; cv=none; b=l9lZ6fnJroTdn34KDqiyvrOIYaa6ZbGh9HSgs6T0EQao9rQCZNNJs4OtyonIty/LLAxG9rSVwnfWDpBg1HpX8qCLIhm0/yi5oxgRbVZpPCE2r5pwuJ2R2vahFvGA90TsNKRaX5ENPYJKoWzFSQBUcVUfo61Ft9tQYcN9PxKDOjY=
+	t=1760041669; cv=none; b=t25EPqMPc6t8Bt0K4t/T8YypPoBnwTAO+NVzw7W41sXnHMZ7BBwPWwX1DKtr45voZbTJSLnnr49R+Wrb1CLWahDcpbAqH9Lil2inlMl5l/tsqzzQx0syspvEC0dakxchrwWyIy04y/KM0aS7ZaGSQllQj5L9euv9B8B12TwRoKk=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1760041667; c=relaxed/simple;
-	bh=Y4R+QZx9B1Vk4jIAxOYIi+UZmzBRDVrhlBXX9ezi2gc=;
-	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=eRezA/XiTullIWcUcAi1CQscod2MAeAcQi6t7/DV/Y5CEmH9mtP9k2bxgWif4frXQHrcsNY0jtoUaQ1TNwLh6JXbme4eGCTlhhzT+VDwhXfyFw8g4pKn+quLIc99vb2+VGHYJwyQu2ZwbQlTH+Rng2Fdoe27rB7kcbIeAIEsKYA=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=fail (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=k5SJIcjY; arc=none smtp.client-ip=209.85.219.53
+	s=arc-20240116; t=1760041669; c=relaxed/simple;
+	bh=4qLZp9JXRBP0fLkYpSVOTLZOL+DxjDSup6EN7vVqxw4=;
+	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
+	 MIME-Version:Content-Type; b=GERroeh/F+plUYHPBhDwCdAlfGvhEaGBPTE0jtk0ehyGmENbj/3D3eXtpOPV+S15mJ8PP/7042PMzY+rYvJI2CajWRHDPzw4qpx4knwtmzw/rpNR9AFhEwdl/ebd5pt59ZquGQ2olZBnElLyDpl/NG6yG3JSVLhOtVUI7kKMYAk=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=fail (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=ntcLXEej; arc=none smtp.client-ip=209.85.219.48
 Authentication-Results: smtp.subspace.kernel.org; dmarc=fail (p=quarantine dis=none) header.from=redhat.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="k5SJIcjY"
-Received: by mail-qv1-f53.google.com with SMTP id 6a1803df08f44-796fe71deecso13114156d6.1
-        for <linux-rt-users@vger.kernel.org>; Thu, 09 Oct 2025 13:27:45 -0700 (PDT)
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="ntcLXEej"
+Received: by mail-qv1-f48.google.com with SMTP id 6a1803df08f44-79599d65f75so12937126d6.2
+        for <linux-rt-users@vger.kernel.org>; Thu, 09 Oct 2025 13:27:47 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1760041664; x=1760646464; darn=vger.kernel.org;
-        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
-         :to:from:sender:from:to:cc:subject:date:message-id:reply-to;
-        bh=ZdvsIZluu+eB6Xf36RTbl3CvStphzfEwlPJ1PqDTfrw=;
-        b=k5SJIcjY2db63QoZTsGPMrqbtz7SwzuGNByF0nrrR3HqRJ6CBc0MHeeVWPFn6l/nn8
-         5LPYuFrefa7ceI0lU2tSprTD06WHrSWwNXiXFnvW1SGIr+UrwgQttMNH7+eEuFyo2zpx
-         dItaKMaWhkc3lxsiqWdDpXpzcIT1ZfB7xf/IuaZSN0wcRZD+Uz9miOzxHh63A/orPHQR
-         wMaNnsBirPOm7iBtToKwYPWGAmI+HQwHIuHst+ktENNPnAZYrSd8dM9N5QpQPhQUYk9r
-         6lmDAUhWiJuugIUNkR+b+wtuzCBNXSZgycHWWy1UW+tx/mNH+JGnCSNzLpvcyRk6A0lf
-         tE8Q==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1760041664; x=1760646464;
-        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
-         :to:from:sender:x-gm-message-state:from:to:cc:subject:date
+        d=gmail.com; s=20230601; t=1760041666; x=1760646466; darn=vger.kernel.org;
+        h=content-transfer-encoding:mime-version:references:in-reply-to
+         :message-id:date:subject:cc:to:from:sender:from:to:cc:subject:date
          :message-id:reply-to;
-        bh=ZdvsIZluu+eB6Xf36RTbl3CvStphzfEwlPJ1PqDTfrw=;
-        b=OtRbUdRkQ4U3RCHs6kfhJMcRgF/Ra4lFtjvnVj93f+STKNRmYY0EnttYol132Nh1PI
-         79Ze3VIDWwL9f5WpE81T0+u3uIAwO48a6W/UsVhWekmqgWCyoK8VY7ZZGyzYJhFDJvZO
-         DMIB3Udbc8YwHcSJpF5vLswaHA7Lt1qNlCi4i/UJUMFdN8I2gvttlve+OH1hLG+ZDBK3
-         h1rSivnrPauG9SwfrLVSoZtskAW02u+Ok1O+N/k/R2uCyCZExVaApZkJ7lhn8dVU0fzs
-         NOvE35+eN0nI4OKh7+TpXahbafTpEHQyPoYa0qdoopBvAGgqx+a120G4s7ukQsqrz5u4
-         xocw==
-X-Gm-Message-State: AOJu0Yzrho3tAdoNs4b6lOn35Z0CRFdvaLsDjiMzs0KE/fcKpzI1cqV9
-	REhRMH3J4UNVtUsYMKIPnP3yq+zra+XIAi5ZhUALpI1//7HXc8KY8EDMUT0ag84BUrw=
-X-Gm-Gg: ASbGncuHGNnTt2IHQgcjttgWpgXoMDmiPisJ+s5ZM1Xj8tenUVgMqEza8HQBcG6HeWr
-	772zSGk39BChp7B81MMCh9cZLg6KFSE227cywl+46VNpuZoT6NVpjhU0YPU37c+OHJkcEZFKG3D
-	QzhgUicYs/nO4hPWGvmUKleSe3+GeawuTxtsFaI/ndM9qf7D56ZYCMiVGlRNxxDLlxzQmb994wB
-	ga2e4jsUSl53fCyb74fLHvoZ1EwfrkLsf+8RTSph8bKEhQ7HOHssw+aGmuGXOyMG1upbwiP2lqC
-	fQaqWyhJe34UjPBKWnB9hiZsq2mc/WHN9PBBqO4bIMOnIXQQJpMOClf+qGILa2XSCpGuCVQ58qA
-	ebv+DsDegNEwtpsi6eJYpG4Zdv6uJHwF1vBJFoMrsiWM/PKQWS3vWoyu7V3rEB6t14gIIKLec3q
-	Psys8yAxrO5BsnqvcHlSUHHC8txC4tre1ILYY=
-X-Google-Smtp-Source: AGHT+IFE9s/wnE5PujzyVCRT9MSnh+GT5g3lqurp4vhpBaIq2E9zsLR1PxO+0Mul0DnVD8FxytT8oA==
-X-Received: by 2002:a05:6214:40b:b0:879:e961:670c with SMTP id 6a1803df08f44-87b21014dd9mr127548646d6.7.1760041664306;
-        Thu, 09 Oct 2025 13:27:44 -0700 (PDT)
+        bh=a0+2XyHe/4In0MTAQyhO3Gb40wa8WqcUEM1FYMvBbAY=;
+        b=ntcLXEejXoTHWmET9fO+hJKfj3/8DTerHq++YphhIkb5TV8gl4frzvFpAlqNr30+8i
+         dNNFHftVBS1FSODJ8umveT3ChdBR0hOPijEQ0PEpfX3aJaAvn62ErdFlT2tAXPplCm0R
+         IQuoj+PZnqNoJS09CK9XObkwFik45eMHebs7C/pL1LJ7Qz5FDeM3w+0Nu9p0ckQl6gYk
+         mhqK6z5Vg9ImCEfeIahJ2jwttcDB11gc9ccxm/AazN0f/LpCxdScUhqIsOlI/3fs6LbF
+         sxhXIThAEOi8Nk5UBixAbZzBzRgf8GXmFKJ0i3JytscYW3eGWUwd5w1nky3yJsHDlP1d
+         hCsA==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20230601; t=1760041666; x=1760646466;
+        h=content-transfer-encoding:mime-version:references:in-reply-to
+         :message-id:date:subject:cc:to:from:sender:x-gm-message-state:from
+         :to:cc:subject:date:message-id:reply-to;
+        bh=a0+2XyHe/4In0MTAQyhO3Gb40wa8WqcUEM1FYMvBbAY=;
+        b=fTS+qM+MqCcOt3Dtnq4CtdGuYaAIhkCORVV1mY450sU+Y8ahfqlV1SJUovaGD2cWgR
+         w5ZFWrLe6IFBi4tArA2fWNDObsipCPQPd2/+Ie4PagZdcE7+/0EqzeMkzrXRq0RYT5oH
+         /q5/cBPisnlsjbD6slJWqsjjuAtIOFN3KLVD/IIs2h9DW2yOkkmHS/G5509BBY38zgff
+         oL2Bh1s4VRnalX/uwa02OaL22V3TPF85h/z/+yiXMqsTJYtXCui4VDzMk2iIWzA6USu+
+         WqWkFHxwm0zhuUe5T9kXgxg8Du6612DQ3cXILIBLsHGNoOgyiIITty8BVvHOcdfo7PJM
+         uFew==
+X-Gm-Message-State: AOJu0YwXoTHWB2HvnLxUe9tLhNRk+F9NehTuX23J8TIHnMz3718VoDc2
+	NillLSEhYRvwxcnzuWLs6ivd0SHAaNxL/rRQ5ErFg/bVGjTpbVwjsThyQZ4iR8sYGHE=
+X-Gm-Gg: ASbGncuXo7Zi8ohVBBipEOWZTBD3/B6//mJR8b6RrfHKrRT+TElTn0qnTRQK/rfvh6E
+	mOLQAqO0tYWXtPXfSRc7lKw7sDNMmk354aZGhQ40JUqg7fGvXGmURTEPI4NEcT4cOh/dmrGSHts
+	xGcHN/S9dYuvQF43wwyXsZCPrNH8OBammo7EvMHUmNcH9HQcHwNepLMHI/EPHTwykHgknLUOl1Q
+	nl44caxd16FswTVKx1qD5zHO2rpBk2assjFzkq/qi+305OSjoQShuneewJuB71+CVfVsZGrG8yJ
+	Z9C2BaczK3XnU31boE9a5KPjz+D+Gr+XL/eDXzAFtJHZ2aJ8nQHijeBgWk+MnFQk8wWnlmbdN7c
+	w6eaOAR1Z0Hc4sBe6kXPzo1LfJt9Kgi4KhkjnwdOxZ5JbjUp6w9USEfI8x7b44+fykMun5AXXjs
+	IgXSQCOmFFeyKAGlLQZCMmr+QXmPMxXpSzoc0=
+X-Google-Smtp-Source: AGHT+IHwbSbXbu8tdhx4gGdN3Crca9goCEc2b7FQm0BddUBY99Go0eiVbGN5CyxI1xW0khn28BYSqQ==
+X-Received: by 2002:a05:6214:48f:b0:852:eccb:62c5 with SMTP id 6a1803df08f44-87b2106d81emr120033566d6.20.1760041665968;
+        Thu, 09 Oct 2025 13:27:45 -0700 (PDT)
 Received: from fionn.redhat.com (bras-base-rdwyon0604w-grc-05-70-53-55-167.dsl.bell.ca. [70.53.55.167])
-        by smtp.gmail.com with ESMTPSA id 6a1803df08f44-87bc35713ccsm2664286d6.37.2025.10.09.13.27.43
+        by smtp.gmail.com with ESMTPSA id 6a1803df08f44-87bc35713ccsm2664286d6.37.2025.10.09.13.27.44
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Thu, 09 Oct 2025 13:27:43 -0700 (PDT)
+        Thu, 09 Oct 2025 13:27:44 -0700 (PDT)
 Sender: John Kacur <jkacur@gmail.com>
 From: John Kacur <jkacur@redhat.com>
 To: linux-rt-users <linux-rt-users@vger.kernel.org>
 Cc: Clark Williams <williams@redhat.com>,
-	John Kacur <jkacur@redhat.com>
-Subject: [PATCH 1/4] python-linux-procfs: Remove import of range from six.moves
-Date: Thu,  9 Oct 2025 16:27:29 -0400
-Message-ID: <20251009202732.57880-1-jkacur@redhat.com>
+	John Kacur <jkacur@redhat.com>,
+	Claude <noreply@anthropic.com>
+Subject: [PATCH 2/4] python-linux-procfs: Modernize packaging and update authorship
+Date: Thu,  9 Oct 2025 16:27:30 -0400
+Message-ID: <20251009202732.57880-2-jkacur@redhat.com>
 X-Mailer: git-send-email 2.51.0
+In-Reply-To: <20251009202732.57880-1-jkacur@redhat.com>
+References: <20251009202732.57880-1-jkacur@redhat.com>
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
 List-Subscribe: <mailto:linux-rt-users+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit
 
-We're fully python3, remove import of range and just use the python3
-built-in
+- Remove six dependency from pflags (Python 3.10+ only)
+- Add John Kacur as author in pyproject.toml and source files
+- Update copyright statements to 2025
+- Replace setup.py with pyproject.toml for modern packaging
+- Add CLAUDE.md documentation for AI assistants
 
+🤖 Generated with [Claude Code](https://claude.com/claude-code)
+
+Co-Authored-By: Claude <noreply@anthropic.com>
 Signed-off-by: John Kacur <jkacur@redhat.com>
 ---
- procfs/procfs.py  | 2 --
- procfs/utilist.py | 3 ---
- 2 files changed, 5 deletions(-)
+ CLAUDE.md           | 102 ++++++++++++++++++++++++++++++++++++++++++++
+ MANIFEST            |   2 -
+ bitmasklist_test.py |   3 ++
+ pflags              |  15 ++-----
+ procfs/procfs.py    |   4 +-
+ procfs/utilist.py   |   2 +-
+ pyproject.toml      |  39 +++++++++++++++++
+ setup.py            |  33 --------------
+ 8 files changed, 152 insertions(+), 48 deletions(-)
+ create mode 100644 CLAUDE.md
+ create mode 100644 pyproject.toml
+ delete mode 100755 setup.py
 
+diff --git a/CLAUDE.md b/CLAUDE.md
+new file mode 100644
+index 000000000000..7cfcc5c0a03c
+--- /dev/null
++++ b/CLAUDE.md
+@@ -0,0 +1,102 @@
++# CLAUDE.md
++
++This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
++
++## Project Overview
++
++python-linux-procfs is a Python library that provides abstractions to extract information from the Linux kernel /proc filesystem. It's a GPL-2.0-only licensed library maintained by Red Hat developers, primarily for Linux system programming and process introspection.
++
++## Build and Test Commands
++
++### Installation
++```bash
++# Install the package locally for development
++python3 -m pip install -e .
++
++# Or using setup.py directly
++python3 setup.py install
++```
++
++### Testing
++```bash
++# Run the bitmasklist unit tests
++python3 bitmasklist_test.py
++```
++
++### Clean
++```bash
++# Remove temporary files and tags
++make clean
++
++# Remove only Python cache files
++make pyclean
++```
++
++### Tags Generation
++```bash
++# Generate ctags for code navigation
++make tags
++```
++
++## Architecture
++
++### Core Module Structure
++
++The library consists of a single `procfs` package with two main modules:
++
++**procfs/procfs.py** - Main module containing all /proc abstraction classes:
++- `pidstat` - Parses /proc/PID/stat files for process statistics
++- `pidstatus` - Parses /proc/PID/status files for additional process info
++- `process` - Combines stat and status data, lazy-loads cmdline, threads, cgroups, environ
++- `pidstats` - Collection of all processes in the system with find/search methods
++- `interrupts` - Parses /proc/interrupts for IRQ information
++- `cmdline` - Parses /proc/cmdline for kernel boot parameters
++- `cpuinfo` - Parses /proc/cpuinfo for CPU information and topology
++- `cpustat`/`cpusstats` - Parses /proc/stat for CPU usage statistics
++- `smaps`/`smaps_lib` - Parses /proc/PID/smaps for memory mapping information
++
++**procfs/utilist.py** - Utility functions for bitmask conversions:
++- `bitmasklist()` - Converts hex CPU affinity masks to lists of CPU numbers
++- `hexbitmask()` - Converts CPU number lists to hex bitmask format
++
++### Design Patterns
++
++1. **Lazy Loading**: The `process` class implements lazy loading via `__getitem__` - attributes like "stat", "status", "cmdline", "threads", "cgroups", and "environ" are only loaded when accessed.
++
++2. **Dictionary-like Interfaces**: Most classes implement dict-like access patterns (`__getitem__`, `keys()`, `values()`, `items()`, `__contains__`) for intuitive data access.
++
++3. **Ephemeral Process Handling**: Code throughout handles processes disappearing mid-query by catching `FileNotFoundError` and `IOError` exceptions.
++
++4. **basedir Parameter**: Most classes accept a `basedir` parameter (default "/proc") to support testing with mock /proc filesystems or accessing /proc from containers.
++
++### Key Implementation Details
++
++- **Process flags**: `pidstat` class defines PF_* constants matching kernel's include/linux/sched.h. Some flags have duplicate values representing kernel API changes (e.g., PF_THREAD_BOUND and PF_NO_SETAFFINITY both = 0x04000000).
++
++- **Thread handling**: Threads are loaded from /proc/PID/task/ with the thread leader (matching the PID) removed from the collection.
++
++- **CPU topology**: `cpuinfo` class calculates `nr_sockets` and `nr_cores` based on "physical id", "siblings", and "cpu cores" fields. Has special handling for s390/s390x architectures.
++
++- **Interrupt affinity**: The `interrupts` class reads both /proc/interrupts and /proc/irq/*/smp_affinity to provide complete IRQ information.
++
++## Command Line Tools
++
++**pflags** - Utility to display process flags for running processes:
++- Can filter by PID, process name, or glob patterns
++- Shows kernel process flags (PF_*) in human-readable format
++- Handles superseded flags (removes old flag names when new ones exist)
++- Note: Currently imports from `six.moves` which should be removed as Python 2 support is no longer needed (requires-python = ">=3.10")
++
++## Python Version Requirements
++
++- Minimum Python version: 3.10
++- The codebase has been migrated away from Python 2/3 compatibility
++- Still has one remaining `six` import in `pflags` that should be removed
++
++## Package Configuration
++
++The project uses modern Python packaging with both:
++- `pyproject.toml` - Modern build configuration (preferred)
++- `setup.py` - Legacy setup script for backwards compatibility
++
++Both files must be kept in sync for version numbers and metadata.
+diff --git a/MANIFEST b/MANIFEST
+index ebbd4998d03a..20742ff4ca73 100644
+--- a/MANIFEST
++++ b/MANIFEST
+@@ -5,5 +5,3 @@ pflags-cmd.py
+ procfs/__init__.py
+ procfs/procfs.py
+ procfs/utilist.py
+-rpm/SPECS/python-linux-procfs.spec
+-setup.py
+diff --git a/bitmasklist_test.py b/bitmasklist_test.py
+index af26884c14b8..30197da5304f 100755
+--- a/bitmasklist_test.py
++++ b/bitmasklist_test.py
+@@ -1,5 +1,8 @@
+ #!/usr/bin/python3
+ # SPDX-License-Identifier: GPL-2.0-only
++#
++# Copyright (C) 2025 Red Hat, Inc.
++# John Kacur <jkacur@redhat.com>
+ 
+ """ Module to test bitmasklist functionality """
+ 
+diff --git a/pflags b/pflags
+index 46d396c87c2b..f5e107785166 100755
+--- a/pflags
++++ b/pflags
+@@ -1,24 +1,17 @@
+ #! /usr/bin/python3
+ # -*- python -*-
+ # -*- coding: utf-8 -*-
++# SPDX-License-Identifier: GPL-2.0-only
++#
+ #   print process flags
+-#   Copyright (C) 2015 Red Hat Inc.
++#   Copyright (C) 2015-2025 Red Hat, Inc.
+ #   Arnaldo Carvalho de Melo <acme@redhat.com>
+-#
+-#   This application is free software; you can redistribute it and/or
+-#   modify it under the terms of the GNU General Public License
+-#   as published by the Free Software Foundation; version 2.
+-#
+-#   This application is distributed in the hope that it will be useful,
+-#   but WITHOUT ANY WARRANTY; without even the implied warranty of
+-#   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+-#   General Public License for more details.
++#   John Kacur <jkacur@redhat.com>
+ 
+ 
+ import procfs, re, fnmatch, sys
+ import argparse
+ from functools import reduce
+-from six.moves import map
+ 
+ ps = None
+ 
 diff --git a/procfs/procfs.py b/procfs/procfs.py
-index 7cc7371b53e2..e3f9f44614ef 100755
+index e3f9f44614ef..7e9459907d5f 100755
 --- a/procfs/procfs.py
 +++ b/procfs/procfs.py
-@@ -11,12 +11,10 @@ import platform
- import re
- import time
- from functools import reduce
--from six.moves import range
- from procfs.utilist import bitmasklist
- 
- VERSION = "0.7.3"
- 
--
- def is_s390():
-     """ Return True if running on s390 or s390x """
-     machine = platform.machine()
-diff --git a/procfs/utilist.py b/procfs/utilist.py
-index e6314f0fd89c..e36c739862a4 100755
---- a/procfs/utilist.py
-+++ b/procfs/utilist.py
-@@ -6,9 +6,6 @@
- # Copyright (C) 2007 Red Hat, Inc.
+@@ -3,7 +3,9 @@
+ # -*- coding: utf-8 -*-
+ # SPDX-License-Identifier: GPL-2.0-only
+ #
+-# Copyright (C) 2007-2015 Red Hat, Inc.
++# Copyright (C) 2007-2025 Red Hat, Inc.
++# Arnaldo Carvalho de Melo <acme@redhat.com>
++# John Kacur <jkacur@redhat.com>
  #
  
--from six.moves import range
--
--
+ import os
+diff --git a/procfs/utilist.py b/procfs/utilist.py
+index e36c739862a4..831ef85d51f1 100755
+--- a/procfs/utilist.py
++++ b/procfs/utilist.py
+@@ -3,7 +3,7 @@
+ # -*- coding: utf-8 -*-
+ # SPDX-License-Identifier: GPL-2.0-only
+ #
+-# Copyright (C) 2007 Red Hat, Inc.
++# Copyright (C) 2007-2025 Red Hat, Inc.
+ #
+ 
  def hexbitmask(l, nr_entries):
-     hexbitmask = []
-     bit = 0
+diff --git a/pyproject.toml b/pyproject.toml
+new file mode 100644
+index 000000000000..01c4866add76
+--- /dev/null
++++ b/pyproject.toml
+@@ -0,0 +1,39 @@
++[build-system]
++requires = ["setuptools>=61.0"]
++build-backend = "setuptools.build_meta"
++
++[project]
++name = "python-linux-procfs"
++version = "0.7.3"
++description = "Linux /proc abstraction classes"
++readme = "README.md"
++license = {text = "GPL-2.0-only"}
++authors = [
++    {name = "Arnaldo Carvalho de Melo", email = "acme@redhat.com"},
++    {name = "John Kacur", email = "jkacur@redhat.com"}
++]
++maintainers = [
++    {name = "John Kacur", email = "jkacur@redhat.com"}
++]
++requires-python = ">=3.10"
++dependencies = []
++classifiers = [
++    "Development Status :: 4 - Beta",
++    "Intended Audience :: Developers",
++    "License :: OSI Approved :: GNU General Public License v2 (GPLv2)",
++    "Operating System :: POSIX :: Linux",
++    "Programming Language :: Python :: 3",
++    "Programming Language :: Python :: 3.10",
++    "Programming Language :: Python :: 3.11",
++    "Programming Language :: Python :: 3.12",
++    "Topic :: System :: Operating System Kernels :: Linux",
++]
++
++[project.urls]
++Homepage = "https://www.kernel.org/pub/software/libs/python/python-linux-procfs"
++
++[tool.setuptools.packages.find]
++include = ["procfs*"]
++
++[tool.setuptools]
++script-files = ["pflags"]
+diff --git a/setup.py b/setup.py
+deleted file mode 100755
+index 144e07e69e14..000000000000
+--- a/setup.py
++++ /dev/null
+@@ -1,33 +0,0 @@
+-#!/usr/bin/python3
+-# SPDX-License-Identifier: GPL-2.0-only
+-
+-import os
+-from os.path import isfile, relpath
+-import sysconfig
+-from setuptools import setup
+-
+-if isfile("MANIFEST"):
+-    os.unlink("MANIFEST")
+-
+-SCHEME = 'rpm_prefix'
+-if not SCHEME in sysconfig.get_scheme_names():
+-    SCHEME = 'posix_prefix'
+-
+-# Get PYTHONLIB with no prefix so --prefix installs work.
+-PYTHONLIB = relpath(sysconfig.get_path('platlib', SCHEME), '/usr')
+-
+-setup(name="python-linux-procfs",
+-    version = "0.7.3",
+-    description = "Linux /proc abstraction classes",
+-    author = "Arnaldo Carvalho de Melo",
+-    author_email = "acme@redhat.com",
+-    url = "http://userweb.kernel.org/python-linux-procfs",
+-    license = "GPLv2",
+-    long_description =
+-"""\
+-Abstractions to extract information from the Linux kernel /proc files.
+-""",
+-    packages = ["procfs"],
+-    scripts = ['pflags'],
+-    install_requires = ['six'],
+-)
 -- 
 2.51.0
 
