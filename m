@@ -1,47 +1,43 @@
 Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 4505B23C8AE
-	for <linux-rt-users@vger.kernel.org>; Fri, 17 Oct 2025 02:25:04 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 0E67223A564
+	for <linux-rt-users@vger.kernel.org>; Fri, 17 Oct 2025 02:42:15 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1760667904; cv=none; b=Q4IxscuHq1HeYR3siG2ofPPC5SGhbF1UmiMWd/Fesb0wnBGf4p014p42mm9C4exhHe9USPKQJGfXFDx2cilVA/mdxmctOusaLlCtYlNca9pYjcgG7jtD6MILDUIsxgCqo6Tlbfy98arESgWe4f3SgQsN82KAKR/YZRfURO9NJ30=
+	t=1760668936; cv=none; b=ipWYHkPoToOVIk1yG5lpcg5oSOpN/Q8x5uV3TC/+YN3bD2JwA7p6ezytdA06IWgPvwFa+UGbd55TbVKM0Tb6Q6+/J1st1J17GWNAixwPiaEAD1+hfVLmCjJhCgtPOIsRtqfNS9M4tgLAUEpbKISM1a8LLS16Thoeu8acUeLHI60=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1760667904; c=relaxed/simple;
-	bh=5VIeRBMB3Hva4TW2XSe4Xfje1SzuhiEncV3VzzNSTuc=;
-	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version:Content-Type:Content-type; b=ZR1r5PpkBfso6FDb0kARkTfYpKdWQpIvsDfw5Go4qY+7DZlepIQOfDA3EdDJ+22+BTaCE3zDH0q1FBoWLPFHrOt2Z7aebohDABwsoUvd+qie9ddoOGkREa5fSPvastl34q674f+CqibKTfESfIsGpP8/MZKJ+goZQwzK53Sw6LE=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=HkT5Jrup; arc=none smtp.client-ip=10.30.226.201
+	s=arc-20240116; t=1760668936; c=relaxed/simple;
+	bh=n6pxz8fBNxIFHlPsBr/r8Bgk6+YbBOK6FRx8GmeCHJE=;
+	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version:Content-Type:
+	 Content-type; b=ch/1/1b6y6X2tnrQAc545cPbKqXxLk8ThIOnD34fV0/IBF0dS2fBN1KktrJEM+J12q8xgLapr1hBW6oUsF3IxDpK5yVMXEuPffrMlvUtvtVoK1z3w3zAy/1Nw6QgUd1q01t1nlnPaEECnBVeC067ikcYSFEv3XCYKPOzq0irKSo=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=j1q4dDkN; arc=none smtp.client-ip=10.30.226.201
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="HkT5Jrup"
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id F25BDC4CEF1;
-	Fri, 17 Oct 2025 02:25:03 +0000 (UTC)
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="j1q4dDkN"
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id 705EDC4CEF1;
+	Fri, 17 Oct 2025 02:42:15 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-	s=k20201202; t=1760667904;
-	bh=5VIeRBMB3Hva4TW2XSe4Xfje1SzuhiEncV3VzzNSTuc=;
-	h=From:To:Cc:Subject:Date:In-Reply-To:References:From;
-	b=HkT5JrupViapPo5pueZ+lbzosREAFs/U9KdrgIPZNJdabH5vHF7skCRgHEHW4wDLt
-	 LJUIZ8w6Gs7sphDSbgkZ0BHwTUP2UjY4MRbvAWEU3hXacK+Q9xQgEa13urtRnObJZW
-	 Lu67Q4oV6lUwUlPL1UGo09u9EEFzAfXMixSZeYdqJtwF1P80rWAOv0y3XnNB/ZhSfz
-	 Z1tw6GiRAqmx7d7TkaJdOUxYAxHN+ao0740hE/Wl91MBCPyny/HrVoOe35N6sZuBDx
-	 xEijbrTDuR4SkCBp+CK5CKF0aQPtuViIeH99vvUiVnLGNT00dmnjm8bZh+uPl7ce8I
-	 P+HX/Fvr1cG5A==
+	s=k20201202; t=1760668935;
+	bh=n6pxz8fBNxIFHlPsBr/r8Bgk6+YbBOK6FRx8GmeCHJE=;
+	h=From:To:Cc:Subject:Date:From;
+	b=j1q4dDkNfpAR6bxde3I/cXoK7X5BuyCHLVpjnACWaip5CcE2LEiePhwwFv8i8dkFT
+	 4L+48hHiX69t4qRRn0KDNPH+D8YYE96sUPnhNBuhlrIiK6qJoBNizA4y10Y6NHC5+w
+	 lJMmYrtJeMShrxOZ4MMvjehP8a7RQFzDzT/2wWlv3bTekKR3vh3YR2vsnxEnV1M5iV
+	 jwBWG3qwtR4CGApaswXk4EkbNI2j9HH4GDcu9zJnMYe4oQJmuG99uoKNAQhOXAQ/bQ
+	 Hj2j0t55J+YE+hQgDj5BXqJ7KQQ7ZD55/txU2C8IbfEP1yfBL0qugNmUolsGMkykZv
+	 lKXbnyE+F5u+g==
 From: Clark Williams <clrkwllms@kernel.org>
 To: linux-rt-users@vger.kernel.org
 Cc: Clark Williams <williams@redhat.com>,
-	Claude <noreply@anthropic.com>,
-	Clark Williams <clrkwllms@kernel.org>,
 	wander@redhat.com,
 	debarbos@redhat.com,
 	marco.chiappero@suse.com,
 	chris.friesen@windriver.com,
 	luochunsheng@ustc.edu
-Subject: [PATCH 12/12] Fix segfault in adaptive/aggressive modes
-Date: Thu, 16 Oct 2025 21:24:44 -0500
-Message-ID: <20251017022444.118802-12-clrkwllms@kernel.org>
+Subject: [PATCH 00/58] stalld: Comprehensive test framework with 21 functional tests
+Date: Thu, 16 Oct 2025 21:42:13 -0500
+Message-ID: <20251017024214.120057-1-clrkwllms@kernel.org>
 X-Mailer: git-send-email 2.51.0
-In-Reply-To: <20251017022444.118802-1-clrkwllms@kernel.org>
-References: <20251017022444.118802-1-clrkwllms@kernel.org>
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
@@ -54,53 +50,359 @@ Content-Transfer-Encoding: 8bit
 
 From: Clark Williams <williams@redhat.com>
 
-The merge_taks_info() function was unconditionally calling
-update_cpu_starving_vector() at line 389, but cpu_starving_vector
-is only allocated in single_threaded_main() (line 1007). This caused
-segmentation faults when running in adaptive or aggressive threading
-modes.
+Hello all,
 
-The fix guards both update_cpu_starving_vector() calls with
-config_single_threaded checks, since this vector is only used
-in single-threaded/power mode.
+I have a 58 commit series that implements a test framework for stalld. I spent
+4 or 5 days working with Claude Code and got a somewhat decent framework in place.
+It's by no means complete and I'm sure has tons of corner cases in it, but
+I wanted to make it available to people that had expressed interest in
+contributing to stalld.
 
-Root cause: cpu_starving_vector is a global array used exclusively
-by single-threaded mode to track one starving task per CPU. The
-merge_taks_info() function is called by both backends during parsing,
-regardless of threading mode. In adaptive/aggressive modes, the
-vector remains NULL, causing crashes when accessed.
+I decided to just send the cover letter to start with and point everyone at the
+github repo and branch, rather than spamming 58 patches to linux-rt-users. If
+anyone objects to accessing github/gitlab/kernel.org git trees then I'll go
+ahead and send the patches.
 
-Crash backtrace:
-  conservative_main() → get_cpu_and_parse() → sched_debug_parse() →
-  merge_taks_info() → update_cpu_starving_vector() → SEGFAULT at
-  line 362: if (cpu_info->pid)
+Github info:
 
-This fix allows test_starvation_threshold.sh to pass on sched_debug
-backend with adaptive mode (-M flag).
+       repo: https://github.com/clrkwllms/stalld
+       branch:  tests
 
-🤖 Generated with [Claude Code](https://claude.com/claude-code)
+Below is the cover letter helpfully generated by Claude summarizing the commits.
 
-Co-Authored-By: Claude <noreply@anthropic.com>
-Signed-off-by: Clark Williams <clrkwllms@kernel.org>
-Signed-off-by: Clark Williams <williams@redhat.com>
----
- src/stalld.c | 3 ++-
- 1 file changed, 2 insertions(+), 1 deletion(-)
+I suspect I'll be adding this to the main branch after we've reviewed the 12 patch
+series I just sent to the list, so if you comments/objects then send them now :)
 
-diff --git a/src/stalld.c b/src/stalld.c
-index 305618e577fc..130a7d4eaf9d 100644
---- a/src/stalld.c
-+++ b/src/stalld.c
-@@ -386,7 +386,8 @@ void merge_taks_info(int cpu, struct task_info *old_tasks, int nr_old, struct ta
- 	int i;
- 	int j;
- 
--	update_cpu_starving_vector(cpu, &notask);
-+	if (config_single_threaded)
-+		update_cpu_starving_vector(cpu, &notask);
- 
- 	for (i = 0; i < nr_old; i++) {
- 		old_task = &old_tasks[i];
+Clark
+---------------------------------------------------------------------------------
+
+This series introduces a comprehensive test framework for stalld with
+extensive test coverage, matrix testing infrastructure, and systematic
+hardening of the test suite across multiple kernel configurations and
+threading modes.
+
+The work is organized into four major development phases that took place
+over October 2025, resulting in 21 functional tests, robust test infrastructure,
+and documentation for AI-assisted development workflows.
+
+## Test Infrastructure Foundation (Patches 1-7)
+
+The initial phase establishes the complete testing infrastructure:
+
+  - Patch 1 adds CLAUDE.md documentation and AI agent definitions for
+    collaborative development workflow with specialized agents for code
+    review, kernel development, testing, and project management.
+
+  - Patch 2 implements the core test framework with run_tests.sh test
+    orchestrator (311 lines), test_helpers.sh library (355 lines),
+    starvation_gen.c test workload generator (266 lines), and 3 initial
+    functional tests. Also fixes 7 critical bugs in the original test01.c
+    starvation test (buffer overflows, resource leaks, error handling).
+
+  - Patches 3-4 add 8 command-line option tests (Phase 2) covering pidfile,
+    affinity, CPU selection, force-fifo mode, and logging. Includes project
+    rules and agent usage guidelines.
+
+  - Patches 5-7 add Phase 3 core logic tests: starvation detection (5 tests),
+    runqueue parsing (6 tests), DEADLINE boosting (7 tests), FIFO boosting
+    (5 tests), boost period/duration/runtime (3 tests each), boost restoration
+    (7 tests), task merging (5 tests), and idle detection (4 tests). Total: 45
+    individual test cases across 11 test scripts.
+
+## System State Management (Patches 8-13)
+
+The second phase adds robust system state handling:
+
+  - Patches 8-9 implement RT throttling save/restore helpers and automatic
+    state management to prevent test-induced system hangs.
+
+  - Patches 10-11 add DL-server management with save/disable/restore support
+    for reliable testing on kernels with DEADLINE server enabled.
+
+  - Patches 12-13 update documentation with DL-server management, state
+    handling improvements, and Phase 3 completion status.
+
+## Legacy Test Integration and Backend Support (Patches 14-27)
+
+The third phase adds multi-backend testing and systematic bug fixing:
+
+  - Patches 14-16 integrate legacy test01 as a wrapper script with backend
+    selection support and move it to tests/legacy/ directory.
+
+  - Patch 17 removes accidentally committed test binary.
+
+  - Patches 18-19 fix EXIT trap to preserve exit codes and improve
+    test_log_only.sh timing/reliability.
+
+  - Patches 20-21 add backend selection support (sched_debug/queue_track)
+    to all individual tests and move documentation to .claude/ directory.
+
+  - Patches 22-27 fix starvation_gen RT starvation creation, backend
+    selection in test_starvation_detection.sh, timing issues, idle detection
+    problems, EPERM cleanup errors, and add comprehensive backend/procfs
+    documentation.
+
+## Test Suite Hardening (Patches 28-43)
+
+The fourth phase systematically fixes test reliability issues:
+
+  - Patches 28-34 rewrite old-style tests using modern framework: infinite
+    hang fixes in test_starvation_detection.sh, test_cpu_selection.sh
+    modernization, test_boost_period.sh hanging fixes, PID tracking issues,
+    test_starvation_threshold.sh undefined variables, and log file collision
+    fixes.
+
+  - Patches 35-36 document 2025-10-09 hardening session progress and
+    old-style test issues in TODO.md and context snapshots.
+
+  - Patches 37-38 complete Phase 2 test rewrites using modern framework
+    and fix EPERM cleanup errors by replacing wait with polling.
+
+  - Patches 39-43 fix Phase 1 test issues (affinity, backend_selection,
+    fifo_boosting), add -N flag to disable idle detection for controlled
+    testing, fix argument ordering, and resolve hanging issues in
+    test_boost_duration.sh and test_boost_runtime.sh.
+
+## Final Test Fixes and Enhancements (Patches 44-58)
+
+The final phase completes test hardening and adds advanced features:
+
+  - Patches 44-48 fix output redirection in test_affinity.sh, pidfile
+    handling, boost_period.sh helper integration, boost_restoration.sh
+    stability issues, and document the mass fix session with 7 test repairs
+    and 4 critical discoveries.
+
+  - Patches 49-50 fix grep pattern in test_starvation_threshold.sh for
+    actual log format and update context snapshot for queue_track backend
+    test fixes.
+
+  - Patches 51-53 implement matrix testing infrastructure for backends
+    (sched_debug, queue_track) and threading modes (power, adaptive,
+    aggressive) with --quick, --backend-only, and --full-matrix flags.
+    Includes performance options and per-backend/per-mode statistics.
+
+  - Patch 54 adds timeout protection to test01_wrapper.sh using SIGINT
+    (since test01 blocks all signals except SIGINT).
+
+  - Patches 55-56 document queue_track backend limitation with SCHED_FIFO
+    task detection (BPF backend can only track TASK_RUNNING state) and
+    update documentation with segfault fix details.
+
+  - Patch 58 adds comprehensive FIFO-on-FIFO priority starvation test
+    (5 test cases) with configurable blockee priority in starvation_gen
+    to test scenarios like FIFO:10 starving FIFO:5.
+
+## Summary Statistics
+
+Test Coverage:
+  - 21 functional tests with 100+ individual test cases
+  - Backend matrix: sched_debug + queue_track (2× runtime)
+  - Full matrix: 2 backends × 3 threading modes (6× runtime)
+  - Quick mode: sched_debug + adaptive (1× runtime)
+
+Code Additions:
+  - tests/run_tests.sh: ~785 lines (test orchestrator with matrix support)
+  - tests/helpers/test_helpers.sh: ~725 lines (comprehensive helper library)
+  - tests/helpers/starvation_gen.c: ~290 lines (configurable workload generator)
+  - 21 functional test scripts: ~6,500 lines total
+  - Documentation: ~2,000 lines (README, TODO, BACKEND_USAGE, CLAUDE.md)
+  - AI agent definitions: ~4,500 lines (12 specialized agents)
+
+Files Changed: 48 files, +14,588 insertions, -46 deletions
+
+## Testing
+
+This test suite has been validated across:
+  - Multiple kernel versions (3.x legacy through 6.12+)
+  - Both backends (sched_debug, queue_track with documented limitations)
+  - All threading modes (power/single-threaded, adaptive, aggressive)
+  - Various system configurations (DL-server enabled/disabled, RT throttling)
+  - Matrix testing modes (quick, backend-only, full-matrix)
+
+Known Issues:
+  - queue_track backend cannot reliably detect SCHED_FIFO tasks on runqueue
+    (documented limitation in BPF task_running() implementation)
+  - Some tests require sched_debug backend for reliable SCHED_FIFO detection
+  - Power mode (single-threaded) automatically skips FIFO tests
+
+The test suite provides a solid foundation for regression testing, continuous
+integration, and validation of stalld behavior across diverse configurations.
+
+Clark Williams (58):
+  docs: add CLAUDE.md, .claude agents, and update .gitignore
+  tests: Add comprehensive test suite with infrastructure and functional
+    tests
+  tests: Add Phase 2 command-line option tests (8 new tests)
+  docs: Add project rules and agent usage guidelines
+  docs: Update context snapshot with Phase 2 completion
+  tests: Add Phase 3.1 core logic tests (starvation detection and
+    parsing)
+  tests: Add Phase 3.2 boosting mechanism tests (DEADLINE, FIFO,
+    restoration)
+  tests: Add Phase 3.3 task merging and idle detection tests - Phase 3
+    COMPLETE
+  tests: Add RT throttling save/restore helpers
+  tests: Automatically save and restore RT throttling state
+  tests: Fix test_task_merging empty variable errors and add DL-server
+    check
+  tests: Add DL-server save/disable/restore support
+  docs: Update TODO.md with DL-server management and recent improvements
+  docs: Update context snapshot with Phase 3 completion and state
+    management
+  tests: Add legacy test integration and backend selection support
+  test01: add ability to specify backend
+  tests: remove binary accidentally committed
+  tests: Fix cleanup EXIT trap to preserve test exit codes
+  tests: Fix test_log_only.sh timing and starvation reliability
+  tests: Add backend selection support to individual tests
+  saved claude context snapshot and moved CLAUDE.md to .claude dir
+  .claude: Add context-snapshot.json and update CLAUDE.md
+  tests: Fix starvation_gen to create actual RT starvation
+  tests: Fix test_starvation_detection.sh to respect backend selection
+  tests: Fix test_starvation_detection.sh timing and idle detection
+    issues
+  tests: Fix EPERM errors in cleanup by improving process termination
+    handling
+  docs: Update CLAUDE.md with backend selection and debugfs/procfs
+    clarification
+  tests: Fix infinite hang in test_starvation_detection.sh Test 5
+  tests: Rewrite test_cpu_selection.sh to use modern test framework
+  tests: Rewrite test_boost_period.sh to fix hanging issues
+  tests: Fix PID tracking and backgrounding issues in test suite
+  tests: Rewrite test_starvation_threshold.sh to fix undefined variables
+  tests: Fix test_starvation_threshold.sh log file collision issue
+  tests: Update TODO.md with 2025-10-09 progress and old-style test
+    issues
+  tests: Update context snapshot for 2025-10-09 test framework hardening
+    session
+  tests: Rewrite all remaining old-style Phase 2 tests using modern
+    framework
+  tests: Fix EPERM errors in test cleanup by replacing wait with polling
+  tests: Fix Phase 1 test issues (affinity, backend_selection,
+    fifo_boosting)
+  tests: Add -N flag to disable idle detection in starvation/FIFO tests
+  tests: Fix argument ordering in backend selection tests
+  tests: Fix hanging issues in test_boost_duration.sh
+  tests: Fix test_boost_runtime.sh hanging and improve reliability
+  save LLM context
+  add helpers for git-scm-master AI agent
+  tests: Fix output redirection issues in test_affinity.sh
+  test: Fix test_pidfile.sh output handling and CLI options
+  tests: Fix test_boost_period.sh helper integration and reliability
+  test: Fix test_boost_restoration.sh for stability and standard
+    infrastructure
+  docs: Document mass test suite fixes session with 7 tests and 4
+    critical discoveries
+  tests: Fix grep pattern in test_starvation_threshold.sh for actual log
+    format
+  docs: Update context snapshot for queue_track backend test fixes
+  tests: Implement matrix testing for backends and threading modes
+  docs: Update CLAUDE.md with correct threading mode flags and matrix
+    testing
+  context: Document matrix testing infrastructure implementation
+  tests: Add timeout protection to test01_wrapper.sh
+  Document queue_track backend limitation in
+    test_starvation_threshold.sh
+  docs: Update documentation with segfault fix and queue_track
+    limitation
+  tests: Add FIFO-on-FIFO priority starvation test
+
+ .claude/CLAUDE.md                             |  585 +++++++++
+ .claude/agents/agent-prompt-engineer.md       |  135 ++
+ .claude/agents/c-expert.md                    |   53 +
+ .claude/agents/code-reviewer.md               |  104 ++
+ .claude/agents/get-agent-hash                 |   99 ++
+ .claude/agents/git-scm-master.md              | 1154 +++++++++++++++++
+ .claude/agents/kernel-hacker.md               |  231 ++++
+ .claude/agents/plan-validator.md              |  130 ++
+ .claude/agents/project-historian.md           |  285 ++++
+ .claude/agents/project-librarian.md           |  604 +++++++++
+ .claude/agents/project-manager.md             |  388 ++++++
+ .claude/agents/project-scope-guardian.md      |  326 +++++
+ .claude/agents/python-expert.md               |   57 +
+ .claude/agents/test-specialist.md             |  656 ++++++++++
+ .claude/agents/update-agent-hashes            |   96 ++
+ .claude/context-snapshot.json                 |  248 ++++
+ .claude/rules                                 |   42 +
+ .gitignore                                    |    5 +
+ tests/BACKEND_USAGE.md                        |  269 ++++
+ tests/Makefile                                |   56 +-
+ tests/README.md                               |  270 ++++
+ tests/TODO.md                                 |  682 ++++++++++
+ tests/functional/test_affinity.sh             |  328 +++++
+ tests/functional/test_backend_selection.sh    |  170 +++
+ tests/functional/test_boost_duration.sh       |  260 ++++
+ tests/functional/test_boost_period.sh         |  261 ++++
+ tests/functional/test_boost_restoration.sh    |  448 +++++++
+ tests/functional/test_boost_runtime.sh        |  300 +++++
+ tests/functional/test_cpu_selection.sh        |  210 +++
+ tests/functional/test_deadline_boosting.sh    |  451 +++++++
+ tests/functional/test_fifo_boosting.sh        |  401 ++++++
+ .../test_fifo_priority_starvation.sh          |  401 ++++++
+ tests/functional/test_force_fifo.sh           |  316 +++++
+ tests/functional/test_foreground.sh           |   92 ++
+ tests/functional/test_idle_detection.sh       |  274 ++++
+ tests/functional/test_log_only.sh             |  107 ++
+ tests/functional/test_logging_destinations.sh |  172 +++
+ tests/functional/test_pidfile.sh              |  288 ++++
+ tests/functional/test_runqueue_parsing.sh     |  434 +++++++
+ tests/functional/test_starvation_detection.sh |  434 +++++++
+ tests/functional/test_starvation_threshold.sh |  235 ++++
+ tests/functional/test_task_merging.sh         |  369 ++++++
+ tests/helpers/starvation_gen.c                |  290 +++++
+ tests/helpers/test_helpers.sh                 |  725 +++++++++++
+ tests/legacy/README.md                        |  169 +++
+ tests/{ => legacy}/test01.c                   |   81 +-
+ tests/legacy/test01_wrapper.sh                |  159 +++
+ tests/run_tests.sh                            |  784 +++++++++++
+ 48 files changed, 14588 insertions(+), 46 deletions(-)
+ create mode 100644 .claude/CLAUDE.md
+ create mode 100644 .claude/agents/agent-prompt-engineer.md
+ create mode 100644 .claude/agents/c-expert.md
+ create mode 100644 .claude/agents/code-reviewer.md
+ create mode 100755 .claude/agents/get-agent-hash
+ create mode 100644 .claude/agents/git-scm-master.md
+ create mode 100644 .claude/agents/kernel-hacker.md
+ create mode 100644 .claude/agents/plan-validator.md
+ create mode 100644 .claude/agents/project-historian.md
+ create mode 100644 .claude/agents/project-librarian.md
+ create mode 100644 .claude/agents/project-manager.md
+ create mode 100644 .claude/agents/project-scope-guardian.md
+ create mode 100644 .claude/agents/python-expert.md
+ create mode 100644 .claude/agents/test-specialist.md
+ create mode 100755 .claude/agents/update-agent-hashes
+ create mode 100644 .claude/context-snapshot.json
+ create mode 100644 .claude/rules
+ create mode 100644 tests/BACKEND_USAGE.md
+ create mode 100644 tests/README.md
+ create mode 100644 tests/TODO.md
+ create mode 100755 tests/functional/test_affinity.sh
+ create mode 100755 tests/functional/test_backend_selection.sh
+ create mode 100755 tests/functional/test_boost_duration.sh
+ create mode 100755 tests/functional/test_boost_period.sh
+ create mode 100755 tests/functional/test_boost_restoration.sh
+ create mode 100755 tests/functional/test_boost_runtime.sh
+ create mode 100755 tests/functional/test_cpu_selection.sh
+ create mode 100755 tests/functional/test_deadline_boosting.sh
+ create mode 100755 tests/functional/test_fifo_boosting.sh
+ create mode 100755 tests/functional/test_fifo_priority_starvation.sh
+ create mode 100755 tests/functional/test_force_fifo.sh
+ create mode 100755 tests/functional/test_foreground.sh
+ create mode 100755 tests/functional/test_idle_detection.sh
+ create mode 100755 tests/functional/test_log_only.sh
+ create mode 100755 tests/functional/test_logging_destinations.sh
+ create mode 100755 tests/functional/test_pidfile.sh
+ create mode 100755 tests/functional/test_runqueue_parsing.sh
+ create mode 100755 tests/functional/test_starvation_detection.sh
+ create mode 100755 tests/functional/test_starvation_threshold.sh
+ create mode 100755 tests/functional/test_task_merging.sh
+ create mode 100644 tests/helpers/starvation_gen.c
+ create mode 100755 tests/helpers/test_helpers.sh
+ create mode 100644 tests/legacy/README.md
+ rename tests/{ => legacy}/test01.c (87%)
+ create mode 100755 tests/legacy/test01_wrapper.sh
+ create mode 100755 tests/run_tests.sh
+
 -- 
 2.51.0
 
