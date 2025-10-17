@@ -1,77 +1,42 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 4112143169
-	for <linux-rt-users@vger.kernel.org>; Thu, 16 Oct 2025 18:19:43 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 862B6201004
+	for <linux-rt-users@vger.kernel.org>; Fri, 17 Oct 2025 02:24:46 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1760638786; cv=none; b=hOv6+LSzSOEoJkhU15OUMsoW/N+kr0FGmTqE7BGufj7Bv2Vk+9Ujnps9HA2yJev3aX44mhHrPmSm2fu1WK2/OiqF0HvhLIW7CA46USKbLs1Z4zSL1fLIhMBDQkp/kHUnBXX5KGncz1tmi3Rmjrt4ajC5m0vv9yMCkMImTahXrDs=
+	t=1760667886; cv=none; b=h4eq9pnCEmtarcKu58Bq5IL6Ie5LUc5akL67/IEGBZQwIiKoSUONROsKDgJTLfJQuepsp43yJi0+oKBIB68m7owTr3hEKW/3XMNkO2bD43ynXFmshegfZWH/e+g2/W2U+3uddEcmHLO1ARBk4DbNRtbndb+r2p7dtyq8AHpnlRY=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1760638786; c=relaxed/simple;
-	bh=YUq92PT9S0M3uqOOJ+cIqy/ZEbBIValbfTdlrJFF+S0=;
-	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=kjJ2Mb5GLVeGb+QXMhaiaKLuBYXccbYrM75OT5eDdclZHFNA2VwxCLEqTzxJ5Vs2FF+OxxbvExN975Abh4W4RSz2MRErBBYqhqRbbLQ8PRKr/9HyHAck7hpkGVA4EiwqtnrxO3EpMu9PzwG6TFM0h7wQ/cpz34ZlxQZnsKk5j2g=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=UwNgINVO; arc=none smtp.client-ip=170.10.129.124
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
+	s=arc-20240116; t=1760667886; c=relaxed/simple;
+	bh=E5QOmPCuJTN9I3KAPP9kAHdx0iihpH1gFJRRsqzCZMQ=;
+	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version:Content-type; b=dB9GLs2be0wvLN2nXsopDEyn/13weQaqY/jpe3W4gC0IttidSHUyLS2DhRoN3N96ZBjWhoZpWadhy0fTJ9eiV7W14MXUi+K4ij0j4k2T9cCwGpVBCGNKcauPQwAGwNMT52UdwcQBjQ0rT+dmUK4p84rMjCmYsF6/nuCC8FsbPSw=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=B1qqpW+b; arc=none smtp.client-ip=10.30.226.201
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="UwNgINVO"
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1760638783;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:
-	 content-transfer-encoding:content-transfer-encoding;
-	bh=fiovgzTgCiARs5jA3Lu8Npoy+zV1t5v9Gg7B7esB2+o=;
-	b=UwNgINVOMW4EHReb3hsVmGaOrQ7wuKMTlhxTE93r4bc96dWlG3wy1+SnrwIC1CzhOA5aD5
-	RQFoVR7H6T+ai4GiJsC9znLC6peJDkSWASpkILUxFqrIcKtYt8mlboBK6kQb1KLNf+iOBY
-	QLzWaSTvPB5XqTYV9ZhUWNXc8pw2o18=
-Received: from mail-wr1-f72.google.com (mail-wr1-f72.google.com
- [209.85.221.72]) by relay.mimecast.com with ESMTP with STARTTLS
- (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
- us-mta-567-DuojZnTeOvGlhY-tdD0Njw-1; Thu, 16 Oct 2025 14:19:42 -0400
-X-MC-Unique: DuojZnTeOvGlhY-tdD0Njw-1
-X-Mimecast-MFC-AGG-ID: DuojZnTeOvGlhY-tdD0Njw_1760638781
-Received: by mail-wr1-f72.google.com with SMTP id ffacd0b85a97d-3ee888281c3so2632217f8f.3
-        for <linux-rt-users@vger.kernel.org>; Thu, 16 Oct 2025 11:19:41 -0700 (PDT)
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1760638780; x=1761243580;
-        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
-         :to:from:x-gm-message-state:from:to:cc:subject:date:message-id
-         :reply-to;
-        bh=fiovgzTgCiARs5jA3Lu8Npoy+zV1t5v9Gg7B7esB2+o=;
-        b=Pv0duZX//CjGl7TO+o1+l8c0EHCrSaPWyQQqyemd2taAOfsEU1tgYu3d9RwNQpCIla
-         zcpuE+h26P6oDK+6NNGzXwvHlDgE2YhWewWA+3vYAhdZUr+GruJQ54kYwgo2jCxrsWWN
-         AmvMOx3mwVZmOt/Xu+f25BuiBtS601/FHQHGdse8YNaVT9N0KDjGhK0zVoCb2sV7sYqB
-         iIj7rgpF4yGU+GBiG2E4HB8gG13scIZT9mef3ilH2XLJpwGZoYUGZIB4Hbq7FgbiDHGi
-         m5bl0DRHoLLUon4UAD+SWl474w37vTUK4sv/HvHFfWVCIYfwK/poHnpNwitwRj/B++Py
-         WTjw==
-X-Gm-Message-State: AOJu0Yx4QTQqXgOdWpIvbTM0zDf7Sy/eS4wLVL4iwiNfmuvgw1PlrNof
-	Uxj9bQTAz9R9M4WzlhwLwwEo/4RKipxx99QE/+135ZvwyL1ZHOUB7JD6ZLqneSedloRXGw/DB07
-	pO5EfJl6kkkHttGBdT6iMsYuBsVOyeIkkdxgUbUhxYtGuHfo4ulixD45PLJ5CpwQ6nJ8LG6+izY
-	lYCog0X0Kw9XTw9E/HU+pPU5R28ERAC9CDc9CLzxay1QN19I400RSmRII=
-X-Gm-Gg: ASbGnculwM/y5xzeBY1LK4jGq9ARKkjO5AiGwUDE/wYH2uxCQcprkGtvTunvDA4h2PF
-	h4F61lIFM0dev8h62f2nwVkt7leim/cD4QyFDA2YunH/pewFTb1YhLNVrEsd+eZo2yatByF7xMF
-	qLmJELz2uTKnANQQSgNCUOrLttzOo2OnzqnLRDaZh+8yMIjNKPHFtk50uS91R/wi9Xp1SWUVbiQ
-	N5Qo0JD22lvVvGIucRVXib/i0/POdbTRxu5OTkdR1jNZgSsk8bK4npT7MLU2K9UIGTqpeO0dRmw
-	rZon33SBR5vWqguvZeUlkAep765ZXqKgNEZNLMSftVBT0jl3Ix8uGzE9gSLnPPDGDTjkTIbjGGY
-	TEOiSzoAhl5aSRlpe
-X-Received: by 2002:a05:6000:4010:b0:425:8502:f8c3 with SMTP id ffacd0b85a97d-42704d7e9e0mr722459f8f.1.1760638780542;
-        Thu, 16 Oct 2025 11:19:40 -0700 (PDT)
-X-Google-Smtp-Source: AGHT+IEVLeYKbRFyKNVtOBvWkelSHwkih7o3VQgmdxtae5T98CPcItPQwi/TiItqg//2S/GXAxq2BA==
-X-Received: by 2002:a05:6000:4010:b0:425:8502:f8c3 with SMTP id ffacd0b85a97d-42704d7e9e0mr722442f8f.1.1760638780074;
-        Thu, 16 Oct 2025 11:19:40 -0700 (PDT)
-Received: from costa-tp.redhat.com ([2a00:a041:e2eb:5500:8728:d68a:a687:c89b])
-        by smtp.gmail.com with ESMTPSA id ffacd0b85a97d-426ce5d015esm37261351f8f.33.2025.10.16.11.19.39
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Thu, 16 Oct 2025 11:19:39 -0700 (PDT)
-From: Costa Shulyupin <costa.shul@redhat.com>
-To: linux-rt-users <linux-rt-users@vger.kernel.org>,
-	John Kacur <jkacur@redhat.com>
-Cc: Bart Wensley <bwensley@redhat.com>,
-	Clark Williams <williams@redhat.com>,
-	Costa Shulyupin <costa.shul@redhat.com>
-Subject: [PATCH RESEND v1] rt-tests: hwlatdetect: Add field count to samples output
-Date: Thu, 16 Oct 2025 21:19:33 +0300
-Message-ID: <20251016181933.418200-1-costa.shul@redhat.com>
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="B1qqpW+b"
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id 268D0C4CEF1;
+	Fri, 17 Oct 2025 02:24:46 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
+	s=k20201202; t=1760667886;
+	bh=E5QOmPCuJTN9I3KAPP9kAHdx0iihpH1gFJRRsqzCZMQ=;
+	h=From:To:Cc:Subject:Date:From;
+	b=B1qqpW+bwNQFdv1ar1hxBq120ITafOPsRL4iTEd6lF1oi+pd0ztjWlkfNJSL0yfBH
+	 u69/SXpl2Jq5JlpwkdNf7PjhKAu1PzRIDFzVnXdFuq+cadTLXgTAUK5n+WvILgVk9H
+	 wFr9FTTDVqRe3I5Q4hHA1r+xf26rwHtzvaDszKRwAhMu2GIJPYJo6Eox6TRjuNJb/k
+	 e7UU+RlY9LE8mzOsqMJSJTsTLR4xOXX9s7p20l4A/ZthPIqDym5kjGLnZab6QdK7GI
+	 +O0fna9ru7HG+NSRtYwrepf6LYoKI5/nNwHoGfloVIddnwvf1/YpJw1Uv4Qu7NZ+33
+	 XerBgee/6+9UQ==
+From: Clark Williams <clrkwllms@kernel.org>
+To: linux-rt-users@vger.kernel.org
+Cc: Clark Williams <williams@redhat.com>,
+	Clark Williams <clrkwllms@kernel.org>,
+	Derek Barbosa <debarbos@redhat.com>,
+	wander@redhat.com,
+	marco.chiappero@suse.com,
+	chris.friesen@windriver.com,
+	luochunsheng@ustc.edu
+Subject: [PATCH 01/12] sched_debug: Unify parsing methods for task_info
+Date: Thu, 16 Oct 2025 21:24:33 -0500
+Message-ID: <20251017022444.118802-1-clrkwllms@kernel.org>
 X-Mailer: git-send-email 2.51.0
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
@@ -79,73 +44,635 @@ List-Id: <linux-rt-users.vger.kernel.org>
 List-Subscribe: <mailto:linux-rt-users+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
+Content-type: text/plain
 Content-Transfer-Encoding: 8bit
 
-Kernel commit b396bfdebffc ("tracing: Have hwlat ts be first instance
-and record count of instances") adds field `count`.
+From: Clark Williams <williams@redhat.com>
 
-Add processing of `count` field to hwlatdetect.py.
+In the sched_debug backend code, there are two logical paths for parsing
+the sched_debug file's task_info "running tasks". These are currently
+divided into "OLD" and "NEW" parsing functions, each with their own
+logic.
 
-Signed-off-by: Costa Shulyupin <costa.shul@redhat.com>
+Unify these branching code paths by creating a line-based "word" parser
+that stores the word-offset of the neccessary fields in a struct.
+Accomodate "legacy" behavior where needed using an enumerated type.
+
+parse_task_lines() now can parse multiple formats of output from the
+debugfs file which on modern systems is located at
+/sys/kernel/debug/sched/debug, and on 3.X "legacy" systems, is located
+at /proc/sched_debug.
+
+The detect_task_format() function records field offsets which are used
+by parse_task_lines to pull fields out of the "running tasks:" section.
+
+Signed-off-by: Clark Williams <clrkwllms@kernel.org>
+Signed-off-by: Derek Barbosa <debarbos@redhat.com>
+Signed-off-by: Clark Williams <williams@redhat.com>
 ---
- src/hwlatdetect/hwlatdetect.py | 19 ++++++++++++++++---
- 1 file changed, 16 insertions(+), 3 deletions(-)
+ src/sched_debug.c | 405 +++++++++++++++++++++-------------------------
+ src/sched_debug.h |  65 +++++++-
+ 2 files changed, 244 insertions(+), 226 deletions(-)
 
-diff --git a/src/hwlatdetect/hwlatdetect.py b/src/hwlatdetect/hwlatdetect.py
-index 68f312db639f..af9852cc95e8 100755
---- a/src/hwlatdetect/hwlatdetect.py
-+++ b/src/hwlatdetect/hwlatdetect.py
-@@ -38,6 +38,17 @@
-     return ','.join([num_hex[max(i - 8, 0):i] for i in range(len(num_hex), 0, -8)][::-1])
+diff --git a/src/sched_debug.c b/src/sched_debug.c
+index fa2f74bf36ed..180932ca7aa3 100644
+--- a/src/sched_debug.c
++++ b/src/sched_debug.c
+@@ -24,6 +24,9 @@
+  */
+ static int config_task_format;
  
++static struct task_format_offsets
++    config_task_format_offsets  = { 0, 0, 0, 0 };
++
+ /*
+  * Read the contents of sched_debug into the input buffer.
+  */
+@@ -88,8 +91,12 @@ static char *get_next_cpu_info_start(char *start)
+ {
+ 	const char *next_cpu = "cpu#";
  
-+def key_values(fields):
-+    """ Extract key:value pairs from a list of fields and return them as a dictionary """
-+    return {
-+        k: v
-+        for field in fields
-+            if ':' in field
-+                for k, v in [field.split(":", 1)]
-+                    if k and v
-+    }
+-	/* Skip the current CPU definition. */
+-	start += 10;
++        /*
++         * Skip the current CPU definition.
++         * We want to move our "cursor" past the current "cpu#" definition.
++         * This number is arbitrary. It is purely to assist strstr().
++         */
++        start += 10;
+ 
+ 	return strstr(start, next_cpu);
+ }
+@@ -143,9 +150,13 @@ static inline char *skipchars(char *str)
+ 	return str;
+ }
+ 
++/*
++ * Note, for our purposes newline is *not* a space
++ * and we want to stop when we hit it
++ */
+ static inline char *skipspaces(char *str)
+ {
+-	while (*str && isspace(*str))
++	while (*str && isspace(*str) && (*str != '\n'))
+ 		str++;
+ 	return str;
+ }
+@@ -156,6 +167,20 @@ static inline char *nextline(char *str)
+ 	return ptr ? ptr+1 : NULL;
+ }
+ 
++/*
++ * skip a specified number of words on a task line
++ */
++
++static inline char *skipwords(char *ptr, int nwords)
++{
++	int i;
++	for (i=0; i < nwords; i++) {
++		ptr = skipspaces(ptr);
++		ptr = skipchars(ptr);
++	}
++	return ptr;
++}
++
+ /*
+  * Read sched_debug and figure out if it's old or new format
+  * done once so if we fail just exit the program.
+@@ -173,6 +198,7 @@ static int detect_task_format(void)
+ 	char *ptr;
+ 	int status;
+ 	int fd;
++	int i, count=0;
+ 
+ 	bufsiz = bufincrement = BUFFER_PAGES * page_size;
+ 
+@@ -204,122 +230,63 @@ static int detect_task_format(void)
+ 
+ 	ptr = strstr(buffer, TASK_MARKER);
+ 	if (ptr == NULL) {
+-		fprintf(stderr, "unable to find 'runnable tasks' in buffer, invalid input\n");
++		die("unable to find 'runnable tasks' in buffer, invalid input\n");
+ 		exit(-1);
+ 	}
+ 
+-	ptr += strlen(TASK_MARKER) + 1;
+-	ptr = skipspaces(ptr);
++	ptr = nextline(ptr);
++	i = 0;
+ 
+-	if (strncmp(ptr, "task", 4) == 0) {
+-		retval = OLD_TASK_FORMAT;
+-		log_msg("detected old task format\n");
+-	} else if (strncmp(ptr, "S", 1) == 0) {
++	/*
++	 * Determine the TASK_FORMAT from the first "word" in the header
++	 * line.
++	 */
++	ptr = skipspaces(ptr);
++	if (strncmp(ptr, "S", strlen("S")) == 0) {
++		log_msg("detect_task_format: NEW_TASK_FORMAT detected\n");
+ 		retval = NEW_TASK_FORMAT;
+-		log_msg("detected new task format\n");
+ 	}
+-
+-	free(buffer);
+-	return retval;
+-}
+-
+-/*
+- * Parse the new sched_debug format.
+- *
+- * Example:
+- * ' S           task   PID         tree-key  switches  prio     wait-time             sum-exec        sum-sleep'
+- * '-----------------------------------------------------------------------------------------------------------'
+- * ' I         rcu_gp     3        13.973264         2   100         0.000000         0.004469         0.000000 0 0 /
+- */
+-static int parse_new_task_format(char *buffer, struct task_info *task_info, int nr_entries)
+-{
+-	char *R, *X, *start = buffer;
+-	struct task_info *task;
+-	int tasks = 0;
+-	int comm_size;
+-	char *end;
++	else {
++		log_msg("detect_task_format: OLD_TASK_FORMAT detected\n");
++		retval = OLD_TASK_FORMAT;
++	}
+ 
+ 	/*
+-	 * If we have less than two tasks on the CPU there is no
+-	 * possibility of a stall.
++	 * Look for our header keywords and store their offset
++	 * we'll use the offsets when we actually parse the task
++	 * line data
+ 	 */
+-	if (nr_entries < 2)
+-		return 0;
+-
+-	while (tasks < nr_entries) {
+-		task = &task_info[tasks];
+-
+-		/*
+-		 * Runnable tasks.
+-		 */
+-		R = strstr(start, "\n R");
+-
+-		/*
+-		 * Dying tasks.
+-		 */
+-		X = strstr(start, "\n X");
+-
+-		/*
+-		 * Get the first one, the only one, or break.
+-		 */
+-		if (X && R) {
+-			start = R < X ? R : X;
+-		} else if (X || R) {
+-			start = R ? R : X;
+-		} else {
+-			break;
++	while (*ptr != '\n') {
++		ptr = skipspaces(ptr);
++		if (strncmp(ptr, "task", strlen("task")) == 0) {
++			config_task_format_offsets.task = i;
++			count++;
++			log_msg("detect_task_format: found 'task' at word %d\n", i);
+ 		}
+-
+-		/* Skip '\n R' || '\n X'. */
+-		start = &start[3];
+-
+-		/* Skip the spaces. */
+-		start = skipspaces(start);
+-
+-		/* Find the end of the string. */
+-		end = skipchars(start);
+-
+-		comm_size = end - start;
+-
+-		if (comm_size >= COMM_SIZE) {
+-			warn("comm_size is too large: %d\n", comm_size);
+-			comm_size = COMM_SIZE - 1;
++		else if (strncmp(ptr, "PID", strlen("PID")) == 0) {
++			config_task_format_offsets.pid = i;
++			count++;
++			log_msg("detect_task_format: found 'PID' at word %d\n", i);
+ 		}
+-
+-		strncpy(task->comm, start, comm_size);
+-
+-		task->comm[comm_size] = '\0';
+-
+-		/* Go to the end of the task comm. */
+-		start=end;
+-
+-		task->pid = strtol(start, &end, 10);
+-
+-		/* Get the id of the thread group leader. */
+-		task->tgid = get_tgid(task->pid);
+-
+-		/* Go to the end of the pid. */
+-		start=end;
+-
+-		/* Skip the tree-key. */
+-		start = skipspaces(start);
+-		start = skipchars(start);
+-
+-		task->ctxsw = strtol(start, &end, 10);
+-
+-		start = end;
+-
+-		task->prio = strtol(start, &end, 10);
+-
+-		task->since = time(NULL);
+-
+-		/* Go to the end and try to find the next occurrence. */
+-		start = end;
+-
+-		tasks++;
++		else if (strncmp(ptr, "switches", strlen("switches")) == 0) {
++			config_task_format_offsets.switches = i;
++			count++;
++			log_msg("detect_task_format: found 'switches' at word %d\n", i);
++		}
++		else if (strncmp(ptr, "prio", strlen("prio")) == 0) {
++			config_task_format_offsets.prio = i;
++			count++;
++			log_msg("detect_task_format: found 'prio' at word %d\n", i);
++		}
++		ptr = skipchars(ptr);
++		i++;
+ 	}
+ 
+-	return tasks;
++	if (count != 4)
++		die("detect_task_format: did not detect all task line fields we need\n");
++
++	free(buffer);
++	return retval;
+ }
+ 
+ /*
+@@ -387,104 +354,80 @@ static int is_runnable(int pid)
+ 	return runnable;
+ }
+ 
+-static int count_task_lines(char *buffer)
+-{
+-	int lines = 0;
+-	char *ptr;
+-	int len;
+-
+-	len = strlen(buffer);
+-
+-	/* Find the runnable tasks: header. */
+-	ptr = strstr(buffer, TASK_MARKER);
+-	if (ptr == NULL)
+-		return 0;
+-
+-	/* Skip to the end of the dashed line separator. */
+-	ptr = strstr(ptr, "-\n");
+-	if (ptr == NULL)
+-		return 0;
+-
+-	ptr += 2;
+-	while(*ptr && ptr < (buffer+len)) {
+-		lines++;
+-		ptr = strchr(ptr, '\n');
+-		if (ptr == NULL)
+-			break;
+-		ptr++;
+-	}
+-	return lines;
+-}
+-
+-/*
+- * Parse the old sched debug format:
+- *
+- * Example:
+- * '            task   PID         tree-key  switches  prio     wait-time             sum-exec        sum-sleep
+- * ' ----------------------------------------------------------------------------------------------------------
+- * '     watchdog/35   296       -11.731402      4081     0         0.000000        44.052473         0.000000 /
+- */
+-static int parse_old_task_format(char *buffer, struct task_info *task_info, int nr_entries)
++static int parse_task_lines(char *buffer, struct task_info *task_info, int nr_entries)
+ {
+ 	int pid, ctxsw, prio, comm_size;
+-	char *start, *end, *buffer_end;
++	char *ptr, *line, *end;
+ 	struct task_info *task;
+ 	char comm[COMM_SIZE];
+-	int waiting_tasks = 0;
+-
+-	start = buffer;
+-	start = strstr(start, TASK_MARKER);
+-	start = strstr(start, "-\n");
+-	start++;
++	int tasks = 0;
+ 
+-	buffer_end = buffer + strlen(buffer);
++	if ((ptr = strstr(buffer, TASK_MARKER)) == NULL)
++		die ("no runnable task section found!\n");
+ 
+ 	/*
+-	 * We can't short-circuit using nr_entries, we have to scan the
+-	 * entire list of processes that is on this CPU.
++	 * If we have less than two tasks on the CPU there is no
++	 * possibility of a stall.
+ 	 */
+-	while (*start && start < buffer_end) {
+-		task = &task_info[waiting_tasks];
++	if (nr_entries < 2)
++		return 0;
++	line = ptr;
++
++	/* skip header and divider */
++	line = nextline(line);
++	line = nextline(line);
++	
++	/* now loop over the task info */
++	while (tasks < nr_entries) {
++		task = &task_info[tasks];
+ 
+-		/* Only care about tasks that are not R (running on a CPU). */
+-		if (start[0] == 'R') {
++		/*
++		 * In 3.X kernels, only the singular RUNNING task receives
++		 * a "running state" label. Therefore, only care about
++		 * tasks that are not R (running on a CPU).
++		 */
++		if ((config_task_format == OLD_TASK_FORMAT) &&
++			(*ptr == 'R')) {
+ 			/* Go to the end of the line and ignore this task. */
+-			start = strchr(start, '\n');
+-			start++;
++			ptr = strchr(ptr, '\n');
++			ptr++;
+ 			continue;
+ 		}
+ 
+-		/* Pick up the comm field. */
+-		start = skipspaces(start);
+-		end = skipchars(start);
+-		comm_size = end - start;
++		/* get the task field */
++		ptr = skipwords(line, config_task_format_offsets.task);
++
++		/* Find the end of the task field */
++		end = skipchars(ptr);
++		comm_size = end - ptr;
++
++		/* make sure we don't overflow the comm array */
+ 		if (comm_size >= COMM_SIZE) {
+ 			warn("comm_size is too large: %d\n", comm_size);
+ 			comm_size = COMM_SIZE - 1;
+ 		}
+-		strncpy(comm, start, comm_size);
+-		comm[comm_size] = 0;
+-
+-		/* Go to the end of the task comm. */
+-		start=end;
+-
+-		/* Now pick up the pid. */
+-		pid = strtol(start, &end, 10);
+-
+-		/* Go to the end of the pid. */
+-		start=end;
+-
+-		/* Skip the tree-key. */
+-		start = skipspaces(start);
+-		start = skipchars(start);
+-
+-		/* Pick up the context switch count. */
+-		ctxsw = strtol(start, &end, 10);
+-		start = end;
+-
+-		/* Get the priority. */
+-		prio = strtol(start, &end, 10);
+-		if (is_runnable(pid)) {
++		strncpy(comm, ptr, comm_size);
++		comm[comm_size] = '\0';
++		ptr = end;
++
++		/* get the PID field */
++		ptr = skipwords(line, config_task_format_offsets.pid);
++		pid = strtol(ptr, NULL, 10);
++
++		/* get the context switches field */
++		ptr = skipwords(line, config_task_format_offsets.switches);
++		ctxsw = strtol(ptr, NULL, 10);
++
++		/* get the prio field */
++		ptr = skipwords(line, config_task_format_offsets.prio);
++		prio = strtol(ptr, NULL, 10);
++
++                /*
++                 * In older formats, we must check to
++                 * see if the process is runnable prior to storing header
++                 * fields and incrementing task processing
++                 */
++                if ((config_task_format == NEW_TASK_FORMAT) || (is_runnable(pid))) {
+ 			strncpy(task->comm, comm, comm_size);
+ 			task->comm[comm_size] = 0;
+ 			task->pid = pid;
+@@ -492,18 +435,44 @@ static int parse_old_task_format(char *buffer, struct task_info *task_info, int
+ 			task->ctxsw = ctxsw;
+ 			task->prio = prio;
+ 			task->since = time(NULL);
+-			waiting_tasks++;
++			/* increment the count of tasks processed */
++			tasks++;
++		} else {
++			continue;
+ 		}
+ 
+-		if ((start = nextline(start)) == NULL)
+-			break;
++	}
++	return tasks;
++}
+ 
+-		if (waiting_tasks >= nr_entries) {
++
++static int count_task_lines(char *buffer)
++{
++	int lines = 0;
++	char *ptr;
++	int len;
++
++	len = strlen(buffer);
++
++	/* Find the runnable tasks: header. */
++	ptr = strstr(buffer, TASK_MARKER);
++	if (ptr == NULL)
++		return 0;
++
++	/* Skip to the end of the dashed line separator. */
++	ptr = strstr(ptr, "-\n");
++	if (ptr == NULL)
++		return 0;
++
++	ptr += 2;
++	while(*ptr && ptr < (buffer+len)) {
++		lines++;
++		ptr = strchr(ptr, '\n');
++		if (ptr == NULL)
+ 			break;
+-		}
++		ptr++;
+ 	}
+-
+-	return waiting_tasks;
++	return lines;
+ }
+ 
+ static int fill_waiting_task(char *buffer, struct cpu_info *cpu_info)
+@@ -515,36 +484,23 @@ static int fill_waiting_task(char *buffer, struct cpu_info *cpu_info)
+ 		warn("NULL cpu_info pointer!\n");
+ 		return 0;
+ 	}
+-	nr_entries = cpu_info->nr_running;
+-
+-	switch (config_task_format) {
+-	case NEW_TASK_FORMAT:
+-		cpu_info->starving = malloc(sizeof(struct task_info) * nr_entries);
+-		if (cpu_info->starving == NULL) {
+-			warn("failed to malloc %d task_info structs", nr_entries);
+-			return 0;
+-		}
+-		nr_waiting = parse_new_task_format(buffer, cpu_info->starving, nr_entries);
+-		break;
+-	case OLD_TASK_FORMAT:
+-		/*
+-		 * The old task format does not output a correct value for
+-		 * nr_running (the initializer for nr_entries) so count the
+-		 * task lines for this CPU data and use that instead.
+-		 */
++
++	if (config_task_format == OLD_TASK_FORMAT)
+ 		nr_entries = count_task_lines(buffer);
+-		if (nr_entries <= 0)
+-			return 0;
+-		cpu_info->starving = malloc(sizeof(struct task_info) * nr_entries);
+-		if (cpu_info->starving == NULL) {
+-			warn("failed to malloc %d task_info structs", nr_entries);
+-			return 0;
+-		}
+-		nr_waiting = parse_old_task_format(buffer, cpu_info->starving, nr_entries);
+-		break;
+-	default:
+-		die("invalid value for config_task_format: %d\n", config_task_format);
++	else
++		nr_entries = cpu_info->nr_running;
++
++	if (nr_entries <= 0)
++		return 0;
++
++	cpu_info->starving = malloc(sizeof(struct task_info) * nr_entries);
++	if (cpu_info->starving == NULL) {
++		warn("failed to malloc %d task_info structs", nr_entries);
++		return 0;
+ 	}
++
++	nr_waiting = parse_task_lines(buffer, cpu_info->starving, nr_entries);
++
+ 	return nr_waiting;
+ }
+ 
+@@ -574,7 +530,7 @@ static int sched_debug_parse(struct cpu_info *cpu_info, char *buffer, size_t buf
+ 	}
+ 
+ 	/*
+-	 * The NEW_TASK_FORMAT produces useful output values for nr_running and
++	 * NEW_TASK_FORMAT and produces useful output values for nr_running and
+ 	 * rt_nr_running, so in this case use them. For the old format just leave
+ 	 * them initialized to zero.
+ 	 */
+@@ -613,7 +569,8 @@ static int sched_debug_has_starving_task(struct cpu_info *cpu)
+ static int sched_debug_init(void)
+ {
+ 	find_sched_debug_path();
+-	config_task_format = detect_task_format();
++	if ((config_task_format = detect_task_format()) == TASK_FORMAT_UNKNOWN)
++		die("Can't handle task format!\n");
+ 	return 0;
+ }
+ 
+diff --git a/src/sched_debug.h b/src/sched_debug.h
+index 21f9da27866e..4b12c39bf7fe 100644
+--- a/src/sched_debug.h
++++ b/src/sched_debug.h
+@@ -1,6 +1,67 @@
+ /* SPDX-License-Identifier: GPL-2.0-or-later */
+-#define OLD_TASK_FORMAT  1
+-#define NEW_TASK_FORMAT  2
+ #define TASK_MARKER	"runnable tasks:"
++#define TASK_DIVIDER	"-\n"
++
++/*
++ * Over time, the various 'runnable task' output in SCHED_DEBUG has
++ * changed significantly.
++ *
++ * Depending on the version of the running kernel, the task formats can
++ * differ greatly.
++ *
++ * For example, in 3.X kernels, the sched_debug running tasks format denotes the current
++ * running task on the current CPU with a singular state label, 'R'. Other tasks do not
++ * receive a state label.
++ *
++ * example:
++ * '          task   PID         tree-key  switches  prio     wait-time             sum-exec        sum-sleep'
++ * ' ----------------------------------------------------------------------------------------------------------'
++ * '      watchdog/5    33        -8.984472       151     0         0.000000         0.535614         0.000000 0 /'
++ * ' R          less  9542      2382.087644        56   120         0.000000        16.444493         0.000000 0 /'
++ *
++ * In 4.18+ kernels, the sched_debug format running tasks format included an additional 'S'
++ * state field to denote the state of the running tasks on said CPU.
++ *
++ * example:
++ * ' S           task   PID         tree-key  switches  prio     wait-time             sum-exec        sum-sleep'
++ * '-----------------------------------------------------------------------------------------------------------'
++ * ' I         rcu_gp     3        13.973264         2   100         0.000000         0.004469         0.000000 0 0 /'
++ *
++ * Introduced in 6.12+, 2cab4bd024d2 sched/debug: Fix the runnable tasks
++ * output, the sched_debug running tasks format was changed to include
++ * four new EEVDF fields.
++ *
++ * Example:
++ *  'S            task   PID       vruntime   eligible    deadline             slice          sum-exec      switches  prio         wait-time        sum-sleep       sum-block  node   group-id  group-path'
++ *  '-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------'
++ *  ' I kworker/R-rcu_g     4        -1.048576   E          -1.040501           0.700000         0.000000         2     100         0.000000         0.000000         0.000000   0      0        /'
++ *
++ * As there are considerable differences in the location of the fields
++ * needed to boost task prioriy, handle the logical code differences with
++ * an enumerated type.
++ */
++enum task_format {
++	TASK_FORMAT_UNKNOWN =0,
++	OLD_TASK_FORMAT,	// 3.10 kernel
++	NEW_TASK_FORMAT,	// 4.18+ kernel
++	TASK_FORMAT_LIMIT
++};
 +
 +
- #
- # Class used to manage mounting and umounting the debugfs
- # filesystem. Note that if an instance of this class mounts
-@@ -242,19 +253,21 @@     def detect(self):
++/*
++ * set of offsets in a task format line based on offsets
++ * discovered by discover_task_format
++ *
++ * Note: These are *NOT* character offsets, these are "word" offsets.
++ * Requiring consumers of this struct to parse through the individual
++ * lines.
++ */
++struct task_format_offsets {
++	int task;
++	int pid;
++	int switches;
++	int prio;
++	int wait_time;
++};
  
-     class Sample:
-         'private class for tracer sample data'
--        __slots__ = 'cpu', 'timestamp', 'inner', 'outer'
-+        __slots__ = 'cpu', 'timestamp', 'inner', 'outer', 'count'
- 
-         def __init__(self, line):
-             fields = line.split()
-+            kv = key_values(fields)
-             self.cpu = int(fields[1][1:-1])
-             i, o = fields[6].split('/')
-             ts = fields[7][3:]
-             self.timestamp = str(ts)
-             self.inner = int(i)
-             self.outer = int(o)
-+            self.count = int(kv["count"])
- 
-         def __str__(self):
--            return f"ts: {self.timestamp}, inner:{self.inner}, outer:{self.outer}, cpu:{self.cpu}"
-+            return f"ts: {self.timestamp}, inner:{self.inner}, outer:{self.outer}, cpu:{self.cpu}, count:{self.count}"
- 
-         def display(self):
-             """ convert object to string and print """
-@@ -286,7 +299,7 @@     def set(self, field, val):
- 
-     def get(self, field):
-         if field == "count":
--            return len(self.samples)
-+            return sum(s.count for s in self.samples)
-         if field == "max":
-             max = 0
-             for values in self.samples:
+ extern struct stalld_backend sched_debug_backend;
 -- 
 2.51.0
 
