@@ -1,83 +1,84 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id D6EE732E699
-	for <linux-rt-users@vger.kernel.org>; Mon, 20 Oct 2025 16:48:20 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 8F73D274FC1
+	for <linux-rt-users@vger.kernel.org>; Mon, 20 Oct 2025 16:54:32 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1760978902; cv=none; b=BP232nz/YWN2Lyw43Vy3Q0bSedn2izG2s0OgOXYl1V6AMumlDyCtOwpHrPMDImBv1ggItgw4COj3hL01mYKcEllWbNgnXtgw0bhKU7XPYNafeRtwtGgN9IaN+ZL8KB2xfNhY7cNadtAUCB1SS0i60JpE7KXOrPyr5ll6TsEvVwE=
+	t=1760979274; cv=none; b=hvNZwNZIQtD4igbpkm+YIoPaymlI1PkU8khyO2j8oOb6YjbhsF9Vz6DlJUBdm8wNA3vTHSmKheYRZ1Hc9WDxa9REXz5bjaT5tLDSgKk9tPd0NPcGqIwTU85Zz2c1W8e7faOC6XCk3A+pVJbV6TMR2gDTLNLGU52jPqKY0U2cOOE=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1760978902; c=relaxed/simple;
-	bh=kK5e6X+yNV9kMI07srtB4TLiYnb4CXfG3Lw/gljMisw=;
+	s=arc-20240116; t=1760979274; c=relaxed/simple;
+	bh=Jz0baFqFiWKIPqaBnzJKzJNcAiPJ7QZaRFJ74r3U+0M=;
 	h=Message-ID:Subject:From:To:Cc:Date:In-Reply-To:References:
-	 Content-Type:MIME-Version; b=n/GpqAUdpxtqxY4AQQ9Ce3KF567UMxVXLlA1XPTPx61+HVp33990Q8buYHVaKw9KgcNWwlt6jm+E5hOvB5Rk7JIIaUWI900rfGIcBsSaIDyN9cdnZeo53q5qBwKBdiRs7zXr3tzDcepR/PlY2Y22Lom4xY8Gga+7IM6rzhBpZbw=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=TqfFIOkF; arc=none smtp.client-ip=170.10.133.124
+	 Content-Type:MIME-Version; b=de5dIUz9j3a1q5zHtHfuRjRash1rQ8NRsgeU5tn2VPS0pqIuAqOu+w0/2WRwTJgX4Mkz/u3YNHzmfpC7SuHDl9gWbRTbhfkQxyef0xjw5GIBoPSh7PSth4BE1TvpdNdiJNL31DX8rLL5ks6xqkk48NIfaG/BROlrqar1lF4WZSc=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=dMA+igBy; arc=none smtp.client-ip=170.10.129.124
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="TqfFIOkF"
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="dMA+igBy"
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1760978899;
+	s=mimecast20190719; t=1760979271;
 	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
 	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references;
-	bh=rKX00ZcqitjGF24FjIrKvd4ZxRXevNwK7tBxWaWKSPQ=;
-	b=TqfFIOkFqkCtsTeFt/lPtz6A/2mBSI5pXyffBcrxLfeYoRlMpUqD51l6IFEfnrCYnbhbP4
-	0uhJycfYqEIJ6TLY21i5YmJveXx6jxgDo61UK/FQOlLTNsScxK1HMcu48voYqKA4cIp7K2
-	APuQXjIZHtg0TnVd7dcQBUfZXp41nrI=
-Received: from mail-il1-f199.google.com (mail-il1-f199.google.com
- [209.85.166.199]) by relay.mimecast.com with ESMTP with STARTTLS
+	bh=jtNiq+0DMzS67x+Z2XhCdPdrIGRMKKCvNH4lfvpH2iY=;
+	b=dMA+igByA9F5FAiGSQFitB6uJ24zP04CDHSzxiVfi80IoGnQ34fM7c5Gz0rrgcU29je7zj
+	NeoL3gZILDNfCxgVY4yyhCKHti+fY0YKpvP0iO9lu+fz1GqSRmH6QQJo92rgF3/lbDkMzo
+	3wj/xyVoK5y6tSkNYK8G60DMxn/WZ1A=
+Received: from mail-il1-f197.google.com (mail-il1-f197.google.com
+ [209.85.166.197]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
- us-mta-644-7qyneiPgOKaiR_V2we5fTg-1; Mon, 20 Oct 2025 12:48:18 -0400
-X-MC-Unique: 7qyneiPgOKaiR_V2we5fTg-1
-X-Mimecast-MFC-AGG-ID: 7qyneiPgOKaiR_V2we5fTg_1760978898
-Received: by mail-il1-f199.google.com with SMTP id e9e14a558f8ab-430da49fcbbso19117335ab.3
-        for <linux-rt-users@vger.kernel.org>; Mon, 20 Oct 2025 09:48:18 -0700 (PDT)
+ us-mta-649-qKsQh8-GM2etZYKNgL0clg-1; Mon, 20 Oct 2025 12:54:30 -0400
+X-MC-Unique: qKsQh8-GM2etZYKNgL0clg-1
+X-Mimecast-MFC-AGG-ID: qKsQh8-GM2etZYKNgL0clg_1760979269
+Received: by mail-il1-f197.google.com with SMTP id e9e14a558f8ab-430e1a4a129so13631445ab.1
+        for <linux-rt-users@vger.kernel.org>; Mon, 20 Oct 2025 09:54:30 -0700 (PDT)
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1760978898; x=1761583698;
+        d=1e100.net; s=20230601; t=1760979269; x=1761584069;
         h=mime-version:user-agent:content-transfer-encoding:references
          :in-reply-to:date:cc:to:from:subject:message-id:x-gm-message-state
          :from:to:cc:subject:date:message-id:reply-to;
-        bh=rKX00ZcqitjGF24FjIrKvd4ZxRXevNwK7tBxWaWKSPQ=;
-        b=qKYMzkRuIUJeccIt/gpv/QGPmWryEzGzT2t7jTK55pCowX2w50xyP2nxBRNnGXl27y
-         pK/ygKp1pg/al/QXaBqiaciIdyD0HHuK1skaZkn8zwv5r7qfE9fLZx16I6bIhGbENZaR
-         LnJByXzZCv/DCsdPVzOK1fc1Hi1Ue51I9n68o6wzQy16Ut+4DfbjEWNcXRkLbnLU8x8W
-         9oy6cNGDeV5WyOPzXNuRZ/EJ7Gt7l5jYUq8XHtVuSWWPn+4ZHq0lRGn+PMazt16fES9S
-         K40eADA5TeoeN0//eqGMFSv3C1W5eKj0+6CBGGNJwePNOJxvrRnnGhWujeSMf+4nAHpa
-         ixYg==
-X-Forwarded-Encrypted: i=1; AJvYcCVtIzVJ6A4j0b2gY+nZvg1pDpjYkCPWKrwiKqq7I/CxxZWzjB2bBVKM92WiCUShLJJ28lFwYFXYpQKxZYIfDA==@vger.kernel.org
-X-Gm-Message-State: AOJu0Yz0kh8e8CRacKfEo5U9TMQkAbeT5NOXbdzyDeeX78BfkXDhK68N
-	O5i5wBEbUAa9qVEH1NqDv1KbHVS2oQwKed0Gqa1P+YQ0yRLtupq88g193gex3SOkB7yg+KZ4Jcy
-	0JhTyGzjcR+OcCX8e/R8iAP44J3KdTmNuGNcT/wKVLeXtb9Xg8XVKH/XJCR7I0QvafP8xf4nnsF
-	Vy
-X-Gm-Gg: ASbGncsrW+t9vLFVBDXpRhTLm+Xr6w9KGfBdThX5PU69pOSdmDmaiXNjxOIVtx4HY/+
-	HwJKyb/f+6ytF0JRdkVVOAdFyBJM2rsKliWomJr2r45mrwywBWobKQs3WKronIotQLHYFIGBQEt
-	zEACMq8RzV2v+aWpIM+vbVVpB2h1uYZZXR7ICbJmuFJ7lsuOaTeHLRHQVghmie05juso6NW2n5G
-	9w9xrfv8PVQBoUCyo21lDB3YPXAsxZOxeNmzZsHG3LLKk1t1WCksRNXgarg1bBzZ8CdQG3zQcoS
-	5ypxZavrmmXyU4vaNWGiV76xPdUaFgQ7PSnbNMdwcoWZVJJOjgEc0O/0Poje23WRhlVyEGFX6AX
-	hn6SDYNOaCKo90rvOlRGrroI/z1A4
-X-Received: by 2002:a05:6e02:2307:b0:42f:a60a:8538 with SMTP id e9e14a558f8ab-430c52b5afemr166066835ab.16.1760978897519;
-        Mon, 20 Oct 2025 09:48:17 -0700 (PDT)
-X-Google-Smtp-Source: AGHT+IEuUlrrK/5aAbPSk1loC+r6sCVcJ+i4goM7bShWBDu7xr8KsYEry88fgpEoO4J9UFd7/zWJYQ==
-X-Received: by 2002:a05:6e02:2307:b0:42f:a60a:8538 with SMTP id e9e14a558f8ab-430c52b5afemr166066535ab.16.1760978897081;
-        Mon, 20 Oct 2025 09:48:17 -0700 (PDT)
+        bh=jtNiq+0DMzS67x+Z2XhCdPdrIGRMKKCvNH4lfvpH2iY=;
+        b=RRSV7xy/fEmzTsPU1KGa0mlLXXq85+MTppQPmREKp9j60GdsGx9oYnbEHtymk42Heu
+         uWLYjU9h8SdLB+sykFgK0vhhZGIhX4/vJ14mAeUQiJEWEmqlLe/DtFkM4j2zchTeQJVe
+         B60zmq/MCHN37Qy2SRiXq4J4OyU5+RB8//lvpF1VMp38jBIWUy5kzGSCVNBhUmPBEHPr
+         yFfvPie7GonqZAkdAkyIBryzsUKIusti8ykLPnYgFaMRCBlyOQtFx3LCoeT0rT3XJcyl
+         fl3Qwo4FxUzBj0Lxo1VoogpfGXffo9KaVz+qwGl0WaaZ5E4QUZly/7qBw1Q2Y2C0xe9k
+         7i9A==
+X-Gm-Message-State: AOJu0YwtgVPD7ahjedhwMLWPRC3PnI1NYV0C6PwC5GOnDM9F6YqQ14jF
+	cPTay82oWBkVdWx0VODln0IdmR/dObbMVSRrmJ6Xv0NGPWag5Ztb2RbFWXvp0yQNxKmUsLxnkX1
+	lIIwoQa323CV8iNMGGloWIVEIfxfmZ/zHsY0rOpfUz7oy4AqvSqtfIumHnJM+WFraQ3rM
+X-Gm-Gg: ASbGncsDBYxsgT1VwhI4QsKv9iFzI4Lgte7UBhN2GxYWTsN9wsW4WSeX8N/LpABJNWw
+	uhUzrfbSfsryImwWaMfPuadPM6y6+c+gkL6WdGN/K/gKv22/DcfwVt7EksIx3jdpTEZdr4pa96q
+	yxsZK6TSQoFRjHU0+0vvxZToFcL9t/47MYCN71GjJbClup3NY8UFgqxsDSieDmRRHO36JQVjvbv
+	C2oMtKQIJg6d+myg/YWxF5JkRkOhXv4GZRs5Q6xRg7pHG+hE4MSA94fIYKa9n/04WVncwVIhl0m
+	WTj1bM1OKYf7m4XVv2tWcYl3mgYvn8GV7SYn6mtCGfolrtBWT8bHFqeSLaLEEa04nAV/L4dElMp
+	k94PHlbMbFL5ifooXEhb9m2d9Kf/H
+X-Received: by 2002:a05:6e02:3e06:b0:42f:94f5:4662 with SMTP id e9e14a558f8ab-430c527d356mr188331535ab.18.1760979269361;
+        Mon, 20 Oct 2025 09:54:29 -0700 (PDT)
+X-Google-Smtp-Source: AGHT+IGwGBPqM2yOijQjzejYn+0KCUEhjkeo/BW/SlWtt8ghhCUOvowWM/xK9isgU44xdFvJgaxIwA==
+X-Received: by 2002:a05:6e02:3e06:b0:42f:94f5:4662 with SMTP id e9e14a558f8ab-430c527d356mr188331175ab.18.1760979268953;
+        Mon, 20 Oct 2025 09:54:28 -0700 (PDT)
 Received: from crwood-thinkpadp16vgen1.minnmso.csb ([50.145.183.242])
-        by smtp.gmail.com with ESMTPSA id e9e14a558f8ab-430d071eb25sm32795295ab.16.2025.10.20.09.48.16
+        by smtp.gmail.com with ESMTPSA id 8926c6da1cb9f-5a8a976a58csm3076706173.47.2025.10.20.09.54.28
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Mon, 20 Oct 2025 09:48:16 -0700 (PDT)
-Message-ID: <84f6f9f25d0ecc7884e6a3f3f87c03f651545d27.camel@redhat.com>
+        Mon, 20 Oct 2025 09:54:28 -0700 (PDT)
+Message-ID: <8d049c27440410a0ac0922d5e48da7824af57db8.camel@redhat.com>
 Subject: Re: [PATCH 2/3] Makefile: Add support for legacy kernels
 From: Crystal Wood <crwood@redhat.com>
-To: Clark Williams <williams@redhat.com>
-Cc: Derek Barbosa <debarbos@redhat.com>, clrkwllms@kernel.org, 
-	linux-rt-users@vger.kernel.org, wander@redhat.com
-Date: Mon, 20 Oct 2025 11:48:16 -0500
-In-Reply-To: <CAMLffL_a2-RkOJg8kXPZSKhzenu9aPDs4SBz-F97y9-wa_oHHQ@mail.gmail.com>
+To: Clark Williams <clrkwllms@kernel.org>, Derek Barbosa
+ <debarbos@redhat.com>
+Cc: linux-rt-users@vger.kernel.org, wander@redhat.com
+Date: Mon, 20 Oct 2025 11:54:28 -0500
+In-Reply-To: <aPJBkImjwb_Ze6dX@lysander>
 References: <20251002205515.1299816-1-debarbos@redhat.com>
 	 <20251002205515.1299816-3-debarbos@redhat.com>
 	 <adb796e86ac3cd19b55ee399662b8ad97dc2bba1.camel@redhat.com>
-	 <CAMLffL_a2-RkOJg8kXPZSKhzenu9aPDs4SBz-F97y9-wa_oHHQ@mail.gmail.com>
+	 <cyk7iyu5rn72ppngwax6xn2nzgsyl5x2w5xjwj5aowmcw2ximv@cpxbkerjod3s>
+	 <6eef31238e5c8ee18fee7dbc1cf250bd30892941.camel@redhat.com>
+	 <6wtktjmptvddkeo3wibqjignaofyupiowxwsug4xp5inekvn24@qriseqkmhke6>
+	 <aPJBkImjwb_Ze6dX@lysander>
 Content-Type: text/plain; charset="UTF-8"
 Content-Transfer-Encoding: quoted-printable
 User-Agent: Evolution 3.56.2 (3.56.2-2.fc42) 
@@ -88,31 +89,27 @@ List-Subscribe: <mailto:linux-rt-users+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
 
-On Fri, 2025-10-17 at 13:01 +0000, Clark Williams wrote:
-> On Tue, Oct 7, 2025 at 6:51=E2=80=AFPM Crystal Wood <crwood@redhat.com> w=
-rote:
+On Fri, 2025-10-17 at 08:16 -0500, Clark Williams wrote:
+> On Wed, Oct 08, 2025 at 02:41:11PM -0400, Derek Barbosa wrote:
 > >=20
-> > Speaking of SOPTS, is this tool intended to be Red Hat specific
-> > (and require redhat-rpm-config even if no RPM building is intended)?
-> >=20
+> > Of course, we could always go the direction of just dropping the functi=
+onality
+> > of parsing said "old" sched_debug files. Clark said that this may make =
+some
+> > people upset though :P
 > >=20
 >=20
-> No, I really don't like that we have it there in the main Makefile.=20
-> Unfortunately we can't push it to the packaging phase since it
-> affects things generated at compilation time.=C2=A0
+> I agree that's the "easiest" path, but I think we may want to poll the
+> community to see if there's someone running an application on a 3.x or
+> earlier kernel and has a need for stalld.=20
 >=20
-> Perhaps we need to have a Makefile variable that identifies a
-> "distro" and triggers inclusion of a Makefile.<distro> that modifies
-> the appropriate flags?  I know it's ugly but I'd like to give other
-> folks (suse, cannonical, etc) a way to tweak the build.  We could
-> default the variable to "redhat" and have a block that includes
-> Makefile.redhat to modify the CFLAGS appropriately.=C2=A0
+> We can bump this around a bit and if no one raises their hand, we'll
+> drop the old format.
 
-Why can't the specfile build phase pass in the cflags it wants to add
-(after fixing the makefile so that it appends to cflags rather than
-replacing it)?
+s/3.x/pre-4.14/
 
-Ideally upstream shouldn't have to know about specific distros at all...
+But is the task format really the issue here?  This patch is addressing
+issues with BPF and compiler flags.
 
 -Crystal
 
