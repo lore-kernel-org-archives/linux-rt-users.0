@@ -1,57 +1,57 @@
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id DBB2D1F584C
-	for <linux-rt-users@vger.kernel.org>; Tue, 21 Oct 2025 16:27:38 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id BFB4734A789
+	for <linux-rt-users@vger.kernel.org>; Tue, 21 Oct 2025 16:33:54 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1761064060; cv=none; b=accbl9rBpTH8ztsYni8PzYSpQnydl8DtX/Y0RGXrinvJjs8vWHJ9u8PX9DOu0XHzZiCYegPrKOvt5gedDN/4FvMzKSab46wGP77I0E2GO0Yfw6ct3lzB7Nd4g75oEGPERNX/Rnf2w/go6JJebnm+IKvB6AqrmKi9SyX2OKCjmzw=
+	t=1761064436; cv=none; b=RNK/LM6cYa6ySODwqsU9mNwfItfHV2siwOttcHnSaiitrAiLs8bsDSMD3xQaVBGrxdNac8UWbxd+Vi5zqPmqEinsXC0MXVD508wk8bJ/+h+IoBjLWgq8g9t3wpx5ZZ8mI1GIaPm20X4lEJNzPvzLqqyhlVbQqwMYXB1OPgP4+X4=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1761064060; c=relaxed/simple;
-	bh=bz9LmyHuXzCxAaCNcSxn7N8X0LTJ1yp/mD5iFQ0YRlY=;
+	s=arc-20240116; t=1761064436; c=relaxed/simple;
+	bh=Kn5N3/W+7sPHn5aJWBGKNADcWsHSSmX1dT88eUS8FVU=;
 	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 Content-Type:Content-Disposition:In-Reply-To; b=Ut8KwIA0pd7Y4kYbc20xtjn3ZBBF69eCofvj8zY7GoL7HVwR4/Ye7eMO8SlGmMerUpLRmkEuY9jdt4We4BU6vZV/ySP1CSWjEFKuGsLnSZCAfHeKnZYwuwZkW9wka6v7St82ny8NvPuoE+SFw8sFvT61udt7k0PNnmzlQhgorB8=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=IjNicEqq; arc=none smtp.client-ip=170.10.133.124
+	 Content-Type:Content-Disposition:In-Reply-To; b=lFbIcl2nqFw0lq0ff6jTH8oDOvO6MWrcfkZ3ILfJ6lUK/N0scz8FGomXKlAYPw/26NMB4rmJolERjIxIhyyzIXKAk7cUDipuTbXog1VXqI4BBcqWbJI0ECoZ0jKKx+6k2fTDVA7N7zg/sQKTdJTQjJnnzBMI/mDtZSpf+QsyISk=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=KV9410+P; arc=none smtp.client-ip=170.10.133.124
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="IjNicEqq"
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="KV9410+P"
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1761064057;
+	s=mimecast20190719; t=1761064433;
 	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
 	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
 	 in-reply-to:in-reply-to:references:references;
-	bh=tlCUriKCfY2uY6YWDYqkAe5/DUGRpvq7Ae65qFPf1ho=;
-	b=IjNicEqqrd1rdDDpLC7f2aan+H7n2J126ZSfd/ega7nFC1yLxrDYcqIOeBVGCqR3qe3n2R
-	+Hw8NDjAhDvIRHB+OcuiLi/ccHzOO4kax00LJz52KmHJNVdlGfEuCYmDdEpTJ/Cth/g7jT
-	2mT827OV6DkRvk35dU73M9U5c0l/wnQ=
-Received: from mx-prod-mc-04.mail-002.prod.us-west-2.aws.redhat.com
+	bh=/LaJ3yf2DN9SiSQ0IqR7+Hoamcn53+rasZx8id1bQE4=;
+	b=KV9410+P5B7umirk/cO0GG6uH43byYCePuuUNOaXl7zZOA3tQSEFUF7XhLkny6Qj1pCDkp
+	BPKiM24o0o8V5xPX9xda0dZ7q+EWl1iAZaBUqUAFxtPCdawnae2s+OZEYwPTnGK4cepIS7
+	uU9DYKekNsd10w/TLx59bdSRgzLNl1Q=
+Received: from mx-prod-mc-03.mail-002.prod.us-west-2.aws.redhat.com
  (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
  relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-442-lFdTF0cPPYqTaSF932b54Q-1; Tue,
- 21 Oct 2025 12:27:34 -0400
-X-MC-Unique: lFdTF0cPPYqTaSF932b54Q-1
-X-Mimecast-MFC-AGG-ID: lFdTF0cPPYqTaSF932b54Q_1761064053
-Received: from mx-prod-int-03.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-03.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.12])
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-564-PWWbETyaP8ucsfl_U0QpaA-1; Tue,
+ 21 Oct 2025 12:33:48 -0400
+X-MC-Unique: PWWbETyaP8ucsfl_U0QpaA-1
+X-Mimecast-MFC-AGG-ID: PWWbETyaP8ucsfl_U0QpaA_1761064427
+Received: from mx-prod-int-05.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-05.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.17])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
 	(No client certificate requested)
-	by mx-prod-mc-04.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id AA93219560AD;
-	Tue, 21 Oct 2025 16:27:32 +0000 (UTC)
+	by mx-prod-mc-03.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 1A49D1956059;
+	Tue, 21 Oct 2025 16:33:47 +0000 (UTC)
 Received: from wcosta-thinkpadt14gen4.rmtbr.csb (unknown [10.22.80.189])
-	by mx-prod-int-03.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with SMTP id 9486019560A2;
-	Tue, 21 Oct 2025 16:27:28 +0000 (UTC)
-Date: Tue, 21 Oct 2025 13:27:26 -0300
+	by mx-prod-int-05.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with SMTP id 5A8721955F22;
+	Tue, 21 Oct 2025 16:33:42 +0000 (UTC)
+Date: Tue, 21 Oct 2025 13:33:40 -0300
 From: Wander Lairson Costa <wander@redhat.com>
 To: Clark Williams <clrkwllms@kernel.org>
 Cc: linux-rt-users@vger.kernel.org, Clark Williams <williams@redhat.com>, 
 	Claude <noreply@anthropic.com>, debarbos@redhat.com, marco.chiappero@suse.com, 
 	chris.friesen@windriver.com, luochunsheng@ustc.edu
-Subject: Re: [PATCH 07/12] stalld.c: Add starvation logging in
- single-threaded log-only mode
-Message-ID: <if6nj64pqe6mysbhrkpruf7c3uqe2fbonfepy74wligxp4cveu@gugej5ue2b76>
+Subject: Re: [PATCH 08/12] stalld: Add -N/--no_idle_detect flag to disable
+ idle detection
+Message-ID: <akknqsqj7xhctb3tecrvbe6m3debu2hjxyez4dn3dktem5adnk@ggxn4b4qqi7t>
 References: <20251017022444.118802-1-clrkwllms@kernel.org>
- <20251017022444.118802-7-clrkwllms@kernel.org>
+ <20251017022444.118802-8-clrkwllms@kernel.org>
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
@@ -60,31 +60,32 @@ List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Content-Disposition: inline
-In-Reply-To: <20251017022444.118802-7-clrkwllms@kernel.org>
-X-Scanned-By: MIMEDefang 3.0 on 10.30.177.12
+In-Reply-To: <20251017022444.118802-8-clrkwllms@kernel.org>
+X-Scanned-By: MIMEDefang 3.0 on 10.30.177.17
 
-On Thu, Oct 16, 2025 at 09:24:39PM -0500, Clark Williams wrote:
+On Thu, Oct 16, 2025 at 09:24:40PM -0500, Clark Williams wrote:
 > From: Clark Williams <williams@redhat.com>
 > 
-> In single-threaded mode with -l/--log_only flag, stalld was not logging
-> the "starved" message when tasks reached the starvation threshold. This
-> was because the config_log_only check occurred before any logging, and
-> the "starved" message (present in check_starving_tasks() for per-CPU
-> threading modes) was missing from boost_cpu_starving_vector().
+> Idle detection is an optimization that skips parsing CPUs that have
+> increasing idle time. However, this causes issues in controlled test
+> environments where the starvation generator may not prevent CPUs from
+> appearing idle.
 > 
-> This caused test_log_only.sh to fail when looking for the "starved"
-> message in the log output.
+> The new flag allows disabling this optimization for:
+> - Testing scenarios where CPUs need to be monitored regardless of idle state
+> - Debugging starvation detection issues
+> - Ensuring all CPUs are always checked
 > 
-> Changes to boost_cpu_starving_vector():
-> - Move config_log_only check after starvation detection
-> - Add log_msg() call to output "starved" message when threshold reached
-> - Reset timestamp (cpu->since) in log-only mode to prevent continuous
->   logging of the same starvation event
-> - Change threshold comparison from <= to < for consistency with
->   check_starving_tasks()
+> Usage: stalld -N or --no_idle_detect
 > 
-> This ensures consistent logging behavior between single-threaded mode
-> and per-CPU threading modes when using log-only mode.
+> Implementation:
+> - Added -N option to getopt_long short options
+> - Added no_idle_detect to long_options array
+> - Sets config_idle_detection = 0 when specified
+> - Added help text: "disable idle CPU detection optimization (for testing)"
+> 
+> The config_idle_detection variable already exists and is checked
+> throughout the code, so no other changes are needed.
 > 
 > ???? Generated with [Claude Code](https://claude.com/claude-code)
 > 
@@ -92,44 +93,52 @@ On Thu, Oct 16, 2025 at 09:24:39PM -0500, Clark Williams wrote:
 > Signed-off-by: Clark Williams <clrkwllms@kernel.org>
 > Signed-off-by: Clark Williams <williams@redhat.com>
 > ---
->  src/stalld.c | 16 +++++++++++++---
->  1 file changed, 13 insertions(+), 3 deletions(-)
+>  src/utils.c | 8 +++++++-
+>  1 file changed, 7 insertions(+), 1 deletion(-)
 > 
-> diff --git a/src/stalld.c b/src/stalld.c
-> index 6adc3e9a8cea..ebca23105ce9 100644
-> --- a/src/stalld.c
-> +++ b/src/stalld.c
-> @@ -924,12 +924,22 @@ int boost_cpu_starving_vector(struct cpu_starving_task_info *vector, int nr_cpus
->  			log_verbose("\t cpu %d: pid: %d starving for %llu\n",
->  				    i, cpu->pid, (now - cpu->since));
+> diff --git a/src/utils.c b/src/utils.c
+> index 91c99c0a1270..8f1fe9266db9 100644
+> --- a/src/utils.c
+> +++ b/src/utils.c
+> @@ -767,6 +767,7 @@ static void print_usage(void)
+>  		"                               starving_threshold time, dispatch a specialized thread to monitor",
+>  		"                               it.",
+>  		"	   -O/--power_mode: works as a single threaded tool. Saves CPU, but loses precision.",
+> +		"	   -N/--no_idle_detect: disable idle CPU detection optimization (for testing)",
+>  		"	   -g/--granularity: set the granularity at which stalld checks for starving threads",
+>  		"	   -R/--reservation: percentage of CPU time reserved to stalld using SCHED_DEADLINE.",
+>  		"	   -a/--affinity: limit stalld's affinity",
+> @@ -996,6 +997,7 @@ int parse_args(int argc, char **argv)
+>  			{"aggressive_mode",	no_argument,	   0, 'A'},
+>  			{"power_mode",		no_argument,	   0, 'O'},
+>  			{"adaptive_mode",	no_argument,	   0, 'M'},
+> +			{"no_idle_detect",	no_argument,	   0, 'N'},
+>  			{"help",		no_argument,	   0, 'h'},
+>  			{"boost_period",	required_argument, 0, 'p'},
+>  			{"boost_runtime",	required_argument, 0, 'r'},
+> @@ -1017,7 +1019,7 @@ int parse_args(int argc, char **argv)
+>  		/* getopt_long stores the option index here. */
+>  		int option_index = 0;
 >  
-> -		if (config_log_only)
-> +		/* Skip if no task or not starving long enough */
-> +		if (cpu->pid == 0 || (now - cpu->since) < config_starving_threshold)
->  			continue;
+> -		c = getopt_long(argc, argv, "lvkfAOMhsp:r:d:t:c:FVSg:i:I:R:b:a:",
+> +		c = getopt_long(argc, argv, "lvkfAOMNhsp:r:d:t:c:FVSg:i:I:R:b:a:",
+>  				 long_options, &option_index);
 >  
-> -		/* Skip if no task or not starving long enough */
-> -		if (cpu->pid == 0 || (now - cpu->since) <= config_starving_threshold)
-> +		/* Log when task has reached starvation threshold */
-> +		if ((now - cpu->since) >= config_starving_threshold) {
-
-Is this "if" necessary? It wouldn't reach this point if the condition is
-false, would it?
-
-> +			log_msg("%s-%d starved on CPU %d for %d seconds\n",
-> +				cpu->task.comm, cpu->pid, i,
-> +				(now - cpu->since));
-> +		}
-> +
-> +		if (config_log_only) {
-> +			/* Reset timestamp to avoid continuous logging */
-> +			cpu->since = now;
->  			continue;
-> +		}
->  
->  		/* Skip if task is on denylist */
->  		if (config_ignore && !check_task_ignore(&cpu->task))
+>  		/* Detect the end of the options. */
+> @@ -1138,6 +1140,10 @@ int parse_args(int argc, char **argv)
+>  			config_single_threaded = 0;
+>  			config_aggressive = 0;
+>  			break;
+> +		case 'N':
+> +			config_idle_detection = 0;
+> +			log_msg("idle detection disabled\n");
+> +			break;
+>  		case 'R':
+>  			config_reservation = get_long_from_str(optarg);
+>  			if (config_reservation < 10 || config_reservation > 90)
 > -- 
 > 2.51.0
 > 
+
+Reviewed-by: Wander Lairson Costa <wander@redhat.com>
 
