@@ -1,57 +1,57 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 5FE6023AE9A
-	for <linux-rt-users@vger.kernel.org>; Tue, 21 Oct 2025 16:01:45 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 930EB336ECD
+	for <linux-rt-users@vger.kernel.org>; Tue, 21 Oct 2025 16:03:14 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1761062507; cv=none; b=mFh2LpMPeesZNdo6RwjyavRW36SekTuGRiU5wxWZes+huYHNjsqnSi5XyZwZMz5wjkLpBfwjtzBKrK5PJM819+r32m2XfrSBgO2a6CPh15imdGQQh/mFSTEJewBv6snTmYSoMA248Qp4HyxPoz2uRl5OHg11oyw4WhuEzextBCw=
+	t=1761062596; cv=none; b=Gc3c9jO1sP+z5Tp3QA6rRaWgV1hKhLnM0QyV4l2xjgxQ7vBDghO9VNPye/a2zP2UzZ32sZC6SE6IipjdlQ5KwxGCR3ZXfPynEViWcXcHjHxCAXw8u9nIDqkYx/6OIhPFMe9Bl19yTGzDtyBg4Ebkt0AuDGApSMZHEtPFsTTfPzk=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1761062507; c=relaxed/simple;
-	bh=rgbpyEo9yesEYS317IDBebT1raLV8o1R74Gy5nN4vq4=;
+	s=arc-20240116; t=1761062596; c=relaxed/simple;
+	bh=DUiHd7WOVgjrQHcLG2v4uduReZaUC++jeAPsU/3uabU=;
 	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 Content-Type:Content-Disposition:In-Reply-To; b=JWWMOnnw2t5/1l8cp+Lh/Vyyp4xMmSGdItxPY0fgNd5m40/lrhbpucC7HHtWhnhsSkEDqjgpcrVJJ0UvuDnu7Uz481XXkYgFQzDhXxumRA6FHoIgTTpy8whMaSGFcfSFbYhJJFhlnckfZjvvhk3FVMrXJiHxVXpyd5q5E3eZJIY=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=ItoUVL5Y; arc=none smtp.client-ip=170.10.129.124
+	 Content-Type:Content-Disposition:In-Reply-To; b=j79mipAsZu9NY6ug+k972IrbVsQ0Z+MX+Q1nVKnixLLn/M2B8tKc/muFJtPO+Jhqyyno3+CXX7W+CijQPLQDkpLEJwnrDo+BeF0PIpRQgMelTV7G3bJS/2TDUfNVyOVLxXpWSWCI0j8tZmlS+EE9FnT3PEbwqYIvtBsqBOM93wQ=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=HzfNaQW2; arc=none smtp.client-ip=170.10.133.124
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="ItoUVL5Y"
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="HzfNaQW2"
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1761062504;
+	s=mimecast20190719; t=1761062593;
 	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
 	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
 	 in-reply-to:in-reply-to:references:references;
-	bh=6H4lFQIk2GUxhWy2FavpB0N+OJc57BACchLCrA27a1U=;
-	b=ItoUVL5Y1oLDgwf0Rt3yG3bfo7BnJj+C1LFeY4HeF4uYmUnE8iq+j973vFv4OGiuWC568D
-	wnd5gMgR542blqFjqx85B24GSDm+vu8T7XLIcSyMNBF9SS4zSQRR6KRU302mACe+QlBhcf
-	X4AXt3E05KLU5agMYYZOwr9JNWy9MfM=
+	bh=yxIpov8q1HQM1HQXX7X1TYx+Q25FjidiuS5xFKVp8F8=;
+	b=HzfNaQW2DsISxU40myG6b5FXr8BvrRsZmBBVQDbSF0hf07wPKe7vjKTl+m0Tp7jkveetfl
+	0BUTW3GCe88U3OgD01uo9nZeEIywI02fRP7TsWcHxLofckY77xOfJ7H33SdITJU5xotT3+
+	IhNO0hvyPAebbxtEOei0pRVsNGdAj8k=
 Received: from mx-prod-mc-03.mail-002.prod.us-west-2.aws.redhat.com
  (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
  relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-81-lxSJ0cpBPna8JeQLVcT6ww-1; Tue,
- 21 Oct 2025 12:01:41 -0400
-X-MC-Unique: lxSJ0cpBPna8JeQLVcT6ww-1
-X-Mimecast-MFC-AGG-ID: lxSJ0cpBPna8JeQLVcT6ww_1761062500
-Received: from mx-prod-int-08.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-08.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.111])
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-150-Y_k5VKMXPAaI1pZCfNqPTQ-1; Tue,
+ 21 Oct 2025 12:03:10 -0400
+X-MC-Unique: Y_k5VKMXPAaI1pZCfNqPTQ-1
+X-Mimecast-MFC-AGG-ID: Y_k5VKMXPAaI1pZCfNqPTQ_1761062589
+Received: from mx-prod-int-03.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-03.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.12])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
 	(No client certificate requested)
-	by mx-prod-mc-03.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id A823B195605C;
-	Tue, 21 Oct 2025 16:01:39 +0000 (UTC)
+	by mx-prod-mc-03.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 946271956048;
+	Tue, 21 Oct 2025 16:03:08 +0000 (UTC)
 Received: from wcosta-thinkpadt14gen4.rmtbr.csb (unknown [10.22.80.189])
-	by mx-prod-int-08.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with SMTP id EAE901800577;
-	Tue, 21 Oct 2025 16:01:35 +0000 (UTC)
-Date: Tue, 21 Oct 2025 13:01:34 -0300
+	by mx-prod-int-03.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with SMTP id 19FA119560A2;
+	Tue, 21 Oct 2025 16:03:04 +0000 (UTC)
+Date: Tue, 21 Oct 2025 13:03:03 -0300
 From: Wander Lairson Costa <wander@redhat.com>
 To: Clark Williams <clrkwllms@kernel.org>
 Cc: linux-rt-users@vger.kernel.org, Clark Williams <williams@redhat.com>, 
-	Claude <noreply@anthropic.com>, debarbos@redhat.com, marco.chiappero@suse.com, 
-	chris.friesen@windriver.com, luochunsheng@ustc.edu
-Subject: Re: [PATCH 03/12] sched_debug: Fix double-free crash in
- fill_waiting_task()
-Message-ID: <67xq4zr7dr6d5k362dcmalwlxjcvtljcowx6eah5q4e57enyid@z4atth7l454r>
+	debarbos@redhat.com, marco.chiappero@suse.com, chris.friesen@windriver.com, 
+	luochunsheng@ustc.edu
+Subject: Re: [PATCH 04/12] stalld.c: remove noisy idle report and added
+ report to should_skip_idle_cpus()
+Message-ID: <xhlnvoxitqi4bw5bxlw3yiae5ac3nje2xu5x7mw4qzqag2ghv3@7qdwlfxutzho>
 References: <20251017022444.118802-1-clrkwllms@kernel.org>
- <20251017022444.118802-3-clrkwllms@kernel.org>
+ <20251017022444.118802-4-clrkwllms@kernel.org>
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
@@ -60,88 +60,55 @@ List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Content-Disposition: inline
-In-Reply-To: <20251017022444.118802-3-clrkwllms@kernel.org>
-X-Scanned-By: MIMEDefang 3.4.1 on 10.30.177.111
+In-Reply-To: <20251017022444.118802-4-clrkwllms@kernel.org>
+X-Scanned-By: MIMEDefang 3.0 on 10.30.177.12
 
-On Thu, Oct 16, 2025 at 09:24:35PM -0500, Clark Williams wrote:
+On Thu, Oct 16, 2025 at 09:24:36PM -0500, Clark Williams wrote:
 > From: Clark Williams <williams@redhat.com>
 > 
-> Fix a critical double-free bug that occurs when fill_waiting_task()
-> returns early without allocating new memory for cpu_info->starving.
+> comment out the log_verbose() call in get_cpu_busy_list(), since
+> it's not helpful for production and chews up a lot of screen real-
+> estate when running tests. Added a report in should_skip_idle_cpus()
+> which reports that there were busy cpus and that a run-queue parse
+> will be done.
 > 
-> Root cause:
-> In sched_debug_parse(), the code saves old_tasks = cpu_info->starving,
-> then calls fill_waiting_task(). If fill_waiting_task() returns early
-> (nr_entries <= 0 or cpu_info == NULL), it doesn't allocate new memory
-> or update cpu_info->starving. This leaves cpu_info->starving pointing
-> to the old memory. When the code later frees old_tasks, it's freeing
-> the same memory that cpu_info->starving still points to. On the next
-> iteration, old_tasks again points to this already-freed memory, causing
-> a double-free crash.
-> 
-> Example crash sequence:
-> 1. First parse: cpu_info->starving = malloc(memory A)
-> 2. Second parse: old_tasks = memory A
->                  nr_entries = 5, so cpu_info->starving = malloc(memory B)
->                  free(old_tasks) ??? frees memory A
-> 3. Third parse:  old_tasks = memory B
->                  nr_entries = 0, so fill_waiting_task() returns early
->                  cpu_info->starving still points to memory B
->                  free(old_tasks) ??? frees memory B
-> 4. Fourth parse: old_tasks = memory B (already freed!)
->                  nr_entries > 0, so cpu_info->starving = malloc(memory C)
->                  free(old_tasks) ??? DOUBLE FREE of memory B ??? CRASH
-> 
-> The fix:
-> Explicitly set cpu_info->starving = NULL in fill_waiting_task() when
-> returning early without allocation. This ensures that cpu_info->starving
-> never points to freed memory, preventing the double-free.
-> 
-> Impact:
-> - Prevents random crashes in sched_debug backend
-> - Enables stable operation with varying numbers of runnable tasks
-> - Critical for test suite reliability
-> 
-> Testing:
-> - Verified no crash with: sudo stalld -f -v -N -b sched_debug -t 3 -c 0 -l
-> - Runs stably for extended periods without crashes
-> 
-> ???? Generated with [Claude Code](https://claude.com/claude-code)
-> 
-> Co-Authored-By: Claude <noreply@anthropic.com>
 > Signed-off-by: Clark Williams <clrkwllms@kernel.org>
 > Signed-off-by: Clark Williams <williams@redhat.com>
 > ---
->  src/sched_debug.c | 5 ++++-
->  1 file changed, 4 insertions(+), 1 deletion(-)
+>  src/stalld.c | 9 +++++----
+>  1 file changed, 5 insertions(+), 4 deletions(-)
 > 
-> diff --git a/src/sched_debug.c b/src/sched_debug.c
-> index 04a12ef2a7c2..102a4e02d57d 100644
-> --- a/src/sched_debug.c
-> +++ b/src/sched_debug.c
-> @@ -525,6 +525,7 @@ static int fill_waiting_task(char *buffer, struct cpu_info *cpu_info)
+> diff --git a/src/stalld.c b/src/stalld.c
+> index 4c00158cf239..e8c927750ee0 100644
+> --- a/src/stalld.c
+> +++ b/src/stalld.c
+> @@ -289,9 +289,10 @@ int get_cpu_busy_list(struct cpu_info *cpus, int nr_cpus, char *busy_cpu_list)
+>  			continue;
+>  		}
 >  
->  	if (cpu_info == NULL) {
->  		warn("NULL cpu_info pointer!\n");
-> +		cpu_info->starving = NULL;
->  		return 0;
+> -		log_verbose ("\t cpu %d had %ld idle time, and now has %ld\n",
+> -			     cpu->id, cpu->idle_time, idle_time);
+> -
+> +		/*
+> +		 * log_verbose ("\t cpu %d had %ld idle time, and now has %ld\n",
+> +		 *	     cpu->id, cpu->idle_time, idle_time);
+> +		 */
+
+Any particular reason of this code is commented out instead of deleted?
+
+>  		/* If the idle time did not change, the CPU is busy. */
+>  		if (cpu->idle_time == idle_time) {
+>  			busy_cpu_list[i] = 1;
+> @@ -795,7 +796,7 @@ static int should_skip_idle_cpus(struct cpu_info *cpus, int nr_cpus, char *busy_
+>  		log_verbose("all CPUs had idle time, skipping parse\n");
+>  		return 1;
 >  	}
+> -
+> +	log_verbose("some cpus ran, so run-queues should be parsed\n");
+>  	return 0;
+>  }
 >  
-> @@ -533,8 +534,10 @@ static int fill_waiting_task(char *buffer, struct cpu_info *cpu_info)
->  	else
->  		nr_entries = cpu_info->nr_running;
->  
-> -	if (nr_entries <= 0)
-> +	if (nr_entries <= 0) {
-> +		cpu_info->starving = NULL;
->  		return 0;
-> +	}
->  
->  	cpu_info->starving = malloc(sizeof(struct task_info) * nr_entries);
->  	if (cpu_info->starving == NULL) {
 > -- 
 > 2.51.0
 > 
-
-Reviewed-by: Wander Lairson Costa <wander@redhat.com>
 
