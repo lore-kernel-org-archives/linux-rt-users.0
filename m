@@ -1,95 +1,110 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 5CD323376A3
-	for <linux-rt-users@vger.kernel.org>; Fri, 24 Oct 2025 17:21:29 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 62C82A932
+	for <linux-rt-users@vger.kernel.org>; Sat, 25 Oct 2025 00:11:11 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1761326492; cv=none; b=XjwmB5wH5i3m0PxJn6mMf5EzSHx7ZyhxLzw8dZL8ZC+wH5qlH3QGOziRJxkCYbhjTgNf1uoMxigRWWztANP5wtFNJqbKNVks9N2z0BPIKJ/as5ry0tlceZWK/ndrrECe2iYqDHG4K8uAThpaxE7avMLDYw1qq9+zGzO9W+uBoDk=
+	t=1761351071; cv=none; b=Sg0CNrK8cBaHy/9XybosJcHmCFHOLDlKnJtWNd+BnyrS74byGicd5VVUebFLCZ0VD72oLkbWJHxv90rOe/QiCQcmf65FEaGHpg8W/4B9vlAhlDTClzN8nTSdY0R52yPTtlQmKhY10v5rG2kBih5/ZHwgLiDhbw/aMNTJ4lqshGc=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1761326492; c=relaxed/simple;
-	bh=KeQ0llUrLakiZgGmt1FXxxVndxioYSN+nam300wv7d4=;
-	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=gIEWIvSSpbnjr4dYMQHztZtBhgX08Su9oce1sAhdoxjGo2dSGE2H6vNqWxeEtgeO33mJ5+0ZCE0GhsyCJKpGNETOW32syfQpRqp1DOEINKjr/9b0SF/nbJjvWIPsG16yRv7zw+OBMi/1DUcbrPBJK1Gdd3gr8Ut0Lrxmr2gQCLY=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=XbC4bl3d; arc=none smtp.client-ip=170.10.133.124
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
+	s=arc-20240116; t=1761351071; c=relaxed/simple;
+	bh=2uzTksFKLng+I8qyVmcXHlserGe/faTCzrVIh0VfXsU=;
+	h=Date:From:To:Cc:Subject:Message-ID:MIME-Version:Content-Type:
+	 Content-Disposition; b=nrbAg2Fb/DvPkLpqQq0Dfwsq0DaUsWQ7oF9tl9mm318VnKGcy0UCGI9jcg/UTRExcG4qBlLLVmo5o3u1gw/NQUJqfImGojRIJzUjMfRJeyZ0qBnBc510lTcSyglxW6g6dryOozCufg1yvfM0FNZ5JKDh24TVhIsDq3+P6RYAKx4=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=VIGJwrKb; arc=none smtp.client-ip=10.30.226.201
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="XbC4bl3d"
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1761326489;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:
-	 content-transfer-encoding:content-transfer-encoding;
-	bh=pRibkXI6v4iemd0ZTuRi2aRRXoJJ1WIhylW74J+PURY=;
-	b=XbC4bl3d4t7k5SYJ2IAa1zeVAm0bKWU+p+ChvgQEiX+GlwUr81rXqlY2AyUV+GgjShkLoq
-	/Kk3+oxu9jeLPjpzdD7P65yvkWQIbzIQJzjZcA87QG2hfOE0OffMdCtTb61nwGfiuAkHmK
-	MjaRWU4KMinNEVVcN/8OgTmjHYk938I=
-Received: from mx-prod-mc-08.mail-002.prod.us-west-2.aws.redhat.com
- (ec2-35-165-154-97.us-west-2.compute.amazonaws.com [35.165.154.97]) by
- relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-490-ufPkrC3zOtSaHcSyZi48KQ-1; Fri,
- 24 Oct 2025 13:21:27 -0400
-X-MC-Unique: ufPkrC3zOtSaHcSyZi48KQ-1
-X-Mimecast-MFC-AGG-ID: ufPkrC3zOtSaHcSyZi48KQ_1761326486
-Received: from mx-prod-int-05.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-05.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.17])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
-	(No client certificate requested)
-	by mx-prod-mc-08.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 7CF911800345;
-	Fri, 24 Oct 2025 17:21:26 +0000 (UTC)
-Received: from wcosta-thinkpadt14gen4.rmtbr.csb (unknown [10.22.88.4])
-	by mx-prod-int-05.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTP id 335C1195398C;
-	Fri, 24 Oct 2025 17:21:22 +0000 (UTC)
-From: Wander Lairson Costa <wander@redhat.com>
-To: williams@redhat.com
-Cc: linux-rt-users@vger.kernel.org,
-	Wander Lairson Costa <wander@redhat.com>,
-	Derek Barbosa <debarbos@redhat.com>,
-	John Kacur <jkacur@redhat.com>,
-	Juri Lelli <juri.lelli@redhat.com>,
-	Chunsheng Luo <luochunsheng@ustc.edu>
-Subject: [PATCH] Makefile: Make BPF compilation verbose
-Date: Fri, 24 Oct 2025 14:21:15 -0300
-Message-ID: <20251024172115.73224-1-wander@redhat.com>
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="VIGJwrKb"
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id 16B41C4CEF1;
+	Sat, 25 Oct 2025 00:11:11 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
+	s=k20201202; t=1761351071;
+	bh=2uzTksFKLng+I8qyVmcXHlserGe/faTCzrVIh0VfXsU=;
+	h=Date:From:To:Cc:Subject:From;
+	b=VIGJwrKbSW6VlzdFySR4fUFwx6YQ7YgrEjYeEF0hxKxVFMdfZ+ZlyQjtt0GqEX4BM
+	 4suXjo08gUhLd65K99Zz2yqptmH/hZlHGAizvsf8kEkY5nDcqYD0priRcxObUV016H
+	 d2iZcrkjHWH2uKtKEs8xa+vPcx+JU7vkXS4uaVQWxzcVbyKqI2z/MnqFfMLBXrO/0V
+	 A5LAROKYxADDRFQchnxqVn5likVZHY0sFc3jkHKJiJUg5so2IM+GpA6ytUMlcFEMml
+	 POGaX0ezoUeyqrjCqse2wpCRC2Jup/RU3mxYirV5QxSkqM/Le6IVGQSDMgCS4bLBk6
+	 3SWcuRyq8znag==
+Date: Fri, 24 Oct 2025 19:11:09 -0500
+From: Clark Williams <clrkwllms@kernel.org>
+To: linux-rt-users@vger.kernel.org
+Cc: wander@redhat.com, debarbos@redhat.com, marco.chiappero@suse.com,
+	chris.friesen@windriver.com, luochunsheng@ustc.edu,
+	clrkwllms@kernel.org
+Subject: stalld version v1.24.1 released
+Message-ID: <aPwVnSoca8rS3Y-a@lysander>
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
 List-Subscribe: <mailto:linux-rt-users+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
-X-Scanned-By: MIMEDefang 3.0 on 10.30.177.17
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
 
-Remove the '@' prefix from the CLANG and LLVM_STRIP commands in the
-Makefile. This makes the build system print the commands to the console
-during the BPF compilation process. This increased verbosity is useful
-for debugging build issues.
+marco.chiappero@suse.com,chris.friesen@windriver.com,luochunsheng@ustc.edu,clrkwllms@kernel.org
+Subject: stalld version v1.24.1 released
 
-Signed-off-by: Wander Lairson Costa <wander@redhat.com>
-Cc: Derek Barbosa <debarbos@redhat.com>
-Cc: John Kacur <jkacur@redhat.com>
-Cc: Juri Lelli <juri.lelli@redhat.com>
-Cc: Chunsheng Luo <luochunsheng@ustc.edu>
----
- Makefile | 4 ++--
- 1 file changed, 2 insertions(+), 2 deletions(-)
+Hello RT users,
 
-diff --git a/Makefile b/Makefile
-index 7234a46..0b1ad6d 100644
---- a/Makefile
-+++ b/Makefile
-@@ -154,9 +154,9 @@ bpf/vmlinux.h:
- # The .bpf.c needs to be transformed into the .bpf.o.
- # The .bpf.o is then required to build the .skel.h.
- bpf/stalld.bpf.o: bpf/vmlinux.h bpf/stalld.bpf.c
--	@$(CLANG) -g -O2 -target bpf $(CLANGARCH) -DDEBUG_STALLD=$(DEBUG) -D__TARGET_ARCH_$(ARCH) \
-+	$(CLANG) -g -O2 -target bpf $(CLANGARCH) -DDEBUG_STALLD=$(DEBUG) -D__TARGET_ARCH_$(ARCH) \
- 		$(INCLUDES) $(CLANG_BPF_SYS_INCLUDES) -c $(filter %.c,$^) -o $@
--	@$(LLVM_STRIP) -g $@ # strip useless DWARF info
-+	$(LLVM_STRIP) -g $@ # strip useless DWARF info
- 
- # This is the second step: The .bpf.o object is translated into
- # a bytecode that is embedded into the .skel.h header.
+I just pushed the v1.24.1 update to stalld. This release has a few bug
+fixes and some minor tweaks for logging and building. You can find
+this update in the 'main' branch at:
+
+     https://git.kernel.org/pub/scm/utils/stalld/stalld.git/
+     https://github.com/clrkwllms/stalld
+     https://gitlab.com/rt-linux-tools/stalld
+
+Note that I consider the kernel.org tree as the gold standard. We keep
+copies at github and gitlab mainly so that people familiar with the
+PR/MR workflow style can submit changes. 
+
+Derek Barbosa, with advice from Crystal Wood, tweaked the Makefile so
+it wouldn't be so Red Hat-centric. We basically put all that in the
+package build step where the specfile overrides CFLAGS and
+LDFLAGS. There's now a help target in the Makefile and some compiler
+version checks that hopefully will help other builders.
+
+A segfault was found (and fixed) while running with the adaptive or
+aggressive mains (rather than the default single-threaded main).
+
+A new command line switch (-N/--no-idle-detect) was introduced to skip
+the idle detection step in a processing iteration, mainly for testing
+purposes but some of you might find it useful in production.
+
+Some defensive checks were added to print_boosted_info. There is a bit
+of debate on whether it's better to continue running or just crash
+right there. Stay tuned...
+
+I commented out a log message reported that idle detection had
+detected no activity and so nothing was starving. Got tired of seeing
+it in the log file.
+
+A double-free was avoided by setting the cpu_info->starving vector to
+NULL when it's been freed.
+
+We rewrote the sched_debug backend parser that pulls info from the
+debugfs file. The format changed in 6.12 and we missed that. We
+unified the parsers and hopefully we'll be a bit more change-proof
+there. Of course none of you saw this because you're all using the
+modern super-cool queue_track BPF backend, right?
+
+Finally I'm sure that you'll all noticed the notice in some of the
+commit messages that I used the Claude AI to analyze bits of this
+code. I've been working on a test-suite and using Claude to generate
+most of it. While running, the test suite found the segfault and the
+double free issues. So since I was already there with Claude, I
+figured it should get some credit.
+
+The test-suite isn't quite ready for prime time though, so I'll push a
+branch named 'test-devel' up to the git repos if you want to play with
+it, or even write some more tests!
+
+In any case, I hope this release will be useful to you. Have a nice
+day!
+
+Clark
 -- 
-2.51.0
-
+The United States Coast Guard
+Ruining Natural Selection since 1790
