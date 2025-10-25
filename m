@@ -1,110 +1,48 @@
 Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 62C82A932
-	for <linux-rt-users@vger.kernel.org>; Sat, 25 Oct 2025 00:11:11 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id D34B82FE07E;
+	Sat, 25 Oct 2025 19:41:21 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1761351071; cv=none; b=Sg0CNrK8cBaHy/9XybosJcHmCFHOLDlKnJtWNd+BnyrS74byGicd5VVUebFLCZ0VD72oLkbWJHxv90rOe/QiCQcmf65FEaGHpg8W/4B9vlAhlDTClzN8nTSdY0R52yPTtlQmKhY10v5rG2kBih5/ZHwgLiDhbw/aMNTJ4lqshGc=
+	t=1761421281; cv=none; b=Q+N6AQynF+K3axAWL2ZOnrob1/popZtc5goLMYM+1HD9jsxDXDLAdSHfzotsANbnK9hdpXQz9TeUJJt+iFkoIavG/XrdaKOOjdOs9JAYPeuRTFET2WDWsCPyZt4Vxx5UtEZ8b9omLnwuSWIFC/tl3IDfcB22OtqVMNQ2UWdJ2+o=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1761351071; c=relaxed/simple;
-	bh=2uzTksFKLng+I8qyVmcXHlserGe/faTCzrVIh0VfXsU=;
-	h=Date:From:To:Cc:Subject:Message-ID:MIME-Version:Content-Type:
-	 Content-Disposition; b=nrbAg2Fb/DvPkLpqQq0Dfwsq0DaUsWQ7oF9tl9mm318VnKGcy0UCGI9jcg/UTRExcG4qBlLLVmo5o3u1gw/NQUJqfImGojRIJzUjMfRJeyZ0qBnBc510lTcSyglxW6g6dryOozCufg1yvfM0FNZ5JKDh24TVhIsDq3+P6RYAKx4=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=VIGJwrKb; arc=none smtp.client-ip=10.30.226.201
-Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="VIGJwrKb"
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id 16B41C4CEF1;
-	Sat, 25 Oct 2025 00:11:11 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-	s=k20201202; t=1761351071;
-	bh=2uzTksFKLng+I8qyVmcXHlserGe/faTCzrVIh0VfXsU=;
-	h=Date:From:To:Cc:Subject:From;
-	b=VIGJwrKbSW6VlzdFySR4fUFwx6YQ7YgrEjYeEF0hxKxVFMdfZ+ZlyQjtt0GqEX4BM
-	 4suXjo08gUhLd65K99Zz2yqptmH/hZlHGAizvsf8kEkY5nDcqYD0priRcxObUV016H
-	 d2iZcrkjHWH2uKtKEs8xa+vPcx+JU7vkXS4uaVQWxzcVbyKqI2z/MnqFfMLBXrO/0V
-	 A5LAROKYxADDRFQchnxqVn5likVZHY0sFc3jkHKJiJUg5so2IM+GpA6ytUMlcFEMml
-	 POGaX0ezoUeyqrjCqse2wpCRC2Jup/RU3mxYirV5QxSkqM/Le6IVGQSDMgCS4bLBk6
-	 3SWcuRyq8znag==
-Date: Fri, 24 Oct 2025 19:11:09 -0500
-From: Clark Williams <clrkwllms@kernel.org>
-To: linux-rt-users@vger.kernel.org
-Cc: wander@redhat.com, debarbos@redhat.com, marco.chiappero@suse.com,
-	chris.friesen@windriver.com, luochunsheng@ustc.edu,
-	clrkwllms@kernel.org
-Subject: stalld version v1.24.1 released
-Message-ID: <aPwVnSoca8rS3Y-a@lysander>
+	s=arc-20240116; t=1761421281; c=relaxed/simple;
+	bh=NzaZ3CiiIeAU1eb/XFt80wUeJdtaS7tpvIIGtpHvaSg=;
+	h=From:Subject:Date:Message-ID:To; b=Bjngtjkr1nrFRdqmbbRhlrxuImF2qCeXH2Kf7Vq15dcKbdWwwFbbQPeHyP8purXykJwp/wn1wfCgOvqpNqJ1Hr/p5NjKGfsGq0VcSW/02dtGFTWZI+DnW3AuaFM+JaLSR4FGwnx9+2l7gInR7G/1oxW/7Cxg/PYMyOyP/5fOaZk=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id 5D953C4CEF5;
+	Sat, 25 Oct 2025 19:41:21 +0000 (UTC)
+From: Clark Williams <williams@redhat.com>
+Subject: [ANNOUNCE] 6.6.114-rt65
+Date: Sat, 25 Oct 2025 19:40:35 -0000
+Message-ID: <176142123504.2391680.9403530720672072172@demetrius>
+To: LKML <linux-kernel@vger.kernel.org>,linux-rt-users <linux-rt-users@vger.kernel.org>,Steven Rostedt <rostedt@goodmis.org>,Thomas Gleixner <tglx@linutronix.de>,Carsten Emde <C.Emde@osadl.org>,John Kacur <jkacur@redhat.com>,Sebastian Andrzej Siewior <bigeasy@linutronix.de>,Daniel Wagner <daniel.wagner@suse.com>,Tom Zanussi <tom.zanussi@linux.intel.com>,Clark Williams <williams@redhat.com>,Pavel Machek <pavel@denx.de>,Joseph Salisbury <joseph.salisbury@oracle.com>,Luis Claudio R. Goncalves <lgoncalv@redhat.com>,Stable RT List <stable-rt@vger.kernel.org>
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
 List-Subscribe: <mailto:linux-rt-users+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
-MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
 
-marco.chiappero@suse.com,chris.friesen@windriver.com,luochunsheng@ustc.edu,clrkwllms@kernel.org
-Subject: stalld version v1.24.1 released
+Hello RT-list!
 
-Hello RT users,
+I'm pleased to announce the 6.6.114-rt65 stable release.
 
-I just pushed the v1.24.1 update to stalld. This release has a few bug
-fixes and some minor tweaks for logging and building. You can find
-this update in the 'main' branch at:
+You can get this release via the git tree at:
 
-     https://git.kernel.org/pub/scm/utils/stalld/stalld.git/
-     https://github.com/clrkwllms/stalld
-     https://gitlab.com/rt-linux-tools/stalld
+  git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
 
-Note that I consider the kernel.org tree as the gold standard. We keep
-copies at github and gitlab mainly so that people familiar with the
-PR/MR workflow style can submit changes. 
+  branch: v6.6-rt
+  Head SHA1: 8730bff5e3fb6244ff05722adeb890c928444cca
 
-Derek Barbosa, with advice from Crystal Wood, tweaked the Makefile so
-it wouldn't be so Red Hat-centric. We basically put all that in the
-package build step where the specfile overrides CFLAGS and
-LDFLAGS. There's now a help target in the Makefile and some compiler
-version checks that hopefully will help other builders.
+Or to build 6.6.114-rt65 directly, the following patches should be applied:
 
-A segfault was found (and fixed) while running with the adaptive or
-aggressive mains (rather than the default single-threaded main).
+  https://www.kernel.org/pub/linux/kernel/v6.x/linux-6.6.tar.xz
 
-A new command line switch (-N/--no-idle-detect) was introduced to skip
-the idle detection step in a processing iteration, mainly for testing
-purposes but some of you might find it useful in production.
+  https://www.kernel.org/pub/linux/kernel/v6.x/patch-6.6.114.xz
 
-Some defensive checks were added to print_boosted_info. There is a bit
-of debate on whether it's better to continue running or just crash
-right there. Stay tuned...
+  https://www.kernel.org/pub/linux/kernel/projects/rt/6.6/patch-6.6.114-rt65.patch.xz
 
-I commented out a log message reported that idle detection had
-detected no activity and so nothing was starving. Got tired of seeing
-it in the log file.
 
-A double-free was avoided by setting the cpu_info->starving vector to
-NULL when it's been freed.
-
-We rewrote the sched_debug backend parser that pulls info from the
-debugfs file. The format changed in 6.12 and we missed that. We
-unified the parsers and hopefully we'll be a bit more change-proof
-there. Of course none of you saw this because you're all using the
-modern super-cool queue_track BPF backend, right?
-
-Finally I'm sure that you'll all noticed the notice in some of the
-commit messages that I used the Claude AI to analyze bits of this
-code. I've been working on a test-suite and using Claude to generate
-most of it. While running, the test suite found the segfault and the
-double free issues. So since I was already there with Claude, I
-figured it should get some credit.
-
-The test-suite isn't quite ready for prime time though, so I'll push a
-branch named 'test-devel' up to the git repos if you want to play with
-it, or even write some more tests!
-
-In any case, I hope this release will be useful to you. Have a nice
-day!
-
+Enjoy!
 Clark
--- 
-The United States Coast Guard
-Ruining Natural Selection since 1790
