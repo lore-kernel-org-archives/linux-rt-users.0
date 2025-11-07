@@ -1,71 +1,71 @@
-Received: from mail-qk1-f170.google.com (mail-qk1-f170.google.com [209.85.222.170])
+Received: from mail-qk1-f174.google.com (mail-qk1-f174.google.com [209.85.222.174])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 7356E33C515
-	for <linux-rt-users@vger.kernel.org>; Fri,  7 Nov 2025 18:58:13 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.222.170
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 7819C33C519
+	for <linux-rt-users@vger.kernel.org>; Fri,  7 Nov 2025 18:58:14 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.222.174
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1762541896; cv=none; b=jMTNfpVw7yT2XYgirLZwGg9E5+ctbeE0+DBikuu9IpPveoqmfQ0FQkuMbvwQZbXwDwLvpsrPjgiEVmS2oE8DbQcyEY4Kf+LXiph5+rKWdLTz/82v3cUMO4sjvbi9owDaNvVoGsr/VnObYVrvd36XWJP4ACuNyuWsMSAAmz3sPMA=
+	t=1762541896; cv=none; b=ZQ1BBAOZicK5c6t/W+s1Ew6vBt1ShR4ruvqNo5jqRuivEdQAs8XpfZ8MjfJ3sNjg6TiMVT8NpPV5TVbCIvYhHfEYOHSZu5jUjM2kJKDl8C0FM+AgZKxzZYnTa8Oz/MC0DOqUfwrJTGxhhwbN6Ul6ktZq0inNRX3dqoDRY8X8mYQ=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
 	s=arc-20240116; t=1762541896; c=relaxed/simple;
-	bh=dVaGdt447zQj+7d2mr3wqH4Arwue8/0TqOYlrCXrdpU=;
+	bh=L2N5BVVwBVt0wD4rztuPuzCGfDNXZBvocYuiwSH0/JY=;
 	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=KdezlhbTdTZejD+SEitTHwKOQawxt47xIlHHfvK7rE9x+Z1nkpM+sG15onf7Sc11WS1/MuUtRs5g3Y0D6FpJcFSPfzorG1v2Gz48Undfaiocj6zYUuX4X02/tLoU9bgepl/J5ht3HZ0cv8XBV5buRaCjDJuxxxvqa9sTxFoPduo=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=fail (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=kcCwY6jX; arc=none smtp.client-ip=209.85.222.170
+	 MIME-Version; b=ogn4ed7FBRgYVWVeYsgRZKVIr2swIxCeJXnLfklpNEtv8ZFPRieONy2cZ4FxcDn64cYIKu91+U8/UrhfOrOB7RWXy8Ya/JoQxam5Px0wC18QN0M7XV8cvlEPxovtgVDLqRhV9SJvjDXHorMm57GYtekBAaWaB5R7PCezRDmSrYU=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=fail (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=QJwOrNfr; arc=none smtp.client-ip=209.85.222.174
 Authentication-Results: smtp.subspace.kernel.org; dmarc=fail (p=quarantine dis=none) header.from=redhat.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="kcCwY6jX"
-Received: by mail-qk1-f170.google.com with SMTP id af79cd13be357-89ed2ee35bbso139647585a.3
-        for <linux-rt-users@vger.kernel.org>; Fri, 07 Nov 2025 10:58:13 -0800 (PST)
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="QJwOrNfr"
+Received: by mail-qk1-f174.google.com with SMTP id af79cd13be357-88f8f346c2cso102143685a.0
+        for <linux-rt-users@vger.kernel.org>; Fri, 07 Nov 2025 10:58:14 -0800 (PST)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1762541892; x=1763146692; darn=vger.kernel.org;
+        d=gmail.com; s=20230601; t=1762541893; x=1763146693; darn=vger.kernel.org;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:sender:from:to:cc:subject:date
          :message-id:reply-to;
-        bh=LcEgNpVUlJDsdIkCvzpyQGtJ1wFl33wBMT6wmAoMDkw=;
-        b=kcCwY6jXlHXzqYM7YuA1mKOWpV7bfXQUtC+fWN1DMZAYK5wo9IuFlzVwVPO/hiAg2p
-         LXrumhEy5+mjpTDDW7T8vLFgAeCI8OZ5fCIZAsdDStIR/X4lL7KwZvxQnsMABBm3e/v2
-         4dVf68uMg5tluQ4n6rg9mau0fBmOAhzwMtj9Wb2V4CNy7amM2sUJFrptR3/+pYNv+WLp
-         eMxxn/Uz8C26T9Py5zA8PPZFV4tkPIa3Sp+gh0Q+avKb4QMhct4437eD7wY7LUHXJ45i
-         PsWwzHDQOrLLHiqhOEjB/OiQobRvio0MBWAhjJ0ekZjzUeDtWC3hY1fFyvn7ilZRjiZ/
-         X9ng==
+        bh=Ev7RwbLZn/gJAhxPt25Llu+VsGcMGWrr43XoVoxtiQY=;
+        b=QJwOrNfrXPRuAl6aawEVayTlXxiViZwsq5eXYO5UrIN+nuLaKqADMgsFEbSve4mq6a
+         VYjqUwo4XzTPf4EtRB7yesyXr6jCQjxtO0yHweLDhxOj6r9NlvEe5L3qjGXAE64e40St
+         vg6vu70HZd0rE6p6MsI670HFXuDtKUyTlVKSXqmcOwDHawhvq3uVBp4AuXTJR2AI+NMJ
+         XdkzgroS3EOT49FTdwEHzi7MXzXTrv9O3cEntWpVD63MJ5Y3DURTpJEYMPlCjSNrERuS
+         h0gunpoaCLC04BaXaANuan7MaGw3+yeo5v0yUpVTe00gdFUrUZeIzppCuWzNB7qVHMu2
+         dR7Q==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1762541892; x=1763146692;
+        d=1e100.net; s=20230601; t=1762541893; x=1763146693;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:sender:x-gm-gg
          :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
-        bh=LcEgNpVUlJDsdIkCvzpyQGtJ1wFl33wBMT6wmAoMDkw=;
-        b=XVah41Su2ZhRazU+sDEO17FmRXRp8Mp7Z95RzJ8to/g+Tqcdl/v+NRO9sPinrXpUlR
-         xPpgCR/B3hJek4z1TYh/xRmvseYaDevCl1qt0WDmrCkqTn9hZ2nMmmWtNQfzPejRr/W+
-         oAiBr0pYNBTGiFELHqs4Rz65S/z+nitM0rnTG/uF+acTQBQhMcIlPBxotb+7bGTzmuoS
-         m+IBgYtwAoCiYF0bV7iJ58ZGQfNj74lJ/Ld/v4kCbq79m0XCw9bJ9ZiVhgBXBFbc/pKK
-         pVf3hvKb5Sml1zHZjzkFvWiQAZto1vZWUr9iN9QJCzgtc/edFSH9FyxFJltumFO38tc5
-         Ueww==
-X-Gm-Message-State: AOJu0Yxj4iJoU+OJPE31kOX3Oo5RiJqcy322sKZdFApT9iAeOUuMvXUT
-	1PqX/YabzW4aJycFqLznU3wgj+ZTHvnU6x6Gj0fA/2JDclc8Y7+qnn6FGsoMsoIz
-X-Gm-Gg: ASbGncuSiqJvQw2PGAUebg6LCydpFwGJQXVL1J6dh/gC5DzNubgZFdrpcN08jdgd+0Y
-	I5nQ5Bva2gBkjKvs9fMsrCItq4DYSg5DjuwfDFOD8zkfS2R8EikZZ4sstcv5dNozPHEA8xIVJrR
-	ayTERJLPQpCHOfRX1YhiGh3q0WgWNjgWqrO7XycW2SI3I7ZhCKA/RT8lsWo2SvFUlLgEMHcBOay
-	OAe6Q89ckyKqAYyspgHZbpBLRYli0t1cgwF7r6+Kc03Y1FMUbO1iAbwUVpP+LdXNrFB3mLeqOqL
-	6quqhnIhW9CPQUX9U8fLvPyDbSWbdlnsHYtGhml7JZSR5irO/vr8tARnnUG0EAe6sf7h2JAF/cn
-	JEf6aT05vdz8ZWa/AgAZ0/4D7WwOdOLatJqHEM2NJ4Wrx5fpZ/nhb3Y4ChyesxY4eif4GR1O7ZQ
+        bh=Ev7RwbLZn/gJAhxPt25Llu+VsGcMGWrr43XoVoxtiQY=;
+        b=i81N6EbiuGQBDpTONV866WF3f5AFvADVGX1qb9WtMRFAPfv2VCLbCQMq99QbDljmvy
+         r1AgG6I5RqpY0geDhHL1Sn7PSXi0Utk1ku/Yk4qvZEBKBCgwd5ClfRAz9PXBlawCIRz1
+         3TtulpnAronwjfOPYQ6ndN9u09p2M/LXyoCpaIOD6z+D4C6GaPNs9xaNPaEtCkCuTQxf
+         RHw0jW2SWgAMbQwtrxNSX7G3W2xCXarapGQnu28eHB/CsL1VZN3us2T6BLfxH5H0e/Zy
+         fr/AGGvWq+7sMt+mxV4PSoVBPrDN2BmNNm1osUwNksjBLQ9/6YR+3/NsbXhG6UADGDah
+         XS3A==
+X-Gm-Message-State: AOJu0YyBEo4XuZi1G2MbhpSznCOfmlik5enN7lMe4iEX9XURHN5Xa1B/
+	khzpN1UjxcM9MdsZE3+iDnldWqhOI5qgk4zN5XI08i+Q9EngyJKnM9V1/oVcylVK
+X-Gm-Gg: ASbGncuQd0iXg7U6ferMXcUbuu7Q+HGlGfYA5xPAAzO5ZhXW8QrcJmuZUR2boZeqm2q
+	Y6GLBLwqZK0oqHAIgp5SSpd2nfDaL63s9TPIR4ThEWvrtZkwaM0Pw807pv2ARzt2aJhBMZqY8S+
+	PBb7+LopgPZvx+WrQv10RguL81nPS1Z4sWd+4GRO2DhZeC2/7Hc0qIj+5WrUpF6TOB87mxWIp75
+	C2txU66wOZ4KhE6D6oEpcgJrWLdgJUgUVIFWsiQaOnw2j3Cvo1qBwG5cum/UA5VL9tRtyPYn/mN
+	euF7HvY0YWegvTM+jUxNDIVcDl0tnMc7zQshON11tsR5TPci30knlwGxkFWZNGfRfVset4vTdyO
+	6eLjdVW97ZF9J/JACP4QoOSluJlVzoIA+QvUQcLZ+eJNemzchoLb/xSLz8RT/fCzRUkDl8iZ5MQ
 	==
-X-Google-Smtp-Source: AGHT+IE7E9fYlLrrX3PH/xdy95MPFk3Y1pzXsfOYilJK3wtdVUdrbihcI9w3Cp1O0feDSqdUfJdq2w==
-X-Received: by 2002:a05:620a:3710:b0:8a1:21a6:e045 with SMTP id af79cd13be357-8b257ef47c1mr46538085a.19.1762541891938;
-        Fri, 07 Nov 2025 10:58:11 -0800 (PST)
+X-Google-Smtp-Source: AGHT+IG9P96My/r1YGyIs3irbS2ZNdnTk5nhIQWyx+h1+WR6c7FRJANrRhR+BaovtyO8H8wkdt488g==
+X-Received: by 2002:a05:620a:45a7:b0:8a1:21a6:e054 with SMTP id af79cd13be357-8b257ef3f39mr44332185a.4.1762541893190;
+        Fri, 07 Nov 2025 10:58:13 -0800 (PST)
 Received: from fionn ([174.88.40.44])
-        by smtp.gmail.com with ESMTPSA id af79cd13be357-8b235828514sm458103785a.53.2025.11.07.10.58.10
+        by smtp.gmail.com with ESMTPSA id af79cd13be357-8b235828514sm458103785a.53.2025.11.07.10.58.12
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Fri, 07 Nov 2025 10:58:11 -0800 (PST)
+        Fri, 07 Nov 2025 10:58:12 -0800 (PST)
 Sender: John Kacur <jkacur@gmail.com>
 From: John Kacur <jkacur@redhat.com>
 To: linux-rt-users <linux-rt-users@vger.kernel.org>
 Cc: Clark Williams <williams@redhat.com>,
 	John Kacur <jkacur@redhat.com>
-Subject: [PATCH 13/23] tuna: Fix run command failing to apply BATCH policy
-Date: Fri,  7 Nov 2025 13:57:22 -0500
-Message-ID: <20251107185732.23992-14-jkacur@redhat.com>
+Subject: [PATCH 14/23] tuna: Add -U and -K to the move command
+Date: Fri,  7 Nov 2025 13:57:23 -0500
+Message-ID: <20251107185732.23992-15-jkacur@redhat.com>
 X-Mailer: git-send-email 2.51.1
 In-Reply-To: <20251107185732.23992-1-jkacur@redhat.com>
 References: <20251107185732.23992-1-jkacur@redhat.com>
@@ -77,29 +77,64 @@ List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 
-When using tuna run with -p BATCH the newly spawned process is created
-with SCHED_OTHER instead of SCHED_BATCH
-
-Fix this by calling thread_set_priority if the policy is not zero
+Add the following options to the move command (like in the show_threads
+command)
+  -U, --no_uthreads     Operations will not affect user threads
+  -K, --no_kthreads     Operations will not affect kernel threads
 
 Signed-off-by: John Kacur <jkacur@redhat.com>
 ---
- tuna/tuna.py | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+ tuna-cmd.py  | 4 +++-
+ tuna/tuna.py | 7 ++++++-
+ 2 files changed, 9 insertions(+), 2 deletions(-)
 
+diff --git a/tuna-cmd.py b/tuna-cmd.py
+index 9496c61f0c2b..d0a3e6b7dbf8 100755
+--- a/tuna-cmd.py
++++ b/tuna-cmd.py
+@@ -174,6 +174,8 @@ def gen_parser():
+     move_group.add_argument('-N', '--nohz_full', **MODS['nohz_full'])
+     move.add_argument('-t', '--threads', **MODS['threads'])
+     move.add_argument('-q', '--irqs', **MODS['irqs'])
++    move.add_argument('-U', '--no_uthreads', **MODS['no_uthreads'])
++    move.add_argument('-K', '--no_kthreads', **MODS['no_kthreads'])
+ 
+     spread_group = spread.add_mutually_exclusive_group(required=True)
+     spread_group.add_argument('-c', '--cpus', **MODS['cpus'])
+@@ -746,7 +748,7 @@ def main():
+             parser.error(f"tuna: {args.command} requires a thread/irq list!\n")
+ 
+         if args.thread_list:
+-            tuna.move_threads_to_cpu(args.cpu_list, args.thread_list, spread=spread)
++            tuna.move_threads_to_cpu(args.cpu_list, args.thread_list, args.uthreads, args.kthreads, spread=spread)
+ 
+         if args.irq_list:
+             tuna.move_irqs_to_cpu(args.cpu_list, args.irq_list, spread=spread)
 diff --git a/tuna/tuna.py b/tuna/tuna.py
-index d4c3e2c1a661..1380df0dadba 100755
+index 1380df0dadba..ef60c033362d 100755
 --- a/tuna/tuna.py
 +++ b/tuna/tuna.py
-@@ -621,7 +621,7 @@ def run_command(cmd, policy, rtprio, cpu_list, background):
-     if newpid == 0:
-         cmd_list = shlex.split(cmd)
-         pid = os.getpid()
--        if rtprio:
-+        if rtprio or policy:
-             try:
-                 thread_set_priority(pid, policy, rtprio)
-             except (SystemError, OSError) as err:
+@@ -174,7 +174,7 @@ def is_hardirq_handler(self, pid):
+     except:
+         return False
+ 
+-def move_threads_to_cpu(cpus, pid_list, set_affinity_warning=None, spread=False):
++def move_threads_to_cpu(cpus, pid_list, show_uthreads, show_kthreads, set_affinity_warning=None, spread=False):
+     changed = False
+ 
+     ps = procfs.pidstats()
+@@ -183,6 +183,11 @@ def move_threads_to_cpu(cpus, pid_list, set_affinity_warning=None, spread=False)
+     new_affinity = cpus
+     last_cpu = max(cpus) + 1
+     for pid in pid_list:
++        iskth = iskthread(pid)
++        if not show_uthreads and not iskth:
++            continue
++        if not show_kthreads and iskth:
++            continue
+         if spread:
+             new_affinity = [cpus[cpu_idx]]
+             cpu_idx += 1
 -- 
 2.51.1
 
