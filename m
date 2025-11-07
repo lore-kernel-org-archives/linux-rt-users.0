@@ -1,71 +1,72 @@
-Received: from mail-qk1-f178.google.com (mail-qk1-f178.google.com [209.85.222.178])
+Received: from mail-qk1-f170.google.com (mail-qk1-f170.google.com [209.85.222.170])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 235BD33F36E
-	for <linux-rt-users@vger.kernel.org>; Fri,  7 Nov 2025 18:58:20 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.222.178
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 574E433DEE8
+	for <linux-rt-users@vger.kernel.org>; Fri,  7 Nov 2025 18:58:22 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.222.170
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1762541902; cv=none; b=KrKxedpTlHU6zs+Soi8up04hVJgjPToaiWxqhhXhUS9AwYNNNoI+QsFTiur/WssfG5B28lkiRHt9f9c0ieiqhTBv2FYjliidJcBlGrUAF4tNGIGXkF7BA9nHvaqvqHmFcy9in6OQNM/ZPqq/uuIPiTHRNOZDxmOaGXNTCReJtk0=
+	t=1762541904; cv=none; b=hZ/OdxHRfaSHZFRVAePQH1hmIp+bGX0LfbOExLfHB96ejCqZA4PIC0bVSxudapTf7Ji2OnYzTyl/LJ9XY58D23khBuQCCKXfCSaaZsGkERUkHCMG6pfKjRXcy4QZ3h7zHQE++V4mZddADCCIupGV8QY0LO6FvMXzatODEWshf+8=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1762541902; c=relaxed/simple;
-	bh=jngxCYksZTS4tt0ARlisHczBIkID55lPwyw43b3rvCE=;
+	s=arc-20240116; t=1762541904; c=relaxed/simple;
+	bh=G7+/cygh7RWuGut9SX/8aQa4x1HtqY+3MZJUDvtY2ls=;
 	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=kerDAB0OuPVpo9QbZkxGN1gVZI+fb97STwOwIMzM5Doj/1vDPpIusHkLfvnZxrJmScsJ3TFdzfCxOBJ9LUJhC2bUex5QcVduEIwLrOrsj+6+Zex5HxQcCvnz0Hlx5rAaHSvmNQjBztTr8xp/fBEAcrlhC9CD1W7wcHoAUVZJDkM=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=fail (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=dl5Y7v3F; arc=none smtp.client-ip=209.85.222.178
+	 MIME-Version; b=gGfAH7I433jP0e+LB2MSZbdl9kFT7roHRMOglFh/W8RoM0izYSwB6RSq25StWJMdAb3yEsEJO/JtdruISzBDRp233lR+p2Ix4gO0WPRzxI+/Wrwgeqb6qYanD1aTYgp+3EGiUZOBkB0keYVNoVB0TRHZTXdgOZf0csSB8XnEvHs=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=fail (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=QOluuDPA; arc=none smtp.client-ip=209.85.222.170
 Authentication-Results: smtp.subspace.kernel.org; dmarc=fail (p=quarantine dis=none) header.from=redhat.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="dl5Y7v3F"
-Received: by mail-qk1-f178.google.com with SMTP id af79cd13be357-89e93741839so78370385a.3
-        for <linux-rt-users@vger.kernel.org>; Fri, 07 Nov 2025 10:58:20 -0800 (PST)
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="QOluuDPA"
+Received: by mail-qk1-f170.google.com with SMTP id af79cd13be357-89c81839de7so65523085a.1
+        for <linux-rt-users@vger.kernel.org>; Fri, 07 Nov 2025 10:58:22 -0800 (PST)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1762541900; x=1763146700; darn=vger.kernel.org;
+        d=gmail.com; s=20230601; t=1762541901; x=1763146701; darn=vger.kernel.org;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:sender:from:to:cc:subject:date
          :message-id:reply-to;
-        bh=UsnXPRAn6A9eNFlABbJt6acWqa/X0+XhC8p29C2ad4s=;
-        b=dl5Y7v3F6k8pP+1Dgvss03c8dbXBqPjXOXzBiZOj+hPZM3R0bmQzFzDAN+WUVIMboM
-         M9e+oUQsR/p6oDY8kE1r/jB57Cq9aFBG4CkH0wot0/AQVfszW/vYu0K44SLjk0LJG22i
-         1jNXSRfoPUje54yhzUXLnC9GPDBdOt908rdfd5eiJKwjdH9qLauB9VWZXt0dDbwxpsD5
-         WoOj51C3Xp2YwoTz4RHzpFiOyzj180R0jIr/CXjMzNAGV0G8+J2SlNVatpD1uyOPHZXX
-         wFOtgYJrr4KqtRpXhHMx7OanVxpWnEU4Vf/Sihrh/HUtpRyHUS3O/hKvd0hitkn78cQB
-         PFwQ==
+        bh=fVb2jW01H4oQrdCJ5xpZ65fXvHFqRpTtrgPYLgQHckc=;
+        b=QOluuDPA6MyXJo93aWo27aqG09880Q+Bsy4vY7EYhgABQ4nJKiX6F05833Jn71rmSm
+         o8qebOaJlUoE++Yz35BlBM0q2uB/aNQkWBeciIwZ115j1eKvp+iXDr8yuT2BqV4ph5x3
+         PMrvA2vEwBJPWTZMzYs5PaNvq8gw0XlclYsOkOjadnE1CbVb7vPLoLoZAxb1wSohRJGV
+         oakacaz7Xm+kag4MSIbR+OFxRDUHGuF/uYhJa3YMgixyb4fy4r8RkummBWUDj0PO0Wfk
+         e3Ns+pp2NgBtJ5Onzq07Um0MPn07brXKBVJninoMVoFUSlIKSx/SZi474pSdebNT2ebv
+         EXkw==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1762541900; x=1763146700;
+        d=1e100.net; s=20230601; t=1762541901; x=1763146701;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:sender:x-gm-gg
          :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
-        bh=UsnXPRAn6A9eNFlABbJt6acWqa/X0+XhC8p29C2ad4s=;
-        b=XvxquOhnraCUVrv333j+Sn/qW04xZ6s1AxfER+somO2S1YVS40jAcJ93oClhUYnqFL
-         eD4rK3poXGCnf3Mo3+dCQiTyjn0Oc7JtfrrlabtL5J7ATRpOZnRewr2iY0rL0xqwAh+P
-         MonxnpDtC5nSqHUCOR4y9lEMAFZYBVhPyyKrwUhpfTQbu7EE9YFzsAkMliLcpalV3QFl
-         JYcgEd0Mv50xsARxPMDsjixBywS5MPwiTNOdql0YYNAnyH3sXOBgwXbr8A2BXozVOSQL
-         cG1+ClKjyy0FFLdI4hxVOjEVcR5wY/UN1VGv4gAEkChjnK0ePg6lHJrBrL7FHEj2VPIe
-         +BdQ==
-X-Gm-Message-State: AOJu0YzvDp5sc0YkCCNDs/pDY7HGOrhNODmAQxl3MzUlRmvkxkakRyFK
-	EyWxBUnexUqunU5onjXYxygRUaavxqcL4rG28U2Ztohu8T0V/MFRN+wMTJ4CvQpI
-X-Gm-Gg: ASbGnct31MqSkp/a1R6WczEir/CrSdyMQgGyVwKGMRt/79SzMoUWsLdAuoo0R49dDNN
-	gidO8/ExXaoiIfVMSbjXTFwQxrrkJuR2f4qRZop79gSxos4N/pD4FArvMEpT4yjr2KKl/Qrwklj
-	yBpL+VvmiHcLys21wzOS1lLoaFXnCLgHrP/YU8KyBFF89N99XokL3mJiX/M007x2k7iTzIZi7V/
-	QbtfcqzseW7pz1gpthHnpqGpJeLzBV6Py+vS/VJVF2/ti76ayKLxIdB4jrq8AUnYi2eXQb7NYNW
-	DrAjpEtIbyRPRriYdrK/V0CmPxvOyhcO0LWchXJR8+A1v0I2ITbttx2A1OsPmcA71LUT+JULOrn
-	CMsd7UHnGcbB+IWAGtM6OCPgMrhtrkT7zmNhl2n91c9iDMSYhJzvNDnGhy5iBV5Y=
-X-Google-Smtp-Source: AGHT+IHyKEEWYVoT5Wc6P/hfziN8EoAXu7/W/FRtaHa3ERHWEH3p6/cKnZ7V5RTTuTB0MTm7ZLkvuw==
-X-Received: by 2002:a05:620a:294b:b0:849:e64c:b7d4 with SMTP id af79cd13be357-8b257f68d83mr45590885a.66.1762541899733;
-        Fri, 07 Nov 2025 10:58:19 -0800 (PST)
+        bh=fVb2jW01H4oQrdCJ5xpZ65fXvHFqRpTtrgPYLgQHckc=;
+        b=I4MRyYdz/F+6lgitlTsv1gl208OHsYDhDYvGwa2Y7iKm1Mwn0Ehvm7fFRycjyxcSC4
+         VC0TqzyROihlzWBQnL55bQ+2hIpfvfGkQk4bQETzxOkEmmq497rYPgJ5l0ZoDuebrLVv
+         9xfFVsQqa3LAe0sM4+1/qczCAINHx9vkKiMR+BoeUEhD5iqa5tNCdLXbkNMGaxQAyCvc
+         0CKEl9j9kfJwLkebE2p76rIllltVo5xzUt6LeBVq0s+nGv8hqr/iU3830cP01u/57O53
+         bm1Q2y/UPiSlQwn+mUDeLT+V1U8PemTPAOTc2JZwju0Zu2KKIUjq7bCZJdiO1W93kXJO
+         oqCw==
+X-Gm-Message-State: AOJu0YwhaJW6SJja0nLKJeN85IFhdNzsZ2Q/aaCvInFL8XnVVx9zx3YW
+	DkZxvOsT47+GuED1R0LBFVuQv0hx8tv4flDxwTek6fdriZ/bCPzcYauykKrZlc3A
+X-Gm-Gg: ASbGncvVnx3LK9qfMAJStG/huQrBJ4BoFpJA+GrLo1M1N5389LmGnZRvK0dMVOPIvgG
+	osUCUVgvNEyho7g1KknDW0pQj48o2xI1qpsGQQzJH31B9lGMkYm51vfU436958FI81wwBa3n71a
+	NXM5dJtLFurbP4I3cOn819ib+WF6rvf1fu5gzLe9hp863+754jm0db1tF5eR3azoZQfxLgfxhfh
+	lxGqoGy4shCm9/9kSE+X/JeZzQr2Oquzc2VVYlpzG3GOkzztY2qM6gFYAXsimLxta4LRdPQ1kVG
+	lo/uPk/lfGTKp11/aV5Qq/UnkErjZ+fsSJzvho67qdXnyYIyXTmcSV8Dz1Nmwbw8kzPiwFOi94f
+	loDc534Dg//C+8tSS/U3XcM/xezjGfaL8QsQf8DZs3bcPTZ4hGT4SJpPedDz57Y+oSM23VTvwmq
+	SvM8BJ6Tp1
+X-Google-Smtp-Source: AGHT+IGybFupP3oq/kuD60V687N3nIvNf/4VNBbywYzrXudP3PaKUIkbRA4VOpP6xwPcVOz0MWX/uA==
+X-Received: by 2002:a05:620a:7105:b0:892:ce2b:f869 with SMTP id af79cd13be357-8b257ef5ceamr46681885a.13.1762541900724;
+        Fri, 07 Nov 2025 10:58:20 -0800 (PST)
 Received: from fionn ([174.88.40.44])
-        by smtp.gmail.com with ESMTPSA id af79cd13be357-8b235828514sm458103785a.53.2025.11.07.10.58.18
+        by smtp.gmail.com with ESMTPSA id af79cd13be357-8b235828514sm458103785a.53.2025.11.07.10.58.19
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Fri, 07 Nov 2025 10:58:19 -0800 (PST)
+        Fri, 07 Nov 2025 10:58:20 -0800 (PST)
 Sender: John Kacur <jkacur@gmail.com>
 From: John Kacur <jkacur@redhat.com>
 To: linux-rt-users <linux-rt-users@vger.kernel.org>
 Cc: Clark Williams <williams@redhat.com>,
 	John Kacur <jkacur@redhat.com>,
 	Claude <noreply@anthropic.com>
-Subject: [PATCH 20/23] tuna: Update setup.py with co-author and metadata improvements
-Date: Fri,  7 Nov 2025 13:57:29 -0500
-Message-ID: <20251107185732.23992-21-jkacur@redhat.com>
+Subject: [PATCH 21/23] tuna: Add pyproject.toml for modern Python packaging
+Date: Fri,  7 Nov 2025 13:57:30 -0500
+Message-ID: <20251107185732.23992-22-jkacur@redhat.com>
 X-Mailer: git-send-email 2.51.1
 In-Reply-To: <20251107185732.23992-1-jkacur@redhat.com>
 References: <20251107185732.23992-1-jkacur@redhat.com>
@@ -77,39 +78,120 @@ List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 
-- Add John Kacur as co-author alongside Arnaldo Carvalho de Melo
-- Add explicit maintainer fields
-- Update URL to current kernel.org location
-- Add project_urls with source repository link
+Add pyproject.toml to support PEP 517/518 modern Python packaging
+while maintaining backwards compatibility with setup.py.
+
+Configuration includes:
+- Build system using setuptools>=61.0
+- Project metadata (authors, maintainers, version)
+- Python version requirement (>=3.10)
+- Dependencies (python-linux-procfs)
+- Entry points for tuna and oscilloscope commands
+- Package classifiers for PyPI
 
 Assisted-by: Claude <noreply@anthropic.com>
 Signed-off-by: John Kacur <jkacur@redhat.com>
 ---
- setup.py | 11 ++++++++---
- 1 file changed, 8 insertions(+), 3 deletions(-)
+ .gitignore     |  1 +
+ MANIFEST       | 30 ------------------------------
+ pyproject.toml | 42 ++++++++++++++++++++++++++++++++++++++++++
+ 3 files changed, 43 insertions(+), 30 deletions(-)
+ delete mode 100644 MANIFEST
+ create mode 100644 pyproject.toml
 
-diff --git a/setup.py b/setup.py
-index f119e75abdeb..00a79727ba02 100755
---- a/setup.py
-+++ b/setup.py
-@@ -18,9 +18,14 @@ PYTHONLIB = relpath(sysconfig.get_path('platlib', SCHEME), '/usr')
- setup(name="tuna",
-       version = "0.19",
-       description = "Application tuning GUI",
--      author = "Arnaldo Carvalho de Melo",
--      author_email = "acme@redhat.com",
--      url = "http://userweb.kernel.org/tuna",
-+      author = "Arnaldo Carvalho de Melo, John Kacur",
-+      author_email = "acme@redhat.com, jkacur@redhat.com",
-+      maintainer = "John Kacur",
-+      maintainer_email = "jkacur@redhat.com",
-+      url = "https://www.kernel.org/pub/software/utils/tuna",
-+      project_urls = {
-+          "Source": "git.kernel.org/pub/scm/utils/tuna/tuna.git/",
-+      },
-       license = "GPLv2",
-       long_description =
- """\
+diff --git a/.gitignore b/.gitignore
+index 29b00a0834ab..d8e20215de9b 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -2,3 +2,4 @@
+ *~
+ *.swp
+ tags
++CLAUDE.md
+diff --git a/MANIFEST b/MANIFEST
+deleted file mode 100644
+index 95ae7c5ddd74..000000000000
+--- a/MANIFEST
++++ /dev/null
+@@ -1,30 +0,0 @@
+-help/kthreads/
+-oscilloscope-cmd.py
+-tuna-cmd.py
+-tuna/__init__.py
+-tuna/help.py
+-tuna/sysfs.py
+-tuna/oscilloscope.py
+-tuna/tuna.py
+-tuna/config.py
+-tuna/tuna_gui.py
+-tuna/tuna_gui.glade
+-tuna/gui/__init__.py
+-tuna/gui/cpuview.py
+-tuna/gui/irqview.py
+-tuna/gui/procview.py
+-tuna/gui/commonview.py
+-tuna/gui/profileview.py
+-tuna/gui/util.py
+-setup.py
+-rpm/SPECS/tuna.spec
+-MANIFEST
+-po/LINGUAS
+-po/POTFILES.in
+-po/ja.po
+-po/pt_BR.po
+-po/zh_CN.po
+-ChangeLog
+-docs/oscilloscope+tuna.html
+-docs/oscilloscope+tuna.pdf
+-docs/tuna.8
+diff --git a/pyproject.toml b/pyproject.toml
+new file mode 100644
+index 000000000000..8333a1acb913
+--- /dev/null
++++ b/pyproject.toml
+@@ -0,0 +1,42 @@
++[build-system]
++requires = ["setuptools>=61.0"]
++build-backend = "setuptools.build_meta"
++
++[project]
++name = "tuna"
++version = "0.19"
++description = "Application tuning GUI"
++license = {text = "GPL-2.0-only"}
++authors = [
++    {name = "Arnaldo Carvalho de Melo", email = "acme@redhat.com"},
++    {name = "John Kacur", email = "jkacur@redhat.com"}
++]
++maintainers = [
++    {name = "John Kacur", email = "jkacur@redhat.com"}
++]
++requires-python = ">=3.10"
++dependencies = [
++    "python-linux-procfs",
++]
++classifiers = [
++    "Development Status :: 4 - Beta",
++    "Intended Audience :: System Administrators",
++    "License :: OSI Approved :: GNU General Public License v2 (GPLv2)",
++    "Operating System :: POSIX :: Linux",
++    "Programming Language :: Python :: 3",
++    "Programming Language :: Python :: 3.10",
++    "Programming Language :: Python :: 3.11",
++    "Programming Language :: Python :: 3.12",
++    "Topic :: System :: Systems Administration",
++]
++
++[project.urls]
++Homepage = "https://www.kernel.org/pub/software/utils/tuna"
++Source = "git.kernel.org/pub/scm/utils/tuna/tuna.git/"
++
++[project.scripts]
++tuna = "tuna.tuna:main"
++oscilloscope = "tuna.oscilloscope:main"
++
++[tool.setuptools.packages.find]
++include = ["tuna*"]
 -- 
 2.51.1
 
