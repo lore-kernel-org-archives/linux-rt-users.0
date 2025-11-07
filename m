@@ -1,138 +1,128 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+Received: from mail-qk1-f169.google.com (mail-qk1-f169.google.com [209.85.222.169])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 4178C27E07E
-	for <linux-rt-users@vger.kernel.org>; Fri,  7 Nov 2025 16:41:31 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 0E6531946DA
+	for <linux-rt-users@vger.kernel.org>; Fri,  7 Nov 2025 18:27:06 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.222.169
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1762533692; cv=none; b=p/4P0sHagpSL2Dj2qOm+ZlV4epVqFCbrpq0KSkSgxQU6rPHGLConX9TXScHKFhYtZ4Na+Q2vJCta8iQxpEf1ZwWjiqbvdoItjZZcKwbRweFRy6HvQ3qycPVG4Mj6ffh64NQgRZYJu6mPyyYeCruKcrSYwoJdIfkXv+imafpLa0Q=
+	t=1762540028; cv=none; b=GyikU3do1IawAK5EOjJel6HyDkhgDfVxiF/koWPWhrk8uVSAhShQInOnkp4iypqbFGnvgSIq6cBdXwCjAfKWFXRHj5V/1Pfso8sQA7XoipkZgGCU9heyy0kLR2DFSHb2ui0IFFlEIfvSzdqmWOf33NWgdoVtYSgAMW95WjFwtlM=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1762533692; c=relaxed/simple;
-	bh=ecfR/Lwbgn+kYVBJDQYEAscl7aN0BFHOApqS8Qo/kso=;
-	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 Content-Type:Content-Disposition:In-Reply-To; b=qLp1RlIzdaslxO4Y132xK1Nv+uYvf9YiIIACFq0dSnv5LMWXOwPJK/4UMOM84H/vjlFUaDe3ZtWR849XJo/Gfc4HRcCc66QoM6UFP/jI+XRy+OjPYj4iodPa+gQYNZeEmMFGgwdF0K4QQJ0c138vqW1iF2C56JsaxE2fEuPek78=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=XNe9cRva; arc=none smtp.client-ip=170.10.129.124
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
+	s=arc-20240116; t=1762540028; c=relaxed/simple;
+	bh=qsGQbMPxnNJiIOqYTd+2l3JExcVLJzJUQRqliGzuCSM=;
+	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=Jzh03SSnz6LKvujKuSX7rUDwbHFlKSzWj6nO5dMSCzu4ygPOH2iib61KSyOQwIgPPYSOJQb2VzAOxM1H3o0FBgrz9W74kHqtO/pa0oMyEGbTuyKWkm8TeKcbIuNkTMDlg4gx+9+mhrpzjT+kc05QMwRYJhV70Y/5DfnLktvATLI=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=fail (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=NLH/WJyc; arc=none smtp.client-ip=209.85.222.169
+Authentication-Results: smtp.subspace.kernel.org; dmarc=fail (p=quarantine dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="XNe9cRva"
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1762533690;
-	h=from:from:reply-to:reply-to:subject:subject:date:date:
-	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
-	 content-type:content-type:in-reply-to:in-reply-to:  references:references;
-	bh=4sNS7Ho1mNE72b1qxCjq472cCJXWspbQhyfshbEHQqk=;
-	b=XNe9cRvaK/rX3HYQX36q1/Fq/SrDghgTHtUn/2NW3xX15dPzTHw0kTG83Tw+4+qWVc47wp
-	+3Ch+EP2mbagy68W39PH0wlNrVset0TZu9cL1nDRU7FFzsKH4EocD1H9HFml4cjIUffsGF
-	KD630TSwJ+2ymKKTgLKm9Q9WlKOMl4c=
-Received: from mx-prod-mc-08.mail-002.prod.us-west-2.aws.redhat.com
- (ec2-35-165-154-97.us-west-2.compute.amazonaws.com [35.165.154.97]) by
- relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-543-QAVI84bXMtmzwjjguQx8NQ-1; Fri,
- 07 Nov 2025 11:41:27 -0500
-X-MC-Unique: QAVI84bXMtmzwjjguQx8NQ-1
-X-Mimecast-MFC-AGG-ID: QAVI84bXMtmzwjjguQx8NQ_1762533686
-Received: from mx-prod-int-06.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-06.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.93])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
-	(No client certificate requested)
-	by mx-prod-mc-08.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id E6D3D180045C;
-	Fri,  7 Nov 2025 16:41:25 +0000 (UTC)
-Received: from localhost (unknown [10.22.80.75])
-	by mx-prod-int-06.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTP id A305F1800876;
-	Fri,  7 Nov 2025 16:41:24 +0000 (UTC)
-Date: Fri, 7 Nov 2025 11:41:23 -0500
-From: Derek Barbosa <debarbos@redhat.com>
-To: Wander Lairson Costa <wander@redhat.com>
-Cc: williams@redhat.com, linux-rt-users@vger.kernel.org, 
-	John Kacur <jkacur@redhat.com>, Juri Lelli <juri.lelli@redhat.com>, 
-	Chunsheng Luo <luochunsheng@ustc.edu>
-Subject: Re: [PATCH 2/3] Makefile: Improve compiler flag detection for
- -fcf-protection
-Message-ID: <7etm7f46u757xei6vvzij3lfadnegmtl5tgccnsgofph7n5w6g@myfx5xv7grft>
-Reply-To: debarbos@redhat.com
-References: <20251107161729.320087-1-wander@redhat.com>
- <20251107161729.320087-3-wander@redhat.com>
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="NLH/WJyc"
+Received: by mail-qk1-f169.google.com with SMTP id af79cd13be357-8a3eac7ca30so74282985a.2
+        for <linux-rt-users@vger.kernel.org>; Fri, 07 Nov 2025 10:27:06 -0800 (PST)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20230601; t=1762540025; x=1763144825; darn=vger.kernel.org;
+        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+         :to:from:sender:from:to:cc:subject:date:message-id:reply-to;
+        bh=Vg3yOZ46N2mcArffbLnZi7zfDnPG5SlpiXe4VaTf7yg=;
+        b=NLH/WJyczG1EXUunOmdZkB1RF/q5GISVz0IeOrljav9fu1gIO+aYpTR7jScZa3/PxO
+         BJ9WDLC1tw2i4fgHS3FN4kUMK/9Z2pHi7tw+zb84KS2BVfQe9NVTmNMfaUc3VdIhNgeO
+         EMMTTC9J//uaZBrWdO68HNxaVrZN3akFwumLgYUdpC5VRWfMLq0IpAi4em6RQJ9X89pz
+         KP0FJKvCuvtuFSJfWUUqb9R0SF09QmD8zH/XeyDWAGoiGV9koUiiQKTzHb1oudPscZL2
+         q25f5Om99VR0DblOfxfhYk5F/fyYK5GsI9UOzn5BEHMPe0mXcKtQJOGMRJessGqm9+EC
+         i+ZQ==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20230601; t=1762540025; x=1763144825;
+        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+         :to:from:sender:x-gm-gg:x-gm-message-state:from:to:cc:subject:date
+         :message-id:reply-to;
+        bh=Vg3yOZ46N2mcArffbLnZi7zfDnPG5SlpiXe4VaTf7yg=;
+        b=f3EWu9TX9ZXsxZrI/pUmPK93zb/m1VaCNM0BMKk+p666iXPNENa9HxG4MSUIIAWcVD
+         0jjPHduqt2ru0498TdiZSQEtSto893bjhZZ4viV2D9dXz8Bq9SpSyhyecRGm5L4SiSwG
+         63hEoMX3ct+ZL15ASqL7WkdGncxYm3366rNH1LvWZPizwKkzP0QfjLH7ZkMgnalQRE2X
+         abqCk+EBiyB4NVdAcKL6l8/iMrQku8I2+h9LDmbzKAEflZSWpXWb92gpIzXaQ8zqf2k5
+         tkbhQZ860EFHua+QtVXpzkO+HIHZQeWUCz7tMMl7KIZDcDAq1uLW8mwpcVV5EbstRk2t
+         tyhA==
+X-Gm-Message-State: AOJu0YxyCEvv4gNag+g7+EeR7DrwrnrY2MMgF3VoyAER9aSajRky1aKl
+	f6AC1GxOGx2+DcZSM0iOCI3Ryl4dQjMRxFcpaoue+V3ldhz05Wp0R8VyrcYRv1pS
+X-Gm-Gg: ASbGnctf2QIlxRpO7Sdckkl6WncJ/9gE6j13Toreuvx4iOco7+ISBlm3uSbdslkj5CA
+	zzA+hMFXpnWHs6wDZBRXcQJI3B0SDv6g/pkPAf1O7L0JspF2xwnKvdL1aL0H9K7gQH3nabDBi4Z
+	+DFky5YFd7+FuUBy0cioLEByGN9pd9rrfGAICQC3wjytUm/Zqgp+tJgvb42BjW5tijA+cu3SyMm
+	rF3gxDB5snhmWBOTLEHibUNFF7Phr0u58rLSBSpbCG/KlpDeOMtyiSlfqXCVjK/udiIa/wPOyRF
+	HNAFplBSIOI8q5Sep+uA5m4bdztMp+3Jvnp+KpJDyue9mzD6ScpakhAcscx3j8j9FQgdwr6hep6
+	Sk4ZJfJGcc2qxBndvmaDJx6oIGbpdfKeyB8SfH4s9E1r6XmQVqaCRG92whGajbAj9CAsrlCzjQw
+	==
+X-Google-Smtp-Source: AGHT+IHUX5QN1n2HruGP/0XCjNF1wVeFDACjOhuYI9+8nywY89WchmC4AP1kPzooerz9BsiOwex91A==
+X-Received: by 2002:a05:620a:4113:b0:8b2:271e:a560 with SMTP id af79cd13be357-8b257f69940mr32421685a.72.1762540025302;
+        Fri, 07 Nov 2025 10:27:05 -0800 (PST)
+Received: from fionn ([174.88.40.44])
+        by smtp.gmail.com with ESMTPSA id af79cd13be357-8b235828514sm452141085a.53.2025.11.07.10.27.04
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Fri, 07 Nov 2025 10:27:04 -0800 (PST)
+Sender: John Kacur <jkacur@gmail.com>
+From: John Kacur <jkacur@redhat.com>
+To: linux-rt-users <linux-rt-users@vger.kernel.org>
+Cc: Clark Williams <williams@redhat.com>,
+	Tomas Glozar <tglozar@redhat.com>,
+	John Kacur <jkacur@redhat.com>
+Subject: [PATCH 00/12] rteval updates
+Date: Fri,  7 Nov 2025 13:26:23 -0500
+Message-ID: <20251107182645.19545-1-jkacur@redhat.com>
+X-Mailer: git-send-email 2.51.1
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
 List-Subscribe: <mailto:linux-rt-users+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-In-Reply-To: <20251107161729.320087-3-wander@redhat.com>
-X-Scanned-By: MIMEDefang 3.4.1 on 10.30.177.93
+Content-Transfer-Encoding: 8bit
 
-On Fri, Nov 07, 2025 at 01:17:27PM -0300, Wander Lairson Costa wrote:
-> The previous method of detecting support for -fcf-protection relied on
-> a minimum GCC version check, which was not always accurate and could
-> fail on different architectures or compiler toolchains.
-> 
-> This commit replaces the version check with a more robust method that
-> directly tests if the compiler supports the -fcf-protection flag. This
-> ensures better portability and avoids compilation errors on systems
-> where the flag is not available.
-> 
-> This change mirrors the recently added detection logic for the
-> -mno-omit-leaf-frame-pointer flag.
-> 
-> Signed-off-by: Wander Lairson Costa <wander@redhat.com>
-> Cc: Derek Barbosa <debarbos@redhat.com>
-> Cc: John Kacur <jkacur@redhat.com>
-> Cc: Juri Lelli <juri.lelli@redhat.com>
-> Cc: Chunsheng Luo <luochunsheng@ustc.edu>
-> ---
->  Makefile | 12 ++++++------
->  1 file changed, 6 insertions(+), 6 deletions(-)
-> 
-> diff --git a/Makefile b/Makefile
-> index d605e60..bc82858 100644
-> --- a/Makefile
-> +++ b/Makefile
-> @@ -20,17 +20,14 @@ IS_MINVER := $(intcmp $(GCC_VER), $(MIN_GCC_VER), false, true, true)
->  $(info IS_MINVER=$(IS_MINVER))
->  
->  USE_BPF := 1
-> -FCF_PROTECTION := -fcf-protection
->  MTUNE	:= -mtune=generic
->  M64	:= -m64
->  
->  ifeq ($(ARCH),aarch64)
-> -FCF_PROTECTION := "-fcf-protection=none"
->  M64	:=
->  endif
->  ifeq ($(ARCH),i686)
->  USE_BPF := 0
-> -FCF_PROTECTION := "-fcf-protection=branch"
->  endif
->  ifeq ($(ARCH),s390x)
->  MTUNE := -mtune=z13
-> @@ -43,9 +40,12 @@ ifeq ($(ARCH),powerpc)
->  USE_BPF := 0
->  MTUNE := -mtune=powerpc
->  endif
-> -ifeq ($(strip $(IS_MINVER)), false)
-> -FCF_PROTECTION := 
-> -endif
-> +
-> +# Test if compiler supports -fcf-protection
-> +FCF_PROTECTION := $(shell echo 'int main(void){return 0;}' | \
-> +		$(CC) -x c -fcf-protection - \
-> +		-o /dev/null 2>/dev/null && \
-> +		echo '-fcf-protection')
->  
+Notable here are the patches to add
 
-If we're no longer guarding FCF_PROTECTION on IS_MINVER, I think we can just
-remove that intcmp check all together.
+--measurement-module MODULE so that you can choose cyclictest or
+timerlat without modifying the rteval.conf file
 
-Otherwise this LGTM.
+The patches that adds
+  --timerlat-dma_latency USEC
+                        Set /dev/cpu_dma_latency to USEC (set to None to
+                        disable) (default: 0)
 
->  
->  $(info USE_BPF=$(USE_BPF))
-> -- 
-> 2.51.1
-> 
+And finally the addition of pyproject.toml for a modern type of python
+install. We will still carry setup.py for older distributions.
+
+John
+
+
+John Kacur (12):
+  rteval: Fix spelling of 'occurrences' in measurement modules
+  rteval: Fix typo in comment
+  rteval: Remove unused function remove_offline
+  rteval: timerlat: Fix typo in log message
+  rteval: cyclictest: Fix typo in comment
+  rteval: rtevalConfig: Remove redundant 'is True' comparison
+  rteval: Clean up MANIFEST.in and fix newnet.py copyright header
+  rteval: Add pyproject.toml for modern Python packaging
+  rteval: Improve argparse implementation and remove manual sys.argv
+    parsing
+  rteval: timerlat: Add dma_latency option with default value of 0
+  rteval: Add --measurement-module command-line argument
+  rteval: Add unit tests for --measurement-module argument
+
+ MANIFEST.in                                |   3 +-
+ Makefile                                   |  10 ++
+ pyproject.toml                             |  58 ++++++
+ rteval-cmd                                 | 122 +++++++------
+ rteval/modules/__init__.py                 |   7 +
+ rteval/modules/measurement/__init__.py     |   2 +-
+ rteval/modules/measurement/cyclictest.py   |   8 +-
+ rteval/modules/measurement/timerlat.py     |  17 +-
+ rteval/rtevalConfig.py                     |   2 +-
+ rteval/sysinfo/newnet.py                   |   3 +-
+ run_tests.sh                               |  89 ++++++++++
+ setup.py                                   |   6 +-
+ tests/test_measurement_module_selection.py | 195 +++++++++++++++++++++
+ 13 files changed, 443 insertions(+), 79 deletions(-)
+ create mode 100644 pyproject.toml
+ create mode 100755 run_tests.sh
+ create mode 100755 tests/test_measurement_module_selection.py
+
 -- 
-Derek <debarbos@redhat.com>
+2.51.1
 
