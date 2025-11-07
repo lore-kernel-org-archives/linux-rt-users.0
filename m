@@ -1,63 +1,62 @@
 Received: from mail-qk1-f181.google.com (mail-qk1-f181.google.com [209.85.222.181])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id E8CE7339B56
-	for <linux-rt-users@vger.kernel.org>; Fri,  7 Nov 2025 18:27:18 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 3E93933B6CF
+	for <linux-rt-users@vger.kernel.org>; Fri,  7 Nov 2025 18:27:20 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.222.181
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1762540040; cv=none; b=V7UcWhJt/0kDvrcyRZc2VW4Y7/4G/lRq1WeAlyJft1k53ip5USJxWiqat2aTk49Hl+DC5MofVjslZb3lSNYtMCl/Eqts0gjTPm70VLc5L8+5RFTZdiu5gDZGOfzpXgddiH5g6rZ+H+vjhZ+NaYIMsm10ZZvX+fN3W2VNs2K05Tk=
+	t=1762540041; cv=none; b=QenJpBg0DZK2WgosqB18Ial05BjDSyc/k+QCv8ceR6B9yUcKpY4vuifOi8tN7X8sv2VvF0u0D60uTi4t8OtiL5r2/0zr2WcbfAAiq6uMBTwHzx+iUYseBho3fES9pdyYbLf+ujN3C5kAgx2VBF6O8vTh0XT8VJlrYPfFIgMdcd0=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1762540040; c=relaxed/simple;
-	bh=4gLLHvHBs2Lo9EG6wyfu5J8ByfYbDawWJNiCr9mcHwM=;
+	s=arc-20240116; t=1762540041; c=relaxed/simple;
+	bh=82u5uvQf7FnzfhBVZBDnloY2O887AwfyHZp3Qv8O3w8=;
 	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=dirUfkBXUjJpKohnYldg0uOo5IIdqVcpo2OIqIIWViYD4Yps57els+igu7lqMp0cO2VaqVsou953lSyQuKdrqDIYadTlNuazypAzds/GNIRBz94AgU2YDuQzmi2PhN/9KibdnkfKbeOkzlXiut4iNsxtSTTjQiAaSVtcnxOuGfs=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=fail (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=dROiyRjI; arc=none smtp.client-ip=209.85.222.181
+	 MIME-Version; b=Astw7NpHYGDls2OZUOeA9KCR4XCBMXhqFlFzISPQIyBkE123+AwspKFNbLFmtYgBlHvXY+tJKNOjtJLjfxZmGZ7gKa01kdCpAaPBzTpXaLvgqXEfA6/rzrVCVTGE4+6k2bzqNN5J5cBnZrPoyKwwbW6ClJOAs21CIfP4uZK3zj8=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=fail (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=YnivBJzo; arc=none smtp.client-ip=209.85.222.181
 Authentication-Results: smtp.subspace.kernel.org; dmarc=fail (p=quarantine dis=none) header.from=redhat.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="dROiyRjI"
-Received: by mail-qk1-f181.google.com with SMTP id af79cd13be357-8b0eddecb0bso110497485a.0
-        for <linux-rt-users@vger.kernel.org>; Fri, 07 Nov 2025 10:27:18 -0800 (PST)
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="YnivBJzo"
+Received: by mail-qk1-f181.google.com with SMTP id af79cd13be357-891667bcd82so109534685a.1
+        for <linux-rt-users@vger.kernel.org>; Fri, 07 Nov 2025 10:27:19 -0800 (PST)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1762540037; x=1763144837; darn=vger.kernel.org;
+        d=gmail.com; s=20230601; t=1762540039; x=1763144839; darn=vger.kernel.org;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:sender:from:to:cc:subject:date
          :message-id:reply-to;
-        bh=X3CpaWvDUFkcdSs5Kh36QTKCUi5Z1myMH0oY6IcW71w=;
-        b=dROiyRjI4Xw+k5Cua6ZB8ZMtdDIUVS+8ZaeOY4DoLPBbg9mQRwoVyx59G+CBb+OYxc
-         4TS3cvuMb32a9KQEm/qq1R+muMrxU4tcDF0prkQggu9E827ovw6/qiTOhlASO9pVsKNA
-         3EYBsqSuod/pl3ifwzeY+xtynrxVs7CZv69+ie9m9aCejebaO1ydXdhocs36IcLdEADs
-         FaHk6NaDBWjnYP6dn599VqsnJw+vnAAx0swg3RKhEumTs2NrnLW/muOx/hBafXofowll
-         fNrIYt4wEkWxl+1H+ULHdpzJPufRRmsJGi1Vhtv04CMo7VOyzsCTIbX0zAkB+oKmE7un
-         5ZfQ==
+        bh=Ap2QzIK0eVOddS3/A22CQkSrK7N+b00HEZb8iHAoUmk=;
+        b=YnivBJzoWbiUrHdztdd3oUydynxaJW9nvu2Wyg5H0MsRomrmiVQr1rMEIy3+/LzVwH
+         3KwS7jXlm3w9/P79JrHPmJkGMebIP8WHTy5ZyuduVMon493ItPfT6wdD+BriWpQl/sDl
+         eVDVIuGBPDZh0FTquCdky0C7ie4hv5A1C0XErV3v+6N5SOhNaj0voT7vrTxZsexmlLFX
+         T3JULdgsPox695/Cxk/QRAB56JZv38CNZndsNtT4F7+3FMLqINX/F5RzjiqmL999FJL3
+         TTa3j/rZOz378DQe/fk9+m5C9Kej72OnQtNztsfYUJ0MePNfR38hTMe59YhDm90PNBZ2
+         IBFg==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1762540037; x=1763144837;
+        d=1e100.net; s=20230601; t=1762540039; x=1763144839;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:sender:x-gm-gg
          :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
-        bh=X3CpaWvDUFkcdSs5Kh36QTKCUi5Z1myMH0oY6IcW71w=;
-        b=qugP4IbocHLjGBDGSfyaNnKcfL/rkyaRlzuTepBfQBYdkpzuwoNjBLU+PXR5XC4PRU
-         v8M+K/uBWTF46NdXdkA3HYe8BgtLrjdU6qqbRCja6A6E1asu3Lu+fwGMsPuwtAZxPUnK
-         JjjOKg52GykHHtJmoDeeVkBcpLC6K7G+UDQYycwNM1zw9v2WRSA6aXQzL34kpzB3H7N8
-         T2V6Ktkw9M4Yo6R+j+fgH73RaujXSnUzUHYmZXbwMJmkAinoEit6Nzh3TW/Mhmv1UMS3
-         epBHG4DcOuzpjvGNs0RzhoiZ3iCvCTqLHbSpFFfya9n6oqYwUmOVPsQ9nEfvhVZbxDWk
-         42Bg==
-X-Gm-Message-State: AOJu0Yze8l19CBVXN6RsYu3a6pbm3X6kE+iFYC/P1lp7jGVh1urEh1Lt
-	f6dvyFnwzKg6StULyhY1tnkwtimSSMcjcbX8zOKqQZtrzCHVS6lpEpVNiBa753qh
-X-Gm-Gg: ASbGnctdHss48WoeqJFEvwN5/7Yb6JubiqXi27Ty20RQvKxnqfChGGeNpb+Z0QpItZ8
-	QVmWNi1T9bKluXLf57/WKBkp8FpLSNn/cLmLp7DAEejwNTdRHAfK+aveC/dfN7KfJ168Deh4+Ya
-	ZDcuwusmq6F9xoHvCnW9VtxQQFGjNfHlu7/2GLYn8p5SNd0Zny6Wh/f+wB82fUn811Dn4m3kIkK
-	7t8UzGZVlF2AdEvMyLAxJSwCZ5Zg0D/wtC9bWIVgq/tG5nB58y00J0qevr6Bam09KB3kdqZxEj5
-	2k7M9MY8IyUnMoXdHpzFASgaGXjxi9AnwI8wh3Zp5VggHFtH0OvzsJRszPP46QK3l7Ps1tTliYY
-	sViHe4/gjjgdP+RX7GeR7jmoEQcAD1zsdabm6QJSuWQnE6ksekBSYAf5bOz5JrpXicqOetmCtwg
-	==
-X-Google-Smtp-Source: AGHT+IHRr+0wQUdQ33BX5bwK5xWD2GQMUUrC2BNuPhy6f0zQjcXkR9yprnwssgBpUBWeSyw72CRjLQ==
-X-Received: by 2002:a05:620a:29d5:b0:892:234a:2b2b with SMTP id af79cd13be357-8b257732bd9mr60949085a.12.1762540037321;
-        Fri, 07 Nov 2025 10:27:17 -0800 (PST)
+        bh=Ap2QzIK0eVOddS3/A22CQkSrK7N+b00HEZb8iHAoUmk=;
+        b=VY6UuENp9RKFTT/d1B9qMwoAJK6Ey4xd8ArwW+2UwCvyH5OgYc2qBXpkjZLoyDilwf
+         iXa7GCXRGhVkwr8+mrDcoqWvKD/mlsa/Z1K3LYDpDiUXGlHCSDJNjNek+2DiE1UN1a78
+         +ggZ2J/AGb9zy+iCPV4nN01UypoWUkBvgR55npWc/iiGCSlGkwBXjl9+a/WJZftkTPTP
+         UssV6/9ui7brPaz9mG1EvJzByeugSyv6MmdieJfdU/Mxy77mMInN/qU4dyxtiSZrnO1P
+         kQs8nIaQ0Pfb2o/ryf9L7jWvD8OPByDteWx7jJ9LSYTBgIhP3uQ0n0cUz46KNW/toF9O
+         mUeA==
+X-Gm-Message-State: AOJu0Yyt1X+OPwkHM1nmCqS14L7fQjcwCvvEKQ5tS3V6EWw4BRDs9nBV
+	5oE7rlCluoMPqeySAHZ/Wcb0EFu2s71Pwe8wYwyHv0G1gCZBlD2oFDH+HVOUVzZx
+X-Gm-Gg: ASbGncsrHbY9DAh4KEz5tamunDy3jslu2xEgFeO/ZNPg0/1EvfKQv/oZz2WnbsRE3Fh
+	V0Z0oVMMKVi9vnIe084Sr8K+pzcAVnl4bSYNjw11n00jRNEr2qNRJmVC8nqTLzrK5cTKZ0xSA4U
+	iKSmS7wMCyfi8qMiFBTIBBC4l52azNvsFlb9YbwG7IxZmZH3Jq+b7FKLyvcTbe8UqDmiPxpd/xC
+	LqH3pz97DizBcRKuxSoBDPSEwvS1aU3gCSg+5cuk5RLhqW9qxRBvXptaB7s639C2dlWFvfxJS+d
+	/O15ziyg3c6Riq+bStzSJVr/J5ifhhp3NwDXja4vT7qsNBl8mS4hOKWEZ2/WGGeTMNRInNv51Iv
+	NKfwulC5tglsi4VmUyU/lWyag4mtwnqWoKlWseAO9UtZK5gn27sPLyT0Qs+k/pZ4=
+X-Google-Smtp-Source: AGHT+IFq2E5fHvcnCfzqHTnAOEpjkERHswDOWUlmw+iAB3eY3bGE0Lg2HgFqZxqMmdmMcDZ4M30J6A==
+X-Received: by 2002:a05:620a:4095:b0:8a3:a42e:6e14 with SMTP id af79cd13be357-8b24d6b146cmr348984285a.10.1762540038631;
+        Fri, 07 Nov 2025 10:27:18 -0800 (PST)
 Received: from fionn ([174.88.40.44])
-        by smtp.gmail.com with ESMTPSA id af79cd13be357-8b235828514sm452141085a.53.2025.11.07.10.27.16
+        by smtp.gmail.com with ESMTPSA id af79cd13be357-8b235828514sm452141085a.53.2025.11.07.10.27.17
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Fri, 07 Nov 2025 10:27:16 -0800 (PST)
+        Fri, 07 Nov 2025 10:27:17 -0800 (PST)
 Sender: John Kacur <jkacur@gmail.com>
 From: John Kacur <jkacur@redhat.com>
 To: linux-rt-users <linux-rt-users@vger.kernel.org>
@@ -65,9 +64,9 @@ Cc: Clark Williams <williams@redhat.com>,
 	Tomas Glozar <tglozar@redhat.com>,
 	John Kacur <jkacur@redhat.com>,
 	Claude <noreply@anthropic.com>
-Subject: [PATCH 09/12] rteval: Improve argparse implementation and remove manual sys.argv parsing
-Date: Fri,  7 Nov 2025 13:26:32 -0500
-Message-ID: <20251107182645.19545-10-jkacur@redhat.com>
+Subject: [PATCH 10/12] rteval: timerlat: Add dma_latency option with default value of 0
+Date: Fri,  7 Nov 2025 13:26:33 -0500
+Message-ID: <20251107182645.19545-11-jkacur@redhat.com>
 X-Mailer: git-send-email 2.51.1
 In-Reply-To: <20251107182645.19545-1-jkacur@redhat.com>
 References: <20251107182645.19545-1-jkacur@redhat.com>
@@ -79,210 +78,46 @@ List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 
-This commit modernizes the argument parsing by using argparse properly
-and eliminating fragile manual sys.argv manipulation.
+Add support for the rtla timerlat --dma-latency option to control
+/dev/cpu_dma_latency settings. The option is enabled by default with
+a value of 0 to help reduce latency by preventing deep CPU idle states.
 
-Key improvements:
+Users can customize the value or disable the option entirely by setting
+dma_latency to None in the configuration.
 
-1. Use nargs='+' for -Z/--summarize and -H/--raw-histogram options
-   - These now properly accept one or more XML files as arguments
-   - Removed complex manual argument splitting logic (lines 158-174)
-   - Help text now correctly shows: -Z XMLFILE [XMLFILE ...]
-
-2. Use nargs='?' with const='' for -S/--source-download option
-   - Simplified handling of optional kernel version argument
-   - Removed manual sys.argv.count() checks (line 179)
-   - Default value provided when flag is present without argument
-
-3. Use parse_known_args() for early argument detection
-   - Config file (-f) detection now uses proper argparse
-   - Logging flags (-v/-D/-q) detection now uses proper argparse
-   - Removed all manual sys.argv indexing and counting
-
-4. Return cmd_opts instead of cmd_args from parse_options()
-   - File arguments now directly accessible via cmd_opts attributes
-   - Clearer separation between options and file arguments
-
-5. Improved error handling
-   - argparse provides better error messages for malformed arguments
-   - Supports both -Z file1 file2 and --summarize=file1 formats
-
-This eliminates 40+ lines of fragile manual parsing code and makes
-the argument handling more robust and maintainable.
-
-Co-Authored-By: Claude <noreply@anthropic.com>
+Assisted-by: Claude <noreply@anthropic.com>
 Signed-off-by: John Kacur <jkacur@redhat.com>
 ---
- rteval-cmd | 93 +++++++++++++++++++++++-------------------------------
- 1 file changed, 39 insertions(+), 54 deletions(-)
+ rteval/modules/measurement/timerlat.py | 9 +++++++++
+ 1 file changed, 9 insertions(+)
 
-diff --git a/rteval-cmd b/rteval-cmd
-index 8fd37b98b069..00873ce1196b 100755
---- a/rteval-cmd
-+++ b/rteval-cmd
-@@ -124,11 +124,11 @@ def parse_options(cfg, parser, cmdargs):
-                       action='store_true', default=rtevcfg.debugging,
-                       help=f'turn on debug prints (default: {rtevcfg.debugging})')
-     parser.add_argument("-Z", '--summarize', dest='rteval___summarize',
--                      action='store_true', default=False,
--                      help='summarize an already existing XML report')
-+                      nargs='+', default=None, metavar='XMLFILE',
-+                      help='summarize one or more already existing XML reports')
-     parser.add_argument("-H", '--raw-histogram', dest='rteval___rawhistogram',
--                      action='store_true', default=False,
--                      help='Generate raw histogram data for an already existing XML report')
-+                      nargs='+', default=None, metavar='XMLFILE',
-+                      help='Generate raw histogram data for one or more already existing XML reports')
-     parser.add_argument("-f", "--inifile", dest="rteval___inifile",
-                       type=str, default=None, metavar="FILE",
-                       help="initialization file for configuring loads and behavior")
-@@ -144,43 +144,19 @@ def parse_options(cfg, parser, cmdargs):
-     parser.add_argument("-V", "--version", dest="rteval___version",
-                       action='store_true', default=False,
-                       help='print rteval version and exit')
--    parser.add_argument("-S", "--source-download", nargs="*", dest="rteval___srcdownload",
--                        type=str, default=None, metavar="KERNEL_VERSION",
-+    parser.add_argument("-S", "--source-download", nargs="?", dest="rteval___srcdownload",
-+                        type=str, default=None, const='', metavar="KERNEL_VERSION",
-                         help='download a source kernel from kernel.org and exit')
-     parser.add_argument("--noload", dest="rteval___noload",
-                         action="store_true", default=False,
-                         help="only run the measurements (don't run loads)")
+diff --git a/rteval/modules/measurement/timerlat.py b/rteval/modules/measurement/timerlat.py
+index 95fb7f136c25..1c7fb1607682 100644
+--- a/rteval/modules/measurement/timerlat.py
++++ b/rteval/modules/measurement/timerlat.py
+@@ -232,6 +232,12 @@ class Timerlat(rtevalModulePrototype):
+         self.__cmd.append(f'-E{self.__buckets}')
+         self.__cmd.append('--no-summary')
  
--
--    if not cmdargs:
--        cmdargs = ["--help"]
--
--    # if -Z/--summarize is specified, add the files to be summarized to cmd_args, and add -Z to cmd_opts
--    cmd_args = []
--    if (sys.argv.count('-Z')+sys.argv.count('--summarize')) > 0:
--        try:
--            ind = cmdargs.index('-Z')
--        except ValueError:
--            ind = cmdargs.index('--summarize')
--        cmd_args = cmdargs[ind+1:]
--        cmdargs = cmdargs[:ind+1]
--    # if -H/--raw-histogram is specified, add the files to be summarized to cmd_args, and add -H to cmd_opts
--    elif (sys.argv.count('-H')+sys.argv.count('--raw-histogram')) > 0:
--        try:
--            ind = cmdargs.index('-H')
--        except ValueError:
--            ind = cmdargs.index('--raw-histogram')
--        cmd_args = cmdargs[ind+1:]
--        cmdargs = cmdargs[:ind+1]
--
-     cmd_opts = parser.parse_args(args=cmdargs)
- 
-     # if no kernel version was provided for --source-download, set version to default
--    if (sys.argv.count('-S')+sys.argv.count('--source-download')) > 0:
--        if cmd_opts.rteval___srcdownload == []:
-+    if cmd_opts.rteval___srcdownload is not None:
-+        if cmd_opts.rteval___srcdownload == '':
-             cmd_opts.rteval___srcdownload = ModuleParameters()["source"]["default"].replace(".tar.xz", "")
--        else:
--            cmd_opts.rteval___srcdownload = cmd_opts.rteval___srcdownload[0]
- 
-     if cmd_opts.rteval___version:
-         print(f"rteval version {RTEVAL_VERSION}")
-@@ -205,7 +181,7 @@ def parse_options(cfg, parser, cmdargs):
-     # Update the config object with the parsed arguments
-     cfg.UpdateFromOptionParser(cmd_opts)
- 
--    return cmd_args
-+    return cmd_opts
- 
- if __name__ == '__main__':
-     from rteval.sysinfo import dmi
-@@ -225,13 +201,14 @@ if __name__ == '__main__':
- 
-         # Before really parsing options, see if we have been given a config file in the args
-         # and load it - just so that default values are according to the config file
--        try:
--            cfgfile = sys.argv[sys.argv.index('-f')+1]
--            config.Load(cfgfile)
--        except IndexError:
--            # Missing file argument
--            raise RuntimeError('The -f option requires a file name to the configuration file')
--        except ValueError:
-+        # Use a minimal parser to extract just the -f option
-+        config_parser = argparse.ArgumentParser(add_help=False)
-+        config_parser.add_argument('-f', '--inifile', dest='inifile')
-+        early_args, _ = config_parser.parse_known_args()
++        # Add dma-latency option if configured (default is 0)
++        # If dma_latency is explicitly set to None, don't pass the option to rtla
++        dma_latency = self.__cfg.setdefault('dma_latency', '0')
++        if dma_latency is not None and str(dma_latency).lower() != 'none':
++            self.__cmd.append(f'--dma-latency={dma_latency}')
 +
-+        if early_args.inifile:
-+            config.Load(early_args.inifile)
-+        else:
-             # No configuration file given, load defaults
-             config.Load()
+         if self.__cfg.stoptrace:
+             self.__cmd.append(f"-T{int(self.__cfg.stoptrace)}")
  
-@@ -247,20 +224,29 @@ if __name__ == '__main__':
-                 'sysstat' : 'module'})
+@@ -523,6 +529,9 @@ def ModuleParameters():
+             "trace":    {"descr": "File to save trace to",
+                          "default": None,
+                          "metavar": "FILE" },
++            "dma_latency": {"descr": "Set /dev/cpu_dma_latency to USEC (set to None to disable)",
++                            "default": "0",
++                            "metavar": "USEC" },
+            }
  
-         # Prepare log levels before loading modules, not to have unwanted log messages
-+        # Use a minimal parser to extract logging-related flags early
-         rtevcfg = config.GetSection('rteval')
--        if (sys.argv.count('-v')+sys.argv.count('--verbose')) > 0:
-+        log_parser = argparse.ArgumentParser(add_help=False)
-+        log_parser.add_argument('-v', '--verbose', action='store_true')
-+        log_parser.add_argument('-D', '--debug', action='store_true')
-+        log_parser.add_argument('-q', '--quiet', action='store_true')
-+        log_parser.add_argument('--idle-set', action='store_true')
-+        early_args, _ = log_parser.parse_known_args()
-+
-+        if early_args.verbose:
-             rtevcfg.verbose = True
--        if (sys.argv.count('-D')+sys.argv.count('--debug')) > 0:
-+        if early_args.debug:
-             rtevcfg.debugging = True
--        if (sys.argv.count('-q')+sys.argv.count('--quiet')) > 0:
-+        if early_args.quiet:
-             rtevcfg.quiet = True
-+
-         loglev = (not rtevcfg.quiet and (Log.ERR | Log.WARN)) \
-                 | (rtevcfg.verbose and Log.INFO) \
-                 | (rtevcfg.debugging and Log.DEBUG)
-         logger.SetLogVerbosity(loglev)
- 
-         # check if cpupower is being used
--        if sys.argv.count('--idle-set') > 0:
-+        if early_args.idle_set:
-             rtevcfg.update({'usingCpupower': True})
- 
-         # Load modules
-@@ -271,7 +257,7 @@ if __name__ == '__main__':
-         parser = argparse.ArgumentParser()
-         loadmods.SetupModuleOptions(parser)
-         measuremods.SetupModuleOptions(parser)
--        cmd_args = parse_options(config, parser, sys.argv[1:])
-+        cmd_opts = parse_options(config, parser, sys.argv[1:])
- 
-         if rtevcfg.noload:
-             if rtevcfg.onlyload:
-@@ -371,16 +357,15 @@ if __name__ == '__main__':
-         logger.log(Log.DEBUG, f"workdir: {rtevcfg.workdir}")
- 
-         # if --summarize was specified then just parse the XML, print it and exit
--        if rtevcfg.summarize or rtevcfg.rawhistogram:
--            if len(cmd_args) < 1:
--                raise RuntimeError("Must specify at least one XML file with --summarize!")
--
--            for x in cmd_args:
--                if rtevcfg.summarize:
--                    summarize(x, rtevcfg.xslt_report)
--                elif rtevcfg.rawhistogram:
--                    summarize(x, rtevcfg.xslt_histogram)
-+        if cmd_opts.rteval___summarize:
-+            for xmlfile in cmd_opts.rteval___summarize:
-+                summarize(xmlfile, rtevcfg.xslt_report)
-+            sys.exit(0)
- 
-+        # if --raw-histogram was specified then just parse the XML, print it and exit
-+        if cmd_opts.rteval___rawhistogram:
-+            for xmlfile in cmd_opts.rteval___rawhistogram:
-+                summarize(xmlfile, rtevcfg.xslt_histogram)
-             sys.exit(0)
- 
-         if os.getuid() != 0:
+ def create(params, logger):
 -- 
 2.51.1
 
