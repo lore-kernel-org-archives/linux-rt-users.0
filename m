@@ -1,71 +1,73 @@
-Received: from mail-qt1-f171.google.com (mail-qt1-f171.google.com [209.85.160.171])
+Received: from mail-qk1-f178.google.com (mail-qk1-f178.google.com [209.85.222.178])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 83CED33C51A
-	for <linux-rt-users@vger.kernel.org>; Fri,  7 Nov 2025 18:58:05 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.160.171
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id AB7CB33CE82
+	for <linux-rt-users@vger.kernel.org>; Fri,  7 Nov 2025 18:58:06 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.222.178
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1762541887; cv=none; b=mHug9tQl2Qeel43/3OkESIwhru5dD6ULvqwhU9zWbmDrwKOxsjfcpkhifmcadrkvwNNmVot5mMf3bntqwYD14+N4wkBL+0m/kqzrAnc24Celx8EMnPDO6zVXN80ygosR7/3j5IHCS94WtobiZLfwUuGyb417M7WmNYrOzz2foJk=
+	t=1762541888; cv=none; b=Gq2ZmfFeAk3oqWd7+S6SZLLb84O1JNNSupz2LS73I0F9TwQZwWlOQbJpSsW5knMs1gEzIVB3YiPvHmgGVFSxYZKmmCKZi41gLkGPkt65g3StoTe/SuvEL/CvUh5kQG/7E7UWWUppKLiNHl53UQiAfm3xA0WA4kkINt75RtSwM6w=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1762541887; c=relaxed/simple;
-	bh=GTP8xRoJbXJMP0/5uIRzO8chI01OYN025OarFRfFrQY=;
+	s=arc-20240116; t=1762541888; c=relaxed/simple;
+	bh=VuZgwKgQC7nsJUBVIQtS2AdrCSGA4sps7jg9qQ3yjak=;
 	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=BwATf4fYYzhgZe4teDonFbdeJgMrDLIt1ByE6NMZLOnIGMNpL+83EB1k7JgjC0QHIK3HCJxNgZ0ZJcqYEXEEq97Q1MwOOru0HUATIu6cF/nGGnWILJDxKiKhXnamDUIh6aPY0LZfiGBeduKh+1GtTyZ1a7PVOY6DSICt2hiruoA=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=fail (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=XFkSl3dI; arc=none smtp.client-ip=209.85.160.171
+	 MIME-Version; b=g+4XuZzbfMkN5wgVPhqUzhwikSx9Dzu5Xe9CNdVQOAWT+6jJIVeJ4FiX1e6bvBBIjPuMgAOTBfIHkZ6ADBlcDcbVTy6Rl28jwRPDj43hwSwOgSckQKd9etOyx/Qvm8+NlUawMkggisF22mfSx41sVJP3//swnVc2Cdw44j2syE4=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=fail (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=Oa0ZyBIC; arc=none smtp.client-ip=209.85.222.178
 Authentication-Results: smtp.subspace.kernel.org; dmarc=fail (p=quarantine dis=none) header.from=redhat.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="XFkSl3dI"
-Received: by mail-qt1-f171.google.com with SMTP id d75a77b69052e-4ed69197d32so15473751cf.3
-        for <linux-rt-users@vger.kernel.org>; Fri, 07 Nov 2025 10:58:05 -0800 (PST)
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="Oa0ZyBIC"
+Received: by mail-qk1-f178.google.com with SMTP id af79cd13be357-8b21fa7b91bso101542385a.1
+        for <linux-rt-users@vger.kernel.org>; Fri, 07 Nov 2025 10:58:06 -0800 (PST)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1762541884; x=1763146684; darn=vger.kernel.org;
+        d=gmail.com; s=20230601; t=1762541885; x=1763146685; darn=vger.kernel.org;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:sender:from:to:cc:subject:date
          :message-id:reply-to;
-        bh=Fma4HTar02pmQNPFy+BpOxrLCUVOHyGpXcKkbC6fkbU=;
-        b=XFkSl3dI0DFIX84peYewfA9KeipvvrxuTogdWj/ae+fusF5FuhE/5sU5VMBGAvc51M
-         hSrl66LJVjhUUw1qx+3o8TrdsdJRJWKnh+AFG6qjm1eFJT1Tc4Zqs8/Ai6sU0WPS1ZxY
-         1fHn7M+0lCRmy0jv3h4HE5LfQEX7Hkrybs1lWYZBfAw1ki+oxXNbJSegf2xicyzkF11c
-         RCteC+CRdfjGJaTRvMzuyIsBJeMbZdz6l+woRlU+va0rwaXlE9+OAyICCMpSZRBYMEDK
-         GthB354TRCzWlMN70i7v7IZNfSmrNDfoBuEt0y4KB91Ei/Rii7iiA64/sIT+sBhR2aHo
-         s0Kg==
+        bh=vavBd6sy8hynIA7QcE2Skyi6MESGUkztHlSrpKz6Fdc=;
+        b=Oa0ZyBIC/pDg3WCuPRsSzBwD4SGYwo9armK8T8mP+5Bxnu4aPP5laZYE9sHLN5cN83
+         e9G19m0tTK56BYNfQDp7YOj2Zy3exMd4/txS7l/vgfD5R1tWh4xYaZPw1oyLxaDFW6hi
+         wYTSzTZENjnQnF1d6gOcUA7waNC0Gv9fjUgn1DZru3uV1EH26ijpXZhTWgngAxmRQ2Xa
+         x/DHV1HiIM0ypUpjeahMfNcNC2r5u1xSYtXenfmh2GTQefavaqgDt5mFT4cLlzNYLkyA
+         /Fh8xk5on2ti6tdzJ5VWv5vTworsUQKqFz6+6hnrUEYPKnQVwEmCLuds997wVSsnEskH
+         JP0w==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1762541884; x=1763146684;
+        d=1e100.net; s=20230601; t=1762541885; x=1763146685;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:sender:x-gm-gg
          :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
-        bh=Fma4HTar02pmQNPFy+BpOxrLCUVOHyGpXcKkbC6fkbU=;
-        b=faow3oXrXfJ3iMVUQmgqlpgS5UGk5TGBtPd219E+f7Ctk3Jj4xhy0Pyj7Kab2Mo0vG
-         bdbhELhBkpIY9urCKMWz2tOUj4WR0U2m41GTDJ7JdiY/l/kBEOQspgO1nczdhhfCbHKm
-         xjSPoLjX5X+QCvJrm+bEqTomQFaM2nUMlIXPy4AsEHrCZanW6rdwM56A1MfJATnu/b/j
-         sPgntUtuLO9IToYBG+KBKtx9C1FbcwARR+/FdwLeA0dIYEq+4J9rPpWs5QQtE+JXEvzb
-         u6Ju+LjvFpp/Hz6QEf3PIK0Skjqnc6FcVcWVwWLla7O/djnMSXLeplDufKmc5zbh5taa
-         QX7Q==
-X-Gm-Message-State: AOJu0YxZU3aQyb+m4zuH+pum4FEzlj3Vvch6/fj+kJ+NkykibP78JiLn
-	N3vMLMduKAZ0z/AbzyBBsEWkRcypZSpt+oQsj/nEFGoG+brezdvmuOoxIpWBE17t
-X-Gm-Gg: ASbGncvjeBl08+vh4HbnJvQYQbmDw2oqTKHvcMqThxHY+LjI+S3cdxjdOvsR/v0xGN+
-	bDN//H1Lt1P2Un+Ec1UFHiaCjl1Hj2WN/Xz8WVwTrJv3Pw2UqlzIETD6C6++6XndyzSviWSec2J
-	utmyDXTq8ASMf+loL7wPhCGGMJLNEQSfd08Is3PTWNHLgbFZ7XUk/P1wJM/l56LIkFt9VMrwWHc
-	10EPlXbGUHLaFUFuVfBcv8jv07iPN2mmoflrZ+4nFrR4axWFJgkj99Z9Gncsw79xWxZ2hBPVppH
-	Noo1tPwvqXQHykkdPxk1CGnAUZXrkVJkF6If/C7MHQTJBbRT470oxGHp31nEGGxDPVcXTobdaGp
-	zODS7mAvfrUsy87TmouFrqAJoJZFPkYguNj6HNiljM2PSuL5gaqn5ahaIijReg2yVcZMYyDL8xw
-	==
-X-Google-Smtp-Source: AGHT+IGuyp/S/DJi7Z/sDizxeE9LVIIpCLjbmfjW0gNENfPvcmrpv2MhapBfxuZthce76BrQ/eB9lw==
-X-Received: by 2002:a05:622a:18a6:b0:4ed:6e58:7143 with SMTP id d75a77b69052e-4eda4e73927mr1986661cf.14.1762541884056;
-        Fri, 07 Nov 2025 10:58:04 -0800 (PST)
+        bh=vavBd6sy8hynIA7QcE2Skyi6MESGUkztHlSrpKz6Fdc=;
+        b=QiwaC62NAV2p52E5BkMRdeAAFHi+RIjypw94Qdjy70VlT/F9M6v2NTNdOsQ/lI3hwj
+         OOI57VCjzMrf/4ImsDv3x2xG3a0pu23/DljqPH4q1DYhv4zdPlh9v1LcGWt9H93hSnLv
+         rsIGdel8dHXwXrT1il4ea8wFGrbQvTO/gXrbDKoe7vPSlcLgHFj2tgIGKOUzWNkIYXrS
+         Lcx1HNT64e9R+NjmfMX0T02waT7KkHFQpJbKKp4/O0TamJh/pfvef82siVW6JtlHiEHm
+         pmZbjZeFh/Y6bhQcEfBQTUzsqogE5tD05r/e0i5edWDhgZCOELIdGxnq+NV7RwQrOsGt
+         PLgw==
+X-Gm-Message-State: AOJu0Yw7dqCb7MMT3HG/S8fVUGjHaSBNEgHwNrKIkJsJGtGyH0jQbY+A
+	/w6gD07IihhgLIskvu994Q8Yz8LRGhmFWfljIUHRRTXmWMEcP3jpKU5aJKXtSfWL
+X-Gm-Gg: ASbGncuh9Ghw3Lwb5yotHaqVpfPqDRbU8pCPkZbbxyjYnGS+4cTiMVV2s9bUrJh7ar8
+	4kEm4Dc6vY6Igdqt+K8kO7sKef6jx5iWlfzYEAXYATsBoGnT6QLP9sIx3kq9BUtjjN9a0M0dA8e
+	OXP5IoYuGdeZQjVG2X+vQYgX064NcHT59Cu7EVUh6mU7NAK+Ojie/EUSyDa1ivMxf+j6fGKcPVW
+	znqVRNGHOY4viPyNJHoL0PGd3StdvsXhc+XQWwChZJiThaYRQF4MpyVvKJGgXv/moJNqXNF5JJy
+	OInFAQohjkDAihZ5VFroz9vgY+Bt8UmjC1PN6ebjZeXVadd2FqylBfpNuCFXrMFQVM9VWEFfJBG
+	VR7KL63vIw1jqcV6QWwGV9ugdlZAG2fZF1Q/R7tUYVh1LSASnM/asL6obtNfeoKo=
+X-Google-Smtp-Source: AGHT+IEhb4knc/j0g8yRhADpbh38DJwpA8e4USG9RdgTf01HuGIPXM0SpnL9WK54gK/Jdu37Brr+9A==
+X-Received: by 2002:a05:620a:710a:b0:8a3:1b83:fdb with SMTP id af79cd13be357-8b257f3b369mr42897985a.46.1762541885237;
+        Fri, 07 Nov 2025 10:58:05 -0800 (PST)
 Received: from fionn ([174.88.40.44])
-        by smtp.gmail.com with ESMTPSA id af79cd13be357-8b235828514sm458103785a.53.2025.11.07.10.58.03
+        by smtp.gmail.com with ESMTPSA id af79cd13be357-8b235828514sm458103785a.53.2025.11.07.10.58.04
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Fri, 07 Nov 2025 10:58:03 -0800 (PST)
+        Fri, 07 Nov 2025 10:58:04 -0800 (PST)
 Sender: John Kacur <jkacur@gmail.com>
 From: John Kacur <jkacur@redhat.com>
 To: linux-rt-users <linux-rt-users@vger.kernel.org>
 Cc: Clark Williams <williams@redhat.com>,
+	"John B. Wyatt IV" <jwyatt@redhat.com>,
+	Crystal Wood <crwood@redhat.com>,
+	"John B. Wyatt IV" <sageofredondo@gmail.com>,
 	John Kacur <jkacur@redhat.com>
-Subject: [PATCH 06/23] tuna: help.py
-Date: Fri,  7 Nov 2025 13:57:15 -0500
-Message-ID: <20251107185732.23992-7-jkacur@redhat.com>
+Subject: [PATCH 07/23] tuna: extract common cpu and nics determination code into a utils.py file
+Date: Fri,  7 Nov 2025 13:57:16 -0500
+Message-ID: <20251107185732.23992-8-jkacur@redhat.com>
 X-Mailer: git-send-email 2.51.1
 In-Reply-To: <20251107185732.23992-1-jkacur@redhat.com>
 References: <20251107185732.23992-1-jkacur@redhat.com>
@@ -77,26 +79,161 @@ List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 
-Fix bad indentation in help.py. (Change 8 spaces to 4)
+From: "John B. Wyatt IV" <jwyatt@redhat.com>
 
+Extracting the code allows these previously local (global to the file)
+variables and functions to be used in other files of tuna. Reducing
+the number of globals makes the code cleaner and reduces the size of
+tuna-cmd.py.
+
+Included a suggestion by Crystal to move a function from the latter
+patch into utils.py and make it dependent on get_nr_cpus() (v2).
+
+Included a request by John Kacur to place the SPDX message at the top of
+the file (v4).
+
+Suggested-by: Crystal Wood <crwood@redhat.com>
+
+Signed-off-by: John B. Wyatt IV <jwyatt@redhat.com>
+Signed-off-by: John B. Wyatt IV <sageofredondo@gmail.com>
+- minor spelling error fix
 Signed-off-by: John Kacur <jkacur@redhat.com>
 ---
- tuna/help.py | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+ tuna-cmd.py   | 34 +++++++---------------------------
+ tuna/utils.py | 28 ++++++++++++++++++++++++++++
+ 2 files changed, 35 insertions(+), 27 deletions(-)
+ create mode 100644 tuna/utils.py
 
-diff --git a/tuna/help.py b/tuna/help.py
-index c913a16f4a40..db8b4c84df63 100644
---- a/tuna/help.py
-+++ b/tuna/help.py
-@@ -4,7 +4,7 @@ _ = gettext.gettext
+diff --git a/tuna-cmd.py b/tuna-cmd.py
+index f37e286bffdb..d0323f510750 100755
+--- a/tuna-cmd.py
++++ b/tuna-cmd.py
+@@ -21,7 +21,7 @@ from functools import reduce
+ import tuna.new_eth as ethtool
+ import tuna.tuna_sched as tuna_sched
+ import procfs
+-from tuna import tuna, sysfs
++from tuna import tuna, sysfs, utils
+ import logging
+ import time
+ import shutil
+@@ -76,7 +76,6 @@ except:
  
- # gettext_noop
- def N_(s):
--        return s
-+    return s
+ # FIXME: ETOOMANYGLOBALS, we need a class!
  
- KTHREAD_HELP = {
- 'kthreadd':N_('Used to create kernel threads via kthread_create(). It is the parent of all the other kernel threads.'),
+-nr_cpus = None
+ ps = None
+ irqs = None
+ 
+@@ -233,25 +232,6 @@ def gen_parser():
+     return parser
+ 
+ 
+-def get_nr_cpus():
+-    """ Get all cpus including disabled cpus """
+-    global nr_cpus
+-    if nr_cpus:
+-        return nr_cpus
+-    nr_cpus = os.sysconf('SC_NPROCESSORS_CONF')
+-    return nr_cpus
+-
+-nics = None
+-
+-
+-def get_nics():
+-    global nics
+-    if nics:
+-        return nics
+-    nics = ethtool.get_active_devices()
+-    return nics
+-
+-
+ def thread_help(tid):
+     global ps
+     if not ps:
+@@ -277,7 +257,7 @@ def save(cpu_list, thread_list, filename):
+         if (cpu_list and not set(kt.affinity).intersection(set(cpu_list))) or \
+            (thread_list and kt.pid not in thread_list):
+             del kthreads[name]
+-    tuna.generate_rtgroups(filename, kthreads, get_nr_cpus())
++    tuna.generate_rtgroups(filename, kthreads, utils.get_nr_cpus())
+ 
+ 
+ def ps_show_header(has_ctxt_switch_info, cgroups=False):
+@@ -328,7 +308,7 @@ def format_affinity(affinity):
+     if len(affinity) <= 4:
+         return ",".join(str(a) for a in affinity)
+ 
+-    return ",".join(str(hex(a)) for a in procfs.hexbitmask(affinity, get_nr_cpus()))
++    return ",".join(str(hex(a)) for a in procfs.hexbitmask(affinity, utils.get_nr_cpus()))
+ 
+ def ps_show_thread(pid, affect_children, ps, has_ctxt_switch_info, sock_inodes,
+                    sock_inode_re, cgroups, columns=None, compact=True):
+@@ -351,7 +331,7 @@ def ps_show_thread(pid, affect_children, ps, has_ctxt_switch_info, sock_inodes,
+                 irqs = procfs.interrupts()
+             users = irqs[tuna.irq_thread_number(cmd)]["users"]
+             for u in users:
+-                if u in get_nics():
++                if u in utils.get_nics():
+                     users[users.index(u)] = "%s(%s)" % (
+                         u, ethtool.get_module(u))
+             users = ",".join(users)
+@@ -486,7 +466,7 @@ def do_ps(thread_list, cpu_list, irq_list, show_uthreads, show_kthreads,
+ 
+ 
+ def find_drivers_by_users(users):
+-    nics = get_nics()
++    nics = utils.get_nics()
+     drivers = []
+     for u in users:
+         try:
+@@ -689,10 +669,10 @@ def main():
+         apply_config(args.profilename)
+ 
+     elif args.command in ['include', 'I']:
+-        tuna.include_cpus(args.cpu_list, get_nr_cpus())
++        tuna.include_cpus(args.cpu_list, utils.get_nr_cpus())
+ 
+     elif args.command in ['isolate', 'i']:
+-        tuna.isolate_cpus(args.cpu_list, get_nr_cpus())
++        tuna.isolate_cpus(args.cpu_list, utils.get_nr_cpus())
+ 
+     elif args.command in ['run', 'r']:
+ 
+diff --git a/tuna/utils.py b/tuna/utils.py
+new file mode 100644
+index 000000000000..f55432dbbbb0
+--- /dev/null
++++ b/tuna/utils.py
+@@ -0,0 +1,28 @@
++# SPDX-License-Identifier: GPL-2.0-only
++# Copyright (C) 2024 John B. Wyatt IV
++
++import os
++
++import tuna.new_eth as ethtool
++
++# Collect a few globals and functions so they can be reused in other modules
++nr_cpus = None
++nics = None
++
++def get_nr_cpus():
++    """ Get all cpus including disabled cpus """
++    global nr_cpus
++    if nr_cpus != None:
++        return nr_cpus
++    nr_cpus = os.sysconf('SC_NPROCESSORS_CONF')
++    return nr_cpus
++
++def get_all_cpu_list():
++    return list(range(get_nr_cpus()))
++
++def get_nics():
++    global nics
++    if nics != None:
++        return nics
++    nics = ethtool.get_active_devices()
++    return nics
 -- 
 2.51.1
 
