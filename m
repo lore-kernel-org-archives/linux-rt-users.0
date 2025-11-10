@@ -1,58 +1,54 @@
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 3DA2230FF2E
-	for <linux-rt-users@vger.kernel.org>; Mon, 10 Nov 2025 13:23:31 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 30F1630506A
+	for <linux-rt-users@vger.kernel.org>; Mon, 10 Nov 2025 13:23:32 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1762781013; cv=none; b=oPo+SJDWMR6FJW9KixRYQbJhzDcGW80GjQcEzzoHRg1dsPG5VPXxIhObX/+Z8GVMUfXzPnTp6to4N73CWmFTgt60i965Sagxpy89oVOkwyg2+0lzzp2hhgUlhRUBKson+facPgjhW9b1MfSRCJMm2p7O6R1i0qVhMHkcGhtIeKQ=
+	t=1762781013; cv=none; b=JQYcFYp+pjen389WyvjpTDkRSKdMo8vEka1GHbA6HwIMscVLlj0tUJ3JAaKwPmV69TNCbwDm2QdI40uFNf3N9aLdiwAUpmT75orWZN7x10IcyTMB+YfMtPpB7IfO79ytQjNnunEYH8m8dX34tFJ/4mbF7udRQbjmeCR9Db20oQU=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
 	s=arc-20240116; t=1762781013; c=relaxed/simple;
-	bh=a1VOqnOmHM7pHtnKeqBFGns6atgWVhUpr5guu3E+bbs=;
+	bh=8S9asUjcIxr8sygDyH1CWh2gKwhksrVASAxP3jOnMKo=;
 	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=BZkKTYiaQqIO7tkOaWEjdXjSO7uAcxM9MQbdv/hMrTNy25KsZ4le01SpgAklZSJb7+Lw7sDvzhvz0mFeD879Y6iDgBLJVTLS39vm6aZGfD+AM9b5jml6toXqdv7JvuZIJeIkdxixeDU654YftwjQ36qdA/hP28DY2bQbnf3rC48=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=JkhEiP5M; arc=none smtp.client-ip=170.10.133.124
+	 MIME-Version; b=qzJvtHwzTZtBcjXF2nbIEf+9SgHVzoYPlE24HNPuu3mpWPDigCx29YkSiv7lei3QoAWTKRzN5T6qm0mbqnRmqsQhuPdE/35eTnfSAh9CxyxshzATFS5Zhw0wY/S7vj36S4mMdzLahelkeoOd27wuSgVfZllk2jc12SNnSUC566c=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=i7xVRX5u; arc=none smtp.client-ip=170.10.133.124
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="JkhEiP5M"
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="i7xVRX5u"
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1762781010;
+	s=mimecast20190719; t=1762781011;
 	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
 	 to:to:cc:cc:mime-version:mime-version:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references;
-	bh=b/JxUXpRfuzeDYqFHaoSH5Tjgg9fTbQY5YHtzN/ya0Y=;
-	b=JkhEiP5MpZUC541bKauEDc6U1P8r0+QN0EL5tNgQX/rx2b3xYbGAxwY53HwQThdXBbZ/rQ
-	u2qKw27+2GTnWYprVAKwb/FFjUo8QJyBJwfVIFqBVh77gYFXNrnI/096ZkPMuaHlE2+U1V
-	Gv6PH9eGGlbFex6+1egpIUnqkE2BAsE=
+	bh=Ud5JfjQ4+LDpOAiRd8ZMGAIQrFChoWIuAK54p+sOG/8=;
+	b=i7xVRX5uNHXxqIaMrehpcocDd6FBawR50gNjRP7EiKLKzEMLVhIS5uuX8LvJWRIWD6JJ7V
+	waR1nrDxod41JwABtw9RDY7eez7v3HsXitc2m6YedUDRtbEDx/hwo2rZH39CAJWDKzXfaZ
+	S0cN1HixSuXwpSZ8YTHlOSeVrRD1DGQ=
 Received: from mx-prod-mc-06.mail-002.prod.us-west-2.aws.redhat.com
  (ec2-35-165-154-97.us-west-2.compute.amazonaws.com [35.165.154.97]) by
  relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-530-FQsIQ6EZMR261EoZ7d9aRA-1; Mon,
- 10 Nov 2025 08:23:26 -0500
-X-MC-Unique: FQsIQ6EZMR261EoZ7d9aRA-1
-X-Mimecast-MFC-AGG-ID: FQsIQ6EZMR261EoZ7d9aRA_1762781006
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-74-IoAJkaaUPpeIb2n2ZuYtWQ-1; Mon,
+ 10 Nov 2025 08:23:29 -0500
+X-MC-Unique: IoAJkaaUPpeIb2n2ZuYtWQ-1
+X-Mimecast-MFC-AGG-ID: IoAJkaaUPpeIb2n2ZuYtWQ_1762781008
 Received: from mx-prod-int-05.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-05.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.17])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
 	(No client certificate requested)
-	by mx-prod-mc-06.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 1A42B18001D1;
-	Mon, 10 Nov 2025 13:23:26 +0000 (UTC)
+	by mx-prod-mc-06.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id B797E180034A
+	for <linux-rt-users@vger.kernel.org>; Mon, 10 Nov 2025 13:23:28 +0000 (UTC)
 Received: from wcosta-thinkpadt14gen4.rmtbr.csb (unknown [10.22.88.40])
-	by mx-prod-int-05.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTP id AB476196FC8B;
-	Mon, 10 Nov 2025 13:23:22 +0000 (UTC)
+	by mx-prod-int-05.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTP id 12A6E196FC8B;
+	Mon, 10 Nov 2025 13:23:26 +0000 (UTC)
 From: Wander Lairson Costa <wander@redhat.com>
 To: williams@redhat.com
 Cc: linux-rt-users@vger.kernel.org,
-	Wander Lairson Costa <wander@redhat.com>,
-	Derek Barbosa <debarbos@redhat.com>,
-	John Kacur <jkacur@redhat.com>,
-	Juri Lelli <juri.lelli@redhat.com>,
-	Chunsheng Luo <luochunsheng@ustc.edu>
-Subject: [stalld v2 5/6] Makefile: Print BPF tool versions for debugging
-Date: Mon, 10 Nov 2025 10:22:40 -0300
-Message-ID: <20251110132241.43685-6-wander@redhat.com>
+	Wander Lairson Costa <wander@redhat.com>
+Subject: [stalld v2 6/6] gitignore: Exclude Serena and Claude Code metadata
+Date: Mon, 10 Nov 2025 10:22:41 -0300
+Message-ID: <20251110132241.43685-7-wander@redhat.com>
 In-Reply-To: <20251110132241.43685-1-wander@redhat.com>
 References: <20251110132241.43685-1-wander@redhat.com>
 Precedence: bulk
@@ -64,35 +60,31 @@ MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 X-Scanned-By: MIMEDefang 3.0 on 10.30.177.17
 
-This commit adds informational messages to the Makefile to print the
-kernel version, clang version, and bpftool version. This will help in
-debugging BPF-related compilation issues by providing clear information
-about the build environment.
+This commit adds .serena and CLAUDE.md to the .gitignore file to
+prevent Serena IDE metadata and Claude Code documentation from being
+tracked in version control. These files are development environment
+specific and should not be part of the repository.
+
+The .serena directory contains IDE-specific configuration and cache
+files, while CLAUDE.md is used for AI-assisted development guidance.
+Both are local-only files that vary between development environments
+and should remain untracked.
 
 Signed-off-by: Wander Lairson Costa <wander@redhat.com>
-Cc: Derek Barbosa <debarbos@redhat.com>
-Cc: John Kacur <jkacur@redhat.com>
-Cc: Juri Lelli <juri.lelli@redhat.com>
-Cc: Chunsheng Luo <luochunsheng@ustc.edu>
 ---
- Makefile | 4 ++++
- 1 file changed, 4 insertions(+)
+ .gitignore | 2 ++
+ 1 file changed, 2 insertions(+)
 
-diff --git a/Makefile b/Makefile
-index ba67698..43eb9b8 100644
---- a/Makefile
-+++ b/Makefile
-@@ -121,6 +121,10 @@ VMLINUX_BTF_PATHS	:= /sys/kernel/btf/vmlinux /boot/vmlinux-$(KERNEL_REL)
- VMLINUX_BTF_PATH	:= $(or $(VMLINUX_BTF),$(firstword                            \
-                                           $(wildcard $(VMLINUX_BTF_PATHS))))
- 
-+$(info KERNEL=$(KERNEL_REL))
-+$(info $(shell $(CLANG) --version | head -1))
-+$(info $(shell $(BPFTOOL) --version))
-+
- ifeq ($(ARCH),x86_64)
- CLANGARCH="-D__x86_64__"
- endif
+diff --git a/.gitignore b/.gitignore
+index dc802f6..62fddc0 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -18,3 +18,5 @@ node_modules/
+ patches/
+ tests/legacy/test01
+ *.patch
++.serena
++CLAUDE.md
 -- 
 2.51.1
 
