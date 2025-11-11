@@ -1,100 +1,99 @@
-Received: from galois.linutronix.de (Galois.linutronix.de [193.142.43.55])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id B7313365A0F
-	for <linux-rt-users@vger.kernel.org>; Tue, 11 Nov 2025 15:50:35 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=193.142.43.55
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 0E6FC36CDF7
+	for <linux-rt-users@vger.kernel.org>; Tue, 11 Nov 2025 16:29:31 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1762876237; cv=none; b=Iw5Oc/kzGYXkatApU1OWbXBpMdXrq/vhJhF+F2xL0/I3WtXSlHP4eGgWgZIdeGK2NhmjXIyX5yVvV4vgRGGXB/nOseZ/MyTWd1oeTpPFdu7phkshrOthnQkrLN7VAbnZkFg93hK5EOQRQJX5beDlQFCnD8zIergER4hIww2phuM=
+	t=1762878574; cv=none; b=nJ32Je5FdG9q6IoobIxhWKWLZeQz7Tus4gP0qq+Isg1jlFjVaerhxDEtm+E2ogoA7pkWmKJPRW856Hix9wp00S9NSssxazUTBf9COlwepcuQfZ7/ckhtjlkGUEnFDHaOCgXE9cZSdml2bxWPIlh5AQmQfg6ujGL8eJh9AfMZP/s=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1762876237; c=relaxed/simple;
-	bh=t5EmlaB/gdJ721DQJcMD3Tg49qWPOPS1lFdoUAMB+xs=;
+	s=arc-20240116; t=1762878574; c=relaxed/simple;
+	bh=a91/CUDwRER9w0rtk9QzKfIijDlAVxTl6fNiouoqa88=;
 	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 Content-Type:Content-Disposition:In-Reply-To; b=jXGPshUhVSi/S9bCiLIyBfFKjUfdPjbez4OCPYvF5gR56st+i0jnQoz/o4ziCV/65a828i/4/Vpe4bv6Jr1X1AhwbFUC+IxpEZkaHO+QjB2crbtPoVZDmIwKh/KjU7wUAJyN4Mbo0B9yvR0jSFn2B+Gtjdr1J9l3KlTUAfEKV7M=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linutronix.de; spf=pass smtp.mailfrom=linutronix.de; dkim=pass (2048-bit key) header.d=linutronix.de header.i=@linutronix.de header.b=V8L5VhrZ; dkim=permerror (0-bit key) header.d=linutronix.de header.i=@linutronix.de header.b=yFGX/MNR; arc=none smtp.client-ip=193.142.43.55
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linutronix.de
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=linutronix.de
+	 Content-Type:Content-Disposition:In-Reply-To; b=TaaJsrGkAVRQi9ueztCeMFxF6Y0tVNCbIkZYJMDMXKYaW09E6dITyLuCXd56AWVQbUfe6+yeUDeSnwfl705+V4r+9HlG0HowbUmXAqwz9dN+x/thsOHm7d2EBOwCJd/MvPR1lt0aquDAJlHut1lnLu7dDm61cM2SYod7eAhTrKY=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=eVMAjlYG; arc=none smtp.client-ip=170.10.133.124
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="V8L5VhrZ";
-	dkim=permerror (0-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="yFGX/MNR"
-Date: Tue, 11 Nov 2025 16:50:32 +0100
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
-	s=2020; t=1762876234;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 in-reply-to:in-reply-to:references:references;
-	bh=0wp/MOvePme1rxDWCowHdVvfPDfaZ182QSdmLOsi3RQ=;
-	b=V8L5VhrZu8z8JzI14SmDrv1dwhGyBQMKDjssX+7uYRjUzlJfvG1uYuCNkhhFrzzSCD4T6p
-	gn67hnRe3z8PewN8suaAwW1RHXG5kWAJ446kJVNA9wWne71+Dma7nABhjYloJmz2bCqI1M
-	sFf2UDpQRGpxfDMWeTvwT5UzAPXtSJ5w64d5e+owWRyp9VQjGhpFoiYIboS1iCPHxwU5Zu
-	vl2u6aXXWVaIBSbLFfG+A/q1UeCIoeyc+SVylIoHyKUyttNH2D4JZWac3VGpVn4zCdx1Ra
-	pFdRpLC55tCVrUFQawr2JPHkzncYhDPOibQ+slfSY2u+Y+M05wXyAV4mKIbZ2Q==
-DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
-	s=2020e; t=1762876234;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 in-reply-to:in-reply-to:references:references;
-	bh=0wp/MOvePme1rxDWCowHdVvfPDfaZ182QSdmLOsi3RQ=;
-	b=yFGX/MNRlZnzd0nizVP/Lm5WbtJXIS/4T17h4U8AyfV6gY3xmr2lniEgOpxGMyKOkKEyjD
-	WBIivDenfWMXanBg==
-From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-To: Derek Barbosa <debarbos@redhat.com>
-Cc: Wander Lairson Costa <wander@redhat.com>, williams@redhat.com,
-	linux-rt-users@vger.kernel.org
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="eVMAjlYG"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1762878571;
+	h=from:from:reply-to:reply-to:subject:subject:date:date:
+	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
+	 content-type:content-type:in-reply-to:in-reply-to:  references:references;
+	bh=FK7mhgLR9i6vRUG4vpCbi040lpuKceFGc64EeFiR3Tg=;
+	b=eVMAjlYGB+/hmPYKAEvDIwpsvNUNo5kylOXkovt1NEpA6YiMzxpeEnDq/Xrs90xEJz3xcK
+	bobMLowYOcCoCebmViSGKH/DYDE4EAyh1iZZTGidzR+jEScbbsRi5ngAO98z4CS0Qw7imt
+	j3TpCBR3Lz/MK/AgWILXxABj7rSbyx8=
+Received: from mx-prod-mc-06.mail-002.prod.us-west-2.aws.redhat.com
+ (ec2-35-165-154-97.us-west-2.compute.amazonaws.com [35.165.154.97]) by
+ relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-216-3KKGs_ddMNKJY18r8O-L0A-1; Tue,
+ 11 Nov 2025 11:29:28 -0500
+X-MC-Unique: 3KKGs_ddMNKJY18r8O-L0A-1
+X-Mimecast-MFC-AGG-ID: 3KKGs_ddMNKJY18r8O-L0A_1762878566
+Received: from mx-prod-int-03.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-03.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.12])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
+	(No client certificate requested)
+	by mx-prod-mc-06.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id BD786180034A;
+	Tue, 11 Nov 2025 16:29:19 +0000 (UTC)
+Received: from localhost (unknown [10.22.80.141])
+	by mx-prod-int-03.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTP id B42151956046;
+	Tue, 11 Nov 2025 16:29:18 +0000 (UTC)
+Date: Tue, 11 Nov 2025 11:29:17 -0500
+From: Derek Barbosa <debarbos@redhat.com>
+To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Cc: Wander Lairson Costa <wander@redhat.com>, williams@redhat.com, 
+	linux-rt-users@vger.kernel.org, crwood@redhat.com
 Subject: Re: [PATCH 0/3] Improve Makefile robustness and explicitness
-Message-ID: <20251111155032.r8XNNyFU@linutronix.de>
+Message-ID: <lufi4xb6bbpllszjdfsasor3ehkn3lyynpnmtogegm2l65eop2@4j64xkvwlw4g>
+Reply-To: debarbos@redhat.com
 References: <20251107161729.320087-1-wander@redhat.com>
  <20251111145020.C7DI111V@linutronix.de>
  <dgm5dmxmq56rtcorzcapb6ibzlch73xwqfavwtbzrbpi6ukfgv@h32wjmfahkfm>
+ <20251111155032.r8XNNyFU@linutronix.de>
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
 List-Subscribe: <mailto:linux-rt-users+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=utf-8
+Content-Type: text/plain; charset=us-ascii
 Content-Disposition: inline
-In-Reply-To: <dgm5dmxmq56rtcorzcapb6ibzlch73xwqfavwtbzrbpi6ukfgv@h32wjmfahkfm>
+In-Reply-To: <20251111155032.r8XNNyFU@linutronix.de>
+X-Scanned-By: MIMEDefang 3.0 on 10.30.177.12
 
-On 2025-11-11 10:35:58 [-0500], Derek Barbosa wrote:
-> Hey Sebastian,
-Hi Derek,
+On Tue, Nov 11, 2025 at 04:50:32PM +0100, Sebastian Andrzej Siewior wrote:
+> If the package maintainer decides to add a certain flag, such as
+> -fcf-protection, despite not working on all architectures then he can
+> keep the pieces.
 
-> Part of the changes were to keep in line with what Daniel had in the makefile
-> originally, and just doing some hacks to ensure that these flags are
-> conditionally included based on arch support.
+Tagging Crystal as she has weighed in on this topic in previous threads.
+
+> In my opinion the package should not fiddle with what the upper layer
+> (build system) specified/ requested. It may have a default set of flags
+> (such as -O2 -g) which will be overwritten once the user supplied
+> something.
+
+Agreed. We've already stripped out a lot of the RHEL-styled options of the
+makefile with this logic.
+
+Wander & Clark, any thoughts?
+
+> The default set should not be something that is not required
+> and is not always provided by the compiler specified as minimum.
+
+With this tidbit in mind, what else do you propose we strip out and leave to the
+packagers? Is it worth retaining some of the debug & hardening flags, and
+leaving the rest to them?
+
+Cheers,
+
 > 
-> In the case of -fcf-protection, Clark and I noticed that if a particular host
-> system was using, say, the sched debug file as a parsing logic "backend" by
-> specifying it in the command line, it was most likely because the system does
-> not have BTF support enabled.
+> Sebastian
 > 
-> We were particularly worried about much older systems with older compiler
-> versions, which would prevent them from compiling stalld from source if they
-> desired to use this legacy interface.
-> 
-> Not sure if this answers your question at all. Sorry for the rant.
 
-I understand. I'm just trying to say my two words here what a distro/
-builder should do here and the piece of software.
+-- 
+Derek <debarbos@redhat.com>
 
-On Debian, the build flags start with the "dpkg-buildflags" command
-which the CFLAGS for instance (among other things). So this is might
-look as follows
-| CFLAGS=-g -O2 -Werror=implicit-function-declaration -ffile-prefix-map=/build/pkg=. -fstack-protector-strong -fstack-clash-protection -Wformat -Werror=format-security -fcf-protection
-
-on amd64. Should, for instance, -fcf-protection not be supported on
-s390x it is dpkg-buildflags's job not to pass those on s390x. There
-features which are enabled conditionally because not all architectures
-enable/ provide them at the same time.
-
-If the package maintainer decides to add a certain flag, such as
--fcf-protection, despite not working on all architectures then he can
-keep the pieces.
-In my opinion the package should not fiddle with what the upper layer
-(build system) specified/ requested. It may have a default set of flags
-(such as -O2 -g) which will be overwritten once the user supplied
-something. The default set should not be something that is not required
-and is not always provided by the compiler specified as minimum.
-
-Sebastian
