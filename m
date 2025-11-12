@@ -1,75 +1,70 @@
-Received: from mail-qk1-f171.google.com (mail-qk1-f171.google.com [209.85.222.171])
+Received: from mail-qk1-f172.google.com (mail-qk1-f172.google.com [209.85.222.172])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 30B4428F50F
-	for <linux-rt-users@vger.kernel.org>; Wed, 12 Nov 2025 17:48:52 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.222.171
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id B1FD535CBA9
+	for <linux-rt-users@vger.kernel.org>; Wed, 12 Nov 2025 23:48:48 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.222.172
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1762969733; cv=none; b=i9OKU2SIw+vPTuH9skTE4KAJsotJJVVGoK/cx689L39TTZjeZf7YYeN4ULcoF0pIAbvk1zBxoJKSQ3A7SDCQ8gJWrMEefpyOjw8a8iasexqYzBx6HHwysdWfXG8HtNrtxGPZAlUD7jyMX68lCXY8mNZUI3Inqcp9zMATXmEEaEc=
+	t=1762991330; cv=none; b=mRyS9Uo1Ijy+t/UpWd+jtCxts6G5NZdFsCFkcjehF/280bIOmXgkN40ERRMoGV4HwZpikev8vltML1aZkK1c9c+wtDzH0glxA25DRFoM2WcQ3tltSWyb/8eX1L9OYpWzlEERbOKGNkNUxLvh/44qr5Ud8mm1bavsxHUKsjHWof0=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1762969733; c=relaxed/simple;
-	bh=KIYHgOE5gMBUzJVfNMNe61qnHpIGAg5ZhF/KLH0TK4c=;
-	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=rl8ctI76ZVeLBxAmDu67+mgWx407YjiZTp7S5DuqZiMdX0EK95PxP44F/tBlQbEx28zlN8lJW+qmjdHCeQlE+IYdN/QeXe2D5wyn9CtWdXLJN81c2NI5+j21QFoTTUMvPNVoJUDU8vM/+5SiIik9PDfmVPbUqabwgozuxwWkSek=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=fail (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=E4C9OoNo; arc=none smtp.client-ip=209.85.222.171
+	s=arc-20240116; t=1762991330; c=relaxed/simple;
+	bh=+iBPSzUw90P+DyvX+VuwPc3faW4m5RPQ0X5heR2FqWQ=;
+	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=hjCqfn2MLg5i3FH2tVK/tZ6PbANfIJ0CiVXCHZvCKjvnewzc5/GB8BOKu0X+lBGUXeeFmlc3LI8WIsVJp3tM00AP7SUvHl47gORZ6JRqRsYigkT4YgCKDOQMUrYLn/GhWUnBBY4HG5UX3TnJ8T8X+AIKWLKnRbIzj4jUW90WySw=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=fail (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=Xc+ql9G3; arc=none smtp.client-ip=209.85.222.172
 Authentication-Results: smtp.subspace.kernel.org; dmarc=fail (p=quarantine dis=none) header.from=redhat.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="E4C9OoNo"
-Received: by mail-qk1-f171.google.com with SMTP id af79cd13be357-8b29ff9d18cso86492585a.3
-        for <linux-rt-users@vger.kernel.org>; Wed, 12 Nov 2025 09:48:52 -0800 (PST)
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="Xc+ql9G3"
+Received: by mail-qk1-f172.google.com with SMTP id af79cd13be357-8b25ed53fcbso33665285a.0
+        for <linux-rt-users@vger.kernel.org>; Wed, 12 Nov 2025 15:48:48 -0800 (PST)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1762969730; x=1763574530; darn=vger.kernel.org;
-        h=content-transfer-encoding:mime-version:references:in-reply-to
-         :message-id:date:subject:cc:to:from:sender:from:to:cc:subject:date
-         :message-id:reply-to;
-        bh=M8lV50GRi8bc1PQa66BAUsgRZ2Zhsosh+hqZyeH4f/8=;
-        b=E4C9OoNo4gZZEtpIu+3r/fLTwSdt3GD8dcaxfSz/co4TOGLH344RAg2Zf3oO5k+mzq
-         frcZHcXlmyqLSpwmxZPRzLSJMLhBIJvz/xZI3L/z79ugWtiTLcigIA4p87z5xne2GjJH
-         fVwDYgw5eM4OGIbtr0w9t0/IDUaXh3x8bLitphg6shiJ3EfY2m9DR4SiR9+iv41oY6/L
-         Oxs5GVrm12ThrnIMPIyTGQjLdDxjRoLtr3oXexon5HRuMYhxV2Ex2YaRv0aSPjQvYU2D
-         pkP3LgQdLMFRtunb5liCGx9CSk2aChG7+8NExQRfHpsQNk7GsRdKg7oQDNrwTzfiMX5a
-         5OyQ==
+        d=gmail.com; s=20230601; t=1762991327; x=1763596127; darn=vger.kernel.org;
+        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+         :to:from:sender:from:to:cc:subject:date:message-id:reply-to;
+        bh=nAyT28sEf/dI90ELuoRjZRehk4bb3PCz+7aigkNBeXk=;
+        b=Xc+ql9G3dZ5MMPn+KSJHkoSB6k5vhEZdKPH/UDRXJS+agRGYw4AIrrCwF6mZHxSj42
+         njKJn7Tpgwopgfao9T940RuRyi2csJP6syi13fUua5Rfg2+Erh8EFOmZZPO0ahW2aFGR
+         SkkkCXQMBeRVSE7ET6jYvYHxUrkCDeKalTXNsYwEsIXJ+wserUgTDWVfE0gi4ZwQBgpN
+         Hkpaey68DHdWXmihxKLcI190fR6hv/kAsvaxen/RQwX0/O9ODXVYN5AiTtKzUcsfFsPI
+         Gd6mhlvNroA1YM7t0Yuey5sPN84PC7oiRbYgVwhsDhM+jT3qeX78I2u7p2KD1kZlAuZ4
+         HHGw==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1762969730; x=1763574530;
-        h=content-transfer-encoding:mime-version:references:in-reply-to
-         :message-id:date:subject:cc:to:from:sender:x-gm-gg
-         :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
-        bh=M8lV50GRi8bc1PQa66BAUsgRZ2Zhsosh+hqZyeH4f/8=;
-        b=MG8hdkz3fZMt9629zpLZHkbEeAE3Q6xOnhWUaOUTeweq9P4WuE5kHILfLQC1xKc00U
-         ayKZevdcOeGvrWyGbBA29obN4RZD7lJTJxjE7g+SIx3d1mw6McMecPxBMY0tZOW3Wo/A
-         vsVopV2N4yW+TfnDsNEPAAtHngd9PKKGwNeMskL47niZELZzws/Zxd0y1xYbufzeLEYo
-         DV7Sv8z+TkM0VGThKd0RL+YQbWOI7WKYTJCCkbCSXQBqLZM2tM+70OYC6NO/QYr1GLI4
-         EzFTnpymT1W+R2Bg772icNF6lflRvTYFJqLhsmemkh3eLESXtU/rpJ1oJepwlfeYgvTi
-         n2/w==
-X-Gm-Message-State: AOJu0YwYJc7NO3NB6HHt8u4wrSHCbswsObr9mMkaJ+X4WFimAskmSooP
-	RD7Z6yZvvi8WVdiJeMHf0BLp7ZMEKtGjzTXaDa5aKxI6gipxPzYQpqPrXFfxtfoi
-X-Gm-Gg: ASbGncu3GKesbSnQhu798YdcpW++4MJ5Q0jjobiyShuqvmQn1wPKddCdLYXBLd8BpgL
-	9fkhvX0QyZeVH9tWES90QhBFt32ccQY1UWKpmj1DfirmABWRTS4f8Sc73WnoYMl7j2zP2JH/nVx
-	KITnG8adAMVyeKBEZZCLTpDm3b+cGijNfqxSg7FF3uOGcnX83PT4tE81cO4KQvEjIgv/NgHrT2G
-	+yJjgqwVlzN5eOPrqnC+kN0D464a05mFOm2dBUfwt/3OcJ+fGRoK2THlsAslHYTReeNIAwZKWxw
-	ftn9KhLKkDi6OGi84pug3FKENInPqG5hY5SeMLZIQrutA2dBr+r5XZgD/NS4GSKPtsIr7MwhaMD
-	C6S+ozAu4kf5l4M2jMK9S58fNc55qgE77K2uK0LzwlLSH0AwQYkXGw+i4pzcwJKP2ww5WK8eBGQ
-	==
-X-Google-Smtp-Source: AGHT+IGO3h+geMAb+aFOXocUIHHqcXP3z01xZh8HgAnJf66AC06o78KbI6b6JgkavK8EPPh/5SKoag==
-X-Received: by 2002:a05:620a:2908:b0:8b2:2ba7:8d81 with SMTP id af79cd13be357-8b29b96d08cmr450591985a.87.1762969730595;
-        Wed, 12 Nov 2025 09:48:50 -0800 (PST)
+        d=1e100.net; s=20230601; t=1762991327; x=1763596127;
+        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+         :to:from:sender:x-gm-gg:x-gm-message-state:from:to:cc:subject:date
+         :message-id:reply-to;
+        bh=nAyT28sEf/dI90ELuoRjZRehk4bb3PCz+7aigkNBeXk=;
+        b=ADZSvBX3mXi/i+pZPByzxrjM++Idzocc9Ts66uFnlH0KFo9M0d0S5trr0c9aa/ThaC
+         gDEawvkErXmPHELGS8bFnHTObz3UzebmbP4ssZpiSBXcsvx3yd8NartjvUnJc5CRhheR
+         O/4O/vF1D1T4H5jsGucUCnyUv/aYYv+/YqTlAu9ayaGQK4Oz8g6669o7mSVNdKVJd9EG
+         9xRv2jgM/7Z8Z0J2UidUf6ITRXH/+dUfZTvvbqoQvQBhvOEFNrWT9t3SYVKxLv2Vd0IE
+         pc+i1qmXl6RiYC7DNCB4qzTiHwYN4xGLw5pr+bsUlo1xLADZycKQTaOXI/U+1Jj9NvyJ
+         rRyw==
+X-Gm-Message-State: AOJu0YyYgMg6Jxrv171gWN7J2PYzgwzckeXdDIQF9LR8RKuhxxeEj9Qt
+	cRpR5nvH6u6ojI6Chdj5UDIJZKJ8oXL5AMhyzaY0RpED74ntRsTrKAjVYnX0K7TV
+X-Gm-Gg: ASbGncuvOa4o3BluRe5ShC2vCLtEWbURP696gYkyoGj0k86dhFvBHOpmOm0UAmSh1mt
+	wg1MQhxy1Qyzsxg8oIWDfPWyKTOddj6YomX9cPf04P6jvsRFdiqG3ITn+Iuqi9rtCAZcRWpm+Up
+	BHBPyxxLBzKe46GDxxX8Zg7YyJ0GucegXka1v4tTe9F1J4wp8BXmsN+HCBcOnjsNND+9u755YOZ
+	Z6EatITpk2eN4ukmsqDxT2fcxsFuS50i16Q/Jvd8cowI8xHRQR64kySJXA2m69V2qq+np2IUT1a
+	6NWy7xg6CufzIgYngYu3NoL0rzO7W4H4xnFEIEx8mHiFjXirHX0d4tPNvy/u7wlb65yZg4/c/01
+	kPUD+zOhMYzVoauMI/+/+m+Zr6zWO7V83EsNY0mCmiMWZIFD3K9XJk/XbIGG4i18=
+X-Google-Smtp-Source: AGHT+IFhnDOyDQWbDVyrwPCrr/HuMf+fSYW7VqYglhM1eBZqB1jMXhZRRwfWxVtyBbnyyqSnKF0E5w==
+X-Received: by 2002:a05:620a:4708:b0:8b2:772b:5f5f with SMTP id af79cd13be357-8b29b769a00mr620594885a.28.1762991326832;
+        Wed, 12 Nov 2025 15:48:46 -0800 (PST)
 Received: from fionn ([174.88.40.44])
-        by smtp.gmail.com with ESMTPSA id af79cd13be357-8b29a9e3f09sm233619285a.36.2025.11.12.09.48.48
+        by smtp.gmail.com with ESMTPSA id af79cd13be357-8b2aee9eeb1sm20886885a.8.2025.11.12.15.48.45
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Wed, 12 Nov 2025 09:48:49 -0800 (PST)
+        Wed, 12 Nov 2025 15:48:45 -0800 (PST)
 Sender: John Kacur <jkacur@gmail.com>
 From: John Kacur <jkacur@redhat.com>
 To: linux-rt-users <linux-rt-users@vger.kernel.org>
 Cc: Tomas Glozar <tglozar@redhat.com>,
 	Clark Williams <williams@redhat.com>,
 	John Kacur <jkacur@redhat.com>
-Subject: [PATCH 2/2] rteval: timerlat: Disable auto-analysis with --no-aa
-Date: Wed, 12 Nov 2025 12:48:35 -0500
-Message-ID: <20251112174835.188210-2-jkacur@redhat.com>
+Subject: [PATCH] rteval: Upgrade kcompile kernel to linux-6.17.7
+Date: Wed, 12 Nov 2025 18:48:28 -0500
+Message-ID: <20251112234828.262150-1-jkacur@redhat.com>
 X-Mailer: git-send-email 2.51.1
-In-Reply-To: <20251112174835.188210-1-jkacur@redhat.com>
-References: <20251112174835.188210-1-jkacur@redhat.com>
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
@@ -78,27 +73,78 @@ List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 
-Pass --no-aa flag to rtla timerlat to disable auto-analysis, which
-reduces CPU usage of the timerlat measurement tool.
+Update the kernel that rteval compiles as a load in the kcompile
+load module to linux-6.17.7.tar.xz
 
 Signed-off-by: John Kacur <jkacur@redhat.com>
 ---
- rteval/modules/measurement/timerlat.py | 2 ++
- 1 file changed, 2 insertions(+)
+ Dockerfile                       | 2 +-
+ Makefile                         | 2 +-
+ rteval/modules/loads/kcompile.py | 4 ++--
+ rteval/rteval.conf               | 2 +-
+ 4 files changed, 5 insertions(+), 5 deletions(-)
 
-diff --git a/rteval/modules/measurement/timerlat.py b/rteval/modules/measurement/timerlat.py
-index 1c7fb1607682..7ad8997c95dc 100644
---- a/rteval/modules/measurement/timerlat.py
-+++ b/rteval/modules/measurement/timerlat.py
-@@ -231,6 +231,8 @@ class Timerlat(rtevalModulePrototype):
-         self.__cmd.append(f'-c{self.__cpulist}')
-         self.__cmd.append(f'-E{self.__buckets}')
-         self.__cmd.append('--no-summary')
-+        # Disable auto-analysis
-+        self.__cmd.append('--no-aa')
+diff --git a/Dockerfile b/Dockerfile
+index b8f602b11703..0c4fee028312 100644
+--- a/Dockerfile
++++ b/Dockerfile
+@@ -1,7 +1,7 @@
+ # Use CentOS Stream 9 as base image
+ FROM centos:stream9
  
-         # Add dma-latency option if configured (default is 0)
-         # If dma_latency is explicitly set to None, don't pass the option to rtla
+-ARG KERNEL_VERSION=linux-6.12-rc4.tar.gz
++ARG KERNEL_VERSION=linux-6.17.7.tar.xz
+ 
+ 
+ # Copy current directory to /opt/rteval/
+diff --git a/Makefile b/Makefile
+index 36f2eda626c1..9b8897d89b03 100644
+--- a/Makefile
++++ b/Makefile
+@@ -14,7 +14,7 @@ PREFIX  :=      /usr
+ DATADIR	:=	$(DESTDIR)/$(PREFIX)/share
+ LOADDIR	:=	loadsource
+ 
+-KLOAD	:=	$(LOADDIR)/linux-6.12-rc4.tar.gz
++KLOAD	:=	$(LOADDIR)/linux-6.17.7.tar.xz
+ BLOAD	:=	$(LOADDIR)/dbench-4.0.tar.gz
+ LOADS	:=	$(KLOAD) $(BLOAD)
+ 
+diff --git a/rteval/modules/loads/kcompile.py b/rteval/modules/loads/kcompile.py
+index 8a3a0e93fa14..404b46d505d0 100644
+--- a/rteval/modules/loads/kcompile.py
++++ b/rteval/modules/loads/kcompile.py
+@@ -21,7 +21,7 @@ expand_cpulist = cpulist_utils.expand_cpulist
+ compress_cpulist = cpulist_utils.compress_cpulist
+ nonisolated_cpulist = cpulist_utils.nonisolated_cpulist
+ 
+-DEFAULT_KERNEL_PREFIX = "linux-6.12-rc4"
++DEFAULT_KERNEL_PREFIX = "linux-6.17.7"
+ 
+ class KBuildJob:
+     '''Class to manage a build job bound to a particular node'''
+@@ -342,7 +342,7 @@ class Kcompile(CommandLineLoad):
+ 
+ def ModuleParameters():
+     return {"source":   {"descr": "Source tar ball",
+-                         "default": "linux-6.12-rc4.tar.gz",
++                         "default": "linux-6.17.7.tar.xz",
+                          "metavar": "TARBALL"},
+             "jobspercore": {"descr": "Number of working threads per core",
+                             "default": 2,
+diff --git a/rteval/rteval.conf b/rteval/rteval.conf
+index 5a49040d980f..e4437e04347a 100644
+--- a/rteval/rteval.conf
++++ b/rteval/rteval.conf
+@@ -18,7 +18,7 @@ dbench:    external
+ stressng: module
+ 
+ [kcompile]
+-source: linux-6.12-rc4.tar.gz
++source: linux-6.17.7.tar.xz
+ jobspercore: 2
+ 
+ [hackbench]
 -- 
 2.51.1
 
