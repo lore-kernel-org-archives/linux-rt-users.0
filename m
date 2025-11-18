@@ -1,181 +1,177 @@
-Received: from mail-qv1-f43.google.com (mail-qv1-f43.google.com [209.85.219.43])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from mail-m49198.qiye.163.com (mail-m49198.qiye.163.com [45.254.49.198])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 8AABC30B51E
-	for <linux-rt-users@vger.kernel.org>; Thu, 13 Nov 2025 18:24:33 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.219.43
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id BC8112D47E6
+	for <linux-rt-users@vger.kernel.org>; Tue, 18 Nov 2025 11:32:12 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=45.254.49.198
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1763058275; cv=none; b=psNHFwqzh1O1xR0AXfRX8wC0Oom12vheY4KhjWiOGKeXEIf3u+Slrt13JLbm+4TPCJaZVNFsogZdAD2ujSJfRAlVMmLMzMJTWKEi9o18FkRGn7c8K65iSxqssnmF8H+jdCopBfw+WLA53xkIXO+QI045boXYnv+SqNlJz9/voFk=
+	t=1763465538; cv=none; b=IG/6hAcCJHJCFQpRF+2OP5UyEh50q2EUN8yMOq1e6T5+8Wob/pDK71Ow+3hWRYAl7CvK2Z4V3aoy8qZP8INFjISp5Q7UCa26zwu/ibPFxKv2ZfE9Fv7l9jvwyk0ll3GetJTsqldMQw2krgsRnitucfPBcYZ3HeuliBkJASRlGEY=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1763058275; c=relaxed/simple;
-	bh=GxwZBK6XBYVtQFQee+RbRweae6ZoYM6xfAdJdB9bBnk=;
-	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=Xx0uh8tFw4xuhZRZPbthirgE2rGHW1ATstFRuhxclxpbiGP8qqVQDhhM869IFkXetgYmW/aO5jjRe3Mu+CFM3t/PljalhP7uZasMPFvU4MKV3nUkLsm53zoPundY8bOosPWTcoiPUVJc+5VB7xwfvN9rpRUdUUeCGJk7ogY4zAw=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=fail (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=ffvFJRfL; arc=none smtp.client-ip=209.85.219.43
-Authentication-Results: smtp.subspace.kernel.org; dmarc=fail (p=quarantine dis=none) header.from=redhat.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
-Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="ffvFJRfL"
-Received: by mail-qv1-f43.google.com with SMTP id 6a1803df08f44-88245cc8c92so7317536d6.0
-        for <linux-rt-users@vger.kernel.org>; Thu, 13 Nov 2025 10:24:33 -0800 (PST)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1763058272; x=1763663072; darn=vger.kernel.org;
-        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
-         :to:from:sender:from:to:cc:subject:date:message-id:reply-to;
-        bh=qHcq97qEfbS69vhpABIO6rBUjZBY25lZ3caWXii+0Kc=;
-        b=ffvFJRfLIsRFwIjrcTL7biAlEtY5+rimb7NrxC50eCzh8Y5NzoNY4FpUkxryaJTDMu
-         7RilITAKeS6+jx/G9uj11IjtD/YimX514GfugRWGlixz2/Nqplr9wq0z0Tx9s7xX000f
-         FosRyc36/qy07f3461aQ/BSTpMpEtUzoOocKbsSkwewDovMikYZlw+Q3Ujuo6yD7Okpj
-         Z6SqTxvTwsQ/0wc5OPhrT56gcej13q7IUeIjlfqbIhuj2EMlHDXgTic4M9i4tiYT5LDe
-         VHKaPdeked4Oc6PjwdFVRkzBUuSRyWwcaqckjxO70oRadgUANC4tz3dvCCpot0dbY4O6
-         imbg==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1763058272; x=1763663072;
-        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
-         :to:from:sender:x-gm-gg:x-gm-message-state:from:to:cc:subject:date
-         :message-id:reply-to;
-        bh=qHcq97qEfbS69vhpABIO6rBUjZBY25lZ3caWXii+0Kc=;
-        b=BtJnhT1IY/yQvkD5pD13yRC/k1TEHFfYolUgGx+Myf8F0VVtrIHb/zJr9aAAsLZRs8
-         i8f41Cp4/xMKObiIRj26ywARpfQoZFv8oep+ysQbFPOnneDQo5b1mQYLkvmvzWxdmc0c
-         xNEVsGg4KNV7EW0xuw6WfEMTIREbYHmthzx8AchavCKNEzarpy2FR6HthFBaF5t/iytE
-         rcHsEYlB7hI6FgY81Dgt7+ikJTcndOxi4yIGtXNan8HUmKjo0o7kd3+fQ8wUTipMzcDX
-         kki3zZ4IEykQqsv4RWxAoeWJGMQfPkL86NXkPcL+7bKWcry6v+wmk6RTnrS9UOP79+Ug
-         RtiQ==
-X-Gm-Message-State: AOJu0YxTu1wcS9Ds1O8l8lqyMzhvs0leCVY/wDPgATY0+JTrWuV0E5iX
-	vaT9fnXkgqPeMBz1sMsHVkr7ZDTodPIAA9bzPC1ItloLvR43M9ygjzYRrJXrcyfB
-X-Gm-Gg: ASbGncvLZFshXzN1NtJsGNip/zXuc/83Y1heCHCUTX6koxPCaFw0RB3FoqA2Rc6JIJY
-	XRe54yBNN6h0Gl0FoDAGzuBC6HbbM3mYh67mMs2EmnI90DLElCqQZIs78Sa3zFZwTx+/rnaVbQT
-	ESXuz0cBmNkYDiN9zFQ2zxKspgfWDrpIXReJfZX5zXQTQpIZSX1cLsOy1r8uvCyLNx3ooF3nIL1
-	hdxpej+HKkXHmNheorGGij4o1zNeW3FVdWPy2oIeikLjYmsiL2yCcqsfjJNMAZQbvp86QejGqXN
-	TwGH1/I7PHwKMGcGuI8y4Yr71iaRzcsrZNl8GKchFpR/TkQOXF0VjoqtYE8HInYm/sLsx9Mey0A
-	xiVPOgWl7jWQ0TcHq0DlZW1mRZnIb0UGMl/4OCzQDibzIuEau9q8dXiGGwhEr06M=
-X-Google-Smtp-Source: AGHT+IEuHrQi2xk2TIdF31ITi/sF5nfyhxNn2P51QkfCQzmkL70CjwgLYRdIcKFbAZIRym3kaBIpcg==
-X-Received: by 2002:a05:6214:3012:b0:880:2a49:7047 with SMTP id 6a1803df08f44-88292686ab7mr1170126d6.35.1763058271931;
-        Thu, 13 Nov 2025 10:24:31 -0800 (PST)
-Received: from fionn ([174.88.40.44])
-        by smtp.gmail.com with ESMTPSA id 6a1803df08f44-8828652c882sm16941376d6.32.2025.11.13.10.24.31
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Thu, 13 Nov 2025 10:24:31 -0800 (PST)
-Sender: John Kacur <jkacur@gmail.com>
-From: John Kacur <jkacur@redhat.com>
-To: linux-rt-users <linux-rt-users@vger.kernel.org>,
-	lkml <linux-kernel@vger.kernel.org>
-Cc: Clark Williams <williams@redhat.com>,
-	Tomas Glozar <tglozar@redhat.com>,
-	John Kacur <jkacur@redhat.com>
-Subject: [ANNOUNCE] rteval-v3.10
-Date: Thu, 13 Nov 2025 13:23:54 -0500
-Message-ID: <20251113182354.43767-1-jkacur@redhat.com>
-X-Mailer: git-send-email 2.51.1
+	s=arc-20240116; t=1763465538; c=relaxed/simple;
+	bh=3rv6NdK8mhpFtyEaCyT7Mty0RrEgAO9KgiSyJy8bOW8=;
+	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version:Content-Type; b=fdzacnR3ZOKK2SRYf8j1K66ismVxsMekOvijlFXgzpRt+ZpI09p66mx6FVdL0pyr0xEeTpf9kYaiiVa2+9/N8T3QeXFN1EP1F/gu4arVuxKzR6sjKnPnKu0dZm658X+8HBdRHQxZodVDDWoufmetNmDPmDKYy50Q5sNPDYwhOSg=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=ustc.edu; spf=pass smtp.mailfrom=ustc.edu; arc=none smtp.client-ip=45.254.49.198
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=ustc.edu
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=ustc.edu
+Received: from localhost (unknown [14.22.11.163])
+	by smtp.qiye.163.com (Hmail) with ESMTP id 29feb34f2;
+	Tue, 18 Nov 2025 19:32:04 +0800 (GMT+08:00)
+From: Chunsheng Luo <luochunsheng@ustc.edu>
+To: williams@redhat.com,
+	wander@redhat.com
+Cc: linux-rt-users@vger.kernel.org,
+	debarbos@redhat.com,
+	jkacur@redhat.com,
+	luochunsheng@ustc.edu,
+	luffyluo <luffyluo@tencent.com>
+Subject: [PATCH] Fix typo: rename 'merge_taks_info' to 'merge_tasks_info'
+Date: Tue, 18 Nov 2025 19:31:53 +0800
+Message-ID: <20251118113202.16-1-luochunsheng@ustc.edu>
+X-Mailer: git-send-email 2.43.0
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
 List-Subscribe: <mailto:linux-rt-users+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit
+X-HM-Tid: 0a9a96bc747b03a2kunm4780998f3f4da6
+X-HM-MType: 10
+X-HM-Spam-Status: e1kfGhgUHx5ZQUtXWQgPGg8OCBgUHx5ZQUlOS1dZFg8aDwILHllBWSg2Ly
+	tZV1koWUFITzdXWS1ZQUlXWQ8JGhUIEh9ZQVkZHRhMVh4fS01OTkhJTh0fS1YeHw5VEwETFhoSFy
+	QUDg9ZV1kYEgtZQVlKT1VJSVVKSlVKTUhZV1kWGg8SFR0UWUFZS1VLVUtVS1kG
 
-I am pleased to announce v3.10 of rteval
+From: luffyluo <luffyluo@tencent.com>
 
-This version has some changes to make the timerlat module work more
-closely to the cyclictest module. In particular we set dma_latency to 0
-by default. You can of course shut that off, or use a different number
+---
+ .claude/CLAUDE.md                     | 6 +++---
+ src/queue_track.c                     | 2 +-
+ src/sched_debug.c                     | 2 +-
+ src/stalld.c                          | 2 +-
+ src/stalld.h                          | 2 +-
+ tests/TODO.md                         | 2 +-
+ tests/functional/test_task_merging.sh | 4 ++--
+ 7 files changed, 10 insertions(+), 10 deletions(-)
 
-It is also easier now to switch back and forth between cyclictest and
-timerlat. Before you had to edit the rteval.conf file, and you can still
-do this, but there is also a command-line switch to change this. If you
-don't specify at the command-line or in the rteval.conf file, then
-timerlat is the default.
-
-The menu now displays the cyclictest and timerlat options
-simultaneously.
-
---no-aa (no auto-analysis in timerlat) is a default now.
-
-To fetch
-
-Clone
-git://git.kernel.org/pub/scm/utils/rteval/rteval.git
-
-Branch: main
-Tag: v3.10
-
-Tarballs available here:
-https://kernel.org/pub/linux/utils/rteval
-
-Older version tarballs are available here:
-https://kernel.org/pub/linux/utils/rteval/older
-
-To accommodate distributions that require this, I have linked the last
-version v3.9 from the older directory to the current directory
-
-Bug reports, patches, etc are always welcome.
-
-Enjoy!
-
-
-John Kacur (22):
-  rteval: Fix missing statistics for system with timerlat
-  rteval: Change the default interval for timerlat to 1100us
-  rteval: Change default measurement module to cyclictest
-  rteval: services.py: Fix SyntaxWarning
-  rteval: Make timerlat the default for rteval
-  rteval: Fix spelling of 'occurrences' in measurement modules
-  rteval: Fix typo in comment
-  rteval: Remove unused function remove_offline
-  rteval: timerlat: Fix typo in log message
-  rteval: cyclictest: Fix typo in comment
-  rteval: rtevalConfig: Remove redundant 'is True' comparison
-  rteval: Clean up MANIFEST.in and fix newnet.py copyright header
-  rteval: Add pyproject.toml for modern Python packaging
-  rteval: Improve argparse implementation and remove manual sys.argv
-    parsing
-  rteval: timerlat: Add dma_latency option with default value of 0
-  rteval: Add --measurement-module command-line argument
-  rteval: Add unit tests for --measurement-module argument
-  rteval: Remove outdated TODO file
-  rteval: Show both cyclictest and timerlat options in help menu
-  rteval: timerlat: Disable auto-analysis with --no-aa
-  rteval: Upgrade kcompile kernel to linux-6.17.7
-  Create rteval-3.10
-
-Tomas Glozar (1):
-  rteval: Introduce E2E tests with output checking
-
- Dockerfile                                 |   2 +-
- MANIFEST.in                                |   3 +-
- Makefile                                   |  15 +-
- README                                     |   5 +
- TODO                                       |  26 ---
- pyproject.toml                             |  58 ++++++
- rteval-cmd                                 | 156 ++++++++++-------
- rteval/modules/__init__.py                 |   7 +
- rteval/modules/loads/kcompile.py           |   4 +-
- rteval/modules/measurement/__init__.py     |   2 +-
- rteval/modules/measurement/cyclictest.py   |   8 +-
- rteval/modules/measurement/timerlat.py     |  33 +++-
- rteval/rteval.conf                         |   2 +-
- rteval/rtevalConfig.py                     |   2 +-
- rteval/rteval_text.xsl                     |   2 +-
- rteval/sysinfo/newnet.py                   |   3 +-
- rteval/sysinfo/services.py                 |   2 +-
- rteval/version.py                          |   2 +-
- run_tests.sh                               |  89 ++++++++++
- setup.py                                   |   6 +-
- tests/e2e/basic.t                          |  26 +++
- tests/e2e/engine.sh                        |  81 +++++++++
- tests/e2e/loads.t                          |  72 ++++++++
- tests/e2e/measurement.t                    | 101 +++++++++++
- tests/test_measurement_module_selection.py | 195 +++++++++++++++++++++
- 25 files changed, 785 insertions(+), 117 deletions(-)
- delete mode 100644 TODO
- create mode 100644 pyproject.toml
- create mode 100755 run_tests.sh
- create mode 100644 tests/e2e/basic.t
- create mode 100644 tests/e2e/engine.sh
- create mode 100644 tests/e2e/loads.t
- create mode 100644 tests/e2e/measurement.t
- create mode 100755 tests/test_measurement_module_selection.py
-
+diff --git a/.claude/CLAUDE.md b/.claude/CLAUDE.md
+index 718b704..2cd84ba 100644
+--- a/.claude/CLAUDE.md
++++ b/.claude/CLAUDE.md
+@@ -73,7 +73,7 @@ stalld/
+ - Entry point: `main()` at line 1121
+ - Boosting logic: `boost_with_deadline()`, `boost_with_fifo()` (lines 438-563)
+ - Threading modes: `single_threaded_main()`, `conservative_main()`, `aggressive_main()`
+-- Task merging: `merge_taks_info()` preserves starvation timestamps (lines 370-397)
++- Task merging: `merge_tasks_info()` preserves starvation timestamps (lines 370-397)
+ 
+ **src/utils.c** - Utilities
+ - Command-line parsing: `parse_args()`
+@@ -311,7 +311,7 @@ Tests use `parse_test_options()` from `test_helpers.sh` to handle backend and th
+ 
+ **Known Issues:**
+ - **queue_track backend limitation**: BPF backend cannot detect SCHED_FIFO tasks waiting on runqueue due to `task_running()` check in `stalld.bpf.c:273` only tracking `__state == TASK_RUNNING`. Tests using `starvation_gen` (SCHED_FIFO workloads) pass on sched_debug but fail on queue_track.
+-- **Segfault fix**: Fixed critical bug in `merge_taks_info()` that caused crashes in adaptive/aggressive modes (commit 7af4f55a5765)
++- **Segfault fix**: Fixed critical bug in `merge_tasks_info()` that caused crashes in adaptive/aggressive modes (commit 7af4f55a5765)
+ 
+ 🔄 **Phase 4 Planned** (Advanced Features):
+ - Threading modes (adaptive vs aggressive)
+@@ -521,7 +521,7 @@ Check: `/proc/sys/kernel/sched_rt_runtime_us` should be `-1`.
+ ## Important Code Patterns
+ 
+ ### Task Merging (src/stalld.c:370-397)
+-When re-parsing tasks, `merge_taks_info()` preserves starvation timestamps for tasks that haven't made progress (same PID, same context switch count).
++When re-parsing tasks, `merge_tasks_info()` preserves starvation timestamps for tasks that haven't made progress (same PID, same context switch count).
+ 
+ ### Denylist/Ignore Feature
+ - `-i` flag: Ignore threads/processes matching regex patterns
+diff --git a/src/queue_track.c b/src/queue_track.c
+index dbae1b1..167e8ce 100644
+--- a/src/queue_track.c
++++ b/src/queue_track.c
+@@ -190,7 +190,7 @@ static int queue_track_parse(struct cpu_info *cpu_info, char *buffer, size_t buf
+ 		cpu_info->nr_waiting_tasks = nr_running - 1;
+ 
+ 	if (old_tasks) {
+-		merge_taks_info(cpu_info->id, old_tasks, nr_old_tasks, cpu_info->starving, cpu_info->nr_waiting_tasks);
++		merge_tasks_info(cpu_info->id, old_tasks, nr_old_tasks, cpu_info->starving, cpu_info->nr_waiting_tasks);
+                 free(old_tasks);
+         }
+ 
+diff --git a/src/sched_debug.c b/src/sched_debug.c
+index 102a4e0..3754b56 100644
+--- a/src/sched_debug.c
++++ b/src/sched_debug.c
+@@ -594,7 +594,7 @@ static int sched_debug_parse(struct cpu_info *cpu_info, char *buffer, size_t buf
+ 
+ 	cpu_info->nr_waiting_tasks = fill_waiting_task(cpu_buffer, cpu_info);
+ 	if (old_tasks) {
+-		merge_taks_info(cpu_info->id, old_tasks, nr_old_tasks, cpu_info->starving, cpu_info->nr_waiting_tasks);
++		merge_tasks_info(cpu_info->id, old_tasks, nr_old_tasks, cpu_info->starving, cpu_info->nr_waiting_tasks);
+ 		free(old_tasks);
+ 	}
+ 
+diff --git a/src/stalld.c b/src/stalld.c
+index 854e76d..b9372db 100644
+--- a/src/stalld.c
++++ b/src/stalld.c
+@@ -377,7 +377,7 @@ void update_cpu_starving_vector(int cpu, const struct task_info *task)
+ 	}
+ }
+ 
+-void merge_taks_info(int cpu, struct task_info *old_tasks, int nr_old, struct task_info *new_tasks, int nr_new)
++void merge_tasks_info(int cpu, struct task_info *old_tasks, int nr_old, struct task_info *new_tasks, int nr_new)
+ {
+ 	static const struct task_info notask = {};
+ 
+diff --git a/src/stalld.h b/src/stalld.h
+index fd219bc..706e3ef 100644
+--- a/src/stalld.h
++++ b/src/stalld.h
+@@ -205,7 +205,7 @@ void cleanup_regex(unsigned int *nr_task, regex_t **compiled_expr);
+ void find_sched_debug_path(void);
+ int set_reservation(int period, int reservation);
+ int get_tgid(int pid);
+-void merge_taks_info(int cpu, struct task_info *old_tasks, int nr_old, struct task_info *new_tasks, int nr_new);
++void merge_tasks_info(int cpu, struct task_info *old_tasks, int nr_old, struct task_info *new_tasks, int nr_new);
+ int set_cpu_affinity(char *cpu_list);
+ int check_dl_server_dir_exists(void);
+ 
+diff --git a/tests/TODO.md b/tests/TODO.md
+index 57a7a16..a872254 100644
+--- a/tests/TODO.md
++++ b/tests/TODO.md
+@@ -624,7 +624,7 @@ Follow test_boost_period.sh and test_starvation_threshold.sh rewrites:
+ 
+ ### 2025-10-13 - Critical Segfault Fix and Backend Limitation Documentation
+ - **Fixed critical segfault in adaptive/aggressive modes**
+-  - **Root cause**: `merge_taks_info()` unconditionally called `update_cpu_starving_vector()` at line 389
++  - **Root cause**: `merge_tasks_info()` unconditionally called `update_cpu_starving_vector()` at line 389
+   - **Problem**: `cpu_starving_vector` only allocated in `single_threaded_main()` (line 1007)
+   - **Impact**: Adaptive/aggressive modes crashed when parsing tasks (any backend)
+   - **Fix**: Added `if (config_single_threaded)` guards before both `update_cpu_starving_vector()` calls
+diff --git a/tests/functional/test_task_merging.sh b/tests/functional/test_task_merging.sh
+index daa3eab..053c648 100755
+--- a/tests/functional/test_task_merging.sh
++++ b/tests/functional/test_task_merging.sh
+@@ -2,7 +2,7 @@
+ # SPDX-License-Identifier: GPL-2.0-or-later
+ #
+ # Test: Task Merging Logic
+-# Verify stalld's merge_taks_info() correctly preserves starvation timestamps
++# Verify stalld's merge_tasks_info() correctly preserves starvation timestamps
+ # for tasks that make no progress (same PID + same context switches)
+ #
+ # Copyright (C) 2025 Red Hat Inc
+@@ -362,7 +362,7 @@ log ""
+ log "=========================================="
+ log "Test Summary"
+ log "=========================================="
+-log "Task merging function: merge_taks_info() in stalld.c:370-397"
++log "Task merging function: merge_tasks_info() in stalld.c:370-397"
+ log "Merge logic: if (PID == PID && ctxsw == ctxsw) preserve timestamp"
+ log ""
+ log "Total failures: ${TEST_FAILED}"
 -- 
-2.51.1
+2.41.0
 
