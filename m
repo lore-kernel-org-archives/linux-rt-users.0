@@ -1,184 +1,168 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+Received: from mta-65-225.siemens.flowmailer.net (mta-65-225.siemens.flowmailer.net [185.136.65.225])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 5BEE32E093C
-	for <linux-rt-users@vger.kernel.org>; Tue, 25 Nov 2025 11:02:55 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 55C9B269811
+	for <linux-rt-users@vger.kernel.org>; Tue, 25 Nov 2025 11:32:47 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=185.136.65.225
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1764068579; cv=none; b=t9sRdNWv4SWjlSRg31DDw4uUDuXwU7M+SmWiUo8GXvkv8RaIgFVM+cCfOfKhpMf9rXO2UzgFFlsrMd7lU4URaK5YiKaL13IoQbkiKnQzX/4xNNflj6wqBsmAt9O2gwpNqPdI3uJCCi4anIG7enDb7Rbo5aeMenGClcGbnMcC2YE=
+	t=1764070375; cv=none; b=FSnsR8kgeLT6zs0txSoaG4ZUdbZeAz5rS0eNEbnPntvTPH1AF5qQVYjJJBw1cgk+Zslw7iDTEyJ831u/vmhZuAt0tcBWcYd4xE0b216CIjGVPLl1+hc66Ka9YXMMOVydaDxkQDB/5vuzgmpnsl7MUTUfpDH96tLky5/ET+DwPkU=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1764068579; c=relaxed/simple;
-	bh=lh7Lx0PuomQ1I2hajPkDq8UIYxeaGGgBilloFYSumOU=;
-	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version:Content-Type; b=nugDF5KhpvwE45C6NObPtm3u0Nxz2BgqpzjyaY4uF/XM3N5N8QU9ytF0+ORUjw66yE7zciIZSi8bmWFd/dRn+49CvDeARy/0LmLnFjW4i4CNSLi27uczq2zEeDWj5oaxxsnC0+L0H27SqU4rHLwZQnLXacJ4EdBCgHRxxzlIGZI=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=jOnOVM5z; arc=none smtp.client-ip=170.10.133.124
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
+	s=arc-20240116; t=1764070375; c=relaxed/simple;
+	bh=Rt+EMFr5I5CD+jGcfOaDX0Sp7S9jSlKyHdSDCL640SE=;
+	h=Message-ID:Subject:From:To:Cc:Date:In-Reply-To:References:
+	 Content-Type:MIME-Version; b=QlsfLfwm1KoG4ntnVeW2CyzTp2wqQF4gj1JbpoIMMpWyQEBziO3JrKu00p3xHSAFcSM9pj59f62enDKL/z8iQkFcUryVUbC3vP6fazSa9hVnb5F5U0rK8kv/wKXCa2fC7/CPdAUEJFlx22h+Vvn2ziF1tarcT72uJq1bSEZeCZE=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=siemens.com; spf=pass smtp.mailfrom=rts-flowmailer.siemens.com; dkim=pass (2048-bit key) header.d=siemens.com header.i=florian.bezdeka@siemens.com header.b=ooVbwKNn; arc=none smtp.client-ip=185.136.65.225
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=siemens.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=rts-flowmailer.siemens.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="jOnOVM5z"
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1764068575;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references;
-	bh=OHNucTp0LWMB8B2wMYgIgDaAx6X+niA4IjrKc4LPsLo=;
-	b=jOnOVM5zPTimGswo2FMqdXnEKYj/GUcn+gxLeJXpZvYnEEyfN8GCxYypDzXRKgW9NCHlkY
-	qJdsMnL9O+jY0I5E03et4+T8F95TW7stgu7Ws0NVtqrdB0J0reCjBirACR5f3LIjF01EA3
-	BKJb8uVrxNlnVKLvnRUqEA0PtX+Doew=
-Received: from mx-prod-mc-01.mail-002.prod.us-west-2.aws.redhat.com
- (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
- relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-2-9jWTAfJFN3K2bw-zdq3DLw-1; Tue,
- 25 Nov 2025 06:02:53 -0500
-X-MC-Unique: 9jWTAfJFN3K2bw-zdq3DLw-1
-X-Mimecast-MFC-AGG-ID: 9jWTAfJFN3K2bw-zdq3DLw_1764068572
-Received: from mx-prod-int-03.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-03.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.12])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
-	(No client certificate requested)
-	by mx-prod-mc-01.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id BDA0C195609F
-	for <linux-rt-users@vger.kernel.org>; Tue, 25 Nov 2025 11:02:52 +0000 (UTC)
-Received: from fedora.brq.redhat.com (unknown [10.43.17.228])
-	by mx-prod-int-03.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTP id 7CA0719560B2;
-	Tue, 25 Nov 2025 11:02:51 +0000 (UTC)
-From: Tomas Glozar <tglozar@redhat.com>
-To: John Kacur <jkacur@redhat.com>,
-	Clark Williams <williams@redhat.com>
-Cc: Linux RT Users <linux-rt-users@vger.kernel.org>,
-	Tomas Glozar <tglozar@redhat.com>
-Subject: [PATCH 2/2] rteval: Add README-tests
-Date: Tue, 25 Nov 2025 12:02:39 +0100
-Message-ID: <20251125110241.277542-2-tglozar@redhat.com>
-In-Reply-To: <20251125110241.277542-1-tglozar@redhat.com>
-References: <20251125110241.277542-1-tglozar@redhat.com>
+	dkim=pass (2048-bit key) header.d=siemens.com header.i=florian.bezdeka@siemens.com header.b="ooVbwKNn"
+Received: by mta-65-225.siemens.flowmailer.net with ESMTPSA id 20251125113240a2cd531c4200020745
+        for <linux-rt-users@vger.kernel.org>;
+        Tue, 25 Nov 2025 12:32:40 +0100
+DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; s=fm1;
+ d=siemens.com; i=florian.bezdeka@siemens.com;
+ h=Date:From:Subject:To:Message-ID:MIME-Version:Content-Type:Content-Transfer-Encoding:Cc:References:In-Reply-To;
+ bh=lhh3jD7OYasAcuiQDk2OZZQH8uinDL639rK3VgaNn1Y=;
+ b=ooVbwKNnKcNBWNSaOi8iOrhIw+NnUR8fgjQvanJuWQwDYzy6x5gSNlThDOgKLG0roebNzg
+ CwnDl+yyUi6at9NA4Pdq3jKWMeHVUL+0NsaByVN9ihtY2xGxosx443M7EN+O1eYiP/YuSESx
+ 3MBGoViDvQAd1M0FrDLWQAzZxH2SUU6/mDaxNCmgPD/G9abOWJOAEmVSP+ujTZHtsc7CHjpj
+ J+JavMX+nA8RntvJSwTymiC6MQA653QMlciWYUI40zE+4swwRC6mleLOPUVHLXNdc9l28+TS
+ rKQBBQcdQwNksKrX8eFiKB8PMFX9AqNyEhWFkJxTBj0lBVRy3lafXWsw==;
+Message-ID: <387396748522d2279c3188e5c2b4345bc2211556.camel@siemens.com>
+Subject: Re: Control of IRQ Affinities from Userspace
+From: Florian Bezdeka <florian.bezdeka@siemens.com>
+To: "bigeasy@linutronix.de" <bigeasy@linutronix.de>, "Preclik, Tobias"
+	 <tobias.preclik@siemens.com>, Frederic Weisbecker <frederic@kernel.org>
+Cc: "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>, 
+ "Kiszka, Jan" <jan.kiszka@siemens.com>
+Date: Tue, 25 Nov 2025 12:32:39 +0100
+In-Reply-To: <20251124095919.V73BtuvW@linutronix.de>
+References: <a0cad8314124ca98d7c6763e3e08d7192598cf92.camel@siemens.com>
+	 <20251103155322.Aw9MSNYv@linutronix.de>
+	 <3cbc0cf5301350d87c03b7ceb646a3d7c549167b.camel@siemens.com>
+	 <6523960abaff2054ed25bf57b2a12e381f305a3e.camel@siemens.com>
+	 <20251111143456.YML0ggA7@linutronix.de>
+	 <cce633df665f167291d975c0c13dab990e267384.camel@siemens.com>
+	 <20251124095919.V73BtuvW@linutronix.de>
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
 List-Subscribe: <mailto:linux-rt-users+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: 8bit
-X-Scanned-By: MIMEDefang 3.0 on 10.30.177.12
+X-Flowmailer-Platform: Siemens
+Feedback-ID: 519:519-68982:519-21489:flowmailer
 
-Add a README-tests file describing what tests are implemented for
-rteval and how to run them.
+On Mon, 2025-11-24 at 10:59 +0100, bigeasy@linutronix.de wrote:
+> On 2025-11-21 13:25:09 [+0000], Preclik, Tobias wrote:
+> > > I would be careful with the deprecated term here. The functionality
+> > > is
+> > > not deprecated just the interface is. The CPU affinity has been
+> > > migrated
+> > > a cgroup based interface. If the matching irq affinity is missing
+> > > then
+> > > it should be added rather than avoiding the whole "affinity is
+> > > managed"
+> > > interface since this looks as it has been meant for your use case.
+> > >=20
+> >=20
+> > As you point out isolcpus interface is deprecated and it seems there
+> > exists no way to translate the managed_irq flag of the isolcpus
+> > interface into the cgroups based interface. My understanding is that
+>=20
+> I did not point out anything. I just suggested to test whether this
+> option is working for you and if it does, check if there is matching
+> configuration knob in the cpusets/cgroups interface. As per=20
+>    https://www.suse.com/c/cpu-isolation-practical-example-part-5/
+>=20
+> in "3.2) Isolcpus" Frederic says that the options should be used if the
+> kernel/ application "haven't been built with cpusets/cgroups support".
+> So it seems that this bit is either missing in the other interface or
+> hard to find.
 
-Signed-off-by: Tomas Glozar <tglozar@redhat.com>
----
- README-tests | 102 +++++++++++++++++++++++++++++++++++++++++++++++++++
- 1 file changed, 102 insertions(+)
- create mode 100644 README-tests
+In case that was still unclear: We're using the dynamic system
+configuration features provided by cpusets/cgrups. No isolcpus=3D on the
+kernel cmdline anymore. With that all applications are build around
+cgroups. There is some userspace tooling around that takes care of
+proper system configuration / RT isolation.
 
-diff --git a/README-tests b/README-tests
-new file mode 100644
-index 0000000..802d4eb
---- /dev/null
-+++ b/README-tests
-@@ -0,0 +1,102 @@
-+There currently exist four kinds of tests for rteval:
-+
-+- Unit tests
-+
-+Unit tests reside in the tests/ directory. They are Python modules which import
-+the Python unittest library.
-+
-+The Makefile target "unittest" (or, alternatively, just "test") invokes unit
-+tests:
-+
-+$ make test
-+Running unit tests...
-+./run_tests.sh
-+=========================================
-+Running rteval Unit Tests
-+=========================================
-+
-+Running: test_measurement_module_selection
-+---
-+test_argparse_rejects_invalid_module (__main__.TestMeasurementModuleSelection)
-+Test that argparse rejects invalid module names ... usage: test_measurement_module_selection.py [--measurement-module {cyclictest,timerlat}]
-+test_measurement_module_selection.py: error: argument --measurement-module: invalid choice: 'invalid' (choose from 'cyclictest', 'timerlat')
-+ok
-+...
-+
-+----------------------------------------------------------------------
-+Ran 6 tests in 0.003s
-+
-+OK
-+✓ PASSED: test_measurement_module_selection
-+
-+=========================================
-+Test Summary
-+=========================================
-+Total tests run: 1
-+Passed: 1
-+Failed: 0
-+
-+✓ All tests passed!
-+
-+- End-to-end tests
-+
-+End-to-end tests reside in the tests/e2e subdirectory, in files with
-+the .t extension. They are written in bash and produce output compatible with
-+the TEP standard.
-+
-+To run end-to-end tests, the rteval kcompile source tarball has to be present;
-+see LOADS variable in Makefile for the tarballs used by the current version of
-+rteval.
-+
-+The Makefile target "check" invokes the end-to-end tests under Test::Harness
-+via the "prove" command:
-+
-+$ sudo make e2e-tests
-+PYTHON="python3" RTEVAL="/usr/src/rteval/rteval-cmd" RTEVAL_PKG="/usr/src/rteval" prove -o -f -v tests/e2e/
-+...
-+All tests successful.
-+Files=3, Tests=33, 288 wallclock secs ( 0.02 usr  0.00 sys + 127.59 cusr 155.27 csys = 282.88 CPU)
-+Result: PASS
-+
-+Test::Harness here serves the purpose of measuring time, counting the total
-+number of tests, and verifying if each test suite reported the correct number
-+of test results.
-+
-+Note: rteval requires root privileges to run. All tests, with the exception of
-+a part of the unit tests, thus require root.
-+
-+- Pre-defined rteval commands for manual testing
-+
-+These are accessible under the Makefile targets: "runit", "load", and
-+"sysreport".
-+
-+"runit" tests both measurements and loads, "load" tests only loads, and
-+"sysreport" runs both measurements and loads while also generating a SOS report
-+at the end of the rteval run.
-+
-+- Legacy unit tests
-+
-+Legacy unit tests are embedded directly in rteval source code. The test engine
-+to run them is located in tests/unittest-legacy.py, and may be run with
-+the following sequence of commands (starting in the root directory):
-+
-+$ cd rteval/
-+$ sudo python3 ../tests/unittest-legacy.py
-+...
-+ --------------------
-+  ** TEST SUMMARY **
-+ --------------------
-+
-+  - Modules:
-+      Declared for test:      4
-+      Successfully imported:  4
-+      Failed import:          0
-+
-+  - Tests:
-+      Tests scheduled:        4
-+      Sucessfully tests:      4
-+      Failed tests:           0
-+      Missing unit_test()     0
-+
-+Note that some of the tests require root and will fail if run under normal
-+user.
--- 
-2.51.1
+>=20
+> =E2=80=A6
+> > > > The conclusion got lost:
+> > > >=20
+> > > > Other drivers like for example igb respect the interrupt affinities
+> > > > (both default and per-irq affinities). This leads me to believe
+> > > that
+> > > > the irq rebalancing in the drivers should only affect the effective
+> > > > interrupt affinities. This admittedly is more involved than it
+> > > appears
+> > > > at first because the interface interrupts would have to be balanced
+> > > > subject to multiple (potentially totally different) cpusets.
+> > >=20
+> > > Exactly. Maybe it would work to align the driver with what igb does.
+> >=20
+> > Currently, stmmac sets IRQ affinity and hints for all IRQ
+> > configurations. But on x86 systems with IOAPIC MSI-X vectors should be
+> > automatically balanced. If we remove the driver-based irq balancing
+> > then other architectures would not necessarily balance the interrupts
+> > anymore and would be impacted in terms of performance. Maybe driver-
+> > based irq balancing could be deactivated whenever the underlying system
+> > is capable of balancing them? That would of course only reduced the
+> > number of affected systems.
+> >=20
+> > In general I lack information when drivers should (or are allowed to)
+> > balance interrupts on driver level and whether smp_affinity is allowed
+> > to be ignored and overwritten in that case. All documentation I have
+> > found so far remains rather unspecific.
+>=20
+> It seems that if you exclude certain CPUs from getting interrupt
+> handling than it should work fine. Then the driver would only balance
+> the interrupts among the CPUs that are left.
+
+Sebastian, what exactly do you mean by "exclude certain CPUs from
+getting interrupt handling"? I mean, that is what we do by configuring
+the /proc/<irq>/smp_affinity_list interface.
+
+The point here is, that drivers (like the stmmac, storage, ...) simply
+ignore everything that was configured by userspace. As soon as one of
+the dynamic events (link up/down, bpf loading) occurs they destroy the
+current RT aware system configuration.
+
+I was not successful in finding an API that would allow the driver(s) to
+do better. The default affinity (/proc/irq/default_smp_affinity) - as an
+example - is not visible from outside the IRQ core.
+
+The managed IRQ infrastructure that you mentioned seems coupled with the
+interfaces behind CONFIG_CPU_ISOLATION which seems to be "static", so
+configured at boot time. Is that understanding correct? That would not
+be flexible enough as we don't know the system configuration at boot
+time.
+
+As we now have Frederic with us: Frederic, are there any plans to extend
+the housekeeping API to deal with cpuset creation? Not sure if that
+would be possible as it's hard to say if the newly created cpuset is
+targeting isolation or housekeeping...
+
+The question from Tobias in other words: What are drivers allowed to do?
+Are they free in choosing/configuring a (performance optimized) IRQ
+handling? If so, how can we prevent them from touching RT isolated CPUs?
+
+Do we consider issues like "driver ignoring the default IRQ affinity" as
+driver bugs? Is there some consensus in the community? Background here
+is the argumentation why we would have to touch / fix those drivers.
+
+To sum up:=C2=A0
+- The IRQ balancing issue is not limited to a single driver / subsystem
+- The managed IRQ infrastructure seems very "static" so insufficient for
+  this problem. In addition we would have to migrate all affected
+  drivers to the managed IRQ infrastructure first.
+
+We would love to hear further thoughts / ideas / comments about this
+problem. We're highly interested in fixing this issue properly.
+
+Thanks for all the comments so far!
+
+Florian
 
