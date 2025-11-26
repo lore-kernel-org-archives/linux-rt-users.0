@@ -1,49 +1,51 @@
 Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 18E273358B8
-	for <linux-rt-users@vger.kernel.org>; Wed, 26 Nov 2025 15:31:26 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id BD0641FC7C5
+	for <linux-rt-users@vger.kernel.org>; Wed, 26 Nov 2025 15:45:41 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1764171087; cv=none; b=Xn9UZXVVKXRJiRVTBe6p0237WGTmXEpZXJ0uVArZiX6/0kCjRkz0Gs+5M9lFNzC9dlEBm9ARFeslrSnvTa+6VFH8QofP9Uym0eI0no853OF42K2OKNNTom94QPCuUGrUY7JAbDuypc0NroX/BNPRPDSTolmADgHDjeW7Ud9behk=
+	t=1764171941; cv=none; b=abkx3ACy7655oMk3ANR4VnbiKhHwEnER0Izpvz3irZ8oTjNad/Bm+8J+xNgejXeUQIf4YTSGFZSWjMG1XFSDln10TTvlv9qsWJFltcHOR7fnyIUGaacKQvjDNcddpmWO80vUKyHTC1PX4f9UUfLDXAg8oo3PFLW9wV/3t5YbXPQ=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1764171087; c=relaxed/simple;
-	bh=HuDVpyWD7lbUL5WtsPKyaYpScPFjxQ5lm1/Dhs7jXyU=;
+	s=arc-20240116; t=1764171941; c=relaxed/simple;
+	bh=Z3uxgPMorVr2itfskY4BHKdGRubFYxJSM/RKKGm3x8A=;
 	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 Content-Type:Content-Disposition:In-Reply-To; b=StfSeWyAXi7uazkLt8w59pIa+Bi4ic1GJeaTX5rgdphjTXcUzT8I9nLL+QqmW7XnhlaIYoN78mNpBCxBrXRtYsZ147PrGQDsGOEVQMU6IhhfstGH/iI1JpBR6LfpkmPTYbCJPAZmM9UCH580IyMV7UoCbeApCCWzE/t9mVwHQOU=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=Un6JXwTG; arc=none smtp.client-ip=10.30.226.201
+	 Content-Type:Content-Disposition:In-Reply-To; b=Yg20XL3QL4RPNpu2xt9NfRIospKfZNzRQ4RoTW5vue5wBjfpbs0sZABonGis5iEh68QwnHdbb783WnMvrGaK/pLHJfQZwqlK45h6pOMGtDC9x5hApfh+a9/F+XrANYBGcX22qAl2hWLpZleHkqIuB6b+PZN8QUrZPlBLs1EtUJo=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=cA05fXre; arc=none smtp.client-ip=10.30.226.201
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="Un6JXwTG"
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id 48F02C4CEF7;
-	Wed, 26 Nov 2025 15:31:26 +0000 (UTC)
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="cA05fXre"
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id D6099C4CEF7;
+	Wed, 26 Nov 2025 15:45:40 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-	s=k20201202; t=1764171086;
-	bh=HuDVpyWD7lbUL5WtsPKyaYpScPFjxQ5lm1/Dhs7jXyU=;
+	s=k20201202; t=1764171941;
+	bh=Z3uxgPMorVr2itfskY4BHKdGRubFYxJSM/RKKGm3x8A=;
 	h=Date:From:To:Cc:Subject:References:In-Reply-To:From;
-	b=Un6JXwTGfwltGUM/g5gLqH/exqhYP+Z3PxDTVnuHppfFOdFlYFo6qgttIegiz/IGX
-	 GbgmsDjdA7hO3g7YhwWm+M7h+ZMcahkg085y7ZTDkpy4+Ehc5z9p6oQDsJvzvdHFMI
-	 DzmE9ybTjcYHpm7s45cO36zLeS7MmAxH4X6ZWhx5Izo3MZpXJmWqwUgNPoki02GmNx
-	 gC2/WkYAHxEBeNfU/5hUYYPaswMRUr9Gn4TmorBmCbFnTG1UhTXnrUqxPfGjURXcMf
-	 lYmh98b3A9quKlMZnj+RmFTi8heFqjI6Eof0oKf2HoZe3bF2740kUAsGWsUJfbXs8j
-	 BPtnGZne5T2Rg==
-Date: Wed, 26 Nov 2025 16:31:23 +0100
+	b=cA05fXreaFzmJELo7tkDCQHN1CoYGzMyyz+MJ+VeHlZzfGU+DF4wncbgU00Zgky/i
+	 HaI7xpLngQuiSCJRogkem61fRP5Th23VpgGy4TDGkQAiKVotCXA/MW+0qOcn3t1+oD
+	 4PcE6J94XZasH9C5DZDwnGWa583wZlbAQz46IYdPen08TyUhV1eeybopF1j8uoY4+/
+	 O3pX4lyLopqIZP3hFvthp6EyK9mopEC5n7FQsd6w8RnMIXJ+PyW8KDDeG/L/Mmgu0V
+	 XGWmSxUsOIa+LQAuyY5yBus81NNMdhDbTYPSDaOJ6+e7HzXozKHGoCAKS3LmwvEEpr
+	 1N3kFTm2lVvdw==
+Date: Wed, 26 Nov 2025 16:45:38 +0100
 From: Frederic Weisbecker <frederic@kernel.org>
-To: "bigeasy@linutronix.de" <bigeasy@linutronix.de>
-Cc: Florian Bezdeka <florian.bezdeka@siemens.com>,
+To: Florian Bezdeka <florian.bezdeka@siemens.com>
+Cc: Thomas Gleixner <tglx@linutronix.de>,
+	"bigeasy@linutronix.de" <bigeasy@linutronix.de>,
 	"Preclik, Tobias" <tobias.preclik@siemens.com>,
 	"linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>,
 	"Kiszka, Jan" <jan.kiszka@siemens.com>
 Subject: Re: Control of IRQ Affinities from Userspace
-Message-ID: <aScdS6HNQHZ6OvDO@localhost.localdomain>
-References: <a0cad8314124ca98d7c6763e3e08d7192598cf92.camel@siemens.com>
- <20251103155322.Aw9MSNYv@linutronix.de>
- <3cbc0cf5301350d87c03b7ceb646a3d7c549167b.camel@siemens.com>
+Message-ID: <aScgovATTqcdPmYB@localhost.localdomain>
+References: <3cbc0cf5301350d87c03b7ceb646a3d7c549167b.camel@siemens.com>
  <6523960abaff2054ed25bf57b2a12e381f305a3e.camel@siemens.com>
  <20251111143456.YML0ggA7@linutronix.de>
  <cce633df665f167291d975c0c13dab990e267384.camel@siemens.com>
  <20251124095919.V73BtuvW@linutronix.de>
  <387396748522d2279c3188e5c2b4345bc2211556.camel@siemens.com>
  <20251125115008.-R5m5dX9@linutronix.de>
+ <767a8c7c1c88d930c5e7d7b39e7081c3cb39a08c.camel@siemens.com>
+ <87tsyigjkc.ffs@tglx>
+ <4de393b9304c99386d847ed0694ec12075a99c0a.camel@siemens.com>
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
@@ -53,68 +55,44 @@ MIME-Version: 1.0
 Content-Type: text/plain; charset=iso-8859-1
 Content-Disposition: inline
 Content-Transfer-Encoding: 8bit
-In-Reply-To: <20251125115008.-R5m5dX9@linutronix.de>
+In-Reply-To: <4de393b9304c99386d847ed0694ec12075a99c0a.camel@siemens.com>
 
-Le Tue, Nov 25, 2025 at 12:50:08PM +0100, bigeasy@linutronix.de a écrit :
-> On 2025-11-25 12:32:39 [+0100], Florian Bezdeka wrote:
-> > > It seems that if you exclude certain CPUs from getting interrupt
-> > > handling than it should work fine. Then the driver would only balance
-> > > the interrupts among the CPUs that are left.
+Le Wed, Nov 26, 2025 at 10:20:53AM +0100, Florian Bezdeka a écrit :
+> > drivers/net/ethernet/wangxun/libwx/wx_lib.c:1867:       nvecs = pci_alloc_irq_vectors_affinity(wx->pdev, nvecs,
+> > drivers/nvme/host/pci.c:2659:   return pci_alloc_irq_vectors_affinity(pdev, 1, irq_queues, flags,
+> > drivers/scsi/be2iscsi/be_main.c:3585:           if (pci_alloc_irq_vectors_affinity(phba->pcidev, 2, nvec,
+> > drivers/scsi/csiostor/csio_isr.c:520:   cnt = pci_alloc_irq_vectors_affinity(hw->pdev, min, cnt,
+> > drivers/scsi/hisi_sas/hisi_sas_v3_hw.c:2611:    vectors = pci_alloc_irq_vectors_affinity(pdev,
+> > drivers/scsi/megaraid/megaraid_sas_base.c:5943: i = pci_alloc_irq_vectors_affinity(instance->pdev,
+> > drivers/scsi/mpi3mr/mpi3mr_fw.c:862:            retval = pci_alloc_irq_vectors_affinity(mrioc->pdev,
+> > drivers/scsi/mpt3sas/mpt3sas_base.c:3390:       i = pci_alloc_irq_vectors_affinity(ioc->pdev,
+> > drivers/scsi/pm8001/pm8001_init.c:982:          rc = pci_alloc_irq_vectors_affinity(
+> > drivers/scsi/qla2xxx/qla_isr.c:4539:            ret = pci_alloc_irq_vectors_affinity(ha->pdev, min_vecs,
+> > drivers/virtio/virtio_pci_common.c:160: err = pci_alloc_irq_vectors_affinity(vp_dev->pci_dev, nvectors,
 > > 
-> > Sebastian, what exactly do you mean by "exclude certain CPUs from
-> > getting interrupt handling"? I mean, that is what we do by configuring
-> > the /proc/<irq>/smp_affinity_list interface.
+> > Not a so dead road :)
 > 
-> Step #1
-> - figure out if isolcpus= is restricting the affinity of requested
->   interrupts to housekeeping CPUs only
-> 
-> Step #2
-> - Yes
->    => look for the matching knob in cgroup interface
->       Knob found?
->       - Yes
->         => Use knob.
->       - No.
->         => Add knob.
-> - No
->   This should be added as it breaks the expectation of an isolated
->   system.
-> 
-> I *think* the driver should request as many interrupts as there are
-> available CPUs in the system to handle them. The number of available
-> CPUs/ CPU mask should be a configure knob by the user. Using the
-> housekeeping CPUs as a default mask seems reasonable.
-> The question is what should happen if the mask changes at runtime. Maybe
-> a device needs to reconfigure, maybe just move the interrupt away.
-> But this should also affect NOHZ_FULL workloads.
+> Grml... I definitely fat-fingered the query. Anyway, this housekeeping
+> API still seems very boot-time oriented to me. Can't see yet where this
+> housekeeping cpumasks are filled up by the cgroup/cpuset infrastructure.
 
-Right now, you still need to change by hand the affinity of an IRQ through
-/proc to match a new isolated cpuset partition. But ideally this should be
-automatically handled by cpuset. If someone wants to tackle that, it would
-be greatly appreciated.
+It's on the way:
+https://lore.kernel.org/all/20251105210348.35256-1-frederic@kernel.org/
 
-As for those IRQs whose affinity can only be controlled by isolcpus=managed_irq
-this is more complicated but probably not unfeasible.
+If all goes well, not for the upcoming merge window but the next one.
 
-> 
-> > To sum up: 
-> > - The IRQ balancing issue is not limited to a single driver / subsystem
-> > - The managed IRQ infrastructure seems very "static" so insufficient for
-> >   this problem. In addition we would have to migrate all affected
-> >   drivers to the managed IRQ infrastructure first.
-> > 
-> > We would love to hear further thoughts / ideas / comments about this
-> > problem. We're highly interested in fixing this issue properly.
-> 
-> If the "managed IRQ infrastructure" would help here then why not. Maybe
-> Frederic has some insight here.
+> cgroups/cpusets don't care about "isolation" in that sense yet. It's
+> just about cpumasks for compute. Am I missing something?
 
-Not really but being able to change managed_irq affinities at runtime would
-certainly be welcome. I fear my first visit to the genirq subsystem is only
-one month old though and I miss the cycles to dive further there right now.
+It's a bit more than just scheduler domain isolation. It also handles
+kthreads and workqueues. It's also going to handle unbound timers (on the way
+to the upcoming merge window).
 
 Thanks.
+
+> 
+> 
+> Florian
 
 -- 
 Frederic Weisbecker
