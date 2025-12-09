@@ -1,81 +1,48 @@
-Received: from galois.linutronix.de (Galois.linutronix.de [193.142.43.55])
+Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 729D42EC57C
-	for <linux-rt-users@vger.kernel.org>; Mon,  8 Dec 2025 15:58:14 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=193.142.43.55
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 6F2FE283FDF;
+	Tue,  9 Dec 2025 22:57:13 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1765209496; cv=none; b=VzhLR6bjL3GdeP5D81YQ3LN5O6SBVdwtCR8zr/0APeq1KURxSKrI2Zl0gBOSTvgDmQQnrOI7Drz3yhQeJX4eVXdIxk9OSpwyjJSexNo5hqk9iTVCiAwbA4LiysxCHbyNw6g74Cppuk9CKkHprCBK6qrYN2SlU+qB+JnpI4S++Ro=
+	t=1765321034; cv=none; b=E3cw1qWIT4Sj49jlGjwmxaKzvdufll95fIn4fX4ooMmZvzyr0HrgonDhtO1dMkuAi0AhtY+AIfcXBcWYElEDActnVk26rHCxFOIfrUGuIx07tz2idxHu8+dcXb8RqbvdgB3HDZYp3dJEApEgloZF5UMeuyR/NzpmtAnA/+Iklko=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1765209496; c=relaxed/simple;
-	bh=JGggKbleudk8lA+aNo1n/Ix7aeL+ih6dJN61Aky6LOQ=;
-	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 Content-Type:Content-Disposition:In-Reply-To; b=DFQIG4duyHpcjz4hroO5X0iZnQGtguqXLPQB91HU9YupnR8o8yGWnDiRiQ5mEVUlTA6OhWpLasjbxCgZkywNUCiCOATHgel7ZNcg4mGGoPLZ39Wvy40FdNELCKwGl45rxEk/aNDclS9gGNCzkrnwPVttyOfDbFvbWQHEjz4lDkU=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linutronix.de; spf=pass smtp.mailfrom=linutronix.de; dkim=pass (2048-bit key) header.d=linutronix.de header.i=@linutronix.de header.b=WEse7F2R; dkim=permerror (0-bit key) header.d=linutronix.de header.i=@linutronix.de header.b=89+upyCI; arc=none smtp.client-ip=193.142.43.55
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linutronix.de
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=linutronix.de
-Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="WEse7F2R";
-	dkim=permerror (0-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="89+upyCI"
-Date: Mon, 8 Dec 2025 16:58:11 +0100
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
-	s=2020; t=1765209492;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 in-reply-to:in-reply-to:references:references;
-	bh=wWpRDQ+aJBoo+jjV3aArFLZnIZH47Ly+oWJzHnx6VvQ=;
-	b=WEse7F2RWv3dVLtQfUAXFhWV7nWfrXi1t1nCKMw3Bdbc0T8FfjI2yMuudlaIi9MtfSLdgS
-	uOcOs6qikKzy/cuQ2drVPhh9yIOw6x83runoTqr9lgVJZrGYeK3E8CbJl63Nijz9FiJYh6
-	OlGS572vQ2o+p/1ihL7wpHmXCo3SSaKWICe8Z5EJQhfJjS9k+qixRbkenS+az38jAr72N0
-	tQJTL7/cQE6GJSRz04NKyFGRI7ZJ/il67MHC///Rl7EXblg5vxKAGfev3Yfe8BTStfCKMC
-	+F7GqotNWY+GtwoAQQV7plko/Zk0SfwWBDcw28pjc2ClHfwQNbtypDR6kYPRAg==
-DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
-	s=2020e; t=1765209492;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 in-reply-to:in-reply-to:references:references;
-	bh=wWpRDQ+aJBoo+jjV3aArFLZnIZH47Ly+oWJzHnx6VvQ=;
-	b=89+upyCIhYXdVmjIuKhRYRIU7U4Rxfsm/R6xRE+/fRse3rP9PXfnysBw2IQ/U8Ov7YQ8oo
-	LDzHiYrOc3iqawAA==
-From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-To: Michael Schanne <michael.schanne@gmail.com>
-Cc: linux-rt-users@vger.kernel.org
-Subject: Re: Random lockups with i915 driver enabled
-Message-ID: <20251208155811.Gb4m8Z9J@linutronix.de>
-References: <CAC_kJhQ53MGieN29Kmx96bk-8hhnLb_7bp7cb_kFQ+Hf-_Gtgg@mail.gmail.com>
+	s=arc-20240116; t=1765321034; c=relaxed/simple;
+	bh=yyRahrtlsutwECX6O1ORkGOjjaEOjpdE4ALbb+n6mTA=;
+	h=From:Subject:Date:Message-ID:To; b=VHlH3zyMxxmB3CcAKUJjfzZo6zWFnk7/tpLCOr97cPw+8Dtt/NIgxp0AR5G+87NO4zet84cZwpOColplRJYOiVF0XFuQBQmvjlXeevwr696w8NQB5B0K3iJNnKQug3EhPgKHQgaSzLiktXTXfe1GWwC4paAo7wb8zmjmrkgCNX0=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id D1A59C4CEF5;
+	Tue,  9 Dec 2025 22:57:12 +0000 (UTC)
+From: Clark Williams <williams@redhat.com>
+Subject: [ANNOUNCE] 6.6.119-rt67
+Date: Tue, 09 Dec 2025 22:56:14 -0000
+Message-ID: <176532097422.262627.11373248051565726270@demetrius>
+To: LKML <linux-kernel@vger.kernel.org>,linux-rt-users <linux-rt-users@vger.kernel.org>,Steven Rostedt <rostedt@goodmis.org>,Thomas Gleixner <tglx@linutronix.de>,Carsten Emde <C.Emde@osadl.org>,John Kacur <jkacur@redhat.com>,Sebastian Andrzej Siewior <bigeasy@linutronix.de>,Daniel Wagner <daniel.wagner@suse.com>,Tom Zanussi <tom.zanussi@linux.intel.com>,Clark Williams <williams@redhat.com>,Pavel Machek <pavel@denx.de>,Joseph Salisbury <joseph.salisbury@oracle.com>,Luis Claudio R. Goncalves <lgoncalv@redhat.com>,Stable RT List <stable-rt@vger.kernel.org>
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
 List-Subscribe: <mailto:linux-rt-users+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
-MIME-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Disposition: inline
-In-Reply-To: <CAC_kJhQ53MGieN29Kmx96bk-8hhnLb_7bp7cb_kFQ+Hf-_Gtgg@mail.gmail.com>
 
-On 2025-12-03 16:23:01 [-0500], Michael Schanne wrote:
-> Hi,
-Hi,
+Hello RT-list!
 
-> Can anyone suggest any debug techniques to nail down root cause when
-> the next lockup occurs?  Or are there any potential i915 fixes I could
-> try out?
+I'm pleased to announce the 6.6.119-rt67 stable release.
 
-An 8250-UART would be probably help.
-Does lockdep (CONFIG_PROVE_LOCKING) and/ or CONFIG_DEBUG_ATOMIC_SLEEP
-complain?
-Can you setup pstore and use it for locking?
-Does your BIOS reset your memory on reset? If not, and you can force a
-reset in the lockup case, you could try to stuff some information into
-the tracing buffer. See 
-	https://docs.kernel.org/trace/debugging.html#persistent-buffers-across-boots
+You can get this release via the git tree at:
+
+  git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
+
+  branch: v6.6-rt
+  Head SHA1: 67a5a2ed7ebca42a646433ff04b3559a5beda48a
+
+Or to build 6.6.119-rt67 directly, the following patches should be applied:
+
+  https://www.kernel.org/pub/linux/kernel/v6.x/linux-6.6.tar.xz
+
+  https://www.kernel.org/pub/linux/kernel/v6.x/patch-6.6.119.xz
+
+  https://www.kernel.org/pub/linux/kernel/projects/rt/6.6/patch-6.6.119-rt67.patch.xz
 
 
-Can you try to use the XE driver instead of i915?
-
-> Hardware: Intel i5-6500TE quad core CPU (Skylake), 16 GB RAM
-> 
-> Thanks,
-> Mike
-
-Sebastian
+Enjoy!
+Clark
