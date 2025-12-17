@@ -1,61 +1,92 @@
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id AE5DF2701CB
-	for <linux-rt-users@vger.kernel.org>; Thu, 11 Dec 2025 21:16:08 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id A211C36C0B6
+	for <linux-rt-users@vger.kernel.org>; Wed, 17 Dec 2025 14:54:13 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1765487770; cv=none; b=PwjgKmFzcD+e6c/8Vne7jozlBBen5xqRlNiISc1jfj2IP0/4Kx2G7U7NZ2b40VhTodWQwCa2+WPZ/pSdnsH8tE1b1I0M2HxdOdDahJ1m5NOZB2Z90KUP7D0kemDNe56DRqUBOh2BZWyKVdjkNV0E+JLFYM+0zTS6FqFJ41NJr+c=
+	t=1765983256; cv=none; b=VoQdZpSaXSZnNwXsnmAZqAwag/hP7bpTmbu3CU6bptXQstq8gEQKBm1ZOJYtwwO1KgZe6H3AUkQxlBZe6ZhoWcnLH3pwBYz67LNocFx5i53wLtNRYU04zdvol+CWoA9s6pwJ7cqEFf1K6hYKeq5bMbV+kMn0nuWfJv6xhGmv+iQ=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1765487770; c=relaxed/simple;
-	bh=wATbbmIYJgbH0UmsyaBfV3NU2vstVZWkqaMUAsmCz40=;
-	h=Date:From:To:Subject:Message-ID:MIME-Version:Content-Type:
-	 Content-Disposition; b=DTtCkquSQU8gevswAd/7sndTwl6vtlHosChSyoaoNT37uuvKZKaEa/YrjKvfvCfzhDb0Ev48M0VqTH9sKRI8h3holJKjkO5SLKSB6o51SAtAChncAjRoINy7zBtZMCq9iQ+MdL8AwzGZREbthK3BgBFGqT+0jVQ8bL8y5l19Brk=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=ZMcOEKJS; arc=none smtp.client-ip=170.10.133.124
+	s=arc-20240116; t=1765983256; c=relaxed/simple;
+	bh=bpn6PnaPqjW9QoU4/thXPDyr0QvWsFZ2GeYnd3BcwnM=;
+	h=Date:From:To:Cc:Subject:Message-ID:MIME-Version:Content-Type:
+	 Content-Disposition; b=FSrN6rp6usJiIoFDXmJejWhnz8WHG72e3FAQfLySJRDKqz58s8WCoH0reDQuQl1Owwr6OLX+1zZmbhVZyWWbp5aqvclXmPbn9PCcEmKsVsLZ/HgUsYNwqiCCAhK2NwtpjcsXDBdITksvRRjCObkucxg9zWqmfMt0+mnW5pL+/YI=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=KlgtVaWC; dkim=pass (2048-bit key) header.d=redhat.com header.i=@redhat.com header.b=C5Nzx1ma; arc=none smtp.client-ip=170.10.133.124
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="ZMcOEKJS"
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="KlgtVaWC";
+	dkim=pass (2048-bit key) header.d=redhat.com header.i=@redhat.com header.b="C5Nzx1ma"
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1765487767;
+	s=mimecast20190719; t=1765983250;
 	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:mime-version:mime-version:content-type:content-type;
-	bh=nqrqISFYVkuxT/QgtTRWqRLSMsk0Ltq6MQQWKADLbcY=;
-	b=ZMcOEKJSd7MQxCEkyy5NG8WOH6rK8fsFPV7eyCwnwMh68h6mOdCq8tX+CnQEZ90nicRl9l
-	x1rgSWkwGjr4ri4NUdN0764IINulMzaQ0wXCZooSYkyUrQpQ9KSIJ4w6Piyz/bD4wnKYSp
-	epE+Zosnb+oEI1scU1PvYSLsRAQaAn4=
-Received: from mx-prod-mc-03.mail-002.prod.us-west-2.aws.redhat.com
- (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
- relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-510-Waq-xNNKNQqbHVQGSR5RNg-1; Thu,
- 11 Dec 2025 16:16:02 -0500
-X-MC-Unique: Waq-xNNKNQqbHVQGSR5RNg-1
-X-Mimecast-MFC-AGG-ID: Waq-xNNKNQqbHVQGSR5RNg_1765487760
-Received: from mx-prod-int-01.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-01.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.4])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
-	(No client certificate requested)
-	by mx-prod-mc-03.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 2552119560B2;
-	Thu, 11 Dec 2025 21:16:00 +0000 (UTC)
-Received: from localhost (unknown [10.22.80.58])
-	by mx-prod-int-01.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTP id ED11330001A2;
-	Thu, 11 Dec 2025 21:15:58 +0000 (UTC)
-Date: Thu, 11 Dec 2025 18:15:57 -0300
-From: "Luis Claudio R. Goncalves" <lgoncalv@redhat.com>
-To: LKML <linux-kernel@vger.kernel.org>,
-	linux-rt-users <linux-rt-users@vger.kernel.org>,
-	stable-rt <stable-rt@vger.kernel.org>,
-	Steven Rostedt <rostedt@goodmis.org>,
-	Thomas Gleixner <tglx@linutronix.de>,
-	Carsten Emde <C.Emde@osadl.org>,
-	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-	Daniel Wagner <daniel.wagner@suse.com>,
-	Clark Williams <williams@redhat.com>, Pavel Machek <pavel@denx.de>,
-	Jeff Brady <jeffreyjbrady@gmail.com>,
-	Jan Kiszka <jan.kiszka@siemens.com>,
-	Luis Goncalves <lgoncalv@redhat.com>
-Subject: [ANNOUNCE] 5.10.247-rt141
-Message-ID: <aTs0jVBTwOxAlm8t@redhat.com>
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type;
+	bh=qwTEyD7EyX3W8awcOGf5hUhLWAjEt5Iu/15FJwOP12c=;
+	b=KlgtVaWCP8PfOXxXcKsj3JOW1jmJYqM01L5ZmfAmfROMydHEDrzBxrb9TBYW5laIUEkHLH
+	2t8Cyb6qZEh6Cd0QS1u3DkctG8D3dp4JMdw07b6PUGzZ63Gt9IK9ltqblh/+TMHjqrNBxS
+	AtvoULGijzjC+uUqz6fUNHsLa0mArfg=
+Received: from mail-wr1-f71.google.com (mail-wr1-f71.google.com
+ [209.85.221.71]) by relay.mimecast.com with ESMTP with STARTTLS
+ (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
+ us-mta-292-ud_4d8qDMw2JbJ_ebdbn6g-1; Wed, 17 Dec 2025 09:52:53 -0500
+X-MC-Unique: ud_4d8qDMw2JbJ_ebdbn6g-1
+X-Mimecast-MFC-AGG-ID: ud_4d8qDMw2JbJ_ebdbn6g_1765983172
+Received: by mail-wr1-f71.google.com with SMTP id ffacd0b85a97d-43102ac1da8so1939903f8f.2
+        for <linux-rt-users@vger.kernel.org>; Wed, 17 Dec 2025 06:52:53 -0800 (PST)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=redhat.com; s=google; t=1765983172; x=1766587972; darn=vger.kernel.org;
+        h=content-disposition:mime-version:message-id:subject:cc:to:from:date
+         :from:to:cc:subject:date:message-id:reply-to;
+        bh=qwTEyD7EyX3W8awcOGf5hUhLWAjEt5Iu/15FJwOP12c=;
+        b=C5Nzx1maGLs5yDsk7rp14VAr2xazEckdDnMCe3/WhVl5h0TffB+3OvRcX33QsZXfAe
+         UrmYkp6BTztJ1b4F7C9pgNPK9gyQkrxYF1WWPxFIrgXVIRzz/LqftSpU6dhlQ9p0M/Wt
+         97WkWZDiv6A10ECD7OscrtwREwiiLAg7cgyVJfuSCMQIXHOP2G6dtK3GAzQXZ4QKl3J0
+         4VKQcAf/ulVSoYF4P8bMMDUIhhasg+A1hqulCZbMrBZ32bESm7JW/q+XcBJs/sCBo67p
+         FTwezMZM8nIKOf8xmFgN3sJmChd6iQTLXN1Jg87MoMX76FZrryKWgG1Gbd0GmMrP9Fs0
+         bjIQ==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20230601; t=1765983172; x=1766587972;
+        h=content-disposition:mime-version:message-id:subject:cc:to:from:date
+         :x-gm-gg:x-gm-message-state:from:to:cc:subject:date:message-id
+         :reply-to;
+        bh=qwTEyD7EyX3W8awcOGf5hUhLWAjEt5Iu/15FJwOP12c=;
+        b=b+8eNiPz7aEe0lKl3gV7l04PAl8OM+snA+UyGM3Tt0ut92OUZ5SSK07gh7tRDHwdQP
+         B57yz/KDRaJjUjYg0S5gerfEoKyVde97RWvkeQlQuo0ihstohSWprZi/dV5AibKkild2
+         C+irkVd/Gy0lm+zNa0fxuAtph+xivrzVnJyfrQohJrG5tvBIM/HsNNaspibCozEC4K5C
+         +kMf9Z58TDdkIfrQQurSc5fcASq5omeqideqw33cnrrbMNRa6nRZDsUilHWbChbi+Uda
+         qfjHIhCUMBcuJedHmVlD5+5p/drVFe7Mwr9yjuqDroXjgtg8G6QYSMnwaEBPdX1X65Qk
+         lXMg==
+X-Forwarded-Encrypted: i=1; AJvYcCW1hbqHvTPZsKiU4RsOkrf+fTL0TU13QVkVg++yqkWTQrUcA/GeST/siNbYK1cpbZHDTTxkw8pp/WA1spgu5A==@vger.kernel.org
+X-Gm-Message-State: AOJu0YyPWIJ4kGbAXUL9hUoPmqOY8ZKHmvYHA0VMTkYnbQt7wSsJU8fo
+	PeCWckH9M5t2/8S7NbJlZ4N8ZTi6DYkcmCO54vPp/RK6grpqFLYaBBG3Kl6TT6CxpexlAkeBOY4
+	dPepddyuTdLfOK4ORL93F0dzpCKwsA9hLqRmR7EL9LY7v7d7UTR9hPvSe1JgmubNS48fK
+X-Gm-Gg: AY/fxX5KqdmN0opX0bOUysh4+i5l5cqEp+tyBqqzXzk4Ox+FEaIQilOgdrNzz7Jz0vt
+	JNbeXtIl7ZovsVYTNoRAw1HVYM0AtB6WeMkwH6j+D1Xu8lJVKnmZFLg/Uw1CHABLJ9iXvpmm51j
+	WYzdDglaPvXFFl9HOHaOdf6Vq6E29TCpNryLvIc3kpi0UoEqdVljRPn88wpVqm73X9cZcvHBcYF
+	Zy2uEejiVBWXhj2n/wsje4N1QC6O0karwu/N9NDFLjqQi12zsPVegv89L4PN+JaY+9I0D4m0yAM
+	3qzTjW2EJSbtFJFXgh4+Au+rJw/Do1m/czSNauGdllZWlvBpyCu5f7RT0tna/WAwtBdFywMj/TV
+	y7uwFc78MZ2dDmhadrRaGTrEi5RuoC+NK/NWhXs/R
+X-Received: by 2002:a5d:5d0e:0:b0:430:f3ab:56af with SMTP id ffacd0b85a97d-430f3ab5950mr16820301f8f.48.1765983172375;
+        Wed, 17 Dec 2025 06:52:52 -0800 (PST)
+X-Google-Smtp-Source: AGHT+IFLP/5gl/yOSrne+8o7qzbeeGelDz1lhEWbsMui55R/X+/B6Wtdik9SdMqV5CH1CuwyFBA5SQ==
+X-Received: by 2002:a5d:5d0e:0:b0:430:f3ab:56af with SMTP id ffacd0b85a97d-430f3ab5950mr16820278f8f.48.1765983171865;
+        Wed, 17 Dec 2025 06:52:51 -0800 (PST)
+Received: from jlelli-thinkpadt14gen4.remote.csb ([151.29.129.40])
+        by smtp.gmail.com with ESMTPSA id ffacd0b85a97d-4310ada846bsm5103573f8f.9.2025.12.17.06.52.50
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Wed, 17 Dec 2025 06:52:51 -0800 (PST)
+Date: Wed, 17 Dec 2025 15:52:49 +0100
+From: Juri Lelli <juri.lelli@redhat.com>
+To: linux-pm@vger.kernel.org, linux-acpi@vger.kernel.org,
+	linux-pci@vger.kernel.org, linux-rt-users@vger.kernel.org,
+	linux-kernel@vger.kernel.org
+Cc: Tommaso Cucinotta <tommaso.cucinotta@santannapisa.it>,
+	Juri Lelli <juri.lelli@redhat.com>,
+	Dietmar Eggemann <dietmar.eggemann@arm.com>,
+	Lorenzo Pieralisi <lorenzo.pieralisi@linaro.org>
+Subject: [ANNOUNCE][CFP] Power Management and Scheduling in the Linux Kernel
+ VIII edition (OSPM-summit 2026)
+Message-ID: <aULDwbALUj0V7cVk@jlelli-thinkpadt14gen4.remote.csb>
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
@@ -64,39 +95,109 @@ List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Content-Disposition: inline
-X-Scanned-By: MIMEDefang 3.4.1 on 10.30.177.4
 
-Hello RT-list!
+Power Management and Scheduling in the Linux Kernel (OSPM-summit) VIII
+edition
 
-I'm pleased to announce the 5.10.247-rt141 stable release.
+April 14-16, 2026 - Arm, Cambridge (UK)
 
-This release is just an update to the new stable 5.10.247 version and
-no RT specific changes have been made.
+.:: FOCUS
 
-You can get this release via the git tree at:
+The VIII edition of the Power Management and Scheduling in the Linux
+Kernel (OSPM) summit aims at fostering discussions on power management
+and (real-time) scheduling techniques. The summit will be held at Arm in
+Cambridge (UK) on April 14-16, 2026.
 
-  git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
+We welcome anybody interested in having discussions on the broad scope
+of scheduler techniques for reducing energy consumption while meeting
+performance and latency requirements, real-time systems, real-time and
+non-real-time scheduling, tooling, debugging and tracing.
 
-  branch: v5.10-rt
-  Head SHA1: 50175885f5585879d8e3ee001599cde54779ac8b
+Feel free to take a look at what happened previous years:
 
-Or to build 5.10.247-rt141 directly, the following patches should be applied:
+I   edition - https://lwn.net/Articles/721573/
+II  edition - https://lwn.net/Articles/754923/
+III edition - https://lwn.net/Articles/793281/
+IV  edition - https://lwn.net/Articles/820337/ (online)
+V   edition - https://lwn.net/Articles/934142/
+              https://lwn.net/Articles/934459/
+              https://lwn.net/Articles/935180/
+VI  edition - https://lwn.net/Articles/981371/
+VII edition - https://lwn.net/Articles/1020596/
+              https://lwn.net/Articles/1021332/
+              https://lwn.net/Articles/1022054/
 
-  https://www.kernel.org/pub/linux/kernel/v5.x/linux-5.10.tar.xz
+.:: FORMAT
 
-  https://www.kernel.org/pub/linux/kernel/v5.x/patch-5.10.247.xz
+The summit is organized to cover three days of discussions and talks.
 
-  https://www.kernel.org/pub/linux/kernel/projects/rt/5.10/older/patch-5.10.247-rt141.patch.xz
+The list of topics of interest includes (but it is not limited to):
 
-Signing key fingerprint:
+- Power management techniques
+- Scheduling techniques (real-time and non real-time)
+- Energy consumption and CPU capacity aware scheduling
+- Real-time virtualization
+- Mobile/Server power management real-world use cases (successes and
+  failures)
+- Power management and scheduling tooling (configuration, integration,
+  testing, etc.)
+- Tracing
+- Recap/lightning talks
 
-  9354 0649 9972 8D31 D464  D140 F394 A423 F8E6 7C26
+Presentations (50 min) can cover recently developed technologies,
+ongoing work and new ideas. Please understand that this workshop is not
+intended for presenting sales and marketing pitches.
 
-All keys used for the above files and repositories can be found on the
-following git repository:
+.:: SUBMIT A TOPIC/PRESENTATION
 
-   git://git.kernel.org/pub/scm/docs/kernel/pgpkeys.git
+To submit a topic/presentation use the form available at
+https://forms.gle/dR5FuzQRFNXZEQBb8.
 
-Enjoy!
-Luis
+Or, if you prefer, simply reply (only to me, please :) to this email
+specifying:
+
+- name/surname
+- affiliation
+- short bio
+- email address
+- title
+- abstract
+
+The deadline for submitting topics/presentations is January 30, 2026.
+Notifications for accepted topics/presentations will be sent out
+February 6, 2026.
+
+.:: ATTENDING
+
+Attending the OSPM-summit is free of charge, but registration to the
+event is mandatory. The event can allow a maximum of 50 people (so, be
+sure to register early!).
+
+Registrations open on February 6, 2025.
+
+To register, fill in the registration form available at
+https://forms.gle/TZwvdg7196G5CWyH6.
+
+While it is not strictly required to submit a topic/presentation,
+registrations with a topic/presentation proposal will take precedence.
+
+.:: VENUE
+
+OSPM26 is hosted at the Arm Cambridge campus (in Cambridge, UK), in the
+lecture theater and breakout area. We appreciate Arm's generous support
+in providing the venue.
+
+Although the event takes place on Arm's premises, it is fully
+independent of Arm's business operations. The summit is organized by and
+for the open-source community, and everyone is welcome to take part in
+an open, collaborative environment.
+
+.:: ORGANIZERS
+
+Juri Lelli (Red Hat)
+Dietmar Eggemann (Arm)
+Tommaso Cucinotta (SSSA)
+Lorenzo Pieralisi (Linaro)
+
+http://retis.sssup.it/ospm-summit/
 
