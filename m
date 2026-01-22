@@ -1,39 +1,50 @@
-Received: from mail.nearlyone.de (mail.nearlyone.de [49.12.199.46])
+Received: from jabberwock.ucw.cz (jabberwock.ucw.cz [46.255.230.98])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 8F1CD50096D;
-	Mon, 19 Jan 2026 21:01:43 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=49.12.199.46
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id A744D3B8BC2;
+	Thu, 22 Jan 2026 11:28:51 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=46.255.230.98
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1768856506; cv=none; b=C+HONk2a4SvE1bBbvPaMgPFOSgi/T8DNzjdY9ewd7XLBYbceEMlN0NhnTYDAzGBNXmrVXtJ/FSD/ZQG4OaXOAP5Z1LAFVeWk+9APPeDnF0JjgCkIvRuCWcL2lmpKSjuvCIeXboI408AnG0UHrEOXfjXBXgL05CI+gCIINHWBUHA=
+	t=1769081336; cv=none; b=sKMLELF+WB3ZDgHmmLNPVWJdYNlB5tj0dQE43TIJE0KXCBX0aqOq5CVx2eIojtmHbyGNkWH1NAERk7RKjToE6BFPkC9Yfn6mez1jH6M+7ULdWHqG3oQNYgURAmTKcPhsRWb4WFzsNlkipC8GNrmKN3t7uVSfF0IbpyEdgxZRi4Y=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1768856506; c=relaxed/simple;
-	bh=PT9nrrPVAbmQq6E72CivuujG6a9b8hCmZ6oLhNnQUBE=;
-	h=Date:From:To:Subject:Message-ID:MIME-Version:Content-Type:
-	 Content-Disposition; b=AbyUqVsAsVMBjclAn7zhpoSi3qW2ZvfKGJkkQjZfWRvEM5y8GMyaMcprVoFjOz7CPpqzSe9eWl3/bZ6EsnqWZqQYMfr2awIwJygHr+YzHwFtbhC+UO9y6x9a1jHCrFZ+9MxomIGAl1Ca8FoFRvKZRQeIR1N1U6FKhIhFKApFzWA=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=monom.org; spf=pass smtp.mailfrom=monom.org; dkim=pass (2048-bit key) header.d=monom.org header.i=@monom.org header.b=lNt6dKs3; arc=none smtp.client-ip=49.12.199.46
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=monom.org
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=monom.org
+	s=arc-20240116; t=1769081336; c=relaxed/simple;
+	bh=x6/akTtN/KWT1JNOcFwCD0vPfNB8Y+8TMzIMTYiPVCY=;
+	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
+	 Content-Type:Content-Disposition:In-Reply-To; b=Qeks5VKFjMoeLQrfaojHBmvlDwHnc9dv4s15Mekd0Ww28lJPvhFITYPHGcH5ATNdBPJzBIyL9sK3vRb6PQ5JyKb5y1cL3y5/0AZodzAUQTP+N6EeMMl1fGdhNMdyNjB6K7dkUqAKp28n26zdcYi753vtGwJAKUQdbQYtgXLEEyY=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=ucw.cz; spf=pass smtp.mailfrom=ucw.cz; dkim=pass (1024-bit key) header.d=ucw.cz header.i=@ucw.cz header.b=CfG0J6AA; arc=none smtp.client-ip=46.255.230.98
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=ucw.cz
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=ucw.cz
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=monom.org header.i=@monom.org header.b="lNt6dKs3"
-Received: from [127.0.0.1] (localhost [127.0.0.1]) by localhost (Mailerdaemon) with ESMTPSA id CB89DE4116;
-	Mon, 19 Jan 2026 21:51:57 +0100 (CET)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=monom.org; s=dkim;
-	t=1768855919; h=from:subject:date:message-id:to:mime-version:content-type;
-	bh=sPjrPsCW0SWV51AZ+nux2paE0SVATagsky7N1T6E0is=;
-	b=lNt6dKs3URULuPO5Xwh21UVhRR9di1JwHkQj8Ml9c5Zb97wblH1ySiDEnh+T3XlZEvRwJU
-	88s4+C773SGSp8lH0pxIj0JIUPzSzQENzF+XIVpxyhDwC2fTltqnkz80jnX5rJ42XHkSRV
-	MKAaqZ5ZLMSuarDdyUASU6BzH8vT/p24yhqhwH8Rni0pbOUai5ZOXpUsBjUH2jiuFpjSIc
-	W6s/3H4/cBYBK5fydFWpbzsChYGKvwFF/g3aFelRO4kg18tc5WsTsi2+fJLsG/HDfQW+65
-	Tsn2br9GB/wKKUr+jC27bdU7S31m7NPcYb8T1WlaJOqa1gxR+34E9UB/NEae+g==
-Date: Mon, 19 Jan 2026 21:51:55 +0100
-From: Daniel Wagner <wagi@monom.org>
-To: LKML <linux-kernel@vger.kernel.org>, linux-rt-users@vger.kernel.org, 
-	stable-rt@vger.kernel.org, Steven Rostedt <rostedt@goodmis.org>, 
-	Thomas Gleixner <tglx@linutronix.de>, Sebastian Andrzej Siewior <bigeasy@linutronix.de>, 
-	Clark Williams <williams@redhat.com>
-Subject: [ANNOUNCE] 6.12.66-rt15
-Message-ID: <176881761224.25763.16646224135751002623@nitrogen>
+	dkim=pass (1024-bit key) header.d=ucw.cz header.i=@ucw.cz header.b="CfG0J6AA"
+Received: by jabberwock.ucw.cz (Postfix, from userid 1017)
+	id 07A18327EA2; Thu, 22 Jan 2026 12:19:18 +0100 (CET)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=ucw.cz; s=gen1;
+	t=1769080758;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 in-reply-to:in-reply-to:references:references;
+	bh=xbCDoNSwctK7nZcX4ULbVfcxqNF6jqJjOPd4kHlvUx4=;
+	b=CfG0J6AAnKwvQcMv8MQRL54ivGjqRXfh7CO1pRfxZSlfRH8MUw8QC1Lp9XppT+hvE3E5NH
+	D5aGrZd7sLMqKT3b0MHyuQo5gcqC4rtOSTpjTzr7HHbB0JTJnVFiHI5v+ryBF15LVCfOrh
+	en5IYGFyxaUA7QZyhTDNoHmygIMQmGc=
+Date: Thu, 22 Jan 2026 12:19:17 +0100
+From: Pavel Machek <pavel@ucw.cz>
+To: Clark Williams <williams@redhat.com>, pavel@nabladev.com
+Cc: LKML <linux-kernel@vger.kernel.org>,
+	linux-rt-users <linux-rt-users@vger.kernel.org>,
+	Steven Rostedt <rostedt@goodmis.org>,
+	Thomas Gleixner <tglx@linutronix.de>,
+	Carsten Emde <C.Emde@osadl.org>, John Kacur <jkacur@redhat.com>,
+	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+	Daniel Wagner <daniel.wagner@suse.com>,
+	Tom Zanussi <tom.zanussi@linux.intel.com>,
+	Pavel Machek <pavel@denx.de>,
+	Joseph Salisbury <joseph.salisbury@oracle.com>,
+	"Luis Claudio R. Goncalves" <lgoncalv@redhat.com>,
+	Stable RT List <stable-rt@vger.kernel.org>
+Subject: Re: [ANNOUNCE] 6.1.157-rt57
+Message-ID: <aXIHtRPEGgXGcYWw@ucw.cz>
+References: <176132099496.2233461.13982532598284511514@demetrius>
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
@@ -42,53 +53,22 @@ List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Content-Disposition: inline
-X-Last-TLS-Session-Version: TLSv1.3
+In-Reply-To: <176132099496.2233461.13982532598284511514@demetrius>
 
-Hello RT-list!
+Hi!
 
-I'm pleased to announce the 6.12.66-rt15 stable release. This is
-just an update to the latest stable release. No RT specific changes.
+I changed email address, from pavel@denx.de to pavel@nabladev.com
+. Could I ask you to update the To: list so I get new announcements?
 
-You can get this release via the git tree at:
+Also, is there new 6.1-rt release on the horizon?
 
-  git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
+Last I see is, and we'd need newer for planned -cip-rt release.
 
-  branch: v6.12-rt
-  Head SHA1: 682cc16c05c6cec473f4277c9b807dcd5cacd0c8
+commit 7f90be9bd646f3b3ba239d08fdfe6d90744cae07 (tag: v6.1.158-rt58, rt/v6.1-rt)
+Author: Clark Williams <clrkwllms@kernel.org>
+Date:   Mon Nov 10 17:04:16 2025 -0600
 
-Or to build 6.12.66-rt15 directly, the following patches should be applied:
+    Linux 6.1.158-rt58
 
-  https://www.kernel.org/pub/linux/kernel/v6.x/linux-6.12.tar.xz
-
-  https://www.kernel.org/pub/linux/kernel/v6.x/patch-6.12.66.xz
-
-  https://www.kernel.org/pub/linux/kernel/projects/rt/6.12/older/patch-6.12.66-rt15.patch.xz
-
-Signing key fingerprint:
-
-  5BF6 7BC5 0826 72CA BB45  ACAE 587C 5ECA 5D0A 306C
-
-All keys used for the above files and repositories can be found on the
-following git repository:
-
-   git://git.kernel.org/pub/scm/docs/kernel/pgpkeys.git
-
-Enjoy!
-Daniel
-
-Changes from v6.12.57-rt14:
----
-
-Daniel Wagner (1):
-      v6.12.66-rt15
----
-localversion-rt | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
----
-diff --git a/localversion-rt b/localversion-rt
-index 08b3e75841ad..18777ec0c27d 100644
---- a/localversion-rt
-+++ b/localversion-rt
-@@ -1 +1 @@
---rt14
-+-rt15
+Thanks and best regards,
+								Pavel
