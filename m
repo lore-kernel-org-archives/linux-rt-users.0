@@ -1,47 +1,47 @@
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 75A1417B50F
-	for <linux-rt-users@vger.kernel.org>; Tue, 10 Feb 2026 01:31:15 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id ACC9917B50F
+	for <linux-rt-users@vger.kernel.org>; Tue, 10 Feb 2026 01:31:20 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1770687076; cv=none; b=hAl9gDoA1+cMG/A5gx/MJpXNn5ZgIEZETtN/JBH5AvTOCMn91qvNMvl3LxJWSzf6slk1zB5RL+UaTe0sdQSrRlAPi5poEiLzJNGEYMzU3FdO04mtf8GeJx+ffq+AGZcaL1yhn2BpLdLMUEUZcA+OPYo3PvhaIdgfGwDA17/ChWg=
+	t=1770687083; cv=none; b=UdfnhaMfq0boSmKucp1dkVNZkvVoBbe5VHtxBTfgn/n+bwUU8Oq3XL3wNDWJe4tC6DOtSpHK8fnWWWKm4pqHs6oCHq3rIgkp2tTbsJbKk0w7rTYJyGjt5gHr0hADtpGSpAq+p/dyJStNXVdBcHWJPwjJxwrolXutk+EKUf3mI08=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1770687076; c=relaxed/simple;
-	bh=oZRCc0Z0rNyXSbqN+7hWEFTEvvflnsFiRVpeOOR6Wjk=;
+	s=arc-20240116; t=1770687083; c=relaxed/simple;
+	bh=yxrcRqe9ro1svTbTgqZZj8BlqGpMugc8LFFzYoGRXL8=;
 	h=From:To:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=D+bbufAi4Z7nr3QEtf8CRsZBlIAD34delpjtvxId6skCijd3O+sfYSqDW3aAoLCAEB/MMEfSeIUwR27c/dyvSERfundif6yXGX5d6QXbeBTNNXdRnpBLOPThh6lajffdKHjZFgdHp6knyoTNqHlGHebhUn3ep1t4tyko2J0Ew1s=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=LbkRg6Ms; arc=none smtp.client-ip=170.10.133.124
+	 MIME-Version; b=Sq9dN3V+sjDFN8EXqcT5yLrFyp66GnSd4pHK2NITiIZuBP1iPAOu1NiSGOxunShmFBhT8n0RfVL9Cm0lHwCBpbU04B75mwIs/8ITcRdJn9u0cWZZe7vvnPpg/m+xQZ8pmXxWwDFzW2N7l0WVgLynZ6yaoVVg+zDkl+qnaQg0uVc=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=WFRKjopV; arc=none smtp.client-ip=170.10.133.124
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="LbkRg6Ms"
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="WFRKjopV"
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1770687074;
+	s=mimecast20190719; t=1770687079;
 	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
 	 to:to:cc:mime-version:mime-version:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references;
-	bh=NkeOLdKSRA0le7arJORSzkJlfj10ebhVqDlw60vi1Ms=;
-	b=LbkRg6Ms6CgpfzLAfOGsdO4rkDckxzWyTBQZmhAiBahMtLsTMY9cDXJ+POvRibQfxAzBMw
-	8LLjtH8aI8FL5HpKpVMFKSa4kDxaHIzJGhCMPWzYoyytnz9kvefyrj+ruWtgemfxREPpHi
-	/Bv1ciDfg3RwbUXGVEOF4LwX5dzrT4o=
-Received: from mx-prod-mc-05.mail-002.prod.us-west-2.aws.redhat.com
+	bh=/nWOZhJEkvy1+pw7cGHB3rPaOygbBGW7MfeiszVO32E=;
+	b=WFRKjopVhiU28kXLG6cgwDvgEWzL5OO9r63CHMJ5+0Odo+6aaz608WXiVI9pzszkV4ehuN
+	MciaFgzp8YAbwGY0Wze5YpEevA0bzL1tsaqdqWvgREp5FZDoSZVtZGdEhPcOu1xR6Ph1tx
+	cUdFDIVxU4iW5NiklRezwx7nsHVHUDY=
+Received: from mx-prod-mc-01.mail-002.prod.us-west-2.aws.redhat.com
  (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
  relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-678-iuez_w6ENkuC8Fgk_9C8rw-1; Mon,
- 09 Feb 2026 20:31:12 -0500
-X-MC-Unique: iuez_w6ENkuC8Fgk_9C8rw-1
-X-Mimecast-MFC-AGG-ID: iuez_w6ENkuC8Fgk_9C8rw_1770687070
-Received: from mx-prod-int-03.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-03.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.12])
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-130-7Hr1TOC_NIaSrV_XmbAcQw-1; Mon,
+ 09 Feb 2026 20:31:15 -0500
+X-MC-Unique: 7Hr1TOC_NIaSrV_XmbAcQw-1
+X-Mimecast-MFC-AGG-ID: 7Hr1TOC_NIaSrV_XmbAcQw_1770687074
+Received: from mx-prod-int-06.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-06.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.93])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
 	(No client certificate requested)
-	by mx-prod-mc-05.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 348A71956096;
-	Tue, 10 Feb 2026 01:31:10 +0000 (UTC)
+	by mx-prod-mc-01.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 1DBE31956053;
+	Tue, 10 Feb 2026 01:31:13 +0000 (UTC)
 Received: from localhost (unknown [10.22.64.105])
-	by mx-prod-int-03.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTP id DF26219560A3;
-	Tue, 10 Feb 2026 01:31:08 +0000 (UTC)
+	by mx-prod-int-06.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTP id B257C180066C;
+	Tue, 10 Feb 2026 01:31:11 +0000 (UTC)
 From: "Luis Claudio R. Goncalves" <lgoncalv@redhat.com>
 To: linux-rt-users <linux-rt-users@vger.kernel.org>,
 	stable-rt <stable-rt@vger.kernel.org>,
@@ -56,9 +56,9 @@ To: linux-rt-users <linux-rt-users@vger.kernel.org>,
 	Jan Kiszka <jan.kiszka@siemens.com>,
 	Ben Hutchings <ben@decadent.org.uk>,
 	Luis Goncalves <lgoncalv@redhat.com>
-Subject: [PATCH RT 1/2] net/sched: act_ife: convert comma to semicolon
-Date: Mon,  9 Feb 2026 22:31:02 -0300
-Message-ID: <20260210013103.73763-2-lgoncalv@redhat.com>
+Subject: [PATCH RT 2/2] Linux 5.10.248-rt143-rc1
+Date: Mon,  9 Feb 2026 22:31:03 -0300
+Message-ID: <20260210013103.73763-3-lgoncalv@redhat.com>
 In-Reply-To: <20260210013103.73763-1-lgoncalv@redhat.com>
 References: <20260210013103.73763-1-lgoncalv@redhat.com>
 Precedence: bulk
@@ -68,9 +68,7 @@ List-Subscribe: <mailto:linux-rt-users+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
-X-Scanned-By: MIMEDefang 3.0 on 10.30.177.12
-
-From: Chen Ni <nichen@iscas.ac.cn>
+X-Scanned-By: MIMEDefang 3.4.1 on 10.30.177.93
 
 v5.10.248-rt143-rc1 stable review patch.
 If anyone has any objections, please let me know.
@@ -78,44 +76,18 @@ If anyone has any objections, please let me know.
 -----------
 
 
-upstream commit 205305c028ad986d0649b8b100bab6032dcd1bb5
-
-Replace comma between expressions with semicolons.
-
-Using a ',' in place of a ';' can have unintended side effects.
-Although that is not the case here, it is seems best to use ';'
-unless ',' is intended.
-
-Found by inspection.
-No functional change intended.
-Compile tested only.
-
-Signed-off-by: Chen Ni <nichen@iscas.ac.cn>
-Reviewed-by: Jamal Hadi Salim <jhs@mojatatu.com>
-Link: https://patch.msgid.link/20251112072709.73755-1-nichen@iscas.ac.cn
-Signed-off-by: Jakub Kicinski <kuba@kernel.org>
 Signed-off-by: Luis Claudio R. Goncalves <lgoncalv@redhat.com>
 ---
- net/sched/act_ife.c | 6 +++---
- 1 file changed, 3 insertions(+), 3 deletions(-)
+ localversion-rt | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/net/sched/act_ife.c b/net/sched/act_ife.c
-index 892d4824d81d..e518e9b36486 100644
---- a/net/sched/act_ife.c
-+++ b/net/sched/act_ife.c
-@@ -648,9 +648,9 @@ static int tcf_ife_dump(struct sk_buff *skb, struct tc_action *a, int bind,
- 
- 	memset(&opt, 0, sizeof(opt));
- 
--	opt.index = ife->tcf_index,
--	opt.refcnt = refcount_read(&ife->tcf_refcnt) - ref,
--	opt.bindcnt = atomic_read(&ife->tcf_bindcnt) - bind,
-+	opt.index = ife->tcf_index;
-+	opt.refcnt = refcount_read(&ife->tcf_refcnt) - ref;
-+	opt.bindcnt = atomic_read(&ife->tcf_bindcnt) - bind;
- 
- 	spin_lock_bh(&ife->tcf_lock);
- 	opt.action = ife->tcf_action;
+diff --git a/localversion-rt b/localversion-rt
+index 234720dc343d..aec9f67adeee 100644
+--- a/localversion-rt
++++ b/localversion-rt
+@@ -1 +1 @@
+--rt142
++-rt143-rc1
 -- 
 2.53.0
 
