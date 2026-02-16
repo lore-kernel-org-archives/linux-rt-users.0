@@ -1,65 +1,73 @@
-Received: from MRWPR03CU001.outbound.protection.outlook.com (mail-francesouthazon11011053.outbound.protection.outlook.com [40.107.130.53])
+Received: from MRWPR03CU001.outbound.protection.outlook.com (mail-francesouthazon11011052.outbound.protection.outlook.com [40.107.130.52])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id DD5F4228CB0;
-	Sat, 14 Feb 2026 14:23:08 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=fail smtp.client-ip=40.107.130.53
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 847EC2F4A05;
+	Mon, 16 Feb 2026 12:24:11 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=fail smtp.client-ip=40.107.130.52
 ARC-Seal:i=2; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1771078991; cv=fail; b=Wi5sHI6hOL/HBO6qCr3BKHTU64KN7sWqdYZqBEdjLgaK5WyDo9NIx8CJrA8bliIVDjeOE/V2SriRqlzEL/pHoJBTSWAxvEP5tnRpCV9dp5blniAA7oHha4ut4UsiWfhhPKwUeoRwAIt6wYskfCQqDq8VA9wlyQkjLhRi165sX2E=
+	t=1771244653; cv=fail; b=jL33ou3hE1oC9WHGAgBXoIjlK/xIVoeEtgGeCaODxrjSLjNSkxXCpnY/ycB6gtJiDTFozdik8p8+ODZ7+8zqKTVfKgzfKepzK+g9lL2fSaRtVte0b+aM55tS14Y5qOf3tVDTbdBaXKG6BRqPhO4ur0cTJujIVy3vspY4rw2Kqv8=
 ARC-Message-Signature:i=2; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1771078991; c=relaxed/simple;
-	bh=e2GT8qhnrQ4Nr4F1RWa1NkXlOX2BnjqOgNTNi8f5cRQ=;
+	s=arc-20240116; t=1771244653; c=relaxed/simple;
+	bh=eX/vv3etr31L+NUWr6UAjZhpOi5/xe6S8zXouiwI5mc=;
 	h=Message-ID:Date:Subject:To:Cc:References:From:In-Reply-To:
-	 Content-Type:MIME-Version; b=BoYubghWiaa/ak+TbvY/I+oJlJGaq9gEtsvZsVET4Q/7+sp7FVX6kMucbSOZNugQg0JA/4ozJLX6KJCuhNGsavp+gGRSg3NMe95fLZ9gB7iJbCIEYB7LaqEgdgHPNSgODYL3UcKoW/BAQom6dLGKkCqGFZ4KkcqtEFSj6iy2yu8=
-ARC-Authentication-Results:i=2; smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=siemens.com; spf=pass smtp.mailfrom=siemens.com; dkim=pass (2048-bit key) header.d=siemens.com header.i=@siemens.com header.b=wG5QPlcZ; arc=fail smtp.client-ip=40.107.130.53
+	 Content-Type:MIME-Version; b=TZIJjcaqFKfNji4o1FNA00C8gPqcJLbt3e/7uEwBAOYXUYrdZ2wWuSkE7LKHVznrUOQnO4pTTBDBcQoXNOo2DzoKeTwDwsjfQPMypctRKd8sYnlRgJqb25qAliRrnvr9t8HM0qX7ecu9o2gyK/13aA+V972V5Q1fhuI/zpRSQ8I=
+ARC-Authentication-Results:i=2; smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=siemens.com; spf=pass smtp.mailfrom=siemens.com; dkim=pass (2048-bit key) header.d=siemens.com header.i=@siemens.com header.b=a8dI5xI4; arc=fail smtp.client-ip=40.107.130.52
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=siemens.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=siemens.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=siemens.com header.i=@siemens.com header.b="wG5QPlcZ"
+	dkim=pass (2048-bit key) header.d=siemens.com header.i=@siemens.com header.b="a8dI5xI4"
 ARC-Seal: i=1; a=rsa-sha256; s=arcselector10001; d=microsoft.com; cv=none;
- b=mnxTgHAfZydyBhZ/I/gdf5HYzGW7cdJYNOYWrzyO4FTLHvqrXTVclgnt+S4M59JASOpaEBx6zlQKNZstgCIM8zwiOJLIK/z/gm49oxPTXBY191kIJAGuJkSTrtidcboFdRVC4D21++hzL2oAsEfoPxht7LlPj8mx111rbul87BvZn7XseaUmo0cQY/wJmq7vs6McC9J21bORRGprHmyl+HmtoGzf6L9B4UdavW4Dghqyv3u3D6dLUJjZHmIvXI6FcY5kXipOBQo4OCnEXy3JddeCCUn0OffUgK3BP3q3TsCBrszAkxMYoqfw3cY0lQf7YEZ5COMNYNPwbQlXWPAnPA==
+ b=Sx6/gvtCwGQmCdg6iZXE2nZAdXVHG/+auJi8B2FRrfk+j95DZjFb4DQIuWZ30JaadqPMC+Z7Oq7/oqnlA75oYdnV2V8101J5Jp6xahQ7UQx525aBDtaO0s79jV+uXOgEGsxaUeTPFmETBnOMsgx/4YCtKQlwRpL6wmDizyprGnMc78xo7mLRQXhwcwRe2bhvmnQIB8969IQCnHmQudA9FEBC2zV41tn2mZEYmaJXVx2pdEb64ZV62I1kFyBeJ/4Hn7ELAFCMmD9IaDDzGckSZyet81Wfi1c+Jp0eRJ5d9/jimMPBOxQi+WHx+pY41cFitacIfoYwIwGGGEMPkQvsgA==
 ARC-Message-Signature: i=1; a=rsa-sha256; c=relaxed/relaxed; d=microsoft.com;
  s=arcselector10001;
  h=From:Date:Subject:Message-ID:Content-Type:MIME-Version:X-MS-Exchange-AntiSpam-MessageData-ChunkCount:X-MS-Exchange-AntiSpam-MessageData-0:X-MS-Exchange-AntiSpam-MessageData-1;
- bh=r2EPFJ3bohdPt+FJvbF3HQpYL42DwAj6cKVAGpGCAN8=;
- b=ZfZdZpOqYv6TkjvGECWp0pLImagZvGN+5gUeA+85U+KULVT5aO5uYthejmSuF+ziFegCjA5+ZJ3/wehsmATwc6OVKxhtl/NtABIc0Btp00jeFG/WEJgtTh/LBk6Siz0oGUgWQBtr75NxKuZhaHq8uLy7CJ3hVSeH7GXWo0JzkMkG56Qs4VyokRL4Yh7eNvfAJ0/a5yf0wAk+g3LIwxv9vT/dlN6w9+6st9Evqy5aV9KqgNBGESyWnoJSwqdKvzF9JOgxYwlJDnGik8zatviBYrnpH8yD4u3ewtbrax2AkmwDpgWbKnxQ7HLEyi0UAZF9T6PWnEjVXa4uoGYkfM5hJw==
+ bh=LpiiZSXZIo6hk+6p2htcso4Z31Aay76knTGTkS5XVzc=;
+ b=NJ4VevObJ/FHqERhHOlWb6pXysFMnuNjYWtHLOjpCQGEcbo4ZFob/uBm7Zf7ondFMlms6Kp1z//6QS0JRQ8yxjes4SYzWPg1tlmdNsyGvup4JTLEftbvnM/9NpsqQvoMrbrR5bjMRfX9Ijm96aNy9iq8J4ch65urwqvPQ2da+dHYUxXIVSOQi61LT+Bk70j4BYtp9Lo6bnYh4sjBby5ysPFhDw/ZI4BHzAgyOeD+vQsaHatM8gz2zaOMKsxqvebHp3Q05vwBXxGSn/fE9B449cXH4JAyaNIJEuVT+gsSL9tkeq0NkuKJt5vNCPVcctvUQPSqNs0lmANmORVqW32Stw==
 ARC-Authentication-Results: i=1; mx.microsoft.com 1; spf=pass
  smtp.mailfrom=siemens.com; dmarc=pass action=none header.from=siemens.com;
  dkim=pass header.d=siemens.com; arc=none
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=siemens.com;
  s=selector2;
  h=From:Date:Subject:Message-ID:Content-Type:MIME-Version:X-MS-Exchange-SenderADCheck;
- bh=r2EPFJ3bohdPt+FJvbF3HQpYL42DwAj6cKVAGpGCAN8=;
- b=wG5QPlcZ/MFfKz6n7L+yJiiw3F/7zlr89HnYZrrhcnF/ChDbIEzXMtiQNZHe56j6Y4app1Jcd+Q5U09uKDHXAJXx4HFa9VbbOL2JmA1S8zzPiBVrjtCpvsPwru+NCjxl/61F7VlNung033k88Umk4dcW/QMFDnMcI2tFpIAXRAXn2yZdNLGRokggxFvL4p03/pZKGbQsd9XnooUpGSRW120MI+eA5cHuYXDnw2zXVFozHMRqq1TrTh3M991894/cwwJgzjMNUMx1Kcmnofy1SNe/DXPTbshm+Zm/q0lyMyTk8zcAq49kW6+OX16BHTzWitDNNs28EKMELiZUC2hXVg==
+ bh=LpiiZSXZIo6hk+6p2htcso4Z31Aay76knTGTkS5XVzc=;
+ b=a8dI5xI4ddD3waCFCRK4f0EgwVwrhuX2J9XtMQXQWV/Rilq7oQhYy2En0/q+LRfrscRVicBA8Wqdpb/oH6LNEXNUsKlW6V+Gj4ZtUKIKW1ylq7pkSe0JOMJFi1P5DOuaObZ5E3ErN9QBuA+xHGrwm0dP+Oi77pLxq8PT7A5Po3D4HNjcKXVows5T20zz9aEYvsCjJbZYLe8QGPmjl2oH2yOo9wldaZMBPOTnqfXXk0lLOD9tXtntc8DnmDbYyrx/dwfZAn1KNTBOvflPGI41xyOc9us8lk4wnTQ+O9wcJByTVuOd/fMYdiXKUq/3n4xWCWzbJL3ZCTIUWy9oK1BOYA==
 Authentication-Results: dkim=none (message not signed)
  header.d=none;dmarc=none action=none header.from=siemens.com;
 Received: from AS4PR10MB6181.EURPRD10.PROD.OUTLOOK.COM (2603:10a6:20b:588::19)
- by GVXPR10MB8581.EURPRD10.PROD.OUTLOOK.COM (2603:10a6:150:1e1::18) with
+ by DUZPR10MB8236.EURPRD10.PROD.OUTLOOK.COM (2603:10a6:10:4af::19) with
  Microsoft SMTP Server (version=TLS1_2,
- cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.20.9611.15; Sat, 14 Feb
- 2026 14:23:04 +0000
+ cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.20.9611.16; Mon, 16 Feb
+ 2026 12:24:07 +0000
 Received: from AS4PR10MB6181.EURPRD10.PROD.OUTLOOK.COM
  ([fe80::be9f:e8ca:ee9:83e1]) by AS4PR10MB6181.EURPRD10.PROD.OUTLOOK.COM
- ([fe80::be9f:e8ca:ee9:83e1%6]) with mapi id 15.20.9611.008; Sat, 14 Feb 2026
- 14:23:04 +0000
-Message-ID: <438c3c7b-6a57-4ed4-a968-d43142f53afc@siemens.com>
-Date: Sat, 14 Feb 2026 15:23:02 +0100
+ ([fe80::be9f:e8ca:ee9:83e1%6]) with mapi id 15.20.9611.013; Mon, 16 Feb 2026
+ 12:24:07 +0000
+Message-ID: <4dedb1c0-ae80-404d-ad1c-06f0a29ef566@siemens.com>
+Date: Mon, 16 Feb 2026 13:24:05 +0100
 User-Agent: Mozilla Thunderbird
-Subject: Re: [PATCH v2] x86: mshyperv: Use kthread for vmbus interrupts on
+Subject: Re: [PATCH] x86: mshyperv: Use kthread for vmbus interrupts on
  PREEMPT_RT
-To: Saurabh Singh Sengar <ssengar@linux.microsoft.com>
-Cc: "K. Y. Srinivasan" <kys@microsoft.com>,
- Haiyang Zhang <haiyangz@microsoft.com>, Wei Liu <wei.liu@kernel.org>,
- Dexuan Cui <decui@microsoft.com>, Long Li <longli@microsoft.com>,
- Thomas Gleixner <tglx@kernel.org>, Ingo Molnar <mingo@redhat.com>,
- Borislav Petkov <bp@alien8.de>, Dave Hansen <dave.hansen@linux.intel.com>,
- x86@kernel.org, linux-hyperv@vger.kernel.org, linux-kernel@vger.kernel.org,
- Florian Bezdeka <florian.bezdeka@siemens.com>,
- RT <linux-rt-users@vger.kernel.org>, Mitchell Levy
- <levymitchell0@gmail.com>, Michael Kelley <mhklinux@outlook.com>
-References: <514e068c-1b85-4e39-8388-c1d2b106b4e9@siemens.com>
- <aY/4D/JVu7TjNOku@linuxonhyperv3.guj3yctzbm1etfxqx2vob5hsef.xx.internal.cloudapp.net>
- <aY/5eBLvodLYbV0a@linuxonhyperv3.guj3yctzbm1etfxqx2vob5hsef.xx.internal.cloudapp.net>
+To: mhklkml@zohomail.com, 'Michael Kelley' <mhklinux@outlook.com>,
+ 'Florian Bezdeka' <florian.bezdeka@siemens.com>,
+ "'K. Y. Srinivasan'" <kys@microsoft.com>,
+ 'Haiyang Zhang' <haiyangz@microsoft.com>, 'Wei Liu' <wei.liu@kernel.org>,
+ 'Dexuan Cui' <decui@microsoft.com>, 'Long Li' <longli@microsoft.com>,
+ 'Thomas Gleixner' <tglx@kernel.org>, 'Ingo Molnar' <mingo@redhat.com>,
+ 'Borislav Petkov' <bp@alien8.de>, 'Dave Hansen'
+ <dave.hansen@linux.intel.com>, x86@kernel.org
+Cc: linux-hyperv@vger.kernel.org, linux-kernel@vger.kernel.org,
+ 'RT' <linux-rt-users@vger.kernel.org>,
+ 'Mitchell Levy' <levymitchell0@gmail.com>, skinsburskii@linux.microsoft.com,
+ mrathor@linux.microsoft.com, anirudh@anirudhrb.com,
+ schakrabarti@linux.microsoft.com, ssengar@linux.microsoft.com
+References: <133a95d9-8148-40ea-9acc-edfd8e3ceef4@siemens.com>
+ <SN6PR02MB4157B6A9C8BEFA312F0D9D68D499A@SN6PR02MB4157.namprd02.prod.outlook.com>
+ <eb5debe8-b7d6-4076-b295-9a02271c2ee6@siemens.com>
+ <SN6PR02MB41579F60E39CA2A3CA8A5A75D467A@SN6PR02MB4157.namprd02.prod.outlook.com>
+ <1b569fcf3d096066aeb011e21f9c1fe21f7df9b5.camel@siemens.com>
+ <SN6PR02MB4157DB59F0F7BFBF56612651D465A@SN6PR02MB4157.namprd02.prod.outlook.com>
+ <b084a7b6-c394-4337-82cd-8b9cb911d8d5@siemens.com>
+ <005a01dc9d30$a40515e0$ec0f41a0$@zohomail.com>
 From: Jan Kiszka <jan.kiszka@siemens.com>
 Content-Language: en-US
 Autocrypt: addr=jan.kiszka@siemens.com; keydata=
@@ -105,11 +113,11 @@ Autocrypt: addr=jan.kiszka@siemens.com; keydata=
  qH4kDzsqKX8zzTzfAWFxrkXA/kFpR3JsMzNmvextkN2kOLCCHkym0zz5Y3vxaYtbXG2wTrqJ
  8WpkWIE8STUhQa9AkezgucXN7r6uSrzW8IQXxBInZwFIyBgM0f/fzyNqzThFT15QMrYUqhhW
  ZffO4PeNJOUYfXdH13A6rbU0y6xE7Okuoa01EqNi9yqyLA8gPgg/DhOpGtK8KokCsdYsTbk=
-In-Reply-To: <aY/5eBLvodLYbV0a@linuxonhyperv3.guj3yctzbm1etfxqx2vob5hsef.xx.internal.cloudapp.net>
+In-Reply-To: <005a01dc9d30$a40515e0$ec0f41a0$@zohomail.com>
 Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: 8bit
-X-ClientProxiedBy: FR4P281CA0345.DEUP281.PROD.OUTLOOK.COM
- (2603:10a6:d10:ea::6) To AS4PR10MB6181.EURPRD10.PROD.OUTLOOK.COM
+Content-Transfer-Encoding: 7bit
+X-ClientProxiedBy: FR4P281CA0190.DEUP281.PROD.OUTLOOK.COM
+ (2603:10a6:d10:ca::15) To AS4PR10MB6181.EURPRD10.PROD.OUTLOOK.COM
  (2603:10a6:20b:588::19)
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
@@ -118,239 +126,214 @@ List-Subscribe: <mailto:linux-rt-users+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
 X-MS-PublicTrafficType: Email
-X-MS-TrafficTypeDiagnostic: AS4PR10MB6181:EE_|GVXPR10MB8581:EE_
-X-MS-Office365-Filtering-Correlation-Id: a3c993a1-f963-4540-9dac-08de6bd490f0
+X-MS-TrafficTypeDiagnostic: AS4PR10MB6181:EE_|DUZPR10MB8236:EE_
+X-MS-Office365-Filtering-Correlation-Id: 38603db6-9c12-46c0-987a-08de6d5647df
 X-MS-Exchange-AtpMessageProperties: SA
 X-MS-Exchange-SenderADCheck: 1
 X-MS-Exchange-AntiSpam-Relay: 0
-X-Microsoft-Antispam: BCL:0;ARA:13230040|366016|7416014|376014|1800799024;
+X-Microsoft-Antispam:
+	BCL:0;ARA:13230040|1800799024|376014|366016|7416014|921020|7053199007;
 X-Microsoft-Antispam-Message-Info:
-	=?utf-8?B?OFp5WS85dEtLL0EzTndrTjFvdThmL0t4VjVXcTFUSk4wTUFBdy80TDUrV0xO?=
- =?utf-8?B?RFoyU2ZnSkNxSlUzSUNqYlRwZDVkaHErc0lIbjBBeGZ3cWFWVjR1d3dWQmln?=
- =?utf-8?B?TW9XZEVhWFhxOUNoYU8zZHVJNjFIdUxoSnRTUUxkZEdIQm1lRVJJMkxKbkFC?=
- =?utf-8?B?WktGQ3RZVHo3VXU2NnNnaC9mVGtFMUtlNHVENVlkbDNoR1BLcTFqOGQrbE9u?=
- =?utf-8?B?c25RbjViMEdVS1lHc0hDTjQvc1Y2MjNhK215ZlNxNjJyYzJSOFlOeWhBV3U3?=
- =?utf-8?B?eTdGNVFxZ2Jhc21LTjVld00xNCtXOFdnZENybW9YRUdpckNNREU4ZGlRSHdB?=
- =?utf-8?B?VEh0YkYvcFlFMGRDUVNmbHZhVitLNXZyT3lNdGhDL0V1eU1wS2IydXlPaXlm?=
- =?utf-8?B?ZTU5akRBaDdiSjJhMUhSRXBTNW9WMVVrOUFZOWh2T2E4YlhST21sczVpbUx3?=
- =?utf-8?B?MnlxRjE3dUJya3huMWxNajNJekgvZHlrUkpQV04zNlpqc2I2SWl4SUxTWjA5?=
- =?utf-8?B?S3RSMGFvWWdsUHFhQktKRUxZUkp4NDdheFQrM2RPclNFeElPSFF5MElHTHhY?=
- =?utf-8?B?NE1pcGJjb21uVWFmNEVLTVFhamVRZmZGenVkVzdjTVdaY3hRaHNpRVMzZHZV?=
- =?utf-8?B?RnNXMTdNa1hrL2p5Rkt2UnFQbGlpckJiekltU0x5VE1CRjN3enA0QVhlTE1W?=
- =?utf-8?B?NFhQdno5ZEt4WTc0d0cxNFVyRXRsMnA3SEpNRHZZWFZIWGhlU2RYeVQ3Z20y?=
- =?utf-8?B?MUdKdExKMzM4VEl2bmtLRnpkQnRwUnhxMUplRWZXdlBEaE1SOGJXenNhanQ2?=
- =?utf-8?B?YUs0VndZSVB1SmpXSEtFd1hmelF0bDBpVTBhY2hHbDV5MUswdFlNTUNzUTds?=
- =?utf-8?B?YWlNM1VhTnpZYlhCa293a0F2RWwveXZRZG9EdFBlbVRlRVJoT0pVVUdLb29H?=
- =?utf-8?B?NTc3UUFyaXZkckpmWE5ndklzMnpmWlBXL2NVSnlJbXB4SytyaWxHOHZzRTBz?=
- =?utf-8?B?eWJqK1RLLzVOTS9ucmQraTkyNEhhK1cyWWFSbmdDb1ZoZUZZY3lLVGJ6UDJv?=
- =?utf-8?B?eHZQVGJ0VlRaWDAwNThSMUJRY1FaYVM2WEptWHQzdE0reUtybk9xWGdLQTRk?=
- =?utf-8?B?M0M3TTNrMGxRUUtpZzdLeU5YYXp4d1FHUFBFd3pHWG5ZdVlpZ2N3K2M1WVB1?=
- =?utf-8?B?UG40RFk0Ky8wWkZ1bWJFdTdpVk1ISEpjaGFuWk1vQ3JkTUhrV2ZrVlV6RlV5?=
- =?utf-8?B?Q1FDejh4d1JjYjltNzJxbGt1ZjAvRUwxSDc1b1FrQWxVbzczSFlwL25KVmhL?=
- =?utf-8?B?ajJ3ZWtWRFYzUE5TZTlteHZOajdYYVZtNDlNUUd1Q0RoTjhaaWJTOFdTanZF?=
- =?utf-8?B?b2lKK2J5Y3VQUllnckdhczZmRDN0emtTdjF1VTM4aU5JbVM5NWl2ZUpFV1Rx?=
- =?utf-8?B?RHFJaTBtY2xnbzJ6RlYxaXpGNFE5bDFhWmFLb0J0VG91NktVdlB6UVI3ODFp?=
- =?utf-8?B?dDJ5YVY5c2laaG1HZ2luYXNFaFJwT0ZGL2dPTUZGWllZN3VlSmhLVm9QMlRt?=
- =?utf-8?B?S2ovYStlZk81a2c1UFRXMlpkNFJEVE4vbWM2Y08zUTBFbG84bUx1Tk1CTUFY?=
- =?utf-8?B?MmJscWppckF1cHd3OW8ySW9ORCtYQmNTZ0xkckY1VlM4ZGZONmY4TDFXRDRB?=
- =?utf-8?B?cmlHNnJxQkxqNXRkVWZoNitMWlE0YUc3Q0srTWNNT0kzWmlIK1lKV1VoTXhD?=
- =?utf-8?B?djEzMm1hWDFNU0ZRU0ZORXpqVlk3azVpaEZac2tjOGQ2cHhsZno0ejZSVjdB?=
- =?utf-8?B?VU5DSDdEcGlxU3lXazRPK3ZNVzhtOGllK0pXR3lmOEtwbXNTY3kyVzRXQ2tU?=
- =?utf-8?B?RWJFYzZsNjJUa2NxUU5VeXREdnVwbE1HVjBuckY2dHlhTkFSQzBxLzhuM2V2?=
- =?utf-8?B?aUkwNjdpQ0VISUdDVWN3WU9la2pveE5VNERGemJNYjFSMEFUM3ZJU0JxczRW?=
- =?utf-8?B?OFdRVnloRWVUWWd6eGtSTU1RUjdvK0pVeVgvZ3Jucm9reWdiblZrSjlBamM1?=
- =?utf-8?B?RElHaGE4bkxSVTMwMTcxOTRzeTBwSmVhZVZGcUxqMU9CT3k3S3ZNZmRaSmJC?=
- =?utf-8?Q?yDIE=3D?=
+	=?utf-8?B?SW13YXdBZmY0b0FTY2lxaEZEN3IzUW9pNVFTNFJVT0ZaM3o4UnVJamRaek0x?=
+ =?utf-8?B?TndRRVBPTkRUNURhY0NMcUIySmh1Z0p6TVpjdXBrd3A5VUVBMm5wMUw0bFJY?=
+ =?utf-8?B?RVY4VUtDYlJxT1U0QW8vSi9nOUV2TmFWWWFMWllqSFBjUTBTOTZNZzkraTVW?=
+ =?utf-8?B?VzZjOXZDUUJHWGdaQmZaU3d0RkR6dUF4cGIxaG00cjluYnZ1aml1VmxYSW42?=
+ =?utf-8?B?RjQ0RktRcXJDdmFsSVI1MG1EYXE3emFrd3Q2Y1BnaFZzOEgwUlk3bHpIa09r?=
+ =?utf-8?B?SGFyTy9IZm5ZaXFYMlJyTmVsM0VKR0M3NlFhN0N4cHBFOHV6MHpKa2lQSUZ4?=
+ =?utf-8?B?WCtyVDZYUklIVFFMdE5RV05nMmRzV25IbjBGMXR0OHl4MHNkTlArM0ZvSm1m?=
+ =?utf-8?B?WDlCTWhtWEFYbjNYclo4QUNHRzZMNmJIYm1lTTF3b2FjY1J0SUFpdGtPWGFn?=
+ =?utf-8?B?RnpiV1RHMzlFQnQ1c3U3Y0RkdGk3RmVYK2M3d2FLWjhYeEVvNnBlV2VqK0Y3?=
+ =?utf-8?B?REFuTFI4VWlVdXdXUEExc2MwVFdjMkowYTAvS09CcVNuY0NyVElMeGZjMURq?=
+ =?utf-8?B?Q1p2cDB6VUtQTmx1eUNuZzEyblRBajRIelMxKzJJelRIbFpiMzZRd29ZY1RC?=
+ =?utf-8?B?MU5MN2oxOE0xcFJFbmE0dVJkT3NCTFhELzBrdDhUMEgvT2FuR0NtUnBqQWw4?=
+ =?utf-8?B?VGRZSEVQSlg4SnRKUk1VWUdaRlJKWUZ4QmE4MkQ2QnpzUjU4TFVpWXE3N2RM?=
+ =?utf-8?B?TXBPUXlJbUZUL0VCZGlXMThvclAyYzdzYlpiWFZwemUvWkRNbzM2OVJYRzlj?=
+ =?utf-8?B?ZlNiS0JYWm1peFp4K2xRNnJ6SlR2cjBDK3kvZ05HbHVmNDRQUTIzeGVTdnBT?=
+ =?utf-8?B?SmVTUkhabjBPVU9Gdmp6THZiVGUyaWY1TkVrQyt6NDlNSFd5UGQ3K0NsbzVF?=
+ =?utf-8?B?amkvTWxzUDljNUE2TXhZdmtlL0pQM2t3Q0NsRGFzYWpxUlY4WnRUWEo1NW9G?=
+ =?utf-8?B?OTlQYzBRays4aWRHOWo5WXRpZUtuRlF1MFBNdFVHSEgwVzZyL05heGZMVG1C?=
+ =?utf-8?B?UHM1WjNqeGtKRm1DMSt3Ris5UWJCVmFoT0JKYnI4T09weW1sRUJBUFJScUcv?=
+ =?utf-8?B?RzY1cWhvRGsyK0p1aE1veVc4Z1hvQXdlWkpSd2tESWJEbWdnSUI2SHdCU0sy?=
+ =?utf-8?B?bEN0TVdHUGJGcG9wY1lhN2YzUDJVTVF4RjNlaGtiazdES2VMeENHRllCWllO?=
+ =?utf-8?B?SDZIZXZwRHRmZjFidUdYRmk3Ry8wU1pTODJiYk1tZC9nakhWb1UvVFV5TGlu?=
+ =?utf-8?B?ajlscnFtZzlnUlNCOUExUHo1R1VMVFRVRFhMTWNFT2dWMjMvZzFKMXdyMWhp?=
+ =?utf-8?B?TkhrbUl2QnBjblp5SjNKUEI0VURQcmZ4WHBhOGRXeEh1YmVHK0tjQ2s5ditR?=
+ =?utf-8?B?L3AxMXE1VHowQTNKUml6aFlYMkF3eDFIUVRuOWpadGpXTlBoUTk3cWFQZG9s?=
+ =?utf-8?B?ZE43U3VZOG5oUzU1UEdML25zTS84VUV0YzBmNUtDTTdObEVkSzgvYmcwcko0?=
+ =?utf-8?B?aWxvUG54TWJsOW9oR0N3eFZOb1FHNkZwVFp2cDlKdmRHVTFycWFBNlNNRVNa?=
+ =?utf-8?B?anNaalJKQzlNTTVUMWNVUTVpc2REc1lCT1oyaWJ6aDBMdnRrNTg2Nm5ka0hl?=
+ =?utf-8?B?ZDNnV1dZcER4RHA5YUhOR1J0dGozSG81VWVKUElURjhFVi9NODR4K1ZoTE9L?=
+ =?utf-8?B?VDNYL2VQaVRmQXVwL0xMK0sxRkNXbnVISFdSSkRBSEx4MDFkSGV0TWpSVUlp?=
+ =?utf-8?B?WSs0Z2VUTzBLWlFUb3hNalhSekhGaDdSUTh0U1p3Q28rMSs4V0hUaW1qOG1n?=
+ =?utf-8?B?aGxVRnFVbFNIUGF3WUNHZHFzcnBmT1JJNkx4Y0hMSU1GT3NraUxRNWlxaXY1?=
+ =?utf-8?B?Vk1zblFFKzhyMkVlbUNXeVVjWU1QMXcwSlNwSEFXbWtIaXJuQkhGOWhONExQ?=
+ =?utf-8?B?T3h2SC9tK1Q0ZzBESDdRckdYQWc5RWdVMHplUGFMc0dmR29nMTB0K3luekN2?=
+ =?utf-8?B?NTh2V3J2QzhiZEZkdWtaSDQ0bHZabGdPTFp3K1l1N2tvSlVuWEtncGUyMlpv?=
+ =?utf-8?B?MHhBci9sbXRjbmVkcEJWYWs4RW9wa1NQVTFNLzV2ZlpqSGx4WlZmSyt5NlRy?=
+ =?utf-8?B?RUE9PQ==?=
 X-Forefront-Antispam-Report:
-	CIP:255.255.255.255;CTRY:;LANG:en;SCL:1;SRV:;IPV:NLI;SFV:NSPM;H:AS4PR10MB6181.EURPRD10.PROD.OUTLOOK.COM;PTR:;CAT:NONE;SFS:(13230040)(366016)(7416014)(376014)(1800799024);DIR:OUT;SFP:1101;
+	CIP:255.255.255.255;CTRY:;LANG:en;SCL:1;SRV:;IPV:NLI;SFV:NSPM;H:AS4PR10MB6181.EURPRD10.PROD.OUTLOOK.COM;PTR:;CAT:NONE;SFS:(13230040)(1800799024)(376014)(366016)(7416014)(921020)(7053199007);DIR:OUT;SFP:1101;
 X-MS-Exchange-AntiSpam-MessageData-ChunkCount: 1
 X-MS-Exchange-AntiSpam-MessageData-0:
-	=?utf-8?B?QzdrSHB6Ykloc3VPekh6aFpyM1dVcEJSVHE2bndnUGkrckVFVlJGSGpSQVFP?=
- =?utf-8?B?aCtKM2NsNmdzZFlpQXlidVFlYlQ1NStUWWlvdk55QUVPMVBOK21YTGJOM0pN?=
- =?utf-8?B?dU1yRGhWanVxVHAvQkRKdGhXalpDM29iVUwyQjloU1hpcUtISE5HSEhabzY0?=
- =?utf-8?B?a1o5MFBBRzhSUXJLbkFwREl0dzQ5YUNYNTMzN3I2ZHpqaVJnWGZBYUtRRUg0?=
- =?utf-8?B?TFVITGdNRUJjMktzaDhpY3lDTm9HQzhTRURKRk96YkdWNGExYTFNWVNZQm9C?=
- =?utf-8?B?eXM0NGxBV0NMdnp4aTJGRk13OWM4RG4rdjJTRFdUeStsNzNlQTd5WEhNc0ho?=
- =?utf-8?B?dnBkOGMxWXByd1llSXVGMkFSeFhSQWxuWDNQSitUeEV0YUVHT0JZcDIreG1J?=
- =?utf-8?B?WURnZjdKQTdqa3dhQUNGR3ExdVRoeGdtL0RoVGtPVnp2NXZoVjc1c3dmRzBs?=
- =?utf-8?B?RmkyZnUwM1B0WFIrQzVXc2phQTl1RmFaK2NycXdEekdBWHluUkxnbEZza2w5?=
- =?utf-8?B?YkVkRkg3K2VHTDA1K1lzL0U4OTB4eExiWFdVWjNnQ1pLME5nS3ZMb1NUMFlL?=
- =?utf-8?B?ZHB0QWp1RWtMM3phcEhibW1HWSs5L3RnQzhqWEt5VzFkam4yZlNMOHFCZFI4?=
- =?utf-8?B?TUhzMHpTRC9rbnpjenk1TTNQMmdFeUdYMFFtSUc4NmdrY1ZSbm1XdlVNVElU?=
- =?utf-8?B?MzZPaHl5VXFVOTRiZGo5TmYySmZudWxVQ3VJc001WUpkbnZaeXd0dWNtSWh5?=
- =?utf-8?B?TWRMTGJIQ0lZTGxYL0NodTE5Y2N0dS8zMlRuVmFSeUIxMEs0Skh3NVJVOGZN?=
- =?utf-8?B?d1l0TkRVUjZHRCtlc3F0cm9iNmhRcUQraXdZSjNmM1hraGlHcUxOMEJyQlFO?=
- =?utf-8?B?NUxlL1h5NzFtODhDcnZlVmdwUVV4UVV5OFpzc0UrakFSRFFlTk16VCtsREVy?=
- =?utf-8?B?NTZCdFJ2V2p3d1BYNEFjV1Y3VG9rbkdjSHlGNDAxUmRhckMyWUlXckRNbWw5?=
- =?utf-8?B?bmc1Y0V3UEZ5YjBkUjhzcmltMENwZHJZL0NaakJKekJ3WURQS3o2aDM2NElE?=
- =?utf-8?B?WS9vVUQ3THdtMlQ3bUo2M0tsd1pwbzh4Y0U1OStxZFg5MjUyQ3dCR0svRFpi?=
- =?utf-8?B?RVRWQUhQMVVJZURVSHFMbDZ1cFdrZ3hncFNWVjlzTUhrMUZjdWhSaWhMcTJ2?=
- =?utf-8?B?d2NObXR0dGNLZWRMNi9lRlM1ZXdURGFkcjl4d1ZPRVU4L0FsWGtQMzFPdVY5?=
- =?utf-8?B?cCtoSlBEd1AwUEl5Z09lTGVXMGFSbGZ1Nm15RDBMVmcvb0JIcjlCNzYvNWFB?=
- =?utf-8?B?cW5aSEMrYm9QMExzb1QvZFdTSVNrL2hYS2wxcGFqelZhdS9EbnUyOTRZS0lu?=
- =?utf-8?B?dHFJQkhlTmV0Nkl4OEdLeVVuOGRvS0duQkpEcFEwa2Z2VkMya1doQ0pDeDdZ?=
- =?utf-8?B?M293L2k0ckN1UHVZUjBqSzFERnhFNWNQdy94T29kc0Y5U1Z0b0ZYMklmTXlD?=
- =?utf-8?B?bzg2SnVtMXRiNjZld0ZTaGtyOEwxR2lhWFk4bm4zNks5RnAvQ3RQcUZSZE5H?=
- =?utf-8?B?dDh0MXErQ2FTcWdSVmtHNzZDL3YrYlJoV1RwTWV4bGlwWm44ZmdDTWIzR0pO?=
- =?utf-8?B?eUFsMTNVRWNPdWwvcTZKdXhObkFrOVdXZVBXQi9mSnVCZ1JSRDdQS1JPdlFN?=
- =?utf-8?B?L0crMG9mcThhQ1pwblhRUE1EcllvTDZlSzA3THhKZW5uMEdqUnNoQ3JjbDRv?=
- =?utf-8?B?QVZYOXpPQndnMm9XSTJ6ZmRmS2xKQU1YbXpjVmVHYysvei8vZmY2SGZhZ0pi?=
- =?utf-8?B?azFWTlJydHFLZTd4SzUvcHJtSFlTYldLM2N4M2Q4V3pjZXZFWkRJU2trMDF3?=
- =?utf-8?B?bWN0aHNIVlZqa1VzaGJ2NHpBN1crV2daQ1dJWGcvTE00R1JCeENjdDhxMW1B?=
- =?utf-8?B?WHZKMXZKL1JFWnZPcjhUK0hsYS9ZWGZRRnFMM3haRTVCWmEyR2JHOWczZGR5?=
- =?utf-8?B?MVZXcy9XV2o0VjRyMndUeEVMMWRBMjhoWktWZkh6VDVXRVpMSDEzZ0JLajN3?=
- =?utf-8?B?TjdQdGpsMzdLZmxKNy9KeTJYMzVWOVNWQU83WVUxeEZNbFVQTkUvOSsyVnpn?=
- =?utf-8?B?NGdUMHZTbjlHTVFVN3hwTVdna3JqZDRKN1N6Q1RhTzQ1ei9CZW1VV1hhaWRq?=
- =?utf-8?B?VWt3MzgwWWdQazFqdzlJRlN0VC9Ud1A3VmFDcjVSQzlDTFpmYksvWC9maUxh?=
- =?utf-8?B?OW9hWXRqUWJHZU1Kb3ZCQTFJTW5sc0VodjJqZTVzS0NVVnRBVnBMZjNEUDhk?=
- =?utf-8?B?QXpwRDZGQmZLaWhmamxzUStCakloNG8rbGx4KzEwR09FQzA3QVljZz09?=
+	=?utf-8?B?dENWRmJtMm42dFhsMzBObkR0cEZTa2pycmlYZ0JGZDIwazRVaHNweUZQMUI3?=
+ =?utf-8?B?N2svWVViN1dreWpOaW1waFJxdmY1L1pzaEJVOW4zODdnamJ1ZExtV0V2aE10?=
+ =?utf-8?B?WlVXaTRqalJaSzBpaklDYXFMMTJ4OHpkZ1FCOS9ZSVQ3cTd0bnkyZ1krNW9V?=
+ =?utf-8?B?RlNLRlM5TkloSWxOZXBBWDlUeDA0MmxlK05vRWU5KzhXZXVGOUpBcnBYSmN3?=
+ =?utf-8?B?RG9ENkdEKzVhM0pOL3FPSmdUSEV1YVI5ckNZb29HWjlsdjlteWNqZFN5Q3B2?=
+ =?utf-8?B?QllkdURHSEU2bU92N1V0Nk1tVlVFUW1kUG81WUx0ajhQdmhtRHIwaytFd3V4?=
+ =?utf-8?B?R2pob2FnL3dMTHd5RGx0Mm55VlRoMjFMcmJ5Wm1oeWdpa3ZJL0pVeW1kRkpP?=
+ =?utf-8?B?MTgxL0N1ckNmSWdvYTNrb3p4VzNrS1FuaXV4cmQxbUhZV01Vb3F1WFNZdFdI?=
+ =?utf-8?B?UHBsdENJUkttOENpNkIzUjZFcTVNeGszNUlNUjNiaDdjSFNpSnJFYkk5SnN0?=
+ =?utf-8?B?bmEreW1oeDV3RzM3TEZnbVZGRjZYSUpha0FIUUlBMytpQUFLSEhzQ1RnTjhq?=
+ =?utf-8?B?NXVUeVdVRE8yMGV2UmdwMDBqckhSeVJSbVVnTzFUdFJoaWxDdlU4NVR6STR6?=
+ =?utf-8?B?ZEJoY1BNODRMMUxpNkVhMjNiS1NsamJxYnA0Q2Z0enllWmtnVGRuZ0RqZUQy?=
+ =?utf-8?B?Mnl1ZVlsY29rQlViNDV4Vld6bTg2cG9BL1JOS3hPZU5Md0RlSzZwWE4xWGU3?=
+ =?utf-8?B?azNNWXNhVHRzS1QxMkg2b1hPZG8xWFVCSUREdHIwZFR2SjlOcnFQQ2tWU0Vl?=
+ =?utf-8?B?eUFPK1pCbHRSdXpHR2JwMVM5R0FxblJjdGpmcmM1YnpzVUY4eGduUGJHaklW?=
+ =?utf-8?B?bDdjTlZqM0w1M3dFMTdXZmtlM21Da3k4TVB3SjJ0T0d1SURyR2NRN21EdTUr?=
+ =?utf-8?B?LzZST0p4bWpxWTNWYm5mV09HVTlGM0MzeDBPM0k5M3JrTW4xZGE5c2dlaVVa?=
+ =?utf-8?B?blFVZUdIVnF4b2NNUWxCYWxtOFFnRGEwOUdkMHVLRC96aXBzUXBBbUtSeUNa?=
+ =?utf-8?B?eUVkVThmNmRzN2lTS3V0N1JSMklwOFB3bWE4SFQwQ3JRSzQ0NUUrbTNHSWJY?=
+ =?utf-8?B?RWxvdlRzaC9RdmpaSGRVMVlEOEVUbnpiTjJGL2VUcDY4dERCanptcDJxaUdT?=
+ =?utf-8?B?cTJHSkVDQWxlWDZlZ2ZkdXQvRVBaUEp5U3hsRnpvbzRvdVdMbHFheS9TVHlZ?=
+ =?utf-8?B?anZxSnpVWW93T0Q1QWI5eWxyTHphTmJLcWdxZStxcVVYeUM4R2taNkx6YTM5?=
+ =?utf-8?B?ZHRLY0h6Y1hUS1pCcFlJOU96RGFRMjdoVTZJbkdqUWhZVlEyWCtEa3NxTnFE?=
+ =?utf-8?B?M29OZ2ZkZE9ZcTFKL0doYmI1T3ExamlBY0NPbWg1L0ZLbmVPbkxjODRZVURt?=
+ =?utf-8?B?MmJIWHNLOE9iSjJEM3FBclg4YlhGb3ZqcHM4enl1UjVpUzBxQis0bTJLZ3VV?=
+ =?utf-8?B?d01iQzk4MzlhamdWZUtCWWZTM21peDRTYjBEY0lMbmoxZzFBVUI2WGFSK1E2?=
+ =?utf-8?B?aDZidTdmOU1jY1hjSUpEUG81TjY3dGNLNjhXcFFRYzVCb2Urejcxek5MV0NX?=
+ =?utf-8?B?R1poOFdQK0d4YzZ6M0xCWnFzSWhrZjFBWFV1c1dpd3NmQjhTZVZHa3o1TWFS?=
+ =?utf-8?B?bWZYMVJNOUhTZ1lMV0g0Uk02bHhVUGRjdENvejNXaUlKKzBMckgzdnMvaTJp?=
+ =?utf-8?B?U1JEMHR4aUgyUFJDTXduOHF2TkYzd2tLQ1FPNlZPbndkMzlVRTNReVg2VmxG?=
+ =?utf-8?B?dDM1OFVMaVdUVDlweS9uWkEwZ2Z1aUh6dTZKVzRLTG9Id1hhVHBpMVMwalMz?=
+ =?utf-8?B?SXE1Yks0eUxUdmxBMHFHbk05RTRFY25veURLaGFCMjkwZ0E2Uk1tQW5OUjY3?=
+ =?utf-8?B?TXBLNEF5a1Y1ZW5IdmVOUENGK08wa3Q5cWkraEJFcStKMkg2MUxhS0M4TitU?=
+ =?utf-8?B?RTEzSkVuSzdaVTJxQXhwaXlQcWFZenlnRWszZ05zaTJJS0tZNEpYdFBaRXRz?=
+ =?utf-8?B?S08xVjRnMnJmcW85WS9NVjhEYWFORndQZ2Jod3gvNUpRdHlGdWpRVHI5eXBm?=
+ =?utf-8?B?ZHN0cVVqVzBSZTY0NzRYS3I4b0loTzg4NElYeml0MmI2c0YzK0tjeDBIYVRM?=
+ =?utf-8?B?allXSXdaYklYdEpYRElOUXFnSFBINWtrRmtlemdSNVhRKzA1YmxvQnBFMitw?=
+ =?utf-8?B?OHZwUmlVU1h3aHRZK3Z3ZlFqQmhwZUlQSGJBVEZpY3J6eTZBS0Vvb3duNVFC?=
+ =?utf-8?B?RmVET3hJMnI1c0IwVmw1MUpDUHVYaDlSNlFOTjF1ZDhuMXpGdTY3Zz09?=
 X-OriginatorOrg: siemens.com
-X-MS-Exchange-CrossTenant-Network-Message-Id: a3c993a1-f963-4540-9dac-08de6bd490f0
+X-MS-Exchange-CrossTenant-Network-Message-Id: 38603db6-9c12-46c0-987a-08de6d5647df
 X-MS-Exchange-CrossTenant-AuthSource: AS4PR10MB6181.EURPRD10.PROD.OUTLOOK.COM
 X-MS-Exchange-CrossTenant-AuthAs: Internal
-X-MS-Exchange-CrossTenant-OriginalArrivalTime: 14 Feb 2026 14:23:04.4850
+X-MS-Exchange-CrossTenant-OriginalArrivalTime: 16 Feb 2026 12:24:07.5171
  (UTC)
 X-MS-Exchange-CrossTenant-FromEntityHeader: Hosted
 X-MS-Exchange-CrossTenant-Id: 38ae3bcd-9579-4fd4-adda-b42e1495d55a
 X-MS-Exchange-CrossTenant-MailboxType: HOSTED
-X-MS-Exchange-CrossTenant-UserPrincipalName: whRy3l6Ymhk2MfyHd3zf2LD1gjf3R+OZF59s6o0HMPLvvZqKrKyzbBgh8BhbS/CKkCwyMgjp3Y3a9+qv+vDpZg==
-X-MS-Exchange-Transport-CrossTenantHeadersStamped: GVXPR10MB8581
+X-MS-Exchange-CrossTenant-UserPrincipalName: YOBJx1Fzhc9FNKfv3wtRWedN1GhlXzQHnd6F9E/E/Woph0ew4xtQKN5DgHvBuWwzu7E4nVRWBDRow9VabHkguw==
+X-MS-Exchange-Transport-CrossTenantHeadersStamped: DUZPR10MB8236
 
-On 14.02.26 05:26, Saurabh Singh Sengar wrote:
-> On Fri, Feb 13, 2026 at 08:20:31PM -0800, Saurabh Singh Sengar wrote:
->> On Fri, Feb 06, 2026 at 07:47:54AM +0100, Jan Kiszka wrote:
->>> From: Jan Kiszka <jan.kiszka@siemens.com>
->>>
->>> Resolves the following lockdep report when booting PREEMPT_RT on Hyper-V
->>> with related guest support enabled:
->>>
->>> [    1.127941] hv_vmbus: registering driver hyperv_drm
->>>
->>> [    1.132518] =============================
->>> [    1.132519] [ BUG: Invalid wait context ]
->>> [    1.132521] 6.19.0-rc8+ #9 Not tainted
->>> [    1.132524] -----------------------------
->>> [    1.132525] swapper/0/0 is trying to lock:
->>> [    1.132526] ffff8b9381bb3c90 (&channel->sched_lock){....}-{3:3}, at: vmbus_chan_sched+0xc4/0x2b0
->>> [    1.132543] other info that might help us debug this:
->>> [    1.132544] context-{2:2}
->>> [    1.132545] 1 lock held by swapper/0/0:
->>> [    1.132547]  #0: ffffffffa010c4c0 (rcu_read_lock){....}-{1:3}, at: vmbus_chan_sched+0x31/0x2b0
->>> [    1.132557] stack backtrace:
->>> [    1.132560] CPU: 0 UID: 0 PID: 0 Comm: swapper/0 Not tainted 6.19.0-rc8+ #9 PREEMPT_{RT,(lazy)}
->>> [    1.132565] Hardware name: Microsoft Corporation Virtual Machine/Virtual Machine, BIOS Hyper-V UEFI Release v4.1 09/25/2025
->>> [    1.132567] Call Trace:
->>> [    1.132570]  <IRQ>
->>> [    1.132573]  dump_stack_lvl+0x6e/0xa0
->>> [    1.132581]  __lock_acquire+0xee0/0x21b0
->>> [    1.132592]  lock_acquire+0xd5/0x2d0
->>> [    1.132598]  ? vmbus_chan_sched+0xc4/0x2b0
->>> [    1.132606]  ? lock_acquire+0xd5/0x2d0
->>> [    1.132613]  ? vmbus_chan_sched+0x31/0x2b0
->>> [    1.132619]  rt_spin_lock+0x3f/0x1f0
->>> [    1.132623]  ? vmbus_chan_sched+0xc4/0x2b0
->>> [    1.132629]  ? vmbus_chan_sched+0x31/0x2b0
->>> [    1.132634]  vmbus_chan_sched+0xc4/0x2b0
->>> [    1.132641]  vmbus_isr+0x2c/0x150
->>> [    1.132648]  __sysvec_hyperv_callback+0x5f/0xa0
->>> [    1.132654]  sysvec_hyperv_callback+0x88/0xb0
->>> [    1.132658]  </IRQ>
->>> [    1.132659]  <TASK>
->>> [    1.132660]  asm_sysvec_hyperv_callback+0x1a/0x20
->>>
->>> As code paths that handle vmbus IRQs use sleepy locks under PREEMPT_RT,
->>> the complete vmbus_handler execution needs to be moved into thread
->>> context. Open-coding this allows to skip the IPI that irq_work would
->>> additionally bring and which we do not need, being an IRQ, never an NMI.
->>>
->>> Signed-off-by: Jan Kiszka <jan.kiszka@siemens.com>
+On 13.02.26 22:35, mhklkml@zohomail.com wrote:
+> From: Jan Kiszka <jan.kiszka@siemens.com> Sent: Thursday, February 12, 2026 8:06 AM
 >>
->> First I would like to share my opinion that, although support for the
->> RT kernel is not on the near-term roadmap, we should welcome RT Linux
->> patches.
+>> On 09.02.26 19:25, Michael Kelley wrote:
+>>> From: Florian Bezdeka <florian.bezdeka@siemens.com> Sent: Monday, February 9, 2026 2:35 AM
+>>>>
+>>>> On Sat, 2026-02-07 at 01:30 +0000, Michael Kelley wrote:
+>>>>
+>>>> [snip]
+>>>>>
+>>>>> I've run your suggested experiment on an arm64 VM in the Azure cloud. My
+>>>>> kernel was linux-next 20260128. I set CONFIG_PREEMPT_RT=y and
+>>>>> CONFIG_PROVE_LOCKING=y, but did not add either of your two patches
+>>>>> (neither the storvsc driver patch nor the x86 VMBus interrupt handling patch).
+>>>>> The VM comes up and runs, but with this warning during boot:
+>>>>>
+>>>>> [    3.075604] hv_utils: Registering HyperV Utility Driver
+>>>>> [    3.075636] hv_vmbus: registering driver hv_utils
+>>>>> [    3.085920] =============================
+>>>>> [    3.088128] hv_vmbus: registering driver hv_netvsc
+>>>>> [    3.091180] [ BUG: Invalid wait context ]
+>>>>> [    3.093544] 6.19.0-rc7-next-20260128+ #3 Tainted: G            E
+>>>>> [    3.097582] -----------------------------
+>>>>> [    3.099899] systemd-udevd/284 is trying to lock:
+>>>>> [    3.102568] ffff000100e24490 (&channel->sched_lock){....}-{3:3}, at: vmbus_chan_sched+0x128/0x3b8 [hv_vmbus]
+>>>>> [    3.108208] other info that might help us debug this:
+>>>>> [    3.111454] context-{2:2}
+>>>>> [    3.112987] 1 lock held by systemd-udevd/284:
+>>>>> [    3.115626]  #0: ffffd5cfc20bcc80 (rcu_read_lock){....}-{1:3}, at: vmbus_chan_sched+0xcc/0x3b8 [hv_vmbus]
+>>>>> [    3.121224] stack backtrace:
+>>>>> [    3.122897] CPU: 0 UID: 0 PID: 284 Comm: systemd-udevd Tainted: G            E 6.19.0-rc7-next-20260128+ #3 PREEMPT_RT
+>>>>> [    3.129631] Tainted: [E]=UNSIGNED_MODULE
+>>>>> [    3.131946] Hardware name: Microsoft Corporation Virtual Machine/Virtual Machine, BIOS Hyper-V UEFI Release v4.1 06/10/2025
+>>>>> [    3.138553] Call trace:
+>>>>> [    3.140015]  show_stack+0x20/0x38 (C)
+>>>>> [    3.142137]  dump_stack_lvl+0x9c/0x158
+>>>>> [    3.144340]  dump_stack+0x18/0x28
+>>>>> [    3.146290]  __lock_acquire+0x488/0x1e20
+>>>>> [    3.148569]  lock_acquire+0x11c/0x388
+>>>>> [    3.150703]  rt_spin_lock+0x54/0x230
+>>>>> [    3.152785]  vmbus_chan_sched+0x128/0x3b8 [hv_vmbus]
+>>>>> [    3.155611]  vmbus_isr+0x34/0x80 [hv_vmbus]
+>>>>> [    3.158093]  vmbus_percpu_isr+0x18/0x30 [hv_vmbus]
+>>>>> [    3.160848]  handle_percpu_devid_irq+0xdc/0x348
+>>>>> [    3.163495]  handle_irq_desc+0x48/0x68
+>>>>> [    3.165851]  generic_handle_domain_irq+0x20/0x38
+>>>>> [    3.168664]  gic_handle_irq+0x1dc/0x430
+>>>>> [    3.170868]  call_on_irq_stack+0x30/0x70
+>>>>> [    3.173161]  do_interrupt_handler+0x88/0xa0
+>>>>> [    3.175724]  el1_interrupt+0x4c/0xb0
+>>>>> [    3.177855]  el1h_64_irq_handler+0x18/0x28
+>>>>> [    3.180332]  el1h_64_irq+0x84/0x88
+>>>>> [    3.182378]  _raw_spin_unlock_irqrestore+0x4c/0xb0 (P)
+>>>>> [    3.185493]  rt_mutex_slowunlock+0x404/0x440
+>>>>> [    3.187951]  rt_spin_unlock+0xb8/0x178
+>>>>> [    3.190394]  kmem_cache_alloc_noprof+0xf0/0x4f8
+>>>>> [    3.193100]  alloc_empty_file+0x64/0x148
+>>>>> [    3.195461]  path_openat+0x58/0xaa0
+>>>>> [    3.197658]  do_file_open+0xa0/0x140
+>>>>> [    3.199752]  do_sys_openat2+0x190/0x278
+>>>>> [    3.202124]  do_sys_open+0x60/0xb8
+>>>>> [    3.204047]  __arm64_sys_openat+0x2c/0x48
+>>>>> [    3.206433]  invoke_syscall+0x6c/0xf8
+>>>>> [    3.208519]  el0_svc_common.constprop.0+0x48/0xf0
+>>>>> [    3.211050]  do_el0_svc+0x24/0x38
+>>>>> [    3.212990]  el0_svc+0x164/0x3c8
+>>>>> [    3.214842]  el0t_64_sync_handler+0xd0/0xe8
+>>>>> [    3.217251]  el0t_64_sync+0x1b0/0x1b8
+>>>>> [    3.219450] hv_utils: Heartbeat IC version 3.0
+>>>>> [    3.219471] hv_utils: Shutdown IC version 3.2
+>>>>> [    3.219844] hv_utils: TimeSync IC version 4.0
+>>>>
+>>>> That matches with my expectation that the same problem exists on arm64.
+>>>> The patch from Jan addresses that issue for x86 (only, so far) as we do
+>>>> not have a working test environment for arm64 yet.
+>>>
+>>> OK. I had understood Jan's earlier comments to mean that the VMBus
+>>> interrupt problem was implicitly solved on arm64 because of VMBus using
+>>> a standard Linux IRQ on arm64. But evidently that's not the case. So my
+>>> earlier comment stands: The code changes should go into the architecture
+>>> independent portion of the VMBus driver, and not under arch/x86. I
+>>> can probably work with you to test on arm64 if need be.
+>>>
 >>
->> Coming back to this patch I can reproduce the stack trace referenced
->> in the commit when running with PREEMPT_RT enabled, and I have verified
->> that this patch resolves the issue. Next, I observed the storage-related
->> stack trace mentioned in Jan’s other patch; applying the storvsc patch
->> fixed that as well.
->>
->> However, when testing without PREEMPT_RT enabled, I see a another lockdep
->> warning below (both with and without Jan’s patches). IWanted to check if
->> is it possible to address this issue as part of the same fix ?
->> Doing so would make the change more useful beyond PREEMPT_RT.
+>> I can move the code, sure, but I still haven't understood what
+>> invalidates my assumptions (beside what you observed). vmbus_drv calls
+>> request_percpu_irq, and that is - as far as I can see - not injecting
+>> IRQF_NO_THREAD. Any explanations welcome.
 > 
+> I haven't setup detailed debugging on arm64 yet, but in prep for that
+> I went looking at the places in the kernel IRQ handling where
+> IRQF_NO_THREAD influences behavior. The key function appears to be
+> irq_setup_forced_threading(). This function first checks force_irqthreads(),
+> which will be "true" when PREEMPT_RT is set. The function then checks
+> the IRQF_NO_THREAD flag and the IRQF_PERCPU flag. From what I can
+> see, the IRQF_PERCPU flag is treated like the IRQF_NO_THREAD flag, and
+> causes forced threading to *not* be done. So the behavior ends up being
+> the same as when PREEMPT_RT is not set.
 > 
-> Sharing the stack, missed in previous email:
-> 
-> [    1.612866] =============================
-> [    1.616197] tun: Universal TUN/TAP device driver, 1.6
-> [    1.612866] [ BUG: Invalid wait context ]
-> [    1.612866] 6.19.0-next-20260212+ #8 Not tainted
-> [    1.612866] -----------------------------
-> [    1.612866] swapper/0/0 is trying to lock:
-> [    1.612866] ffff895a03dfd3f0 (&channel->sched_lock){....}-{3:3}, at: vmbus_chan_sched+0xda/0x350
-> [    1.621086] PPP generic driver version 2.4.2
-> [    1.612866] other info that might help us debug this:
-> [    1.612866] context-{2:2}
-> [    1.612866] 1 lock held by swapper/0/0:
-> [    1.612866]  #0: ffffffff9b7d4660 (rcu_read_lock){....}-{1:3}, at: vmbus_chan_sched+0x38/0x350
+> Since the VMBus interrupt is a per-cpu interrupt, forced threading is not
+> done. In that case, the stack trace I reported makes sense. Take a look at
+> the code and see if you agree.
 
-Current context is LD_WAIT_SPIN (2), but the sched_lock is
-LD_WAIT_CONFIG (3), which is invalid in RT. So this is warning us about
-what this patch is addressing. But my patch likely misses some
-lockdep_hardirq_threaded() before vmbus_handler is called to annotate
-that fact.
+Indeed, missed the IRQF_PERCPU impact on auto-threading. I'll rework my
+patch to perform the transition arch-independently.
 
+Thanks,
 Jan
-
-> [    1.628045] i8042: PNP: No PS/2 controller found.
-> [    1.612866] stack backtrace:
-> [    1.612866] CPU: 0 UID: 0 PID: 0 Comm: swapper/0 Not tainted 6.19.0-next-20260212+ #8 PREEMPT
-> [    1.612866] Hardware name: Microsoft Corporation Virtual Machine/Virtual Machine, BIOS Hyper-V UEFI Release v4.1 09/25/2025
-> [    1.612866] Call Trace:
-> [    1.612866]  <IRQ>
-> [    1.612866]  dump_stack_lvl+0x6f/0xb0
-> [    1.612866]  dump_stack+0x10/0x20
-> [    1.612866]  __lock_acquire+0x973/0x24e0
-> [    1.612866]  ? __lock_acquire+0x449/0x24e0
-> [    1.612866]  lock_acquire+0xb6/0x2c0
-> [    1.612866]  ? vmbus_chan_sched+0xda/0x350
-> [    1.612866]  ? vmbus_chan_sched+0x38/0x350
-> [    1.612866]  _raw_spin_lock+0x2f/0x50
-> [    1.612866]  ? vmbus_chan_sched+0xda/0x350
-> [    1.612866]  vmbus_chan_sched+0xda/0x350
-> [    1.612866]  ? sched_clock_idle_wakeup_event+0x22/0x50
-> [    1.612866]  vmbus_isr+0x26/0x170
-> [    1.612866]  __sysvec_hyperv_callback+0x43/0x80
-> [    1.612866]  sysvec_hyperv_callback+0x85/0xb0
-> [    1.612866]  </IRQ>
-> [    1.612866]  <TASK>
-> [    1.612866]  asm_sysvec_hyperv_callback+0x1b/0x20
-> [    1.612866] RIP: 0010:pv_native_safe_halt+0xb/0x10
-> [    1.612866] Code: 48 2b 05 d8 00 97 00 5d c3 cc cc cc cc 66 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 66 90 0f 00 2d 99 33 1f 00 fb f4 <e9> 40 9e 01 00 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 55
-> [    1.612866] RSP: 0000:ffffffff9b603dd8 EFLAGS: 00000242
-> [    1.612866] RAX: 0000000000040d85 RBX: 0000000000000000 RCX: 0000000000000000
-> [    1.612866] RDX: 0000000000000000 RSI: 0000000000000000 RDI: ffffffff9981172f
-> [    1.612866] RBP: ffffffff9b603de0 R08: 0000000000000001 R09: 0000000000000000
-> [    1.612866] R10: 0000000000000001 R11: 0000000000000001 R12: 0000000000000000
-> [    1.612866] R13: 0000000000000000 R14: 0000000000000000 R15: ffffffff9b628490
-> [    1.612866]  ? do_idle+0x20f/0x290
-> [    1.612866]  ? default_idle+0x9/0x20
-> [    1.612866]  arch_cpu_idle+0x9/0x10
-> [    1.612866]  default_idle_call+0x83/0x210
-> [    1.612866]  do_idle+0x20f/0x290
-> [    1.612866]  cpu_startup_entry+0x29/0x30
-> [    1.612866]  rest_init+0x104/0x200
-> [    1.612866]  start_kernel+0xa13/0xc90
-> [    1.612866]  ? sme_unmap_bootdata+0x14/0x70
-> [    1.612866]  x86_64_start_reservations+0x18/0x30
-> [    1.612866]  x86_64_start_kernel+0x148/0x1a0
-> [    1.612866]  ? soft_restart_cpu+0x14/0x14
-> [    1.612866]  common_startup_64+0x13e/0x141
-> [    1.612866]  </TASK>
-> 
-> - Saurabh
 
 -- 
 Siemens AG, Foundational Technologies
