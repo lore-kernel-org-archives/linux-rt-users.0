@@ -1,123 +1,48 @@
-Received: from linux.microsoft.com (linux.microsoft.com [13.77.154.182])
-	by smtp.subspace.kernel.org (Postfix) with ESMTP id 5CC4A2848BB;
-	Wed, 18 Feb 2026 07:19:57 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=13.77.154.182
+Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+	(No client certificate requested)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 85CB42BE04B;
+	Wed, 18 Feb 2026 17:28:51 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1771399198; cv=none; b=Ebtb2oTri1WtjT7hbZTZRb6mirSgB67mOF4mSmOkhBcI1tAwsp0Yziu2T/DIccaPTGYOTDwyavqENq9mPAgIGe4I85d+qzHbLyQ4UalPoUZsU8vBKgIuIB01Hk5zybz2t2oIR6ZZcsqOshzwM5QL+UxSIoarIPSo8wpzVoga5ro=
+	t=1771435731; cv=none; b=LmOL9eDlRlXm10NH6mF9C54qCybkFHJt7DDIm6s82psL+Trs1V64rNL/DCXZMfvtWig7GCBAcQADflpXr2ETtSvlWK1+PZpw4ABK5+4uNPFlRK/6/QJ5IyOhny73JiCOY/kQrYwGWZ5VGaxyzv4nLK6nAjrSva4jj651wf/nASM=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1771399198; c=relaxed/simple;
-	bh=CMnonVvti53FCRIs2GqHwCIvnDUHhvw5xYvkB6fIZK8=;
-	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 Content-Type:Content-Disposition:In-Reply-To; b=kCl2QmekyAwj7baT9KFuN9Dd65Ct/+bjSLWsg6xwvRRok5xyBjcOfbtAe+mU2X1AGSyQilKRrKydW4s9tp8JONLF5zaQE17V/ArETqHGuXWf2qKyKB4y+dacYXwq8A+FYTkrBSnOhwUGH3g6EneTidSBYb98rirMsiLDhXsBAec=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.microsoft.com; spf=pass smtp.mailfrom=linux.microsoft.com; dkim=pass (1024-bit key) header.d=linux.microsoft.com header.i=@linux.microsoft.com header.b=EYiTpTWr; arc=none smtp.client-ip=13.77.154.182
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.microsoft.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=linux.microsoft.com
-Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=linux.microsoft.com header.i=@linux.microsoft.com header.b="EYiTpTWr"
-Received: by linux.microsoft.com (Postfix, from userid 1127)
-	id F084220B6F00; Tue, 17 Feb 2026 23:19:56 -0800 (PST)
-DKIM-Filter: OpenDKIM Filter v2.11.0 linux.microsoft.com F084220B6F00
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linux.microsoft.com;
-	s=default; t=1771399196;
-	bh=mCFkIACFMaE8niH2M/LuVm2Qd7DXdaZwuVMfoVs2KmA=;
-	h=Date:From:To:Cc:Subject:References:In-Reply-To:From;
-	b=EYiTpTWrl25m8rTuX6RPtBGGmSpK83ybkCk4A6GWiLT5dnjNGaMFc4GMOWwWeKdxV
-	 FhnFxqjIDqDWorPbRMD5oBGS0CMfFkwZsSPNWAe0Sqf5FLDYGxaM5Qxz+4Fqo41Xbg
-	 rP3BMX8RuvrHBO6Vj9FUN3nNSVpT9YmsGxZHvk3I=
-Date: Tue, 17 Feb 2026 23:19:56 -0800
-From: Saurabh Singh Sengar <ssengar@linux.microsoft.com>
-To: Wei Liu <wei.liu@kernel.org>
-Cc: Jan Kiszka <jan.kiszka@siemens.com>,
-	"K. Y. Srinivasan" <kys@microsoft.com>,
-	Haiyang Zhang <haiyangz@microsoft.com>,
-	Dexuan Cui <decui@microsoft.com>, Long Li <longli@microsoft.com>,
-	Thomas Gleixner <tglx@kernel.org>, Ingo Molnar <mingo@redhat.com>,
-	Borislav Petkov <bp@alien8.de>,
-	Dave Hansen <dave.hansen@linux.intel.com>, x86@kernel.org,
-	linux-hyperv@vger.kernel.org, linux-kernel@vger.kernel.org,
-	Florian Bezdeka <florian.bezdeka@siemens.com>,
-	RT <linux-rt-users@vger.kernel.org>,
-	Mitchell Levy <levymitchell0@gmail.com>,
-	Michael Kelley <mhklinux@outlook.com>,
-	Naman Jain <namjain@linux.microsoft.com>
-Subject: Re: [PATCH v3] drivers: hv: vmbus: Use kthread for vmbus interrupts
- on PREEMPT_RT
-Message-ID: <aZVoHGJWGqB3W9mv@linuxonhyperv3.guj3yctzbm1etfxqx2vob5hsef.xx.internal.cloudapp.net>
-References: <289d8e52-40f8-4b22-8aa9-d0bd3bd15aae@siemens.com>
- <20260218070557.GF2236050@liuwe-devbox-debian-v2.local>
+	s=arc-20240116; t=1771435731; c=relaxed/simple;
+	bh=LlsP6N/lGLgsOsH1VtmlbR4lF8UD2EWa5RykZy0qUKU=;
+	h=From:Subject:Date:Message-ID:To; b=ZWbhCNDiIXQndKtgRLvX00wRKMawlASevz2pdEWXnPGJ8WTilM+E6oz9bD+lhOxi5tfB0Qf3bQE2KK3aVqCtCrnwcwViayVbEiM6xCLKnAKD7YsTHF9D4f/yzrOsvgjvLRfgmKcVVt+7v4sDQb2wpmTigtLyr+FfRkHJuSMaipM=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id 04D15C19424;
+	Wed, 18 Feb 2026 17:28:50 +0000 (UTC)
+From: Clark Williams <williams@redhat.com>
+Subject: [ANNOUNCE] 6.6.126-rt68
+Date: Wed, 18 Feb 2026 17:27:25 -0000
+Message-ID: <177143564561.1081522.4396719876035072241@demetrius>
+To: LKML <linux-kernel@vger.kernel.org>,linux-rt-users <linux-rt-users@vger.kernel.org>,Steven Rostedt <rostedt@goodmis.org>,Thomas Gleixner <tglx@linutronix.de>,Carsten Emde <C.Emde@osadl.org>,John Kacur <jkacur@redhat.com>,Sebastian Andrzej Siewior <bigeasy@linutronix.de>,Daniel Wagner <daniel.wagner@suse.com>,Tom Zanussi <tom.zanussi@linux.intel.com>,Clark Williams <williams@redhat.com>,Pavel Machek <pavel@denx.de>,Joseph Salisbury <joseph.salisbury@oracle.com>,Luis Claudio R. Goncalves <lgoncalv@redhat.com>,Stable RT List <stable-rt@vger.kernel.org>
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
 List-Subscribe: <mailto:linux-rt-users+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
-MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-In-Reply-To: <20260218070557.GF2236050@liuwe-devbox-debian-v2.local>
 
-On Wed, Feb 18, 2026 at 07:05:57AM +0000, Wei Liu wrote:
-> On Mon, Feb 16, 2026 at 05:24:56PM +0100, Jan Kiszka wrote:
-> > From: Jan Kiszka <jan.kiszka@siemens.com>
-> > 
-> > Resolves the following lockdep report when booting PREEMPT_RT on Hyper-V
-> > with related guest support enabled:
-> > 
-> > [    1.127941] hv_vmbus: registering driver hyperv_drm
-> > 
-> > [    1.132518] =============================
-> > [    1.132519] [ BUG: Invalid wait context ]
-> > [    1.132521] 6.19.0-rc8+ #9 Not tainted
-> > [    1.132524] -----------------------------
-> > [    1.132525] swapper/0/0 is trying to lock:
-> > [    1.132526] ffff8b9381bb3c90 (&channel->sched_lock){....}-{3:3}, at: vmbus_chan_sched+0xc4/0x2b0
-> > [    1.132543] other info that might help us debug this:
-> > [    1.132544] context-{2:2}
-> > [    1.132545] 1 lock held by swapper/0/0:
-> > [    1.132547]  #0: ffffffffa010c4c0 (rcu_read_lock){....}-{1:3}, at: vmbus_chan_sched+0x31/0x2b0
-> > [    1.132557] stack backtrace:
-> > [    1.132560] CPU: 0 UID: 0 PID: 0 Comm: swapper/0 Not tainted 6.19.0-rc8+ #9 PREEMPT_{RT,(lazy)}
-> > [    1.132565] Hardware name: Microsoft Corporation Virtual Machine/Virtual Machine, BIOS Hyper-V UEFI Release v4.1 09/25/2025
-> > [    1.132567] Call Trace:
-> > [    1.132570]  <IRQ>
-> > [    1.132573]  dump_stack_lvl+0x6e/0xa0
-> > [    1.132581]  __lock_acquire+0xee0/0x21b0
-> > [    1.132592]  lock_acquire+0xd5/0x2d0
-> > [    1.132598]  ? vmbus_chan_sched+0xc4/0x2b0
-> > [    1.132606]  ? lock_acquire+0xd5/0x2d0
-> > [    1.132613]  ? vmbus_chan_sched+0x31/0x2b0
-> > [    1.132619]  rt_spin_lock+0x3f/0x1f0
-> > [    1.132623]  ? vmbus_chan_sched+0xc4/0x2b0
-> > [    1.132629]  ? vmbus_chan_sched+0x31/0x2b0
-> > [    1.132634]  vmbus_chan_sched+0xc4/0x2b0
-> > [    1.132641]  vmbus_isr+0x2c/0x150
-> > [    1.132648]  __sysvec_hyperv_callback+0x5f/0xa0
-> > [    1.132654]  sysvec_hyperv_callback+0x88/0xb0
-> > [    1.132658]  </IRQ>
-> > [    1.132659]  <TASK>
-> > [    1.132660]  asm_sysvec_hyperv_callback+0x1a/0x20
-> > 
-> > As code paths that handle vmbus IRQs use sleepy locks under PREEMPT_RT,
-> > the vmbus_isr execution needs to be moved into thread context. Open-
-> > coding this allows to skip the IPI that irq_work would additionally
-> > bring and which we do not need, being an IRQ, never an NMI.
-> > 
-> > This affects both x86 and arm64, therefore hook into the common driver
-> > logic.
-> > 
-> > Signed-off-by: Jan Kiszka <jan.kiszka@siemens.com>
-> 
-> Applied to hyperv-next. Thanks.
-> 
-> Saurabh and Naman, I want to get this submitted in this merge window. If
-> you find any more issues with this patch, we can address them in the RC
-> phase. In the worst case, we can revert this patch later.
-> 
-> Wei
+Hello RT-list!
 
-I was in the process of completing the final round of testing; however, since
-the change has now been merged, it will receive broader coverage, I will rely
-on that.
+I'm pleased to announce the 6.6.126-rt68 stable release.
 
-Overall, the patch looks good to me.
+You can get this release via the git tree at:
 
-- Saurabh
+  git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
+
+  branch: v6.6-rt
+  Head SHA1: eeb88055d1ffcc2d53c6116c7c0a23818d71db25
+
+Or to build 6.6.126-rt68 directly, the following patches should be applied:
+
+  https://www.kernel.org/pub/linux/kernel/v6.x/linux-6.6.tar.xz
+
+  https://www.kernel.org/pub/linux/kernel/v6.x/patch-6.6.126.xz
+
+  https://www.kernel.org/pub/linux/kernel/projects/rt/6.6/patch-6.6.126-rt68.patch.xz
+
+
+Enjoy!
+Clark
