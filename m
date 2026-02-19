@@ -1,154 +1,173 @@
-Received: from mail-qv1-f43.google.com (mail-qv1-f43.google.com [209.85.219.43])
+Received: from mail-qv1-f41.google.com (mail-qv1-f41.google.com [209.85.219.41])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id E33B82E2DDD
-	for <linux-rt-users@vger.kernel.org>; Thu, 19 Feb 2026 20:27:31 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.219.43
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id C9EFB305046
+	for <linux-rt-users@vger.kernel.org>; Thu, 19 Feb 2026 20:59:45 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.219.41
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1771532853; cv=none; b=uGicd6d0j6hgOVib1PeAFrKiUwCuEbY9YxcjHUFYOkoKVYxfom/ZvcJhmia/1cBSb6p1ycsoFZMwj2ia3Zjr2lT7kroNRV85UMObCyMEvpgpnv4KrZ9J29B4SF9/lJ7Cf+cf9iKcvxBEfREX+lpx9Ye32jWpPRSP7WRVSp8Fn0U=
+	t=1771534787; cv=none; b=fbYNFLtgzpPy6jmbB8vFay6ZEEbKtlUK8a+DWHy3jtKgp/15R7GJTxbgbMRFg28VDNBh2A2zrb4bbXWMB/Da/x/6xV170VDCo1ulir/QxL5D2QP7FC6cQH+bNsbMwWb9GDTKfL/uwMx6b/ZaCVluYPx9NoRZIAdOWHGANfbVRRo=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1771532853; c=relaxed/simple;
-	bh=TkApw+/13YAWhZh3TrRViaTduuGXSjo3Iy6zles876A=;
+	s=arc-20240116; t=1771534787; c=relaxed/simple;
+	bh=pD8H0WYTRW1o+y8pSVAfXCOx8TJwO5oDwMcqHen9u2w=;
 	h=Date:From:To:cc:Subject:In-Reply-To:Message-ID:References:
-	 MIME-Version:Content-Type; b=SdDx98HAVWiZfM5AUWbBq9DLumTQl4CgXYEleXKFVY5xHjNwlryn3o1k8XAFmZ57UQDoKnbwjNDiHGR5lRM2+XLAlATjIm/LvNxG9Ynd73NDVyci5z750J2DYtukpZgyaiO57ej8UvreBvezaPBZjeFKh+Ljhzs629N4QKsX5Ic=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=PxXf4Nle; arc=none smtp.client-ip=209.85.219.43
+	 MIME-Version:Content-Type; b=Qp3Y0hw18PhICTdOx7qRFjbfvBqdmW7OX6lXiklLYSljDL0JIiSjx22Cm7Q4HozGsU+C+X1IaW08AJUCPj9AHJ4Nzd1UwmVulGPl9Wh9VwfZT64EGcR79yhZ0kOQ185IK91F+tVMJUlOhlzOkjmoGyev8S2EIOMIIT36UD3nJB4=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=hFeMstKR; arc=none smtp.client-ip=209.85.219.41
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="PxXf4Nle"
-Received: by mail-qv1-f43.google.com with SMTP id 6a1803df08f44-8954c181830so15666346d6.1
-        for <linux-rt-users@vger.kernel.org>; Thu, 19 Feb 2026 12:27:31 -0800 (PST)
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="hFeMstKR"
+Received: by mail-qv1-f41.google.com with SMTP id 6a1803df08f44-896ff127650so22269506d6.3
+        for <linux-rt-users@vger.kernel.org>; Thu, 19 Feb 2026 12:59:45 -0800 (PST)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1771532851; x=1772137651; darn=vger.kernel.org;
+        d=gmail.com; s=20230601; t=1771534785; x=1772139585; darn=vger.kernel.org;
         h=mime-version:references:message-id:in-reply-to:subject:cc:to:from
          :date:from:to:cc:subject:date:message-id:reply-to;
-        bh=CYriQIU0F+utOjVClWaePgXORuUtWsr9qXUrfVJjiHw=;
-        b=PxXf4NleCa8HpwhicQhew/vmjtrKw64MLBU8S8magjoNsNkuyGuRLnEaXyzycn3Gxp
-         A2Fk8bHlMwI7sGxt/YN+FWfz9tFTbNz6W9djR6Ab3fFdH4tMJXsCoqKKESH0rFrkMwhm
-         j+WY+EK3IFLzFxeHxUW2ChITjG6QWJZ4h13DiL1iqStwfM9nyyQrXm11Qjn5xsfAPUJw
-         XItX8i5QH4S2Cdr5lVCAXm3/xotVjMtLPoIfmm8ItKiXAtTiitf2bg2wYeAl3UtTkEt0
-         ZjASwQ3EqqWnyEphvszG0usyUKjf0QU5kUXEurIjMjQXCCTCJg6O+tNEu+SGb3Y8GpLu
-         qevg==
+        bh=Sxi4+a0eW6tFp+NCTA8B6g3PquzV6LDdu7PeBQsRb7o=;
+        b=hFeMstKR8bIWl4nTpeRHUzPWfXqZkwwK7hzITQH1CQGP72lQrweC5+3WDs6fK1ERsE
+         882oKt4FrSQgyQqLuBAafl4kpuXRi8P4obh2g0cv7FGv1Hr04ySsLf/1lM9ks9ZHs5nO
+         lVxrpMe9PMbIkiWEAVo4umNJKmdDmABgnEVOi9c9DB1sIAfe+wSwviYyGv1Q7GdulO+w
+         Hu+Px5Nd5msf+vSyk2rg6xXOBfBA77124udzOzMcqB/Eku21dr4m+mM4F3kLG2Rz4zmL
+         HnSneJ6UXwc9sbKkak/DhVWbRWILBWX90q3zpCD2DamYYHASTBbXgxmukP6wQUoozyLz
+         lczg==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1771532851; x=1772137651;
+        d=1e100.net; s=20230601; t=1771534785; x=1772139585;
         h=mime-version:references:message-id:in-reply-to:subject:cc:to:from
          :date:x-gm-gg:x-gm-message-state:from:to:cc:subject:date:message-id
          :reply-to;
-        bh=CYriQIU0F+utOjVClWaePgXORuUtWsr9qXUrfVJjiHw=;
-        b=cckNBtMgLdb8zrFKgiN4pYhQGi3y6sfQuA3miiBysxA5NPKdP8nW/NPFuzqsZl3R58
-         TYv/kV2EDDh2SUuYo31OT5GBo/3sD+ngivYCoNlUKtI7Nvodlxwe2nRN3mK5mSJ+WmYg
-         32o1a2ktGGqPHAQcjhQWUVTdKIoJ0ZuG0PKaT3yNSg5tNANnspVW7am6qxpBSMIK/ACe
-         bvuGEgo9JeApuOjy5gisNw7UohEUKZ6gCu1FstE2UBM82bQtnegMWQskWkSI/LRq8eFq
-         DV2FpnnHmM3sD0yP1peRW1mAZ9nVHy/Kb0hnbOn0jBq2b87KSKaXWQQT5ikruDhfa6UT
-         s+dg==
-X-Gm-Message-State: AOJu0Yz7u4Sm93X55odI6NWcUj8IVMQtk3N1VziKtiwDojeyeYdgDML/
-	dCW2BEjYfDERq1zwni0dgEUKoe9bOFJIWSkbqjFfVyU7sEi7lDqZGfpu
-X-Gm-Gg: AZuq6aKPD1/myivl1PbvG4nzaD/fpDpzOI3HRpHu6yh3GqIHqkBaJBRYjAGH7f34cCF
-	t2/olJrKfzeE0PMdJTFOHzZlIdBOT2uI6Bz1W+IRIY1GqeKP725F6ThLkHIR7HIJO35aJ5RJO9M
-	DzQgOWtkDb2bPF28iKJCO0OQ003yJRZssD2rMGv71kwQXCg6av+t1Uxyr3QFb76o0JEpHTk3bOb
-	UwN6ANp0frKEgM9PStYqLueMT7l8xaSu2SrwiqPQXQ12zKHa/aow9JSnEiPduaDyFZI30tkjxyF
-	NeSMV3AxGZIAl+pFyWAlhRb4YdQtRDVBWMrecbn5ZX+S69Df/ieTosFdcuZFRyE1nwzPDORKSt0
-	6K3DvZHCphUVTDK8Z4FeMFczct+oGmVcyKfrTOu/veOjMPJKyaKgCZDkJRL3zpj8QuBN8xQ9pX6
-	3hgVPc0PXNC+cGNo1glIQQNiE61KnG/LJKV8mwmVlhRhrYEvl8MqwcNaiVpuDuIMDB9aZoXYgRv
-	g==
-X-Received: by 2002:a05:6214:c21:b0:895:4852:ef49 with SMTP id 6a1803df08f44-8974047b877mr267688006d6.34.1771532850681;
-        Thu, 19 Feb 2026 12:27:30 -0800 (PST)
+        bh=Sxi4+a0eW6tFp+NCTA8B6g3PquzV6LDdu7PeBQsRb7o=;
+        b=PKuRGqanoZDDgHa0LWhzedy2PIJlr4VKJNtML4YQ8eqJ7qwwXgh/9Im13P1r0G5vty
+         QtFsTycCWR3+i700bLWWvjMo0iH6L1s0u+48fh6xJFYMu20CgdPovBoYZQ1reSlP9NNs
+         V3rguV7nCV8IYjAwMa9jCwUp9eXQejzwEMnKC20+g/75ePHbZEU+zKBs726Jfydaoecw
+         ZHU/mXkbeW0NFavga/4grOEAFTM6xBwma3ko6R6fhQQVs8YXfHeqRDJh5xAcfpztdKvo
+         dwEa/cfWqJgScWc4WbX5CI8FNrD95FWcorD0ScO4kuHgBWPnpqyUKPib125nHUd65CN+
+         Z8mA==
+X-Gm-Message-State: AOJu0YzM7R6k8aLEa2oBaTsxl4UTg61R1HLKKiAfDAug0V3JIBswAxZZ
+	4Grh6fVk55RxQ+j9C9E5DFeO7ZKfpuWwBO63ARUpC/GdZPaYR+oFne6+
+X-Gm-Gg: AZuq6aLW8UHHD0ye4kTPf9M00ojb3cA+9e6jiEKf+MXi71F6RSNpov5YVL17dS3np1z
+	g/GwLjGO25oNVgbhyUFR2eScaCID0yaqgk3iMwE3Cv5HGW4Prt73CXsEpxDi0LkszNIqt3jrs+B
+	XqemiyLtOb4HY0hORu29SWdpEqaBFIKR9YYPnRhBbfJ3VaX/czI1d6X07QZU8hqdz1+kVzE3ZcM
+	8XQ5USolgkdqWPiP3tVfD3K0wwjbC4xqPUp88Fd3z4GOPJKP2tZZ/my6Rpyqs3LKzYrYNKu/R43
+	T7QUm/xn/bDe36um/T1v4XKmc711bIzcoJuCc41CDhf6EKLEn4J0P+3telkQyUSpE4v7aXHysM8
+	Tnk6tuGPbueOewvpglHU7tWWCPHiVrta+oIkVdFLfy7PbcZhqJFnhG8V0wjcHFVyJQ8QeYVutn/
+	2oZEfcHcELoXOGPq5o2eMllgnpsOab8gG851L6LpVsNzppDS3HfT/G1TU8KsSpq2xUjL1jiZGYn
+	WR27ofi76nl
+X-Received: by 2002:ad4:5941:0:b0:895:54f:d87 with SMTP id 6a1803df08f44-897402c8e58mr305948746d6.14.1771534784659;
+        Thu, 19 Feb 2026 12:59:44 -0800 (PST)
 Received: from Cumhall ([142.189.59.50])
-        by smtp.gmail.com with ESMTPSA id 6a1803df08f44-8971cc823a4sm213161886d6.8.2026.02.19.12.27.29
+        by smtp.gmail.com with ESMTPSA id 6a1803df08f44-8971cddc120sm273172696d6.52.2026.02.19.12.59.43
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Thu, 19 Feb 2026 12:27:29 -0800 (PST)
-Date: Thu, 19 Feb 2026 15:27:27 -0500 (EST)
+        Thu, 19 Feb 2026 12:59:44 -0800 (PST)
+Date: Thu, 19 Feb 2026 15:59:43 -0500 (EST)
 From: John Kacur <jkacur@gmail.com>
 To: Costa Shulyupin <costa.shul@redhat.com>
 cc: linux-rt-users <linux-rt-users@vger.kernel.org>, 
     John Kacur <jkacur@redhat.com>, Bart Wensley <bwensley@redhat.com>, 
     Clark Williams <williams@redhat.com>
-Subject: Re: [PATCH RESEND v1] rt-tests: hwlatdetect: Add field count to
- samples output
-In-Reply-To: <20251016181933.418200-1-costa.shul@redhat.com>
-Message-ID: <acbf295f-1eb6-a5df-9ab8-52da187f6d56@gmail.com>
-References: <20251016181933.418200-1-costa.shul@redhat.com>
+Subject: Re: [PATCH v2] rt-tests: hwlatdetect: Add MTBF calculation
+In-Reply-To: <20260106091023.1375803-1-costa.shul@redhat.com>
+Message-ID: <7ed5c387-04b3-2086-5066-c7160b269355@gmail.com>
+References: <20260106091023.1375803-1-costa.shul@redhat.com>
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
 List-Subscribe: <mailto:linux-rt-users+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
+Content-Type: multipart/mixed; boundary="-1463749118-263486296-1771534784=:75424"
+
+  This message is in MIME format.  The first part should be readable text,
+  while the remaining parts are likely unreadable without MIME-aware tools.
+
+---1463749118-263486296-1771534784=:75424
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8BIT
 
 
 
-On Thu, 16 Oct 2025, Costa Shulyupin wrote:
+On Tue, 6 Jan 2026, Costa Shulyupin wrote:
 
-> Kernel commit b396bfdebffc ("tracing: Have hwlat ts be first instance
-> and record count of instances") adds field `count`.
+> Hwlatdetect reports the number of latency spikes but provides no
+> information about their frequency distribution over time. This makes it
+> difficult to compare results - a test with 10 spikes over 1 hour is very
+> different from 10 spikes over 24 hours, but both show 'spikes = 10'.
 > 
-> Add processing of `count` field to hwlatdetect.py.
+> Add Mean Time Between Failures (MTBF) calculation to quantify spike
+> frequency.
+> 
+> By definition MTBF = total operating time / number of failures.
+> 
+> When the failure interval is large relative to test duration, this
+> formula is biased.  For example, imagine stable periodic failures.  The
+> total operating time will include time before the first failure and
+> after the last failure.  These intervals are determined by when the test
+> starts and stops, not by the system’s failure behavior, which adds
+> measurement bias.  The resulting MTBF will vary between runs even for
+> stable periodic failures.
+> 
+> To reduce this bias, calculate MTBF using only the time between the
+> first and last failure, divided by the number of intervals (failures
+> minus one):
+> 
+> MTBF = (timestamp of last failure - timestamp of first failure)
+> / (number of failures - 1)
+> 
+> In hwlatdetect, the failures are called samples.
+> 
+> This metric enables meaningful comparison of real-time performance
+> consistency across different test runs, hardware configurations, and
+> kernel versions.  It can be considered a KPI for real-time stability,
+> relevant for certification and SLA evaluation.
+> 
+> ---
+> 
+> Changed in v2:
+> - Use another more stable calculation of MTBF
 > 
 > Signed-off-by: Costa Shulyupin <costa.shul@redhat.com>
 > ---
->  src/hwlatdetect/hwlatdetect.py | 19 ++++++++++++++++---
->  1 file changed, 16 insertions(+), 3 deletions(-)
+>  src/hwlatdetect/hwlatdetect.py | 8 ++++++++
+>  1 file changed, 8 insertions(+)
 > 
 > diff --git a/src/hwlatdetect/hwlatdetect.py b/src/hwlatdetect/hwlatdetect.py
-> index 68f312db639f..af9852cc95e8 100755
+> index 68f312db639f..6d9db9aec933 100755
 > --- a/src/hwlatdetect/hwlatdetect.py
 > +++ b/src/hwlatdetect/hwlatdetect.py
-> @@ -38,6 +38,17 @@
->      return ','.join([num_hex[max(i - 8, 0):i] for i in range(len(num_hex), 0, -8)][::-1])
+> @@ -19,6 +19,7 @@
+>  debugging = False
+>  quiet = False
+>  watch = False
+> +first = last = 0
 >  
 >  
-> +def key_values(fields):
-> +    """ Extract key:value pairs from a list of fields and return them as a dictionary """
-> +    return {
-> +        k: v
-> +        for field in fields
-> +            if ':' in field
-> +                for k, v in [field.split(":", 1)]
-> +                    if k and v
-> +    }
-> +
-> +
->  #
->  # Class used to manage mounting and umounting the debugfs
->  # filesystem. Note that if an instance of this class mounts
-> @@ -242,19 +253,21 @@     def detect(self):
+>  def debug(dstr):
+> @@ -306,6 +307,10 @@     def detect(self):
+>                  pollcnt += 1
+>                  val = self.get_sample()
+>                  while val:
+> +                    global first, last
+> +                    if not first:
+> +                        first = val.timestamp
+> +                    last = val.timestamp
+>                      self.samples.append(val)
+>                      if watch:
+>                          val.display()
+> @@ -527,6 +532,9 @@     def cleanup(self):
+>      exceeding = detect.get("count")
+>      info(f"Samples exceeding threshold: {exceeding}")
 >  
->      class Sample:
->          'private class for tracer sample data'
-> -        __slots__ = 'cpu', 'timestamp', 'inner', 'outer'
-> +        __slots__ = 'cpu', 'timestamp', 'inner', 'outer', 'count'
->  
->          def __init__(self, line):
->              fields = line.split()
-> +            kv = key_values(fields)
->              self.cpu = int(fields[1][1:-1])
->              i, o = fields[6].split('/')
->              ts = fields[7][3:]
->              self.timestamp = str(ts)
->              self.inner = int(i)
->              self.outer = int(o)
-> +            self.count = int(kv["count"])
->  
->          def __str__(self):
-> -            return f"ts: {self.timestamp}, inner:{self.inner}, outer:{self.outer}, cpu:{self.cpu}"
-> +            return f"ts: {self.timestamp}, inner:{self.inner}, outer:{self.outer}, cpu:{self.cpu}, count:{self.count}"
->  
->          def display(self):
->              """ convert object to string and print """
-> @@ -286,7 +299,7 @@     def set(self, field, val):
->  
->      def get(self, field):
->          if field == "count":
-> -            return len(self.samples)
-> +            return sum(s.count for s in self.samples)
->          if field == "max":
->              max = 0
->              for values in self.samples:
-> -- 
-> 2.51.0
-> 
-> 
-> 
-Signed-off-by: John Kacur <jkacur@redhat.com>
+> +    if exceeding > 1:
+> +        info(f"MTBF: {(float(last)-float(first))/ (exceeding - 1):.3f} seconds")
 
+exceeding = detect.get("count"), but now we have a count that isn't the 
+same as a sample, you might have to rework this for newer kernels.
+
+> +
+>      if detect.have_msr:
+>          finishsmi = detect.getsmicounts()
+>          total_smis = 0
+> -- 
+> 2.52.0
+> 
+> 
+> 
+---1463749118-263486296-1771534784=:75424--
