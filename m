@@ -1,72 +1,73 @@
-Received: from mail-qk1-f177.google.com (mail-qk1-f177.google.com [209.85.222.177])
+Received: from mail-qv1-f43.google.com (mail-qv1-f43.google.com [209.85.219.43])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 1A50D2BD031
-	for <linux-rt-users@vger.kernel.org>; Thu, 19 Feb 2026 18:24:08 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.222.177
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id E33B82E2DDD
+	for <linux-rt-users@vger.kernel.org>; Thu, 19 Feb 2026 20:27:31 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.219.43
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1771525450; cv=none; b=ghN2kwlue7x3P8+GA90zXSBvfnSPiTF/q+AMT/sgJnfTdCH1nfnGcrjbt4ugMWqEttmieVVrtwBUssczStoNUknilQcWbzcTg+kG6TqSVeBxVQuvuivfe9i7as+Bugu41fXNu+/pOcQCUn0M3ileL2oJ18ySzANMGd7MhC9Rpv0=
+	t=1771532853; cv=none; b=uGicd6d0j6hgOVib1PeAFrKiUwCuEbY9YxcjHUFYOkoKVYxfom/ZvcJhmia/1cBSb6p1ycsoFZMwj2ia3Zjr2lT7kroNRV85UMObCyMEvpgpnv4KrZ9J29B4SF9/lJ7Cf+cf9iKcvxBEfREX+lpx9Ye32jWpPRSP7WRVSp8Fn0U=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1771525450; c=relaxed/simple;
-	bh=k/MC3iYI3hLP5llHb521BAu6XZOLFT/PJRjwEzibfV4=;
+	s=arc-20240116; t=1771532853; c=relaxed/simple;
+	bh=TkApw+/13YAWhZh3TrRViaTduuGXSjo3Iy6zles876A=;
 	h=Date:From:To:cc:Subject:In-Reply-To:Message-ID:References:
-	 MIME-Version:Content-Type; b=YWoOinn2NXiM4CACILyLeGpNuCg/YqDKjgcrNOr/SCu2PA3GRTwqfEnJuWDsn0ngQ8tagSYufmNnJiCdaC4F5g/LYwBxZmqxHjvaFBy8GFYJ0OdXaoL7wG0bOtPWvQSNPej0u/zAPuI243hZhz6lxmwpGUE2ZyV0ebni4mVidnA=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=kYtM84Rx; arc=none smtp.client-ip=209.85.222.177
+	 MIME-Version:Content-Type; b=SdDx98HAVWiZfM5AUWbBq9DLumTQl4CgXYEleXKFVY5xHjNwlryn3o1k8XAFmZ57UQDoKnbwjNDiHGR5lRM2+XLAlATjIm/LvNxG9Ynd73NDVyci5z750J2DYtukpZgyaiO57ej8UvreBvezaPBZjeFKh+Ljhzs629N4QKsX5Ic=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=PxXf4Nle; arc=none smtp.client-ip=209.85.219.43
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="kYtM84Rx"
-Received: by mail-qk1-f177.google.com with SMTP id af79cd13be357-8cb4acdacb2so157340385a.3
-        for <linux-rt-users@vger.kernel.org>; Thu, 19 Feb 2026 10:24:08 -0800 (PST)
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="PxXf4Nle"
+Received: by mail-qv1-f43.google.com with SMTP id 6a1803df08f44-8954c181830so15666346d6.1
+        for <linux-rt-users@vger.kernel.org>; Thu, 19 Feb 2026 12:27:31 -0800 (PST)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1771525448; x=1772130248; darn=vger.kernel.org;
+        d=gmail.com; s=20230601; t=1771532851; x=1772137651; darn=vger.kernel.org;
         h=mime-version:references:message-id:in-reply-to:subject:cc:to:from
          :date:from:to:cc:subject:date:message-id:reply-to;
-        bh=fggLOZk7M5FkCw4X8HB49yoYqihnCbNHn72tUP+wyVc=;
-        b=kYtM84RxiOgWaPabzYgmmDrLPL7k3B4EJjcqGyj4Ke/4Ug8bmDxAbtaWCnhm76F+rx
-         0Dkuk7GBcPvTVt4DZayVmUtBuFtEHtGepbiOymabN8MlMtXO+D1WYVyxn9W5hKhs6lnH
-         l9sIkyTrSZyWGIkRgh0D6CUcj3wfEwQxEoF7YpXi5i25Q2kamhnHfMZXsEhMd1m92uD/
-         HsY39d0LsTvXTXN4U839Cn2ZPnDMcUmupmWHhZbckrIS561YhL8WcucicVrZ/EGQlLnm
-         Lwlxl/ktRT9QayckC7046CZeGiyznbn/aTfzzyWyjp2DV9cmJuguwMFWbFL0x1cDTh5/
-         +Wxw==
+        bh=CYriQIU0F+utOjVClWaePgXORuUtWsr9qXUrfVJjiHw=;
+        b=PxXf4NleCa8HpwhicQhew/vmjtrKw64MLBU8S8magjoNsNkuyGuRLnEaXyzycn3Gxp
+         A2Fk8bHlMwI7sGxt/YN+FWfz9tFTbNz6W9djR6Ab3fFdH4tMJXsCoqKKESH0rFrkMwhm
+         j+WY+EK3IFLzFxeHxUW2ChITjG6QWJZ4h13DiL1iqStwfM9nyyQrXm11Qjn5xsfAPUJw
+         XItX8i5QH4S2Cdr5lVCAXm3/xotVjMtLPoIfmm8ItKiXAtTiitf2bg2wYeAl3UtTkEt0
+         ZjASwQ3EqqWnyEphvszG0usyUKjf0QU5kUXEurIjMjQXCCTCJg6O+tNEu+SGb3Y8GpLu
+         qevg==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1771525448; x=1772130248;
+        d=1e100.net; s=20230601; t=1771532851; x=1772137651;
         h=mime-version:references:message-id:in-reply-to:subject:cc:to:from
          :date:x-gm-gg:x-gm-message-state:from:to:cc:subject:date:message-id
          :reply-to;
-        bh=fggLOZk7M5FkCw4X8HB49yoYqihnCbNHn72tUP+wyVc=;
-        b=JE9mC22na0N/OKGB08+5m8g4msV++E6VKAMUNRCSZXuBq+yLhxLqDGXB8EhnBvXc+l
-         aWjFPBe74Fsxr38dj5SDb5A7SoBgAdBV3OOY0kj1c9SUOx9A5ykcyG8O+V5N9lZomHK3
-         fZtUIaZVL3e/u9Jx49Ei+I6Lw9UCm54fFp49xsFZ/jfz+Uyk20dDJOvSwY6ocak2oyrZ
-         jRKWHFqwJhBk7VTmEgypfwj0cFUZsdSWkZSmtmjBDrDld8aD9ob1C54vkQgZ6gYTR05B
-         AGDLD0mb51s9M5TSc6i/k1zVvTzaaRTqnR9Lv6d4gNittB/Y3x7MD1slfSQqzmBjvePT
-         vyqA==
-X-Gm-Message-State: AOJu0YwZrhYYsLWEH2v2QemI0TWAbE78b3J7ymO9uACHXpxuDd6/d3BC
-	yyY4GhHYMu2q1m8zMjUTX4WGLVPNLAhUIpeIEkJYfFewKdwF+44U4z/ZOO0IMA5V
-X-Gm-Gg: AZuq6aIDUtYiQteDMSu3DVbiJaA7eLbfqd9mQM7HzPS0fDVYTEE51EUbRU9oDR5xsg5
-	XqbJrvkFgBSi/mHr6UmungFO6PgM+W/07SQJKp2uGe0NgnSFx6DyU3Wn6RW/NOw8ab/ucMl43eF
-	8Tjfwfa8ArRabQW4ZDU6xl0GgTYsS+AsPisY/uR767b2ZioNRYAgd6mbs2J2fjHqWWlk0csB4IS
-	kSYPsQit76kHt525ydg0oRTp8dN1viSgo4GXPf4yzkqvqMLcQXwkZ+rwNRzx3IT+2j9Miiom259
-	4D9i9C2BuwAwzNT1SZ2Q49rLagXx5U1fdkjkwq8X724Uh9M4XUAAdN2JySLQNME9Oq/rypKpj4n
-	9qrqTn3rwB2ePrkET8s8O0hVBAEh/xpW9zRi1EfGdvAC1OlezlLuAMu7v0lsPNEDF35Xfq8NXqK
-	4zECDCeOGnofQTnxdYPsSu/1Of5BWAqbWmVrocVtTYhSHrE6wisQAc3Ll1/8fbbEKoFRM8RfRY2
+        bh=CYriQIU0F+utOjVClWaePgXORuUtWsr9qXUrfVJjiHw=;
+        b=cckNBtMgLdb8zrFKgiN4pYhQGi3y6sfQuA3miiBysxA5NPKdP8nW/NPFuzqsZl3R58
+         TYv/kV2EDDh2SUuYo31OT5GBo/3sD+ngivYCoNlUKtI7Nvodlxwe2nRN3mK5mSJ+WmYg
+         32o1a2ktGGqPHAQcjhQWUVTdKIoJ0ZuG0PKaT3yNSg5tNANnspVW7am6qxpBSMIK/ACe
+         bvuGEgo9JeApuOjy5gisNw7UohEUKZ6gCu1FstE2UBM82bQtnegMWQskWkSI/LRq8eFq
+         DV2FpnnHmM3sD0yP1peRW1mAZ9nVHy/Kb0hnbOn0jBq2b87KSKaXWQQT5ikruDhfa6UT
+         s+dg==
+X-Gm-Message-State: AOJu0Yz7u4Sm93X55odI6NWcUj8IVMQtk3N1VziKtiwDojeyeYdgDML/
+	dCW2BEjYfDERq1zwni0dgEUKoe9bOFJIWSkbqjFfVyU7sEi7lDqZGfpu
+X-Gm-Gg: AZuq6aKPD1/myivl1PbvG4nzaD/fpDpzOI3HRpHu6yh3GqIHqkBaJBRYjAGH7f34cCF
+	t2/olJrKfzeE0PMdJTFOHzZlIdBOT2uI6Bz1W+IRIY1GqeKP725F6ThLkHIR7HIJO35aJ5RJO9M
+	DzQgOWtkDb2bPF28iKJCO0OQ003yJRZssD2rMGv71kwQXCg6av+t1Uxyr3QFb76o0JEpHTk3bOb
+	UwN6ANp0frKEgM9PStYqLueMT7l8xaSu2SrwiqPQXQ12zKHa/aow9JSnEiPduaDyFZI30tkjxyF
+	NeSMV3AxGZIAl+pFyWAlhRb4YdQtRDVBWMrecbn5ZX+S69Df/ieTosFdcuZFRyE1nwzPDORKSt0
+	6K3DvZHCphUVTDK8Z4FeMFczct+oGmVcyKfrTOu/veOjMPJKyaKgCZDkJRL3zpj8QuBN8xQ9pX6
+	3hgVPc0PXNC+cGNo1glIQQNiE61KnG/LJKV8mwmVlhRhrYEvl8MqwcNaiVpuDuIMDB9aZoXYgRv
 	g==
-X-Received: by 2002:a05:620a:400b:b0:8c7:132f:ba95 with SMTP id af79cd13be357-8cb4c018c47mr2441918685a.81.1771525447930;
-        Thu, 19 Feb 2026 10:24:07 -0800 (PST)
+X-Received: by 2002:a05:6214:c21:b0:895:4852:ef49 with SMTP id 6a1803df08f44-8974047b877mr267688006d6.34.1771532850681;
+        Thu, 19 Feb 2026 12:27:30 -0800 (PST)
 Received: from Cumhall ([142.189.59.50])
-        by smtp.gmail.com with ESMTPSA id af79cd13be357-8cb2b20f240sm2146037885a.40.2026.02.19.10.24.06
+        by smtp.gmail.com with ESMTPSA id 6a1803df08f44-8971cc823a4sm213161886d6.8.2026.02.19.12.27.29
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Thu, 19 Feb 2026 10:24:06 -0800 (PST)
-Date: Thu, 19 Feb 2026 13:24:05 -0500 (EST)
+        Thu, 19 Feb 2026 12:27:29 -0800 (PST)
+Date: Thu, 19 Feb 2026 15:27:27 -0500 (EST)
 From: John Kacur <jkacur@gmail.com>
-To: "Luis Claudio R. Goncalves" <lgoncalv@redhat.com>
-cc: linux-rt-users@vger.kernel.org, John Kacur <jkacur@redhat.com>, 
+To: Costa Shulyupin <costa.shul@redhat.com>
+cc: linux-rt-users <linux-rt-users@vger.kernel.org>, 
+    John Kacur <jkacur@redhat.com>, Bart Wensley <bwensley@redhat.com>, 
     Clark Williams <williams@redhat.com>
-Subject: Re: [PATCH] hwlatdetect: correctly get CPU number from different
- sample formats
-In-Reply-To: <aY9mBeyzm5Mae7SH@redhat.com>
-Message-ID: <ddc60f24-ccc5-6fd4-0bb9-adce544e10ce@gmail.com>
-References: <aY9mBeyzm5Mae7SH@redhat.com>
+Subject: Re: [PATCH RESEND v1] rt-tests: hwlatdetect: Add field count to
+ samples output
+In-Reply-To: <20251016181933.418200-1-costa.shul@redhat.com>
+Message-ID: <acbf295f-1eb6-a5df-9ab8-52da187f6d56@gmail.com>
+References: <20251016181933.418200-1-costa.shul@redhat.com>
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
@@ -77,42 +78,77 @@ Content-Type: text/plain; charset=US-ASCII
 
 
 
-On Fri, 13 Feb 2026, Luis Claudio R. Goncalves wrote:
+On Thu, 16 Oct 2025, Costa Shulyupin wrote:
 
-> Make hwlatdetect able to get the CPU number from samples in both
-> 'nolatency-format' (currently covered by the code) and also from
-> samples in 'latency-format'.
+> Kernel commit b396bfdebffc ("tracing: Have hwlat ts be first instance
+> and record count of instances") adds field `count`.
 > 
-> With this change the code is now able to get the CPU from samples
-> in the following formats:
+> Add processing of `count` field to hwlatdetect.py.
 > 
-> - nolatency-format:
->    <...>-3820    [007] d.... 22851.463472: #2     inner/outer(us):    0/233   ts:1770937572.925294075 count:1
->    <...>-3820    [011] d.... 22855.495526: #3     inner/outer(us):  308/305   ts:1770937576.805213360 count:49
-> 
-> - latency-format:
->    <...>-3835     13d.... 12608167us : #2     inner/outer(us):  307/299   ts:1770937629.988530678 count:49
->    <...>-3835     16d.... 15632212us : #3     inner/outer(us):  308/296   ts:1770937633.322710076 count:24
-> 
-> Fixes: 96e780938322 ("rt-tests: hwlatdetect: Add field cpu to samples output")
-> Signed-off-by: Luis Claudio R. Goncalves <lgoncalv@redhat.com>
+> Signed-off-by: Costa Shulyupin <costa.shul@redhat.com>
 > ---
->  src/hwlatdetect/hwlatdetect.py | 2 +-
->  1 file changed, 1 insertion(+), 1 deletion(-)
+>  src/hwlatdetect/hwlatdetect.py | 19 ++++++++++++++++---
+>  1 file changed, 16 insertions(+), 3 deletions(-)
 > 
 > diff --git a/src/hwlatdetect/hwlatdetect.py b/src/hwlatdetect/hwlatdetect.py
-> index 68f312db639f..26694abe099a 100755
+> index 68f312db639f..af9852cc95e8 100755
 > --- a/src/hwlatdetect/hwlatdetect.py
 > +++ b/src/hwlatdetect/hwlatdetect.py
-> @@ -246,7 +246,7 @@ class Tracer(Detector):
+> @@ -38,6 +38,17 @@
+>      return ','.join([num_hex[max(i - 8, 0):i] for i in range(len(num_hex), 0, -8)][::-1])
+>  
+>  
+> +def key_values(fields):
+> +    """ Extract key:value pairs from a list of fields and return them as a dictionary """
+> +    return {
+> +        k: v
+> +        for field in fields
+> +            if ':' in field
+> +                for k, v in [field.split(":", 1)]
+> +                    if k and v
+> +    }
+> +
+> +
+>  #
+>  # Class used to manage mounting and umounting the debugfs
+>  # filesystem. Note that if an instance of this class mounts
+> @@ -242,19 +253,21 @@     def detect(self):
+>  
+>      class Sample:
+>          'private class for tracer sample data'
+> -        __slots__ = 'cpu', 'timestamp', 'inner', 'outer'
+> +        __slots__ = 'cpu', 'timestamp', 'inner', 'outer', 'count'
 >  
 >          def __init__(self, line):
 >              fields = line.split()
-> -            self.cpu = int(fields[1][1:-1])
-> +            self.cpu = int(fields[1][1:-1]) if fields[1][0] == '[' else int(fields[1][:-5])
+> +            kv = key_values(fields)
+>              self.cpu = int(fields[1][1:-1])
 >              i, o = fields[6].split('/')
 >              ts = fields[7][3:]
 >              self.timestamp = str(ts)
+>              self.inner = int(i)
+>              self.outer = int(o)
+> +            self.count = int(kv["count"])
+>  
+>          def __str__(self):
+> -            return f"ts: {self.timestamp}, inner:{self.inner}, outer:{self.outer}, cpu:{self.cpu}"
+> +            return f"ts: {self.timestamp}, inner:{self.inner}, outer:{self.outer}, cpu:{self.cpu}, count:{self.count}"
+>  
+>          def display(self):
+>              """ convert object to string and print """
+> @@ -286,7 +299,7 @@     def set(self, field, val):
+>  
+>      def get(self, field):
+>          if field == "count":
+> -            return len(self.samples)
+> +            return sum(s.count for s in self.samples)
+>          if field == "max":
+>              max = 0
+>              for values in self.samples:
 > -- 
-
+> 2.51.0
+> 
+> 
+> 
 Signed-off-by: John Kacur <jkacur@redhat.com>
+
