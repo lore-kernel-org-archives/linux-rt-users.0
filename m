@@ -1,71 +1,72 @@
-Received: from mail-qk1-f169.google.com (mail-qk1-f169.google.com [209.85.222.169])
+Received: from mail-qk1-f177.google.com (mail-qk1-f177.google.com [209.85.222.177])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id A494F1CEADB
-	for <linux-rt-users@vger.kernel.org>; Thu, 19 Feb 2026 18:18:51 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.222.169
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 1A50D2BD031
+	for <linux-rt-users@vger.kernel.org>; Thu, 19 Feb 2026 18:24:08 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.222.177
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1771525132; cv=none; b=FanHv9Vy2u6TmuUJsYl3aMAcaNdkK0hznKw4zkPpB4P33s2nGCFYI1Fds8E/R+w0Cx4O9ReuDAru50KPpAiloVNCJgA2AGGzU6K2yTKquiNK4hcLPDDApJuYUON7QU4SuYyotXMT5Vd5cLsTC21/QDh446YjoijDBg8tItbhbdk=
+	t=1771525450; cv=none; b=ghN2kwlue7x3P8+GA90zXSBvfnSPiTF/q+AMT/sgJnfTdCH1nfnGcrjbt4ugMWqEttmieVVrtwBUssczStoNUknilQcWbzcTg+kG6TqSVeBxVQuvuivfe9i7as+Bugu41fXNu+/pOcQCUn0M3ileL2oJ18ySzANMGd7MhC9Rpv0=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1771525132; c=relaxed/simple;
-	bh=1rTxsZpNJFbo1oc7hR8HGKWuItY5iUg39+xH6Ty6KVQ=;
+	s=arc-20240116; t=1771525450; c=relaxed/simple;
+	bh=k/MC3iYI3hLP5llHb521BAu6XZOLFT/PJRjwEzibfV4=;
 	h=Date:From:To:cc:Subject:In-Reply-To:Message-ID:References:
-	 MIME-Version:Content-Type; b=UkWo14v3KDuFTP5eDFGUj0M2t9TngNP/YiWK993lhQcInh0zKLNXPVqaWBiDW2DW6CwATyWpZZwmhQwKnlLG2hwwLbc1CPJJ/wLKx5TAc3tfhXyD2+DeEZdqFDIo96n1nGFstWbzOs6KdXNbNa67UADgvbfrmdSS0BOwfBcXSFQ=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=TAx1Uxcu; arc=none smtp.client-ip=209.85.222.169
+	 MIME-Version:Content-Type; b=YWoOinn2NXiM4CACILyLeGpNuCg/YqDKjgcrNOr/SCu2PA3GRTwqfEnJuWDsn0ngQ8tagSYufmNnJiCdaC4F5g/LYwBxZmqxHjvaFBy8GFYJ0OdXaoL7wG0bOtPWvQSNPej0u/zAPuI243hZhz6lxmwpGUE2ZyV0ebni4mVidnA=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=kYtM84Rx; arc=none smtp.client-ip=209.85.222.177
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="TAx1Uxcu"
-Received: by mail-qk1-f169.google.com with SMTP id af79cd13be357-8cb4097794dso125501785a.3
-        for <linux-rt-users@vger.kernel.org>; Thu, 19 Feb 2026 10:18:51 -0800 (PST)
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="kYtM84Rx"
+Received: by mail-qk1-f177.google.com with SMTP id af79cd13be357-8cb4acdacb2so157340385a.3
+        for <linux-rt-users@vger.kernel.org>; Thu, 19 Feb 2026 10:24:08 -0800 (PST)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1771525130; x=1772129930; darn=vger.kernel.org;
+        d=gmail.com; s=20230601; t=1771525448; x=1772130248; darn=vger.kernel.org;
         h=mime-version:references:message-id:in-reply-to:subject:cc:to:from
          :date:from:to:cc:subject:date:message-id:reply-to;
-        bh=/ajZP0wCyMA1Cjhjlzfy9A+mz2813bO6ZG19STs00Fg=;
-        b=TAx1UxcupiC90Dm7e+2M6C0Mf7pqSRaCKLffBUOfkpyNUtuL4sr/H8E0BnHHz39TSP
-         IYF5UspumN2ImGxRUeJchoa2fr4v1raepxmUO3HjWAYVtQa06NW+cTXq3Cqca9d35O1J
-         WuMbCddBXh2/t+uNhizAMMlwPStaIEWO6YP0ASBLMZAkvvMb4yPANUodbjh/U07Erl4B
-         PzdsZgSs5aQYgxhG8uajoX4opxDRjXCPvsBICFKbvno+OKKmtMnp0OAuS7RfjWIG722e
-         +lRNiQTaVt+9buNVNk9YmB6U0olXpqtpUI8oqXqvc446zOFQ2RulM5awwDIOGWw8+4cU
-         6DOg==
+        bh=fggLOZk7M5FkCw4X8HB49yoYqihnCbNHn72tUP+wyVc=;
+        b=kYtM84RxiOgWaPabzYgmmDrLPL7k3B4EJjcqGyj4Ke/4Ug8bmDxAbtaWCnhm76F+rx
+         0Dkuk7GBcPvTVt4DZayVmUtBuFtEHtGepbiOymabN8MlMtXO+D1WYVyxn9W5hKhs6lnH
+         l9sIkyTrSZyWGIkRgh0D6CUcj3wfEwQxEoF7YpXi5i25Q2kamhnHfMZXsEhMd1m92uD/
+         HsY39d0LsTvXTXN4U839Cn2ZPnDMcUmupmWHhZbckrIS561YhL8WcucicVrZ/EGQlLnm
+         Lwlxl/ktRT9QayckC7046CZeGiyznbn/aTfzzyWyjp2DV9cmJuguwMFWbFL0x1cDTh5/
+         +Wxw==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1771525130; x=1772129930;
+        d=1e100.net; s=20230601; t=1771525448; x=1772130248;
         h=mime-version:references:message-id:in-reply-to:subject:cc:to:from
          :date:x-gm-gg:x-gm-message-state:from:to:cc:subject:date:message-id
          :reply-to;
-        bh=/ajZP0wCyMA1Cjhjlzfy9A+mz2813bO6ZG19STs00Fg=;
-        b=f/DCxdURBMtI676T15LbeYCwFv4Qj4yG8spKbgxzQjy2O+Ch0ykvsHvbowQz0Qd5gB
-         6UGpR535bJ/09NCT3KRWuw4yTUqLJIycaNfaZYvLDV7oNMgmCTFKfXZOhks6aKraNwmS
-         2+m3IWZ0PtekgvP30ZDiIE9LoyWkLt9JhINImFHoXh4FLrqM8kssoP/VNL2voXdcFnsf
-         9gccbcYaTrZS/l5NbYES2fzTnmaDzyunfJfjV+uoiuOhEI6Ltk08rOKdbYaxhZdDzhf1
-         j8nGA8JvsC9+tzFnvC++sfU6If/PPTkpW6E/uz3pRwOYJ44JNXkZMO40y2fwBGn1jujP
-         Fbsg==
-X-Gm-Message-State: AOJu0YxCy0oNxmhyvXocCyT29IUdC5P9JuTHEWtE1QbhUWnXEhDg2CPu
-	HAXbUjuy+Hz7A5Kcd9ufnXeKVC/cZJq754OrYfeCjW3APyU0ZbKcTVgk
-X-Gm-Gg: AZuq6aKjuz/k/RvFsJUpiT+XHGikJyc6ltbYsiB7LUJRTGMy1z9O3TARLxD8eBhzNj4
-	QcHohaxULcoTlqR/mRmAy/TIiycQLLWSUx7w+mv5Rg+xBJUyF17teJH8eDBtUXIuKj75rDNY2r4
-	H2y5Cm92Ue8lqemQ7dN60PGW4fr+NcgAxq4fOEtDRz6Bnu5tyO814ULL6nAhrVhEDUoC8N9P2qj
-	UY2rWOnoRoKyz77RxlJk6QsXBCmWXB9td0fkYNZh/cqF56mJeSdqWklj8W6nN7/zVhQjySc2U+R
-	2YnKmqNJXl5W+5zSuhCYBNKqGq03QNI78YEz2x2gjByZ9gwq9E6DUYmkh+MRqbBaun9hAMWADsn
-	iSikdv3W/yluaq+15L96pb/vU8aEJfsRCwF/VomMvyGtQh5A2XwZY4UiBDxCgASqqHWA4dQ5GTQ
-	teeZShM5sWXc38X+oKKT4P60J1rEtknnRKzq0oTKis+bqE6SNzVaiif64En0qL3l3JlxzXiv3ng
-	Q==
-X-Received: by 2002:a05:620a:711b:b0:8ca:3c67:8914 with SMTP id af79cd13be357-8cb79f448bfmr550500785a.72.1771525130343;
-        Thu, 19 Feb 2026 10:18:50 -0800 (PST)
+        bh=fggLOZk7M5FkCw4X8HB49yoYqihnCbNHn72tUP+wyVc=;
+        b=JE9mC22na0N/OKGB08+5m8g4msV++E6VKAMUNRCSZXuBq+yLhxLqDGXB8EhnBvXc+l
+         aWjFPBe74Fsxr38dj5SDb5A7SoBgAdBV3OOY0kj1c9SUOx9A5ykcyG8O+V5N9lZomHK3
+         fZtUIaZVL3e/u9Jx49Ei+I6Lw9UCm54fFp49xsFZ/jfz+Uyk20dDJOvSwY6ocak2oyrZ
+         jRKWHFqwJhBk7VTmEgypfwj0cFUZsdSWkZSmtmjBDrDld8aD9ob1C54vkQgZ6gYTR05B
+         AGDLD0mb51s9M5TSc6i/k1zVvTzaaRTqnR9Lv6d4gNittB/Y3x7MD1slfSQqzmBjvePT
+         vyqA==
+X-Gm-Message-State: AOJu0YwZrhYYsLWEH2v2QemI0TWAbE78b3J7ymO9uACHXpxuDd6/d3BC
+	yyY4GhHYMu2q1m8zMjUTX4WGLVPNLAhUIpeIEkJYfFewKdwF+44U4z/ZOO0IMA5V
+X-Gm-Gg: AZuq6aIDUtYiQteDMSu3DVbiJaA7eLbfqd9mQM7HzPS0fDVYTEE51EUbRU9oDR5xsg5
+	XqbJrvkFgBSi/mHr6UmungFO6PgM+W/07SQJKp2uGe0NgnSFx6DyU3Wn6RW/NOw8ab/ucMl43eF
+	8Tjfwfa8ArRabQW4ZDU6xl0GgTYsS+AsPisY/uR767b2ZioNRYAgd6mbs2J2fjHqWWlk0csB4IS
+	kSYPsQit76kHt525ydg0oRTp8dN1viSgo4GXPf4yzkqvqMLcQXwkZ+rwNRzx3IT+2j9Miiom259
+	4D9i9C2BuwAwzNT1SZ2Q49rLagXx5U1fdkjkwq8X724Uh9M4XUAAdN2JySLQNME9Oq/rypKpj4n
+	9qrqTn3rwB2ePrkET8s8O0hVBAEh/xpW9zRi1EfGdvAC1OlezlLuAMu7v0lsPNEDF35Xfq8NXqK
+	4zECDCeOGnofQTnxdYPsSu/1Of5BWAqbWmVrocVtTYhSHrE6wisQAc3Ll1/8fbbEKoFRM8RfRY2
+	g==
+X-Received: by 2002:a05:620a:400b:b0:8c7:132f:ba95 with SMTP id af79cd13be357-8cb4c018c47mr2441918685a.81.1771525447930;
+        Thu, 19 Feb 2026 10:24:07 -0800 (PST)
 Received: from Cumhall ([142.189.59.50])
-        by smtp.gmail.com with ESMTPSA id af79cd13be357-8cb2b0db51fsm2108792185a.14.2026.02.19.10.18.48
+        by smtp.gmail.com with ESMTPSA id af79cd13be357-8cb2b20f240sm2146037885a.40.2026.02.19.10.24.06
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Thu, 19 Feb 2026 10:18:49 -0800 (PST)
-Date: Thu, 19 Feb 2026 13:18:17 -0500 (EST)
+        Thu, 19 Feb 2026 10:24:06 -0800 (PST)
+Date: Thu, 19 Feb 2026 13:24:05 -0500 (EST)
 From: John Kacur <jkacur@gmail.com>
-To: Gabriele Monaco <gmonaco@redhat.com>
+To: "Luis Claudio R. Goncalves" <lgoncalv@redhat.com>
 cc: linux-rt-users@vger.kernel.org, John Kacur <jkacur@redhat.com>, 
     Clark Williams <williams@redhat.com>
-Subject: Re: [PATCH] rt-utils.c: Fix write() return value check
-In-Reply-To: <20260212111342.71398-1-gmonaco@redhat.com>
-Message-ID: <7d50c77e-de2d-1b35-c896-62fc70453a4e@gmail.com>
-References: <20260212111342.71398-1-gmonaco@redhat.com>
+Subject: Re: [PATCH] hwlatdetect: correctly get CPU number from different
+ sample formats
+In-Reply-To: <aY9mBeyzm5Mae7SH@redhat.com>
+Message-ID: <ddc60f24-ccc5-6fd4-0bb9-adce544e10ce@gmail.com>
+References: <aY9mBeyzm5Mae7SH@redhat.com>
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
@@ -76,48 +77,42 @@ Content-Type: text/plain; charset=US-ASCII
 
 
 
-On Thu, 12 Feb 2026, Gabriele Monaco wrote:
+On Fri, 13 Feb 2026, Luis Claudio R. Goncalves wrote:
 
-> The write() return value check in tracemark() is a copy-paste from the
-> one in tracing_stop() which checks for 2 bytes to be written. As a
-> result, tracemark() is almost always warning.
+> Make hwlatdetect able to get the CPU number from samples in both
+> 'nolatency-format' (currently covered by the code) and also from
+> samples in 'latency-format'.
 > 
-> Check for the write() return value to be equal to the written length,
-> which is the value returned if no error occurred.
-> While at it, add "\n" to the warn messages.
+> With this change the code is now able to get the CPU from samples
+> in the following formats:
 > 
-> Fixes: 60d60540c009 ("rt-utils.c: Check return values of write()")
-> Signed-off-by: Gabriele Monaco <gmonaco@redhat.com>
+> - nolatency-format:
+>    <...>-3820    [007] d.... 22851.463472: #2     inner/outer(us):    0/233   ts:1770937572.925294075 count:1
+>    <...>-3820    [011] d.... 22855.495526: #3     inner/outer(us):  308/305   ts:1770937576.805213360 count:49
+> 
+> - latency-format:
+>    <...>-3835     13d.... 12608167us : #2     inner/outer(us):  307/299   ts:1770937629.988530678 count:49
+>    <...>-3835     16d.... 15632212us : #3     inner/outer(us):  308/296   ts:1770937633.322710076 count:24
+> 
+> Fixes: 96e780938322 ("rt-tests: hwlatdetect: Add field cpu to samples output")
+> Signed-off-by: Luis Claudio R. Goncalves <lgoncalv@redhat.com>
 > ---
->  src/lib/rt-utils.c | 6 +++---
->  1 file changed, 3 insertions(+), 3 deletions(-)
+>  src/hwlatdetect/hwlatdetect.py | 2 +-
+>  1 file changed, 1 insertion(+), 1 deletion(-)
 > 
-> diff --git a/src/lib/rt-utils.c b/src/lib/rt-utils.c
-> index d800b5f..aa70c78 100644
-> --- a/src/lib/rt-utils.c
-> +++ b/src/lib/rt-utils.c
-> @@ -437,8 +437,8 @@ void tracemark(char *fmt, ...)
+> diff --git a/src/hwlatdetect/hwlatdetect.py b/src/hwlatdetect/hwlatdetect.py
+> index 68f312db639f..26694abe099a 100755
+> --- a/src/hwlatdetect/hwlatdetect.py
+> +++ b/src/hwlatdetect/hwlatdetect.py
+> @@ -246,7 +246,7 @@ class Tracer(Detector):
 >  
->  	/* write the tracemark message */
->  	ret = write(tracemark_fd, tracebuf, len);
-> -	if (ret != 2)
-> -		warn("trace stop write failed");
-> +	if (ret != len)
-> +		warn("trace mark write failed\n");
->  }
->  
->  void tracing_stop(void)
-> @@ -449,7 +449,7 @@ void tracing_stop(void)
->  		return;
->  	ret = write(trace_fd, "0\n", 2);
->  	if (ret != 2)
-> -		warn("trace stop write failed");
-> +		warn("trace stop write failed\n");
->  }
->  
->  void enable_trace_mark(void)
-> 
-> base-commit: 4e68b52f0e0c9777c91088948374c6ee3d4a1f6b
+>          def __init__(self, line):
+>              fields = line.split()
+> -            self.cpu = int(fields[1][1:-1])
+> +            self.cpu = int(fields[1][1:-1]) if fields[1][0] == '[' else int(fields[1][:-5])
+>              i, o = fields[6].split('/')
+>              ts = fields[7][3:]
+>              self.timestamp = str(ts)
 > -- 
 
 Signed-off-by: John Kacur <jkacur@redhat.com>
