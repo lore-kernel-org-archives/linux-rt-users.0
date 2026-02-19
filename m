@@ -1,72 +1,72 @@
-Received: from mail-qk1-f174.google.com (mail-qk1-f174.google.com [209.85.222.174])
+Received: from mail-qk1-f180.google.com (mail-qk1-f180.google.com [209.85.222.180])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 3B8AE328B5B
-	for <linux-rt-users@vger.kernel.org>; Thu, 19 Feb 2026 21:21:34 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.222.174
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 16FCA328B58
+	for <linux-rt-users@vger.kernel.org>; Thu, 19 Feb 2026 21:21:35 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.222.180
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1771536095; cv=none; b=iWRvnodUtUwuFryo+UUUQU3a6+fKZebsH67HOs+Lic7x4CkZpZA05zlsRDv7TewHofka7dwMEUZ0BOIIu7JPZST+sd6i22IH5MLNCqKnDx5iTiUNhHNLvEj19U+RYsk74jW8eFPelYe8D9Vy0BogcDDXhwE7VSeBEIYrOphbFTc=
+	t=1771536097; cv=none; b=NdUJWcYGyz0ZgXB+UjCB06cfS2ou+Ms4iDzzk8/5XwEp7VBsQVrX3kneZb2xRduJQ8/NwIQ9AeUz/4le8lVctCQf1lxbECBY+187GgzIrqX7/x6MmDYwZwDLW+rwEpLQRoIveuA5Oz8RTyW+KY4d8UqOHKQMrlVYF4kesZILACM=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1771536095; c=relaxed/simple;
-	bh=cgL3vJgBqhAuia9Z23fB2W4jbN7wxfcFWvM1JojBI7A=;
+	s=arc-20240116; t=1771536097; c=relaxed/simple;
+	bh=SdRHOJv44D0bqIK80fxKL+hLEZGzm9fA4CJocFFoNqo=;
 	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=hx3s5qwqvaY2+GE3a9WPcmT3Mg7qGLoKYqtAC1GL/Gler13eAOg/72q0HpT4z1CYsu9JnALqu/j7Yp4EYSTujMdJD1E9Ncv5i9wQacZla356YAxKCmJesajeXbb+qeeyygfQSeO8otBR3rGQjAW2/mDELDq/XgbhtTOcgKlLzTI=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=fail (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=DUbzrg8a; arc=none smtp.client-ip=209.85.222.174
+	 MIME-Version; b=sa1PIPS2fYB1TnVvXEXTObya86MMxnbY9ka1IsdrpkmARc2vCktup5My8UbNCFljGRLg+IqAMjH/Y0syCj0o+w/JuiNj8dPOmGb73thcpAI16QmK2767nZx7UEq+KpqfUEAteciuNddvwYCAucu2h8AorNByItq630sP9J16zKU=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=fail (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=KK0QXhV7; arc=none smtp.client-ip=209.85.222.180
 Authentication-Results: smtp.subspace.kernel.org; dmarc=fail (p=quarantine dis=none) header.from=redhat.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="DUbzrg8a"
-Received: by mail-qk1-f174.google.com with SMTP id af79cd13be357-8c70ab3b5fcso191440385a.2
-        for <linux-rt-users@vger.kernel.org>; Thu, 19 Feb 2026 13:21:34 -0800 (PST)
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="KK0QXhV7"
+Received: by mail-qk1-f180.google.com with SMTP id af79cd13be357-8cb39f64348so129021585a.0
+        for <linux-rt-users@vger.kernel.org>; Thu, 19 Feb 2026 13:21:35 -0800 (PST)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1771536093; x=1772140893; darn=vger.kernel.org;
+        d=gmail.com; s=20230601; t=1771536094; x=1772140894; darn=vger.kernel.org;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:sender:from:to:cc:subject:date
          :message-id:reply-to;
-        bh=AIiIWxT8Cnz1h8KfULNXjssyyP8VmLUhWTNrxp2V0tc=;
-        b=DUbzrg8anq02kMt8ssZzqMatZnb3G0GvHldwyIyH/C+WzTqbiw71JrlVlWxBAz4rYk
-         FGh6pZdtTZulqGniVH6OcUJTZrwl0KDwpqXWLpP55uiWBm81PhLteyI26PZFKV6MRYun
-         Z5UgVo3ktCuYnAOACdkoZR2o5zy7qTxpTw3QQUGf2gl9n5nP+oN+1Bxr6ThULcrzS+2s
-         7igz70TGY7H9wfj6VRXd8WGJLH6JymQij+BtFH9vdAUHDHgbrjHmQNNDM0iC55nnmYd7
-         C4vTv9l3YjKm4qgEEu455hXyi4uTJGSjK1/wm0F6k7iXGrBlJ5x9Aw4W9cZ9jKlFcX4J
-         9DIg==
+        bh=/tMSc0xdtVsJUHn44yGbWg7fGE61f72fvNISagRaPMw=;
+        b=KK0QXhV7RYW+53BTWftm1J6nRQbqOglIg5RovYaloy0jkV0Y5M4jlvLGugzmw5qX97
+         qqx+Kdy684TXrpAQqOxpMDmrOUpVUECefg3olWq2nBCDstixl1GGXUc4T+MfIRQREfug
+         hupSpjfl375RC9jDEgO8Z738NbgQYg+sQVBdKxyL6K7IzmrdQsS2Ney/EKU/WFqf+EMt
+         5gaLYIQeF5QKCH6KWbfSrhqGxlV+enkZvwkVJc8q5DH/Ps1iO7FyYY1bsvNaL32vCVPu
+         4tQT2DuxJIyGGr10vmKVTxkBSCI8HDblGS1vOcu/PZJBU5I621rtziFmbbdFGzhXxOqe
+         Ky8w==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1771536093; x=1772140893;
+        d=1e100.net; s=20230601; t=1771536094; x=1772140894;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:sender:x-gm-gg
          :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
-        bh=AIiIWxT8Cnz1h8KfULNXjssyyP8VmLUhWTNrxp2V0tc=;
-        b=dycRL9aDMnsqUGHvMwETM6eMhqcOOK4uEmwZqEp9yyUZi0FHO68vwEZi8ozgTIux38
-         1pXF1ifEoIBPaVxxkoiacicciJBH8G0kpIpsoy5Rmr91RRG8mW4mtNafVIqJf85F7OXh
-         tzTn+657nYKu8Bqp+By2Z+chK/ilaE79xT/gmqqksyteFdcbWw0Xg1BTGysTYGUVgTpK
-         GbVqFem7aFu1vwc9gIRWg3mLlmiwMM03yCouRPxC1opUo629UULLq3g/KpoNCZsMtJaA
-         pUH+/OTwQbs3ujLrxkXAQhaKmh5CdFs6lwTmU4w+0ecsZYN/e7CLYfhYtiG7iYKnNlcP
-         aPhg==
-X-Gm-Message-State: AOJu0YxIRUdexISj/QJHfRicOSAbUgNF9zobiDIXDY489GtggJLB2Hhv
-	YmFs8+Fl2lV2ea7SSDCNeea7liQXwfcbZhhBPDubgdUEmvSv8WrqnuNx3DfvAb2z
-X-Gm-Gg: AZuq6aLjny/z3XLQw8esLJroD/ibzhtMameZ1ylh7zdM9OGRVxzvnmyACm3bOM/yAXC
-	SVtCNVHhUG3VCsvUoVZeRIQk2v9Nlhkc2/JSrFWBU+lLrsMHgn3SEQ79hvNJcJK2fMzevn1xe2L
-	dJxbP4j8ROKT7uNQhLcRhG+zXeS7pyxJgpnH8Ex/gCVExWu0z3l6tWM9nstpXeik6UunD1E9r6L
-	sRzUghdXgSuhDMtjLovIW4whHHG6jXzx4XwZQIzrEPhImyXVTkt2fDWm50BSlDKp1AfFiKuOqm4
-	HK3FVtT3noEW6dmPzUmWq9Ixypi6/P7WBmPPq93eZi0beEdPOFksMCNWeyvYhB7mP0UgB831F9s
-	MqLhC10TYc1tpd3wh1IIQ1YickzmdwEPFEwzyuf1JYJjiDM4nHhyWIXDxPJWWGC8RxXXj68A93o
-	OI6yfvUBZZylFDdC0ZdMgTsmJXy37Da/MKfUPgjmyQ3isWiuA4K4I+FoegY8g/nAwq6HC86kKZb
-	8tINcjU0Xqt+S9u3w==
-X-Received: by 2002:a05:620a:4010:b0:8b2:ea5a:4152 with SMTP id af79cd13be357-8cb4c019b85mr2439160785a.87.1771536092725;
-        Thu, 19 Feb 2026 13:21:32 -0800 (PST)
+        bh=/tMSc0xdtVsJUHn44yGbWg7fGE61f72fvNISagRaPMw=;
+        b=A+KN86HJVmuaKZOstoa3/DbOlLaWMBk5zQxmQ0ecLugYjlPTPuWrhu4SUcy6clHwvF
+         XxYkQN3ifyPnWViO+JTCcvM5qv7p0eZkf+3y3ryrsgrT0gNDv2zrRpDYHc7PExyffC5J
+         4uoK4LxU8hgjEY5J6mocloW/LuTan7/4kc0KbcCq5x75H/UxBwjPlCbwPsLJqSV04xxa
+         RJYzCBNj7kaye2F0ro+qJTSwk20J4B+tMD9wIAhLby0tSg4mAThGnqRTWOHFdnCaNbLA
+         wCdJkALT+LRlUjLg5iDjYSLMXlvHeucMGTZBx/LrgKBcyg71VnKQlCILVjpx4n1oQllL
+         F4aw==
+X-Gm-Message-State: AOJu0YwzMAm8QzFptLImI2M3feuj7Kvjwn3DanLrFnAaql5W+UXFZgIa
+	dighkg02iVkY2ZsLp0AO+kjkZz1sAYjjBrXDFzct6URQc6d1pUZqesr2tMU3M7Te
+X-Gm-Gg: AZuq6aICKKWC5ue9f+pDUB1w0L80IOgmEgdveizOKyyxeSWdEhxe4yGizJTv5S0/z8K
+	4AdFkEzPcrtNoMdgTPqvmapiZPCxj2qG2uoj6XWlgrpn0EHtYETEVr/aINFSaWeUd0JSYDuhoqy
+	OBrhb+m65SGspTx7RmjDRTt/DIYJybcwaqVirf34bSV8cG9ExHR838E/bLqoyLuCtZ9ewWbdOsq
+	X9CKgFSAgqYl2ElGd7S3DfPpJpaTLfwtI1Uq5+GrhHmCErqQa3yQfMLU4CvSkFbtgoaC/Q8cqIi
+	QC9lWkbP5DdM8N+rADnkmnngVIXk7IhpuTnsTw3hj7hPdCc+NhhGCvEnWQgjKEasdOuU+pzdKs4
+	t2luOe2LzmdVPX/4noTHvGk0C5Q4oQBy64I1pGajSrydthbkjaKrc8ePTOHPuTr3R9UmRx9TWGN
+	ulDRh6DE15aWAV4mNHahHC08JTEbWYdn2GBB4fYTPQ37+9Z9hg/Aol5kTYhgG/pOo3a/h63Y6/+
+	Tz5N1alU5+twE46Kw==
+X-Received: by 2002:a05:620a:4547:b0:8c6:a2f2:d874 with SMTP id af79cd13be357-8cb40880133mr2785543785a.39.1771536094533;
+        Thu, 19 Feb 2026 13:21:34 -0800 (PST)
 Received: from Cumhall.redhat.com ([142.189.59.50])
-        by smtp.gmail.com with ESMTPSA id af79cd13be357-8cb2b0be6besm2142975685a.5.2026.02.19.13.21.31
+        by smtp.gmail.com with ESMTPSA id af79cd13be357-8cb2b0be6besm2142975685a.5.2026.02.19.13.21.32
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Thu, 19 Feb 2026 13:21:31 -0800 (PST)
+        Thu, 19 Feb 2026 13:21:33 -0800 (PST)
 Sender: John Kacur <jkacur@gmail.com>
 From: John Kacur <jkacur@redhat.com>
 To: linux-rt-users <linux-rt-users@vger.kernel.org>
 Cc: Clark Williams <williams@redhat.com>,
 	John Kacur <jkacur@redhat.com>,
-	"Claude Sonnet 4.5" <noreply@anthropic.com>
-Subject: [PATCH 1/5] hwlatdetect: Make count field backward compatible
-Date: Thu, 19 Feb 2026 16:21:19 -0500
-Message-ID: <20260219212120.227106-2-jkacur@redhat.com>
+	Costa Shulyupin <costa.shul@redhat.com>
+Subject: [PATCH 5/5] rt-tests: cyclictest: Remove duplicate option in getopt string
+Date: Thu, 19 Feb 2026 16:21:20 -0500
+Message-ID: <20260219212120.227106-3-jkacur@redhat.com>
 X-Mailer: git-send-email 2.53.0
 In-Reply-To: <20260219212120.227106-1-jkacur@redhat.com>
 References: <20260219212120.227106-1-jkacur@redhat.com>
@@ -78,54 +78,27 @@ List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 
-The count field was added to hwlat trace output in kernel v5.10
-(commit b396bfdebffc). Make this field optional to maintain backward
-compatibility with older kernels:
+Remove the duplicate -D in the getopt string
 
-- Set count to None when the field is not present in trace output
-- Only include count in __str__ output when it exists
-- Fall back to len(samples) in get("count") for older kernels
-
-This allows hwlatdetect to work correctly on both kernels with and
-without the count field.
-
-Assisted-by: Claude Sonnet 4.5 <noreply@anthropic.com>
+Reported-by: Costa Shulyupin <costa.shul@redhat.com>
 Signed-off-by: John Kacur <jkacur@redhat.com>
 ---
- src/hwlatdetect/hwlatdetect.py | 11 ++++++++---
- 1 file changed, 8 insertions(+), 3 deletions(-)
+ src/cyclictest/cyclictest.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/src/hwlatdetect/hwlatdetect.py b/src/hwlatdetect/hwlatdetect.py
-index af9852cc95e8..c128f60bc8db 100755
---- a/src/hwlatdetect/hwlatdetect.py
-+++ b/src/hwlatdetect/hwlatdetect.py
-@@ -264,10 +264,12 @@ class Tracer(Detector):
-             self.timestamp = str(ts)
-             self.inner = int(i)
-             self.outer = int(o)
--            self.count = int(kv["count"])
-+            self.count = int(kv["count"]) if "count" in kv else None
- 
-         def __str__(self):
--            return f"ts: {self.timestamp}, inner:{self.inner}, outer:{self.outer}, cpu:{self.cpu}, count:{self.count}"
-+            if self.count is not None:
-+                return f"ts: {self.timestamp}, inner:{self.inner}, outer:{self.outer}, cpu:{self.cpu}, count:{self.count}"
-+            return f"ts: {self.timestamp}, inner:{self.inner}, outer:{self.outer}, cpu:{self.cpu}"
- 
-         def display(self):
-             """ convert object to string and print """
-@@ -299,7 +301,10 @@ class Tracer(Detector):
- 
-     def get(self, field):
-         if field == "count":
--            return sum(s.count for s in self.samples)
-+            # Use new count field if available, otherwise fall back to sample count
-+            if self.samples and self.samples[0].count is not None:
-+                return sum(s.count for s in self.samples)
-+            return len(self.samples)
-         if field == "max":
-             max = 0
-             for values in self.samples:
+diff --git a/src/cyclictest/cyclictest.c b/src/cyclictest/cyclictest.c
+index b4bce8915b43..191945e1e0db 100644
+--- a/src/cyclictest/cyclictest.c
++++ b/src/cyclictest/cyclictest.c
+@@ -1147,7 +1147,7 @@ static void process_options(int argc, char *argv[], int max_cpus)
+ 			{"deepest-idle-state", required_argument,	NULL, OPT_DEEPEST_IDLE_STATE },
+ 			{NULL, 0, NULL, 0 },
+ 		};
+-		int c = getopt_long(argc, argv, "a::A::b:c:d:D:F:h:H:i:l:MNo:p:mqrRsSt::uvD:x",
++		int c = getopt_long(argc, argv, "a::A::b:c:d:D:F:h:H:i:l:MNo:p:mqrRsSt::uvx",
+ 				    long_options, &option_index);
+ 		if (c == -1)
+ 			break;
 -- 
 2.53.0
 
