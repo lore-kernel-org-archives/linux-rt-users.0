@@ -1,82 +1,181 @@
-Received: from galois.linutronix.de (Galois.linutronix.de [193.142.43.55])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 8059E3ACF00;
-	Wed, 25 Feb 2026 12:05:05 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=193.142.43.55
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 893583B95F9
+	for <linux-rt-users@vger.kernel.org>; Wed, 25 Feb 2026 13:33:12 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1772021106; cv=none; b=aKKRbqcncOi2Ai0dwoVPh/9mqe90QOtCYES9IeyFI2w7L1imNP8grfrSoCSqY72nLxN+xT/8kmpQpRkmKa/nbd5ypit02Hese6219JhPFyshN5CY+AtthpKB/7YQjCc7Odyj7JHaguTUUlJE0/NVk86I+FxSGBSa/znKwlJizng=
+	t=1772026393; cv=none; b=J5Yk2D7y2its0lwcNDrYSDK37ZM+/9NrTj6wh94z3lJqXrTM0qSUfBgsooO+3CQMKColiAeuSE7VsxHVJU5TA2uZ26X16G6pk2ZxLmj0JpN1QiVO42Yai9L/8U64O++0eGbBJjRJqBa8Cdbi353kLd4580wkcglSEKkTVdhljX4=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1772021106; c=relaxed/simple;
-	bh=NHDdeJ0QCZzEO4Xr3jUaDm72DW31Pup6QGPwy9pmDvg=;
-	h=Date:From:To:Cc:Subject:Message-ID:MIME-Version:Content-Type:
-	 Content-Disposition; b=qCkE5XlRufvqKMOfvj1HTC8RqbQ43cywqRU8EurpwCroPjiYOgWoNnZb5dtQiX8HEE+iE12CYVGzFKnHeRoB8kF+iUqB5YDSxQlfcidElId0eMDObkDZr+8ljxHcrly4AYKeQtyT2mVn8mLA+xBJ6UDYPsaWplnYdrWTbZsZN+E=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linutronix.de; spf=pass smtp.mailfrom=linutronix.de; dkim=pass (2048-bit key) header.d=linutronix.de header.i=@linutronix.de header.b=m3GyxspM; dkim=permerror (0-bit key) header.d=linutronix.de header.i=@linutronix.de header.b=jnoYlLxy; arc=none smtp.client-ip=193.142.43.55
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linutronix.de
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=linutronix.de
+	s=arc-20240116; t=1772026393; c=relaxed/simple;
+	bh=2ImHeLo2WOnwPOn7U+krPwZ46kWkTDgcb/GDz8mxBv0=;
+	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=sCilPOQyY8EE45WiY2rVT1QFmVYKsoa6A6IeyE6VcOLEVc28+vIHNbDCShDHS/hw8C1zE2YsiHoAfZOcBVczXJX/RT0lwlLcA+K3YA4RB/3oGdImRZ+xuxS9KTNLTHtLmAeRGyOqZLq67P21wf7QAIA0NH6LUTpGrKw7j5N/Tws=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=cUPttYDp; dkim=pass (2048-bit key) header.d=redhat.com header.i=@redhat.com header.b=r2Y7ml54; arc=none smtp.client-ip=170.10.129.124
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="m3GyxspM";
-	dkim=permerror (0-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="jnoYlLxy"
-Date: Wed, 25 Feb 2026 13:05:02 +0100
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
-	s=2020; t=1772021104;
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="cUPttYDp";
+	dkim=pass (2048-bit key) header.d=redhat.com header.i=@redhat.com header.b="r2Y7ml54"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1772026389;
 	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type;
-	bh=hsPw+L3iw/cwuI7LWheAGPD7ax9W882AFiLpWV2wwxo=;
-	b=m3GyxspMowyZtJK6Oqkb2GEhSsqpo8vzUQddUq4zn3CMXKgsx2f1Womktf0+mlrRFlN72V
-	CBz9u5pLZ5tQuLXA8C6Ai2BuTaxeLr6WGz75nBakotqnPgvTBUcQjGyFR1ToOg/lMcvvR2
-	lhUxuAWRjLGC4nlZvX8hPfog8wD7p2i0qbNAowB8beFAWCNn3JPUawG0hwQDWk5ogPb6gT
-	OiaanSuDdkO7GEJF0gSTqJVnz5nQqYP7ZQbZe4LQx7/jALcxqdhBnBT0R8IRDrplmZpSlX
-	3BSd+epe19lSMVKjw+FAQuZ5SSzJHyVux99VxHeeZnEL1//50C/KXldVfplibA==
-DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
-	s=2020e; t=1772021104;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type;
-	bh=hsPw+L3iw/cwuI7LWheAGPD7ax9W882AFiLpWV2wwxo=;
-	b=jnoYlLxyqGlfKxEZP5/3stbsVOY8M7QkmpoxK/9MMHX+gaoj3wlLzLRV84xBs+ezdPn5C/
-	wF8oTJ2bwvvUGrAQ==
-From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-To: Thomas Gleixner <tglx@linutronix.de>, linux-rt-devel@lists.linux.dev
-Cc: LKML <linux-kernel@vger.kernel.org>, linux-rt-users@vger.kernel.org,
-	Steven Rostedt <rostedt@goodmis.org>
-Subject: [ANNOUNCE] v7.0-rc1-rt1 | v6.19.3-rt1 | v6.18.13-rt4
-Message-ID: <20260225120502.XKhQxj1F@linutronix.de>
+	 to:to:cc:cc:mime-version:mime-version:
+	 content-transfer-encoding:content-transfer-encoding;
+	bh=FZk3KRlmMDSMH9kSyA3JPAdfsRreqqfaibvt5bltXrc=;
+	b=cUPttYDp2H/WjBXkS14LycsteQ9dcYgQZeMs2y/rbduKpKUXdI9tHPP8Y+/tD2ehM0sTHJ
+	M163KL6AdLuQdppTqjYYhS4L3bR94q9V0BQnhZrV7qkYK40pdeTqliaSSUXYweloFB9NbJ
+	Z9frCATtiHWnWCwqmV1j2Sd7b/FJaT8=
+Received: from mail-wr1-f70.google.com (mail-wr1-f70.google.com
+ [209.85.221.70]) by relay.mimecast.com with ESMTP with STARTTLS
+ (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
+ us-mta-135-P5ny6hoBMxSk_jQ6IDJBIg-1; Wed, 25 Feb 2026 08:33:08 -0500
+X-MC-Unique: P5ny6hoBMxSk_jQ6IDJBIg-1
+X-Mimecast-MFC-AGG-ID: P5ny6hoBMxSk_jQ6IDJBIg_1772026387
+Received: by mail-wr1-f70.google.com with SMTP id ffacd0b85a97d-4376761037bso819310f8f.1
+        for <linux-rt-users@vger.kernel.org>; Wed, 25 Feb 2026 05:33:08 -0800 (PST)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=redhat.com; s=google; t=1772026386; x=1772631186; darn=vger.kernel.org;
+        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+         :to:from:from:to:cc:subject:date:message-id:reply-to;
+        bh=FZk3KRlmMDSMH9kSyA3JPAdfsRreqqfaibvt5bltXrc=;
+        b=r2Y7ml54scGH+QHgnbdgZHG4DhaJdKA9P+Udw4u7Rh+pYimW3pBA/Wu+/9VdEqod7o
+         0AUQOGgCk13Szg9R0Z1UyR91yBE1SL1lsTVecl13Ag/+Vljt+645Aaowj3EyEQW+HmZZ
+         2Pr3n7Pwd6HKXC2Q+1BsRymQKe7uz07z2Ft+VbDrJR3Lgxx+fDj60N+wxoQniQLC+PKq
+         hrr86E3IfOuam80xD/2ohJnxJ+DOuyV6Rc8KCR3qzi8CfjHBIwW2nnG1h4Z8p1IbYcva
+         NU/UMaEppExeY07GbpHycdz/sYwbxtLFs8LRLRU2KEF1sB7xMz01MzwWdsrdk1CQgXT0
+         RRIw==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20230601; t=1772026386; x=1772631186;
+        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+         :to:from:x-gm-gg:x-gm-message-state:from:to:cc:subject:date
+         :message-id:reply-to;
+        bh=FZk3KRlmMDSMH9kSyA3JPAdfsRreqqfaibvt5bltXrc=;
+        b=d2aOFIUqdpzncqJj2CyvtJ/pnRYEXM2bZi7EHCuGtzrvQNblHxraifKFR3OLs2uiL3
+         kY2D/E4ZMosYdZcxb+L/zjhPQQUJBvG/SnJszwTHNorYu/xaypgNnmJPq+uuYEvlaLGd
+         zTLZ6GW7EW87Rnkrf1v3AuqoQnjQWFYLkS1pigLaQKtxPQa0mIotbX0ixzigNbGZBElL
+         QwDDrpKdosb9emSfoz39RMIjn05Nr53SSDYQ8YqRmOFgkZ8PBiUW9Wwm68VZeUPDisYU
+         YyMQcK6n/HI3F+cYv5RlyCULkP/TYd6OouEE4GohJiGKOZVUX/PntRKZhq4qqMJOGmZo
+         I7OA==
+X-Gm-Message-State: AOJu0YwmU1UG6rZUQ+LL6LjR97+LXTdLRS+w+646FfL8G+D5vFHnJN7E
+	ToriAnW4iMidbV1Er3Q8zS4IfgLYiFmYXfCY6Fe0cuoociSO4kfKzkiLl0mXma1Br6PNvvERrW7
+	GxAH/0iO+lVNcAD9MAehqu5fDNXL2h1G3H93YH1CprjyhpOb7NmDNq3kwHXY7JyY0n2Ti0/0HCQ
+	gibOp3usMnmm8+73QB2S9bHusAvGvn9leOQcVpaJHqDs7udLzwMqAHV/0=
+X-Gm-Gg: ATEYQzwI3xP0sHt9ShoipnAQGlaFR+ZRPV+yJbPHgw+GbNW8OmtPW7TORNSZ1lcUxev
+	N9TfqIkL8fV9sUfG8pJ+HcHKfglQNS3GEwLUJeHyZw8fzVmsRRMVmsZyR58GohIhUcRxPhx/hNS
+	6c1dpzqbcfI3D1NhZrTVwEOpq20rHw7QdI+FXxuXb5g/XZnl3r8xGJA7F01uY0dpwwclHaGn9Kq
+	Bg8YsB2VbQZoxy9H5saa96F0kHGDkzSKnTjk3QL2rFglh1z7MjLxLWLtRtySE5FrUxTmTmCHmsJ
+	RfkP9MbkX9JPHEbaZQ1oXBBx1Bgd24oUfIsk7bBs57LVsI0lk0stMULNIVKUElY3FgGFefJFo1E
+	yNzDa5em3VJbXfBnkvM9wUhmfeIH4tGpEowxQlA==
+X-Received: by 2002:a05:600c:3e10:b0:46e:59bd:f7e2 with SMTP id 5b1f17b1804b1-483bd7429a1mr57532295e9.11.1772026386414;
+        Wed, 25 Feb 2026 05:33:06 -0800 (PST)
+X-Received: by 2002:a05:600c:3e10:b0:46e:59bd:f7e2 with SMTP id 5b1f17b1804b1-483bd7429a1mr57531735e9.11.1772026385910;
+        Wed, 25 Feb 2026 05:33:05 -0800 (PST)
+Received: from costa-tp.redhat.com ([2a00:a041:e223:1b00:fe51:8bb:7986:c897])
+        by smtp.gmail.com with ESMTPSA id 5b1f17b1804b1-483bd6f1a3fsm78962195e9.3.2026.02.25.05.33.04
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Wed, 25 Feb 2026 05:33:05 -0800 (PST)
+From: Costa Shulyupin <costa.shul@redhat.com>
+To: linux-rt-users <linux-rt-users@vger.kernel.org>
+Cc: John Kacur <jkacur@redhat.com>,
+	Costa Shulyupin <costa.shul@redhat.com>,
+	"Luis Claudio R. Goncalves" <lgoncalv@redhat.com>
+Subject: [PATCH v4] hwlatdetect: Add MTBF calculation
+Date: Wed, 25 Feb 2026 15:32:32 +0200
+Message-ID: <20260225133232.756608-1-costa.shul@redhat.com>
+X-Mailer: git-send-email 2.53.0
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
 List-Subscribe: <mailto:linux-rt-users+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Disposition: inline
+Content-Transfer-Encoding: 8bit
 
-Dear RT folks!
+Hwlatdetect reports the number of latency spikes but provides no
+information about their frequency distribution over time. This makes it
+difficult to compare results - a test with 10 spikes over 1 hour is very
+different from 10 spikes over 24 hours, but both show 'spikes = 10'.
 
-I'm pleased to announce the following patch sets:
-- v6.18.13-rt4
-- v6.19.3-rt1
-- v7.0-rc1-rt1
+Add Mean Time Between Failures (MTBF) calculation to quantify spike
+frequency.
 
-I updated the updated each devel tree to the latest version in order to
-catch up. I dropped a few ARM related patches as they appeared in the
-upstream tree. As of v7.0 there is one ARM patch left before it can
-enable PREEMPT_RT on its own.
+By definition MTBF = total operating time / number of failures.
 
-Known issues
-    - Yoann Congal reported a bit spinlock in dm_exception_table_lock().
-        https://lore.kernel.org/all/Z8GTjqgDe_5EkE3t@P-ASN-ECS-830T8C3.local
+When the failure interval is large relative to test duration, this
+formula is biased.  For example, imagine stable periodic failures.  The
+total operating time will include time before the first failure and
+after the last failure.  These intervals are determined by when the test
+starts and stops, not by the system's failure behavior, which adds
+measurement bias.  The resulting MTBF will vary between runs even for
+stable periodic failures.
 
-You can get this release via the git tree at:
+To reduce this bias, calculate MTBF using only the time between the
+first and last failure, divided by the number of intervals (failures
+minus one).
 
-    https://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-rt-devel.git v6.18.13-rt4
-    https://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-rt-devel.git v6.19.3-rt1
-    https://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-rt-devel.git 7.0-rc1-rt1
+Additionally, hwlatdetect only samples during the 'width' period within
+each 'window' cycle. The non-sampling periods contribute to the error
+margin. The MTBF is therefore adjusted by multiplying it by the ratio
+of window to width:
 
-The RT patch is also available at its usual location for the individual
-version:
+MTBF = (timestamp of last failure - timestamp of first failure) * window
+/ ((number of failures - 1) * width)
 
-    https://cdn.kernel.org/pub/linux/kernel/projects/rt/6.18/
-    https://cdn.kernel.org/pub/linux/kernel/projects/rt/6.19/
-    https://cdn.kernel.org/pub/linux/kernel/projects/rt/7.0/
+In hwlatdetect, the failures are called samples. The failure count is
+the sum of counters from all samples.
 
-Sebastian
+This metric enables meaningful comparison of hardware latency across
+different test runs, hardware configurations, and kernel versions.  It
+can be considered a KPI for real-time stability, relevant for
+certification and SLA evaluation.
+
+Signed-off-by: Costa Shulyupin <costa.shul@redhat.com>
+---
+
+v4: Adjust MTBF by multiplying by the ratio of window to width
+v3:
+- Fix formatting
+- Make first and last instance variables
+v2:
+- Use another more stable calculation of MTBF
+---
+ src/hwlatdetect/hwlatdetect.py | 9 +++++++++
+ 1 file changed, 9 insertions(+)
+
+diff --git a/src/hwlatdetect/hwlatdetect.py b/src/hwlatdetect/hwlatdetect.py
+index 38671724f3e3..abfbb954fe75 100755
+--- a/src/hwlatdetect/hwlatdetect.py
++++ b/src/hwlatdetect/hwlatdetect.py
+@@ -306,6 +306,8 @@     def __init__(self):
+             raise DetectorNotAvailable("hwlat", "hwlat tracer not available")
+         self.type = "tracer"
+         self.samples = []
++        self.first = None
++        self.last = None
+         self.set("enable", 0)
+         self.set('current_tracer', 'hwlat')
+ 
+@@ -338,6 +340,8 @@     def detect(self):
+                 pollcnt += 1
+                 val = self.get_sample()
+                 while val:
++                    self.first = self.first or val.timestamp
++                    self.last = val.timestamp
+                     self.samples.append(val)
+                     if watch:
+                         val.display()
+@@ -559,6 +563,11 @@     def cleanup(self):
+     exceeding = detect.get("count")
+     info(f"Samples exceeding threshold: {exceeding}")
+ 
++    if exceeding > 1:
++        mtbf = ((float(detect.last) - float(detect.first)) * int(detect.get('window'))
++                / ((exceeding - 1) * int(detect.get('width'))))
++        info(f"MTBF: {mtbf:.3f} seconds")
++
+     if detect.have_msr:
+         finishsmi = detect.getsmicounts()
+         total_smis = 0
+-- 
+2.53.0
+
