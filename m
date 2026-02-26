@@ -1,120 +1,102 @@
-Received: from mail-qv1-f49.google.com (mail-qv1-f49.google.com [209.85.219.49])
+Received: from mail-qk1-f169.google.com (mail-qk1-f169.google.com [209.85.222.169])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 14FA144DB84
-	for <linux-rt-users@vger.kernel.org>; Thu, 26 Feb 2026 19:43:43 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.219.49
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 36E1B42049
+	for <linux-rt-users@vger.kernel.org>; Thu, 26 Feb 2026 20:35:20 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.222.169
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1772135025; cv=none; b=WZt3/kVKkIbf8mTJ91k/0aQQCHJhTEjA2MlubXOK/0RFLIWES/n3+W/ac1Oi9CbFLa9fIMEBHWRsj0EETptm9vzeV4KLNn9Y/97cTu5mjk1uA2nlc6fEgES6ePvOe00a/pV8VtnXL+u5XPpqDUq35LKg3WzEYPT5pv/miyWEzWU=
+	t=1772138121; cv=none; b=r3I9vpz8Uq0LMIRLkiYh/ODi9jk5oQ3ZMRQVu8OqgKebIMRMdm1Gm3znjSionAuF9Ntapq+FKFtsDtIJy7J2PNfyKdv1zNkNXsqjF6RsToNNTR3Kefr/yPWMnsB1uayn+IYmJ/i9TT1dIDG3hXxtMtG2yr58wDM+n6SC02AQMC4=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1772135025; c=relaxed/simple;
-	bh=uy36mPAbuX29BWUHwWxR/Td98Yoh2ezcSsxbKwztpRQ=;
-	h=Date:From:To:cc:Subject:In-Reply-To:Message-ID:References:
-	 MIME-Version:Content-Type; b=YYYeaCJryjI4+bw0OfGP913f0gy0hvAVJp+ZesYQk5HmkCMTgmH23Z5E9J0wumI8WUknqzJFIkICqtRllvriCB+pEHoU1SdQj5JUlBS+T5vU5QQh/Syp8wsX9QsMdkCwTNXNner4okbX4RhOZWQlFjQ5gwnh8gVCisj2ComGHW8=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=aHRMhTaC; arc=none smtp.client-ip=209.85.219.49
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
+	s=arc-20240116; t=1772138121; c=relaxed/simple;
+	bh=2Fd/S86n9msvEBOAidufGqfMPISJcbno9EeLfho5SSI=;
+	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=rD/t6j3LhmcbWTwOTFplrioI4HtdF25fD7z0srYT2hjgT2okG2KlsvbQlCit36GBEQMidRsD6l4BeTPyTUMcvyUusuTJqp8nKBy4ASJt1axsk9n33yK0g+nn5nDAPKXLKlPqt+M7AUZXYwn51aDGIOAUOA2Ksu8c8a8GCAdL+2w=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=fail (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=d17G1YmR; arc=none smtp.client-ip=209.85.222.169
+Authentication-Results: smtp.subspace.kernel.org; dmarc=fail (p=quarantine dis=none) header.from=redhat.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="aHRMhTaC"
-Received: by mail-qv1-f49.google.com with SMTP id 6a1803df08f44-899c955f6c5so10241966d6.1
-        for <linux-rt-users@vger.kernel.org>; Thu, 26 Feb 2026 11:43:43 -0800 (PST)
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="d17G1YmR"
+Received: by mail-qk1-f169.google.com with SMTP id af79cd13be357-8cb38e6d164so165048385a.3
+        for <linux-rt-users@vger.kernel.org>; Thu, 26 Feb 2026 12:35:19 -0800 (PST)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1772135023; x=1772739823; darn=vger.kernel.org;
-        h=mime-version:references:message-id:in-reply-to:subject:cc:to:from
-         :date:from:to:cc:subject:date:message-id:reply-to;
-        bh=EupXAREj5dfn9ZKsYPLTZgsSCnusuB86T/6+gBFtRds=;
-        b=aHRMhTaCdiPQOOfHLPnLf2u2aLzsmiIcCdHhpNLGQ9aor8wOoWIgPZl92/n6WU/VAZ
-         MHKAU/gQVlKqfgzpY0fx5ji65J5LhYZUH1DzZtNpMGbXJJGsaub2CVBCMsf6AtSannfr
-         ZqNZMJ9C+b8ROf1vuE/18wQbW2kSNQHuO0/AN1w/NsHCO0hzFnR05VfVAwB9kI3h740C
-         F+yoTim4i1YsadtBhFyePlI7smYtwkzfkN264tRMqrpW8ia1fkofZyktUuCVPFLIjFcM
-         +dv9B4S7TzMQVHh42NpU9aa8JdtVUXmS8aqIAqjBs3d4OxNK361OL16EKyMpABOJrtw8
-         Qv8A==
+        d=gmail.com; s=20230601; t=1772138119; x=1772742919; darn=vger.kernel.org;
+        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+         :to:from:sender:from:to:cc:subject:date:message-id:reply-to;
+        bh=/XnwfJ72XD2/bVPg/6LPD3x5U/422g5NO01gdS8whZg=;
+        b=d17G1YmRVOK5lthcrPBvwJlho2m6c729sNqRgFXvlf7GB5Ydxgi/kXDD9OL/Rh7JYC
+         uVRJQhkEpSY0Fp49gWWWMIUSZTsplCHMMWeUhpPfOoBlyKnvH81dnUnjFc2SmNj3FqNN
+         KmzP6bXt/p5T1LRgIP/fsG5ZHRIhS6yHlbwvVtzmssdQccRdLEYtilgjXqnpCOC9FKvJ
+         cpYKXj9hRzMSR19AsY8pTgm00A8hXh/8xRkvF2miXo8ns6lvG9vQeUpt8nhfllbRorOW
+         asLR/Rb+JJwbYq12E+UqFaFLy7NZIOX7NKofI2Nc6dwFnWXRNt7WXD5eS/TJurxhBSTL
+         cZ/w==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1772135023; x=1772739823;
-        h=mime-version:references:message-id:in-reply-to:subject:cc:to:from
-         :date:x-gm-gg:x-gm-message-state:from:to:cc:subject:date:message-id
-         :reply-to;
-        bh=EupXAREj5dfn9ZKsYPLTZgsSCnusuB86T/6+gBFtRds=;
-        b=aoj2ee0vTepcwKktDnlZPoowNLk8ffkapFweTvZ9dFPmdqjkwQaAuquxEhGK94Ol79
-         1yoZ8N3QyS8QfEaOo4d4I8V4EWTLcM2IGbsZZokw9TutrQcRSWnEg4fowK/C3FcBuyb+
-         +VxYBbIm6qeXSgVr7gdT0IW072Jt8sbHrkYD30+SHJyxJRTpyZO7z0BDRu2D2z3wvCwj
-         QPHMaRIPkg0M4P67KfvxobYtU8cXaRXYKgMsh1CPGTcAR5uH9BmX70Mdp14AkNatyUEX
-         u6JxRl5rVfKT78LyxgIGnmnNknDBcJh9RaMCDe9tKtvfzf+RKMgKtAIZ62X6zC+PvtBo
-         V7yw==
-X-Forwarded-Encrypted: i=1; AJvYcCWZVkoKhCkK/1/2uj0CfUsQnximIo/gVdXW/u7caAUTh/mhvsjNsUqsj1bc7tha16iYJz1E1uYLPJv1/NExHA==@vger.kernel.org
-X-Gm-Message-State: AOJu0YxpLNcKyrAzaoO+O79XeJ80Tt+jkxBfW68BhmX0IBAUGWCkuO6L
-	9ZQbT3PYdwR3wmKqf1mMuzGLLrxUXgLpV04+jBjRNv3fWY7bHSozNl4n
-X-Gm-Gg: ATEYQzzJBt2gClq+D0S/K+vEfaEwyTv0ihDpTDdvqy0Cv9g7Nr8EAzVASNBJiV/g2Bb
-	dLOLJq+W1u4nXe5Vd1Z/4iY58tsyUzOVPQMemr5NVgL43KdL/LMCClv2wxPmfMKInTipFqoYi4A
-	zVftzaQUFmqHViS/kFon+syikq41rXPRPhlDYOOuaZDRWn5wspHLLGc7yOxD9pWIJJk4cY2UwLc
-	c2xcCr8y1HnhOLC1JaQotf29KjyZ0pFx8HX/g/lKGhtGYabjsx0xj5PgeEnO2b75UYa8bdzrT2a
-	oBhLm3xJYA11rfkerQIwYPlesCbKOO10/z8Ei65iA8Rep9eFdqS2sfVamGcFqF2AApyRwEnQHIZ
-	XElvU78wniaDrYxss7HraR0jbq5WFDrTqbHLmIjd7D23VsCM/m3EzHB2ZQzC3yMvrhYCG8Xm+1i
-	hBW/U5ImBPsfqUoS0ps+Y/YJ+izUMI/SnKwHL0vXpNiwBDl3Bf3szIyHWYi8FgksJuf7b609pnX
-	Q==
-X-Received: by 2002:a05:6214:62b:b0:895:1d59:5aa7 with SMTP id 6a1803df08f44-899d1e0921cmr4589306d6.22.1772135022849;
-        Thu, 26 Feb 2026 11:43:42 -0800 (PST)
-Received: from Cumhall ([142.189.59.50])
-        by smtp.gmail.com with ESMTPSA id 6a1803df08f44-899c738d80bsm25427726d6.41.2026.02.26.11.43.41
+        d=1e100.net; s=20230601; t=1772138119; x=1772742919;
+        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+         :to:from:sender:x-gm-gg:x-gm-message-state:from:to:cc:subject:date
+         :message-id:reply-to;
+        bh=/XnwfJ72XD2/bVPg/6LPD3x5U/422g5NO01gdS8whZg=;
+        b=eM/4zXZhq2hPo6PkI6DIQjnS4U+eLLWUejn1+gucSkVqYdMjMsDrvpiQSe0l7P42sT
+         ZvB2eQImtc3t1FA7qidtxxWrwnS2YVsEmXdRnLw+Efqus2Kvb5w+lq1FZS0hxF3jet0S
+         NHTsfNdlJ6I3W88xzMvHHkHkckgkZ5bSUjstJhDWIJXf4cIh2s7jAWPahYRIpr2MuxfS
+         lEU/gQ13UrJcdoGY851MgkMd+SgglNTROLW+U7yxZD/qx0nmkt7XZwzaYpmsgP8lfX+1
+         tZTv2arm2IOVsNKJtX1qAvDBpYUpSPVsggutKyjx6rwnFKswVykEPQghaiw8f8beAYLC
+         49MQ==
+X-Gm-Message-State: AOJu0YycRN4Cni/oWMrhtIw+cwNs0MbYbDD+J7YnnqWQVNjy4DvoyY42
+	QvZPVDpzu+SCO0BJL13MUOpBdaaAch4K5vBPqBD3qdh5ZFz4pLX1TPby6gR9Jg==
+X-Gm-Gg: ATEYQzwEcSRMC6OknBOMIH4dZpjxt1fjCK5xSWfduI0oMJYQjCzbZ+FhgqzyfbK4KTm
+	UT6Vl5QkkllSMeTPkAFBH4z2nED919E01S8LZiJLD4gyRY7E4Ew1CnbQGB1MkggCN8e0hlqzvMh
+	Osx/bBIpK1cyLblozG6rRUg/GFFA1pRVwzM05zyakBfN3XtstfF3qkY4mwY51E5lAoHs15OQAOy
+	t5TycnX3/tyW7TdULkJQ960Hr5/fR7h9vL7ffdNff7h/VEj5VWGICdhjvLpDb4F+06TfmLhqJj0
+	NamwaRV7au86EC+wlQvQTajZ5VogezFFfIC/Uo69Vtq1mP+lD0StlvS2MMEoKA3PvpFpSn+OV9B
+	Qp5HeGM8ei0R53PuZ9Ej6cH1H7DSAhewGL+vJYTGrfADDC1vBdKtz7q6wbrNtcryhMg2MPIJE8B
+	XZQr0tvkeH/Dityzy2VhlVUfxWppCkaDFkFieLWChLm1arWkKpTY/dyXzDGhgkyx83haUjT37Jn
+	ZGh91IHqd5NpLP0zb5DmojXsXWD
+X-Received: by 2002:a05:620a:2947:b0:8cb:4d64:e993 with SMTP id af79cd13be357-8cbc8dee816mr42073785a.26.1772138118502;
+        Thu, 26 Feb 2026 12:35:18 -0800 (PST)
+Received: from Cumhall.redhat.com ([142.189.59.50])
+        by smtp.gmail.com with ESMTPSA id 6a1803df08f44-899c738cba0sm25597556d6.38.2026.02.26.12.35.17
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Thu, 26 Feb 2026 11:43:41 -0800 (PST)
-Date: Thu, 26 Feb 2026 14:43:40 -0500 (EST)
-From: John Kacur <jkacur@gmail.com>
-To: Tomas Glozar <tglozar@redhat.com>
-cc: John Kacur <jkacur@redhat.com>, 
-    linux-rt-users <linux-rt-users@vger.kernel.org>
-Subject: Re: [PATCH] rt-tests: cyclictest: Fix -A long name in manpage
-In-Reply-To: <20260226131828.234378-1-tglozar@redhat.com>
-Message-ID: <43526917-bc39-c1e0-f36e-83411cbe5c31@gmail.com>
-References: <20260226131828.234378-1-tglozar@redhat.com>
+        Thu, 26 Feb 2026 12:35:18 -0800 (PST)
+Sender: John Kacur <jkacur@gmail.com>
+From: John Kacur <jkacur@redhat.com>
+To: linux-rt-users <linux-rt-users@vger.kernel.org>
+Cc: Clark Williams <williams@redhat.com>,
+	Costa Shulyupin <costa.shul@redhat.com>,
+	John Kacur <jkacur@redhat.com>
+Subject: [PATCH] rt-tests: hwlatdetect: Add check that width is not zero
+Date: Thu, 26 Feb 2026 15:34:45 -0500
+Message-ID: <20260226203445.110762-1-jkacur@redhat.com>
+X-Mailer: git-send-email 2.53.0
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
 List-Subscribe: <mailto:linux-rt-users+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 8bit
 
+Check that width is not zero before division when calculating the MTBF
 
-
-On Thu, 26 Feb 2026, Tomas Glozar wrote:
-
-> The cyclictest manpage gives the long name for -A option as --align,
-> however, the proper name in both help message and getopt_long() is
-> --aligned.
-> 
-> Use the correct name in the manpage.
-> 
-> Signed-off-by: Tomas Glozar <tglozar@redhat.com>
-> ---
->  src/cyclictest/cyclictest.8 | 4 ++--
->  1 file changed, 2 insertions(+), 2 deletions(-)
-> 
-> diff --git a/src/cyclictest/cyclictest.8 b/src/cyclictest/cyclictest.8
-> index 6becd19..ff2cb96 100644
-> --- a/src/cyclictest/cyclictest.8
-> +++ b/src/cyclictest/cyclictest.8
-> @@ -17,7 +17,7 @@
->  cyclictest \- High resolution test program
->  .SH SYNOPSIS
->  .SY cyclictest
-> -.RI "[ \-hfmnqrsvMS ] [\-a " proc " ] [\-A " align " ] [\-b " usec " ] [\-c " clock " ] [\-d " dist " ] \
-> +.RI "[ \-hfmnqrsvMS ] [\-a " proc " ] [\-A " aligned " ] [\-b " usec " ] [\-c " clock " ] [\-d " dist " ] \
->  [\-h " histogram " ] [\-i " intv " ] [\-\-json " filename " ] [\-l " loop " ] [\-o " red " ] \
->  [\-p " prio " ] [\-t " num " ] [\-D " time "] [\-w] [\-W] [\-y " policy " ] [ \-S | \-U ]"
->  
-> @@ -47,7 +47,7 @@ field in /proc/cpuinfo.  See numa(3) for more information on specifying CPU sets
->  * Support for CPU sets requires libnuma version >= 2.  For libnuma v1, PROC-SET,
->  if specified, must be a single CPU number.
->  .TP
-> -.B \-A, \-\-align=USEC
-> +.B \-A, \-\-aligned=USEC
->  Align thread wakeups to a specific offset in microseconds
->  .TP
->  .B \-b, \-\-breaktrace=USEC
-> -- 
-> 2.53.0
-> 
-> 
-> 
 Signed-off-by: John Kacur <jkacur@redhat.com>
+---
+ src/hwlatdetect/hwlatdetect.py | 5 +++--
+ 1 file changed, 3 insertions(+), 2 deletions(-)
+
+diff --git a/src/hwlatdetect/hwlatdetect.py b/src/hwlatdetect/hwlatdetect.py
+index abfbb954fe75..42b9f301718a 100755
+--- a/src/hwlatdetect/hwlatdetect.py
++++ b/src/hwlatdetect/hwlatdetect.py
+@@ -564,8 +564,9 @@ if __name__ == '__main__':
+     info(f"Samples exceeding threshold: {exceeding}")
+ 
+     if exceeding > 1:
+-        mtbf = ((float(detect.last) - float(detect.first)) * int(detect.get('window'))
+-                / ((exceeding - 1) * int(detect.get('width'))))
++        width = int(detect.get('width'))
++        if width > 0:
++            mtbf = (((float(detect.last) - float(detect.first)) * int(detect.get('window'))) / ((exceeding - 1) * width))
+         info(f"MTBF: {mtbf:.3f} seconds")
+ 
+     if detect.have_msr:
+-- 
+2.53.0
+
