@@ -1,181 +1,102 @@
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 893583B95F9
-	for <linux-rt-users@vger.kernel.org>; Wed, 25 Feb 2026 13:33:12 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 56E79363C5F
+	for <linux-rt-users@vger.kernel.org>; Thu, 26 Feb 2026 12:13:14 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1772026393; cv=none; b=J5Yk2D7y2its0lwcNDrYSDK37ZM+/9NrTj6wh94z3lJqXrTM0qSUfBgsooO+3CQMKColiAeuSE7VsxHVJU5TA2uZ26X16G6pk2ZxLmj0JpN1QiVO42Yai9L/8U64O++0eGbBJjRJqBa8Cdbi353kLd4580wkcglSEKkTVdhljX4=
+	t=1772107996; cv=none; b=LFsyCIoQCucdVgx2RZekMAucveNIBUi8Aov8noeVE4QZbXg9JnWYxxOrwKHSXx5DA8aFR0y6pN1nnijt6WXChGtff9eArhISNlvQM1MmPgDRnS1pgw6/F0cCeld40y3bbrgYp36qcfsgiLtu3JC1RketnpxYkYVtTHlYX0G028Y=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1772026393; c=relaxed/simple;
-	bh=2ImHeLo2WOnwPOn7U+krPwZ46kWkTDgcb/GDz8mxBv0=;
-	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=sCilPOQyY8EE45WiY2rVT1QFmVYKsoa6A6IeyE6VcOLEVc28+vIHNbDCShDHS/hw8C1zE2YsiHoAfZOcBVczXJX/RT0lwlLcA+K3YA4RB/3oGdImRZ+xuxS9KTNLTHtLmAeRGyOqZLq67P21wf7QAIA0NH6LUTpGrKw7j5N/Tws=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=cUPttYDp; dkim=pass (2048-bit key) header.d=redhat.com header.i=@redhat.com header.b=r2Y7ml54; arc=none smtp.client-ip=170.10.129.124
+	s=arc-20240116; t=1772107996; c=relaxed/simple;
+	bh=+ErLP4ILaR5ekddBElWKEkhz6TysaQfOMxg3h08oyjo=;
+	h=Date:From:To:Subject:Message-ID:MIME-Version:Content-Type:
+	 Content-Disposition; b=lsQ8U1H1RZilCpOL9THqaSGSvMxsds/nmH432/7SKIGRqQKKB2BEaOcAn8O4D2/paD4oGEdi/Z3R5CDHGZ08VO7bkYDCT2Jb83ri9o+soLOYzQ/vQSu6uPZZwLAfTSLafER1XvPQbtMbOVC/aZbHv2tlwIFNnvqEEoZQ1KAuXSg=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=QgVGBtDV; arc=none smtp.client-ip=170.10.129.124
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="cUPttYDp";
-	dkim=pass (2048-bit key) header.d=redhat.com header.i=@redhat.com header.b="r2Y7ml54"
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="QgVGBtDV"
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1772026389;
+	s=mimecast20190719; t=1772107993;
 	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:
-	 content-transfer-encoding:content-transfer-encoding;
-	bh=FZk3KRlmMDSMH9kSyA3JPAdfsRreqqfaibvt5bltXrc=;
-	b=cUPttYDp2H/WjBXkS14LycsteQ9dcYgQZeMs2y/rbduKpKUXdI9tHPP8Y+/tD2ehM0sTHJ
-	M163KL6AdLuQdppTqjYYhS4L3bR94q9V0BQnhZrV7qkYK40pdeTqliaSSUXYweloFB9NbJ
-	Z9frCATtiHWnWCwqmV1j2Sd7b/FJaT8=
-Received: from mail-wr1-f70.google.com (mail-wr1-f70.google.com
- [209.85.221.70]) by relay.mimecast.com with ESMTP with STARTTLS
- (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
- us-mta-135-P5ny6hoBMxSk_jQ6IDJBIg-1; Wed, 25 Feb 2026 08:33:08 -0500
-X-MC-Unique: P5ny6hoBMxSk_jQ6IDJBIg-1
-X-Mimecast-MFC-AGG-ID: P5ny6hoBMxSk_jQ6IDJBIg_1772026387
-Received: by mail-wr1-f70.google.com with SMTP id ffacd0b85a97d-4376761037bso819310f8f.1
-        for <linux-rt-users@vger.kernel.org>; Wed, 25 Feb 2026 05:33:08 -0800 (PST)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=redhat.com; s=google; t=1772026386; x=1772631186; darn=vger.kernel.org;
-        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
-         :to:from:from:to:cc:subject:date:message-id:reply-to;
-        bh=FZk3KRlmMDSMH9kSyA3JPAdfsRreqqfaibvt5bltXrc=;
-        b=r2Y7ml54scGH+QHgnbdgZHG4DhaJdKA9P+Udw4u7Rh+pYimW3pBA/Wu+/9VdEqod7o
-         0AUQOGgCk13Szg9R0Z1UyR91yBE1SL1lsTVecl13Ag/+Vljt+645Aaowj3EyEQW+HmZZ
-         2Pr3n7Pwd6HKXC2Q+1BsRymQKe7uz07z2Ft+VbDrJR3Lgxx+fDj60N+wxoQniQLC+PKq
-         hrr86E3IfOuam80xD/2ohJnxJ+DOuyV6Rc8KCR3qzi8CfjHBIwW2nnG1h4Z8p1IbYcva
-         NU/UMaEppExeY07GbpHycdz/sYwbxtLFs8LRLRU2KEF1sB7xMz01MzwWdsrdk1CQgXT0
-         RRIw==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1772026386; x=1772631186;
-        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
-         :to:from:x-gm-gg:x-gm-message-state:from:to:cc:subject:date
-         :message-id:reply-to;
-        bh=FZk3KRlmMDSMH9kSyA3JPAdfsRreqqfaibvt5bltXrc=;
-        b=d2aOFIUqdpzncqJj2CyvtJ/pnRYEXM2bZi7EHCuGtzrvQNblHxraifKFR3OLs2uiL3
-         kY2D/E4ZMosYdZcxb+L/zjhPQQUJBvG/SnJszwTHNorYu/xaypgNnmJPq+uuYEvlaLGd
-         zTLZ6GW7EW87Rnkrf1v3AuqoQnjQWFYLkS1pigLaQKtxPQa0mIotbX0ixzigNbGZBElL
-         QwDDrpKdosb9emSfoz39RMIjn05Nr53SSDYQ8YqRmOFgkZ8PBiUW9Wwm68VZeUPDisYU
-         YyMQcK6n/HI3F+cYv5RlyCULkP/TYd6OouEE4GohJiGKOZVUX/PntRKZhq4qqMJOGmZo
-         I7OA==
-X-Gm-Message-State: AOJu0YwmU1UG6rZUQ+LL6LjR97+LXTdLRS+w+646FfL8G+D5vFHnJN7E
-	ToriAnW4iMidbV1Er3Q8zS4IfgLYiFmYXfCY6Fe0cuoociSO4kfKzkiLl0mXma1Br6PNvvERrW7
-	GxAH/0iO+lVNcAD9MAehqu5fDNXL2h1G3H93YH1CprjyhpOb7NmDNq3kwHXY7JyY0n2Ti0/0HCQ
-	gibOp3usMnmm8+73QB2S9bHusAvGvn9leOQcVpaJHqDs7udLzwMqAHV/0=
-X-Gm-Gg: ATEYQzwI3xP0sHt9ShoipnAQGlaFR+ZRPV+yJbPHgw+GbNW8OmtPW7TORNSZ1lcUxev
-	N9TfqIkL8fV9sUfG8pJ+HcHKfglQNS3GEwLUJeHyZw8fzVmsRRMVmsZyR58GohIhUcRxPhx/hNS
-	6c1dpzqbcfI3D1NhZrTVwEOpq20rHw7QdI+FXxuXb5g/XZnl3r8xGJA7F01uY0dpwwclHaGn9Kq
-	Bg8YsB2VbQZoxy9H5saa96F0kHGDkzSKnTjk3QL2rFglh1z7MjLxLWLtRtySE5FrUxTmTmCHmsJ
-	RfkP9MbkX9JPHEbaZQ1oXBBx1Bgd24oUfIsk7bBs57LVsI0lk0stMULNIVKUElY3FgGFefJFo1E
-	yNzDa5em3VJbXfBnkvM9wUhmfeIH4tGpEowxQlA==
-X-Received: by 2002:a05:600c:3e10:b0:46e:59bd:f7e2 with SMTP id 5b1f17b1804b1-483bd7429a1mr57532295e9.11.1772026386414;
-        Wed, 25 Feb 2026 05:33:06 -0800 (PST)
-X-Received: by 2002:a05:600c:3e10:b0:46e:59bd:f7e2 with SMTP id 5b1f17b1804b1-483bd7429a1mr57531735e9.11.1772026385910;
-        Wed, 25 Feb 2026 05:33:05 -0800 (PST)
-Received: from costa-tp.redhat.com ([2a00:a041:e223:1b00:fe51:8bb:7986:c897])
-        by smtp.gmail.com with ESMTPSA id 5b1f17b1804b1-483bd6f1a3fsm78962195e9.3.2026.02.25.05.33.04
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Wed, 25 Feb 2026 05:33:05 -0800 (PST)
-From: Costa Shulyupin <costa.shul@redhat.com>
-To: linux-rt-users <linux-rt-users@vger.kernel.org>
-Cc: John Kacur <jkacur@redhat.com>,
-	Costa Shulyupin <costa.shul@redhat.com>,
-	"Luis Claudio R. Goncalves" <lgoncalv@redhat.com>
-Subject: [PATCH v4] hwlatdetect: Add MTBF calculation
-Date: Wed, 25 Feb 2026 15:32:32 +0200
-Message-ID: <20260225133232.756608-1-costa.shul@redhat.com>
-X-Mailer: git-send-email 2.53.0
+	 to:to:cc:mime-version:mime-version:content-type:content-type;
+	bh=DBazOV78InOwjua1kPZS+dihZ7Oy/BkjBb1jlWIYUgw=;
+	b=QgVGBtDVLALc6vmT0sjAH/CMoeiIy0YDC4PnTWkjTMorrlbpyTgazFFzXQUiyhsIm6IYNA
+	SDZC1OhOsKmr3EgIkd/0LfoN/W8ZHJSV0eiT3pLZTyMEHoUnaXSJ3jJQjrGWVaFpKtXWHT
+	sXsGeTmlBdSSFCTrV+9VkVQs8sd5H90=
+Received: from mx-prod-mc-03.mail-002.prod.us-west-2.aws.redhat.com
+ (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
+ relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-247-GDHrLDxrNiqshmrjV1HYVA-1; Thu,
+ 26 Feb 2026 07:13:10 -0500
+X-MC-Unique: GDHrLDxrNiqshmrjV1HYVA-1
+X-Mimecast-MFC-AGG-ID: GDHrLDxrNiqshmrjV1HYVA_1772107988
+Received: from mx-prod-int-01.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-01.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.4])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
+	(No client certificate requested)
+	by mx-prod-mc-03.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 7A0311956067;
+	Thu, 26 Feb 2026 12:13:08 +0000 (UTC)
+Received: from localhost (unknown [10.22.88.184])
+	by mx-prod-int-01.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTP id 73AC130001A5;
+	Thu, 26 Feb 2026 12:13:07 +0000 (UTC)
+Date: Thu, 26 Feb 2026 09:13:06 -0300
+From: "Luis Claudio R. Goncalves" <lgoncalv@redhat.com>
+To: LKML <linux-kernel@vger.kernel.org>,
+	linux-rt-users <linux-rt-users@vger.kernel.org>,
+	stable-rt <stable-rt@vger.kernel.org>,
+	Steven Rostedt <rostedt@goodmis.org>,
+	Thomas Gleixner <tglx@linutronix.de>,
+	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+	Daniel Wagner <daniel.wagner@suse.com>,
+	Clark Williams <williams@redhat.com>,
+	Mark Gross <markgross@kernel.org>, Pavel Machek <pavel@denx.de>,
+	Jeff Brady <jeffreyjbrady@gmail.com>,
+	Jan Kiszka <jan.kiszka@siemens.com>,
+	Luis Goncalves <lgoncalv@redhat.com>
+Subject: [ANNOUNCE] 5.10.251-rt146
+Message-ID: <aaA40n_FAhWkK4ik@redhat.com>
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
 List-Subscribe: <mailto:linux-rt-users+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+X-Scanned-By: MIMEDefang 3.4.1 on 10.30.177.4
 
-Hwlatdetect reports the number of latency spikes but provides no
-information about their frequency distribution over time. This makes it
-difficult to compare results - a test with 10 spikes over 1 hour is very
-different from 10 spikes over 24 hours, but both show 'spikes = 10'.
+Hello RT-list!
 
-Add Mean Time Between Failures (MTBF) calculation to quantify spike
-frequency.
+I'm pleased to announce the 5.10.251-rt146 stable release.
 
-By definition MTBF = total operating time / number of failures.
+This release is just an update to the new stable 5.10.251 version
+and no RT specific changes have been made.
 
-When the failure interval is large relative to test duration, this
-formula is biased.  For example, imagine stable periodic failures.  The
-total operating time will include time before the first failure and
-after the last failure.  These intervals are determined by when the test
-starts and stops, not by the system's failure behavior, which adds
-measurement bias.  The resulting MTBF will vary between runs even for
-stable periodic failures.
+You can get this release via the git tree at:
 
-To reduce this bias, calculate MTBF using only the time between the
-first and last failure, divided by the number of intervals (failures
-minus one).
+  git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
 
-Additionally, hwlatdetect only samples during the 'width' period within
-each 'window' cycle. The non-sampling periods contribute to the error
-margin. The MTBF is therefore adjusted by multiplying it by the ratio
-of window to width:
+  branch: v5.10-rt
+  Head SHA1: e6a3449340376655cf768fafe7418f5e81d55b10
 
-MTBF = (timestamp of last failure - timestamp of first failure) * window
-/ ((number of failures - 1) * width)
+Or to build 5.10.251-rt146 directly, the following patches should be applied:
 
-In hwlatdetect, the failures are called samples. The failure count is
-the sum of counters from all samples.
+  https://www.kernel.org/pub/linux/kernel/v5.x/linux-5.10.tar.xz
 
-This metric enables meaningful comparison of hardware latency across
-different test runs, hardware configurations, and kernel versions.  It
-can be considered a KPI for real-time stability, relevant for
-certification and SLA evaluation.
+  https://www.kernel.org/pub/linux/kernel/v5.x/patch-5.10.251.xz
 
-Signed-off-by: Costa Shulyupin <costa.shul@redhat.com>
----
+  https://www.kernel.org/pub/linux/kernel/projects/rt/5.10/older/patch-5.10.251-rt146.patch.xz
 
-v4: Adjust MTBF by multiplying by the ratio of window to width
-v3:
-- Fix formatting
-- Make first and last instance variables
-v2:
-- Use another more stable calculation of MTBF
----
- src/hwlatdetect/hwlatdetect.py | 9 +++++++++
- 1 file changed, 9 insertions(+)
+Signing key fingerprint:
 
-diff --git a/src/hwlatdetect/hwlatdetect.py b/src/hwlatdetect/hwlatdetect.py
-index 38671724f3e3..abfbb954fe75 100755
---- a/src/hwlatdetect/hwlatdetect.py
-+++ b/src/hwlatdetect/hwlatdetect.py
-@@ -306,6 +306,8 @@     def __init__(self):
-             raise DetectorNotAvailable("hwlat", "hwlat tracer not available")
-         self.type = "tracer"
-         self.samples = []
-+        self.first = None
-+        self.last = None
-         self.set("enable", 0)
-         self.set('current_tracer', 'hwlat')
- 
-@@ -338,6 +340,8 @@     def detect(self):
-                 pollcnt += 1
-                 val = self.get_sample()
-                 while val:
-+                    self.first = self.first or val.timestamp
-+                    self.last = val.timestamp
-                     self.samples.append(val)
-                     if watch:
-                         val.display()
-@@ -559,6 +563,11 @@     def cleanup(self):
-     exceeding = detect.get("count")
-     info(f"Samples exceeding threshold: {exceeding}")
- 
-+    if exceeding > 1:
-+        mtbf = ((float(detect.last) - float(detect.first)) * int(detect.get('window'))
-+                / ((exceeding - 1) * int(detect.get('width'))))
-+        info(f"MTBF: {mtbf:.3f} seconds")
-+
-     if detect.have_msr:
-         finishsmi = detect.getsmicounts()
-         total_smis = 0
--- 
-2.53.0
+  9354 0649 9972 8D31 D464  D140 F394 A423 F8E6 7C26
+
+All keys used for the above files and repositories can be found on the
+following git repository:
+
+   git://git.kernel.org/pub/scm/docs/kernel/pgpkeys.git
+
+Enjoy!
+Luis
 
