@@ -1,198 +1,77 @@
-Received: from mout-p-102.mailbox.org (mout-p-102.mailbox.org [80.241.56.152])
+Received: from mail.nearlyone.de (mail.nearlyone.de [49.12.199.46])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id A21FF175A70
-	for <linux-rt-users@vger.kernel.org>; Sun,  1 Mar 2026 21:24:46 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=80.241.56.152
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 9492D308F39;
+	Mon,  2 Mar 2026 08:36:57 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=49.12.199.46
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1772400288; cv=none; b=YS3B5z4kM6EYWz6y9UQq5oeLYJkD3SInrfmcyjkC9aBS/HrY8qTB1CouSHjk8gS6lsUp+b9LCE2UmhmdpeXB3Nk9GiCiKTnH5HFb49T1SR85HmUBcTN6aqGThP28D3gDGVUUb3UZTlgklATX6HO8P63iMpHAxp+4zQxHIyBdEUY=
+	t=1772440619; cv=none; b=ts9fxQghVxlu1dX/8IqchpJAn0Y8Pa08ampwKhgTH2mO+g4nVtnhUDTUw6Pw52Z1MFlDA3tiB/oKmyty2fn5L635t6/iNg9zt+sCs6uH/lUBbffw6/rrzBZ0SuyWQI7uiadiDZlJveVqefAyTxlp9X+PquToUYqms14uqZTHdTc=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1772400288; c=relaxed/simple;
-	bh=NKb77muHZTO4CKRNuTUjqtpXADJOyunaHDdGjcisig8=;
-	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=DzEUBPUZ0aE78RHAyDxkhPyc16tmetFQDLVLNe4/WIJccXO+OuxVfPC+VS6ck/3RiNjuWfgAT2VKjPoeSvqDo3RgNt1W2bPPPJPlwqV4rc+iXePkbJyYVyChY5lJYitZby0+T3K+TIbzgg7u4m9hQ93hZblCOXNBweNc5lb7Ifc=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=mailbox.org; spf=pass smtp.mailfrom=mailbox.org; dkim=pass (2048-bit key) header.d=mailbox.org header.i=@mailbox.org header.b=vhiezbY/; dkim=pass (2048-bit key) header.d=mailbox.org header.i=@mailbox.org header.b=mJ9PUXBo; arc=none smtp.client-ip=80.241.56.152
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=mailbox.org
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=mailbox.org
+	s=arc-20240116; t=1772440619; c=relaxed/simple;
+	bh=NEiwcSgyGy6FkA8MhpPjAoXJytbacu/l7hUad9W4Uxc=;
+	h=Date:From:To:Subject:Message-ID:MIME-Version:Content-Type:
+	 Content-Disposition; b=nDEnSuYW7tJur1l8Wn62K2/XIdZsZKQOnQeYg3xL6B2SMAoIC9wbN1Ah61ChZVpSuZp5V4cB9uCbTr7B7G53e9O4uLHGultTUbjeYDWISz6IJAuaItttU+N4Ak7RPGcEpMrAo0jv7GKAX2550GJu9RhaixAIONgSgrO5qW/HAfM=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=monom.org; spf=pass smtp.mailfrom=monom.org; dkim=pass (2048-bit key) header.d=monom.org header.i=@monom.org header.b=ReC//RPw; arc=none smtp.client-ip=49.12.199.46
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=monom.org
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=monom.org
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=mailbox.org header.i=@mailbox.org header.b="vhiezbY/";
-	dkim=pass (2048-bit key) header.d=mailbox.org header.i=@mailbox.org header.b="mJ9PUXBo"
-Received: from smtp2.mailbox.org (smtp2.mailbox.org [IPv6:2001:67c:2050:b231:465::2])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (4096 bits) server-digest SHA256)
-	(No client certificate requested)
-	by mout-p-102.mailbox.org (Postfix) with ESMTPS id 4fPFSl063yz9v7B;
-	Sun,  1 Mar 2026 22:24:39 +0100 (CET)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=mailbox.org; s=mail20150812;
-	t=1772400279;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references;
-	bh=cxJ8V+JWHGZz9lKpzTZIuSvAhQWT+EzM51Y0ZHcEetE=;
-	b=vhiezbY/YNLrbgYCGieq0igKawXD3m4XRtS8odFRpV6wlXYrNlSf4OiouGg4sI+ZihYr9k
-	lgVE5vXg+4BIY9pfkhhvlM42MjmycHMPAPrCb8Z81k059juGIfwhdwsBLFGsEzt1Qpy9tk
-	DZ9RQjrHTiQf413vUIltOjj1OK1fVSEyXWvtdr5DUy+9bQ8SlV7YEtV2skJM4RWyqEqSpN
-	x7+/ofLO+su7WKQz6PR7LEqzQw4FYU/lvnSILNyYJN2x/xp1Lz8pNrj6a7TZOjETf8Nl5T
-	DtrKxMTR/AwADLKmt8dM7UjBaScaNgSoUn2KLK5F+vSBi3U830PnatQVTUI5qA==
-Authentication-Results: outgoing_mbo_mout;
-	dkim=pass header.d=mailbox.org header.s=mail20150812 header.b=mJ9PUXBo;
-	spf=pass (outgoing_mbo_mout: domain of lbckmnn@mailbox.org designates 2001:67c:2050:b231:465::2 as permitted sender) smtp.mailfrom=lbckmnn@mailbox.org
-From: Lukas Beckmann <lbckmnn@mailbox.org>
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=mailbox.org; s=mail20150812;
-	t=1772400278;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references;
-	bh=cxJ8V+JWHGZz9lKpzTZIuSvAhQWT+EzM51Y0ZHcEetE=;
-	b=mJ9PUXBolNW890gueAjuaW3tzCZMOhfB1WgmMv3WZ1Zv/fizjMFQdgBVhUJg3Uxt5U6q3J
-	vr8RMo7a2Cw1UFHS4pVuPDk1n07Hpu5gC3JDF723IoS4SdCytq6p3/oHXYI2Iju57GH3tx
-	ksKOex7msSU4MaccI2jQJXP4zeEGLwvzg6gBeyTJnpmVXqon4enuA006o+0ylANfqxis3k
-	a4Ssx3uvUpe+B4G+2fiAtbNkoTGzv9hS9mbi4kd7CSeJkHl76c+SFd1Us1DRH3/r45TjuB
-	xBeGqdXowShd3qDL3qrh/TSkPiY4RE/Q3T9q2yG63fCg/DWrWmkRf6zM1rVqqA==
-To: John Kacur <jkacur@redhat.com>
-Cc: rt-users <linux-rt-users@vger.kernel.org>,
-	Lukas Beckmann <lbckmnn@mailbox.org>
-Subject: [PATCH 2/2] cyclictest: simplify rstat_setup
-Date: Sun,  1 Mar 2026 22:24:07 +0100
-Message-ID: <20260301212407.3146506-3-lbckmnn@mailbox.org>
-In-Reply-To: <20260301212407.3146506-1-lbckmnn@mailbox.org>
-References: <20260301212407.3146506-1-lbckmnn@mailbox.org>
+	dkim=pass (2048-bit key) header.d=monom.org header.i=@monom.org header.b="ReC//RPw"
+Received: from [127.0.0.1] (localhost [127.0.0.1]) by localhost (Mailerdaemon) with ESMTPSA id 127D5DAE81;
+	Mon,  2 Mar 2026 09:27:54 +0100 (CET)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=monom.org; s=dkim;
+	t=1772440076; h=from:subject:date:message-id:to:mime-version:content-type;
+	bh=CWaHUhz/H3r60T/UZWrobodNSQ/vKouuac/N/VdylAQ=;
+	b=ReC//RPwf5sf5kwgPHIwZNk7aefV1aMLwSf6CJVpyXz/HfiwAuVnR9ocflLyK8ao25Euts
+	eXLNgsyDrbH+uxkltByjLd+epsidNsB3g8iStpNaXF0GwUGeARY9eEg3DommX4bBvYoe1o
+	NRYjyUAAJIXubQTXLaNVfyrzsis7LYeL8Sf4FWrRJ4J85sTSNXUcBwxNZD0Q4KPbcXsGeM
+	0pBKITnT9XtiN0FNgXt2075lch7jJ13MiDE9N7mSm+QVHmgc3KXXafk+EA0ylQGMB9d488
+	BTQEKqLsu6xwNN7r98Jpt/zH7QUSx+S69EwrZZuyWSVNKzrwRogNpiPWQS5dqQ==
+Date: Mon, 2 Mar 2026 09:27:52 +0100
+From: Daniel Wagner <wagi@monom.org>
+To: LKML <linux-kernel@vger.kernel.org>, linux-rt-users@vger.kernel.org, 
+	stable-rt@vger.kernel.org, Steven Rostedt <rostedt@goodmis.org>, 
+	Thomas Gleixner <tglx@linutronix.de>, Sebastian Andrzej Siewior <bigeasy@linutronix.de>, 
+	Clark Williams <williams@redhat.com>
+Subject: [ANNOUNCE] v6.12.74-rt16
+Message-ID: <c4bdf691-57c7-4aab-b3fd-823bd61c00e9@nitrogen.local>
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
 List-Subscribe: <mailto:linux-rt-users+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
-X-MBO-RS-ID: 061faa4809094bd96e3
-X-MBO-RS-META: pef8yujaqyecozm3764cekfxir8o9g3x
-X-Rspamd-Queue-Id: 4fPFSl063yz9v7B
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+X-Last-TLS-Session-Version: TLSv1.3
 
-The shm file is truncated to zero each time before it is written.
-It does not make sense to truncate it to something non zero on setup or
-to mlock it.
+Hello RT-list!
 
-Signed-off-by: Lukas Beckmann <lbckmnn@mailbox.org>
----
- src/cyclictest/cyclictest.c | 89 ++++++-------------------------------
- 1 file changed, 13 insertions(+), 76 deletions(-)
+I'm pleased to announce the 6.12.74-rt16 stable release. This is just an update
+to the latest stable version. No RT specific changes.
 
-diff --git a/src/cyclictest/cyclictest.c b/src/cyclictest/cyclictest.c
-index 960c905..7b959ac 100644
---- a/src/cyclictest/cyclictest.c
-+++ b/src/cyclictest/cyclictest.c
-@@ -1771,33 +1771,6 @@ static void trigger_update(struct thread_param *par, int diff, int64_t ts)
- 	pthread_mutex_unlock(&trigger_lock);
- }
- 
--/* Running status shared memory open */
--static int rstat_shm_open(void)
--{
--	int fd;
--	pid_t pid;
--
--	pid = getpid();
--
--	snprintf(shm_name, SHM_BUF_SIZE, "%s%d", "/cyclictest", pid);
--
--	errno = 0;
--	fd = shm_unlink(shm_name);
--
--	if ((fd == -1) && (errno != ENOENT)) {
--		fprintf(stderr, "ERROR: shm_unlink %s\n", strerror(errno));
--		return fd;
--	}
--
--	errno = 9;
--	fd = shm_open(shm_name, O_RDWR|O_CREAT|O_EXCL, S_IRUSR|S_IWUSR|S_IRGRP|S_IWGRP|S_IROTH|S_IWOTH);
--	if (fd == -1)
--		fprintf(stderr, "ERROR: shm_open %s\n", strerror(errno));
--
--	rstat_fd = fd;
--
--	return fd;
--}
- 
- static int rstat_ftruncate(int fd, off_t len)
- {
-@@ -1811,62 +1784,26 @@ static int rstat_ftruncate(int fd, off_t len)
- 	return err;
- }
- 
--static void *rstat_mmap(int fd)
--{
--	void *mptr;
- 
--	errno = 0;
--	mptr = mmap(0, _SC_PAGE_SIZE, PROT_READ|PROT_WRITE, MAP_SHARED, fd, 0);
-+static void rstat_setup(void)
-+{
-+	int fd;
-+	pid_t pid;
- 
--	if (mptr == (void*)-1)
--		fprintf(stderr, "ERROR: mmap, %s\n", strerror(errno));
-+	pid = getpid();
- 
--	return mptr;
--}
-+	snprintf(shm_name, SHM_BUF_SIZE, "%s%d", "/cyclictest", pid);
- 
--static int rstat_mlock(void *mptr)
--{
--	int err;
-+	fd = shm_unlink(shm_name);
- 
--	errno = 0;
--	err = mlock(mptr, _SC_PAGE_SIZE);
--	if (err == -1)
--		fprintf(stderr, "ERROR, mlock %s\n", strerror(errno));
-+	if ((fd == -1) && (errno != ENOENT))
-+		fprintf(stderr, "ERROR: shm_unlink %s\n", strerror(errno));
- 
--	return err;
--}
-+	fd = shm_open(shm_name, O_RDWR|O_CREAT|O_EXCL, S_IRUSR|S_IWUSR|S_IRGRP|S_IWGRP|S_IROTH|S_IWOTH);
-+	if (fd == -1)
-+		fprintf(stderr, "ERROR: shm_open %s\n", strerror(errno));
- 
--static void rstat_setup(void)
--{
--	int res;
--	void *mptr = NULL;
--
--	int sfd = rstat_shm_open();
--	if (sfd < 0)
--		goto rstat_err;
--
--	res = rstat_ftruncate(sfd, _SC_PAGE_SIZE);
--	if (res)
--		goto rstat_err1;
--
--	mptr = rstat_mmap(sfd);
--	if (mptr == MAP_FAILED)
--		goto rstat_err1;
--
--	res = rstat_mlock(mptr);
--	if (res)
--		goto rstat_err2;
--
--	return;
--
--rstat_err2:
--	munmap(mptr, _SC_PAGE_SIZE);
--rstat_err1:
--	close(sfd);
--	shm_unlink(shm_name);
--rstat_err:
--	rstat_fd = -1;
--	return;
-+	rstat_fd = fd;
- }
- 
- static void write_stats(FILE *f, void *data)
--- 
-2.53.0
+You can get this release via the git tree at:
 
+  git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
+
+  branch: v6.12-rt-patches
+  Head SHA1: 4e15c62b2e312c7f96da63de703611093f63ed32
+
+Or to build 6.12.74-rt16 directly, the following patches should be applied:
+
+  https://www.kernel.org/pub/linux/kernel/v6.x/linux-6.12.tar.xz
+
+  https://www.kernel.org/pub/linux/kernel/v6.x/patch-6.12.74.xz
+
+  https://www.kernel.org/pub/linux/kernel/projects/rt/6.12/older/patch-6.12.74-rt16.patch.xz
+
+Signing key fingerprint:
+
+  5BF6 7BC5 0826 72CA BB45  ACAE 587C 5ECA 5D0A 306C
+
+All keys used for the above files and repositories can be found on the
+following git repository:
+
+   git://git.kernel.org/pub/scm/docs/kernel/pgpkeys.git
+
+Enjoy!
+Daniel
