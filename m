@@ -1,71 +1,71 @@
-Received: from mail-qv1-f43.google.com (mail-qv1-f43.google.com [209.85.219.43])
+Received: from mail-qt1-f178.google.com (mail-qt1-f178.google.com [209.85.160.178])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id AE2C1217659
-	for <linux-rt-users@vger.kernel.org>; Mon,  9 Mar 2026 22:54:13 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.219.43
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id D07BD21507F
+	for <linux-rt-users@vger.kernel.org>; Mon,  9 Mar 2026 22:56:10 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.160.178
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1773096854; cv=none; b=SAxokznMma0PKoBHWUT72aj5mvw9yzhQxdy2kMGmjYzNiSgIhIBdYi9R2Hwlmkmb+uDyjbExEww1JVxsODYcTIK4h6HJ28S07DUdyV+1aeXM0irIjcxXrXpCicYfcEMFAPaa4T9Z+DlJ3TLiMoZLqvl6nU11Gcf94CaSpA/qXRc=
+	t=1773096972; cv=none; b=axyAAVdP4QpgXV9tYELyaE57X5p76FtsHC8T7Zbj6aObYD8qFoy82bfBIixNkm9adU+GkRi0i7uFC1+sisln6agWCEYFaekYMHjkqSf7aIOeitT+v4Kzsu2aTGqcJZ+YX1ilyPXafYuQ7r0DGzLGu1fmD5W66sef8BH+iQMG8V4=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1773096854; c=relaxed/simple;
-	bh=hXXNERDFg0nvT0ekNEuMpDDEUYibgJYSFmcPvKj/nNA=;
+	s=arc-20240116; t=1773096972; c=relaxed/simple;
+	bh=XLHAbOmKHY0hiI+w4Xjw2p/p/2GkV7MWKox3iblYwKg=;
 	h=Date:From:To:cc:Subject:In-Reply-To:Message-ID:References:
-	 MIME-Version:Content-Type; b=HkW8pkW33FE0T7qSiFzV6cmOrx5EUfEx+NFt0reAEepFui3xl/gF2FDB1FI/HujyJxta/h68OfoPhqUFwV5beC4K8gx/+d2+bvVcu+cDSwG0iIhC1NC5sd9AdhRnJ249jQD9ypT6MmagPwSYjMXpW3J1T6ied3hg+dSj7oScz2c=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=CoaJzmiy; arc=none smtp.client-ip=209.85.219.43
+	 MIME-Version:Content-Type; b=Vwoo/nKDA6TEfE590QqzxChPH531TBkl+bH0mIsXYohc0DYy4HjXJTS2t7D1Mxeji+/1XuIY20/LB92RGw7PS/hXDmS9Pl9oRm8QKKTd7CTV+87MKlnLd55ED3ryfnr9TvzE7SbVQRab8jt7MAgnppXQCsu4ItNfG+SQUGjOVUs=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=CbtpMG/s; arc=none smtp.client-ip=209.85.160.178
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="CoaJzmiy"
-Received: by mail-qv1-f43.google.com with SMTP id 6a1803df08f44-899fb030812so123503006d6.2
-        for <linux-rt-users@vger.kernel.org>; Mon, 09 Mar 2026 15:54:13 -0700 (PDT)
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="CbtpMG/s"
+Received: by mail-qt1-f178.google.com with SMTP id d75a77b69052e-509217e84a3so8429091cf.3
+        for <linux-rt-users@vger.kernel.org>; Mon, 09 Mar 2026 15:56:10 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1773096853; x=1773701653; darn=vger.kernel.org;
+        d=gmail.com; s=20230601; t=1773096970; x=1773701770; darn=vger.kernel.org;
         h=mime-version:references:message-id:in-reply-to:subject:cc:to:from
          :date:from:to:cc:subject:date:message-id:reply-to;
-        bh=IKX6xu6AzOmH1xG1jEMxVknHhdETs0/aXjbtJJRHXTE=;
-        b=CoaJzmiyOn/xDgragW5H2PruBJ9dDk9lZ30Z4a3b0TF2ozIQsknWQmv2FOGIpkFPin
-         wBNCT6Xbbv4Q56PiKcvDLdWjBu1VR3AMZ7noJlYhw2xDkY5nXtbHKdNLrvy8cCTUQ+PP
-         2cbH7g7gUCDT+cuT1eGdNtEPPCki9UrknLx3a2oXvOLJbU2Q/niZrARP8hwHDBGDYevF
-         RC6N5vadxXaFc2IFz3jMQ90EIUpzWzuvl/kbdgNT0Z5Uc+YyL8czoetqUxfDS2S8PZRB
-         l1MHSjDAAdQsG2x7Ny1qAZJzag32xCDE+gYK1u98p7WxomeuLPkd021RNQua+2vGMGug
-         XHQg==
+        bh=FrnlFcK9BmLUB8jSIdfGyua0DXHE6zF5KerwMkRxC/Y=;
+        b=CbtpMG/s7iMAeq4Yn73rS7QGhZ/uBjlkq45n0Nkk+cdg9x/t3ZnpHGugrF6DbVDNOv
+         eC551lzqqQLFbwGYx418cKoMx3IW0r2DWWvL+hfTywE5xPSiFhmF6rt+2UkexobgBzC7
+         u6gEeGs5Sc5DS3ePaaa4sZzwNSYvJV2io+wUp1CkvhY8BN+Bg+uW7CeZxhNqUbSmmwgX
+         53ivB8mXXm1ic9cXNj1ns5+Oriza9OA1ni/PVbpNO1pCL+P6WW6t6ZNT42JvoIx5QxXW
+         ZYViImvc5HN+7CaBtLkK/SGhEBaZwDSgXLmQdMl4wAW4QdP95K6M0unLDJfzPzc6A9fA
+         agVg==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1773096853; x=1773701653;
+        d=1e100.net; s=20230601; t=1773096970; x=1773701770;
         h=mime-version:references:message-id:in-reply-to:subject:cc:to:from
          :date:x-gm-gg:x-gm-message-state:from:to:cc:subject:date:message-id
          :reply-to;
-        bh=IKX6xu6AzOmH1xG1jEMxVknHhdETs0/aXjbtJJRHXTE=;
-        b=enPAcW7kbuHF1jVY6zd+rXKyHVjQs3KBG1ZNXmgmLFFLGR+wGBNEetc4OkEpFfKBfK
-         mjjZCCIak3g5FqIO+N+sdIKXpSgblEsqTy0VuMr3cfGKGqdKyOu6AU2GjMXkyyQCSgDn
-         k59WCCgvmpDcQ/JU0yqiFfHg4OTpTu8lkHvfLsgZfq5N1y7eOTj6zN6uZs6igtWKf73X
-         DS2k6gzeoyUSVHdXxXGXgqS+P5v7m7YdjupCI6Rd6h5t6wHQcvcHX/Ne1YOzzFP2jasK
-         xbXCbKsoOpg+PIz7dWgS3J5lbRqZx7rtsILjTSWN9r9eIG8Av1BT4WUVXGVwGSSqBu+S
-         101Q==
-X-Forwarded-Encrypted: i=1; AJvYcCUtFwg884cyT826u3e6+ApUJbNhRBjy2Oio8D3kn9MpGDaZ6m4tbhbuZvwIJZ11x6oIttbns1LHFA3N4QkX+A==@vger.kernel.org
-X-Gm-Message-State: AOJu0YzK33AR08G9tlNip/blCWhMKS8TDE30jZbSPrkWp8BZ2PwbvQAJ
-	FcpzbW9G6AwOJWUqBebyKxj1sYOhwVhyWvQPOV6rF9ZYYxbwC5kc7B0wZgL3uA==
-X-Gm-Gg: ATEYQzzeu9wCDnt8yEUYTxtrp9KPBcoAgUpQ5D/0DxszF11VO6Es+hxTx/tXtVkbD2Y
-	pChDYlVYjVkaP/xxBUiKVttnyiAnYxVR+1aICYboxWW+LypyXl1y4kgAHlaf8mkpx/VVpS7ayaM
-	gN4MvGQlWMh3hwj7E53z6DYroyhnEjLD8BWCloaR5kZknHw0psfZSC2l3pTFy4WvWQFmLH8Rahp
-	tg67JraxurHXhtfRRvBZrXMV7MbEFCxlugEElhqM7oWcarllIDh+Unsv2NnoKLQR+EWpJ0FiwgP
-	aMB/4vnNd0QPEIrE15yAJOYMNY62edqjB1wFH1DQgYPNk1HkOJotDj56v213f2pZQ8l4bejYffD
-	2WL7Ly0YtQvVe6eFvJ5UnXiBkcN4mxwKG69/PBW3r6VHUKrKYfcacL42NQFrVI+vqIaepDkNUo6
-	StivBIQFdaPZHa75gKU08RHXek5xqoz20ZC1sE3gvMSI+/kqvAS/5jXfr8Y1XLNUtVD2ctXzbZ8
-	g==
-X-Received: by 2002:a05:6214:cac:b0:899:e9bf:3744 with SMTP id 6a1803df08f44-89a30b1505dmr181396426d6.63.1773096852514;
-        Mon, 09 Mar 2026 15:54:12 -0700 (PDT)
+        bh=FrnlFcK9BmLUB8jSIdfGyua0DXHE6zF5KerwMkRxC/Y=;
+        b=WH2sB/s+2YIZ6fsVAA8SYeoAYpo1RyFwk9J3pqGhdwgPxTxqwBIE3STiCbFirYb+0D
+         wVuRZV4/2PBF5PUYQkYwt/MLebehXZs5uEzNo4MoOACVzO3SvWvtzBN8QuxwWJBbsC8L
+         /g8otTtOx03EWtJOoFdCmuq5e2vixTyWyekYVDOq5lB/tvNKF8GLDqgOOL4KkLAnJ3om
+         zZ1mnuAI5bydbNNB3FBY667q/ASP/5ebNpMBJILPkt9O/RuadDPXfLphaurnJS5Jms7r
+         po2zn+A/HZw6S5VkBqU5W6JoPcpdaq6gng+fa981D3PtnQ2y2Hj8NOBZF17Wlybgf6NH
+         ihPw==
+X-Forwarded-Encrypted: i=1; AJvYcCXPgBoFNTcTGmUoNvlO43/Ju57PanCwKQhBUOkoJv7qs+n7khXOkzqaO3MfM5A0nBiEffF5za+QDGxoUPrfNg==@vger.kernel.org
+X-Gm-Message-State: AOJu0YziHpnBT5LiwhuJpvX47gx5S7GLe0hzX1mF4/DcxSl4/zP8vRLL
+	8E++oLfkDDwZaGWXBV8KZCpQpQLQxRPhzdCXB+NbcumgyEUjhLjcPU61NfzOQA==
+X-Gm-Gg: ATEYQzyPD2Plh+pxgK+IVTTKniSZVrKR/bXaB4p91qbts9PgfCUiP888rf4QQT2VgB9
+	ldqO514J1d3bfTOju3o05x6zYv+NRLizeJd5/xJBGbcwUJoBnghVSPYKTocP5rnxNezfu6Ra0qY
+	0UHb3dusIwQD/EFZwAr4zbpFeaVCt1/ADcNKvJb+xKUMOKJ+CZRGseOS60Y/Z4wUO3N5AsSvAQK
+	1kfgnPWG8gnKjz+21oTqCZGqY/7VPvrvl7pgogNpn2zdv0XJxddiRn28HjbFpmf6srKsVZqjusM
+	0FI1FsISK9b0Y1c2my6raqs0SpJGg1x+OoAdOJcXo3P7PGKy9COQLqbGbXa4kJ1POQASMZriu0N
+	luHjpU2aVjmdlQM8CxWfQRmzAphonmWmkIdThCr7LJfrl8+D1OXLToKH1FGuYwxqDXzSjeS3Fuu
+	u6a4z4zRUQTMuzOGxyPfiQEq0fwp/fULHFOFyPwcgDxi2IkfkaikoQi5qsbji1iG6VTKN0Tph7J
+	Q==
+X-Received: by 2002:a05:622a:450:b0:4ff:a40d:d2b2 with SMTP id d75a77b69052e-508f46f10d7mr167298161cf.16.1773096969783;
+        Mon, 09 Mar 2026 15:56:09 -0700 (PDT)
 Received: from Cumhall ([70.50.116.180])
-        by smtp.gmail.com with ESMTPSA id 6a1803df08f44-89a57a1aec5sm7338846d6.8.2026.03.09.15.54.11
+        by smtp.gmail.com with ESMTPSA id d75a77b69052e-50924937718sm9748501cf.29.2026.03.09.15.56.07
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Mon, 09 Mar 2026 15:54:12 -0700 (PDT)
-Date: Mon, 9 Mar 2026 18:54:01 -0400 (EDT)
+        Mon, 09 Mar 2026 15:56:08 -0700 (PDT)
+Date: Mon, 9 Mar 2026 18:55:56 -0400 (EDT)
 From: John Kacur <jkacur@gmail.com>
 To: Lukas Beckmann <lbckmnn@mailbox.org>
 cc: John Kacur <jkacur@redhat.com>, rt-users <linux-rt-users@vger.kernel.org>
-Subject: Re: [PATCH 1/2] cyclictest: fix growing shm stat file
-In-Reply-To: <20260301212407.3146506-2-lbckmnn@mailbox.org>
-Message-ID: <5356ca11-53fd-656b-d934-cf91dfb44e39@gmail.com>
-References: <20260301212407.3146506-1-lbckmnn@mailbox.org> <20260301212407.3146506-2-lbckmnn@mailbox.org>
+Subject: Re: [PATCH 2/2] cyclictest: simplify rstat_setup
+In-Reply-To: <20260301212407.3146506-3-lbckmnn@mailbox.org>
+Message-ID: <f504e9c5-95c9-79e4-0274-f639a4829af9@gmail.com>
+References: <20260301212407.3146506-1-lbckmnn@mailbox.org> <20260301212407.3146506-3-lbckmnn@mailbox.org>
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
@@ -78,35 +78,135 @@ Content-Type: text/plain; charset=US-ASCII
 
 On Sun, 1 Mar 2026, Lukas Beckmann wrote:
 
-> On a received USR2 signal, the current statistics are written to a file
-> in shared memory. Before that happens, it is truncated to zero to clear
-> it.
-> 
-> However, currently the shm file keeps growing with each received signal
-> because the seek pointer is not updated by ftruncate.
-> 
-> This is fixed by calling fseek after truncating.
+> The shm file is truncated to zero each time before it is written.
+> It does not make sense to truncate it to something non zero on setup or
+> to mlock it.
 > 
 > Signed-off-by: Lukas Beckmann <lbckmnn@mailbox.org>
 > ---
->  src/cyclictest/cyclictest.c | 1 +
->  1 file changed, 1 insertion(+)
+>  src/cyclictest/cyclictest.c | 89 ++++++-------------------------------
+>  1 file changed, 13 insertions(+), 76 deletions(-)
 > 
 > diff --git a/src/cyclictest/cyclictest.c b/src/cyclictest/cyclictest.c
-> index 191945e..960c905 100644
+> index 960c905..7b959ac 100644
 > --- a/src/cyclictest/cyclictest.c
 > +++ b/src/cyclictest/cyclictest.c
-> @@ -1472,6 +1472,7 @@ static void sighand(int sig)
->  			return;
->  		}
->  		rstat_ftruncate(rstat_fd, 0);
-> +		lseek(rstat_fd, 0, SEEK_SET);
->  		quiet = 0;
->  		dprintf(rstat_fd, "#---------------------------\n");
->  		dprintf(rstat_fd, "# cyclictest current status:\n");
+> @@ -1771,33 +1771,6 @@ static void trigger_update(struct thread_param *par, int diff, int64_t ts)
+>  	pthread_mutex_unlock(&trigger_lock);
+>  }
+>  
+> -/* Running status shared memory open */
+> -static int rstat_shm_open(void)
+> -{
+> -	int fd;
+> -	pid_t pid;
+> -
+> -	pid = getpid();
+> -
+> -	snprintf(shm_name, SHM_BUF_SIZE, "%s%d", "/cyclictest", pid);
+> -
+> -	errno = 0;
+> -	fd = shm_unlink(shm_name);
+> -
+> -	if ((fd == -1) && (errno != ENOENT)) {
+> -		fprintf(stderr, "ERROR: shm_unlink %s\n", strerror(errno));
+> -		return fd;
+> -	}
+> -
+> -	errno = 9;
+> -	fd = shm_open(shm_name, O_RDWR|O_CREAT|O_EXCL, S_IRUSR|S_IWUSR|S_IRGRP|S_IWGRP|S_IROTH|S_IWOTH);
+> -	if (fd == -1)
+> -		fprintf(stderr, "ERROR: shm_open %s\n", strerror(errno));
+> -
+> -	rstat_fd = fd;
+> -
+> -	return fd;
+> -}
+>  
+>  static int rstat_ftruncate(int fd, off_t len)
+>  {
+> @@ -1811,62 +1784,26 @@ static int rstat_ftruncate(int fd, off_t len)
+>  	return err;
+>  }
+>  
+> -static void *rstat_mmap(int fd)
+> -{
+> -	void *mptr;
+>  
+> -	errno = 0;
+> -	mptr = mmap(0, _SC_PAGE_SIZE, PROT_READ|PROT_WRITE, MAP_SHARED, fd, 0);
+> +static void rstat_setup(void)
+> +{
+> +	int fd;
+> +	pid_t pid;
+>  
+> -	if (mptr == (void*)-1)
+> -		fprintf(stderr, "ERROR: mmap, %s\n", strerror(errno));
+> +	pid = getpid();
+>  
+> -	return mptr;
+> -}
+> +	snprintf(shm_name, SHM_BUF_SIZE, "%s%d", "/cyclictest", pid);
+>  
+> -static int rstat_mlock(void *mptr)
+> -{
+> -	int err;
+
+errno = 0 before the call to shm_unlink for good defensive programming
+other than that the patch looks good, I will do a little more testing
+
+> +	fd = shm_unlink(shm_name);
+>  
+> -	errno = 0;
+> -	err = mlock(mptr, _SC_PAGE_SIZE);
+> -	if (err == -1)
+> -		fprintf(stderr, "ERROR, mlock %s\n", strerror(errno));
+> +	if ((fd == -1) && (errno != ENOENT))
+> +		fprintf(stderr, "ERROR: shm_unlink %s\n", strerror(errno));
+>  
+> -	return err;
+> -}
+> +	fd = shm_open(shm_name, O_RDWR|O_CREAT|O_EXCL, S_IRUSR|S_IWUSR|S_IRGRP|S_IWGRP|S_IROTH|S_IWOTH);
+> +	if (fd == -1)
+> +		fprintf(stderr, "ERROR: shm_open %s\n", strerror(errno));
+>  
+> -static void rstat_setup(void)
+> -{
+> -	int res;
+> -	void *mptr = NULL;
+> -
+> -	int sfd = rstat_shm_open();
+> -	if (sfd < 0)
+> -		goto rstat_err;
+> -
+> -	res = rstat_ftruncate(sfd, _SC_PAGE_SIZE);
+> -	if (res)
+> -		goto rstat_err1;
+> -
+> -	mptr = rstat_mmap(sfd);
+> -	if (mptr == MAP_FAILED)
+> -		goto rstat_err1;
+> -
+> -	res = rstat_mlock(mptr);
+> -	if (res)
+> -		goto rstat_err2;
+> -
+> -	return;
+> -
+> -rstat_err2:
+> -	munmap(mptr, _SC_PAGE_SIZE);
+> -rstat_err1:
+> -	close(sfd);
+> -	shm_unlink(shm_name);
+> -rstat_err:
+> -	rstat_fd = -1;
+> -	return;
+> +	rstat_fd = fd;
+>  }
+>  
+>  static void write_stats(FILE *f, void *data)
 > -- 
 > 2.53.0
 > 
 > 
 > 
-Signed-off-by: John Kacur <jkacur@redhat.com>
