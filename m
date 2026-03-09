@@ -1,72 +1,71 @@
-Received: from mail-qk1-f179.google.com (mail-qk1-f179.google.com [209.85.222.179])
+Received: from mail-qv1-f43.google.com (mail-qv1-f43.google.com [209.85.219.43])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id DD73538E5E1
-	for <linux-rt-users@vger.kernel.org>; Mon,  9 Mar 2026 22:22:12 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.222.179
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id AE2C1217659
+	for <linux-rt-users@vger.kernel.org>; Mon,  9 Mar 2026 22:54:13 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.219.43
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1773094934; cv=none; b=NmQyrsIEEnK+TnyK/RpowpytNgHEy0PkcwFC+aEttCqqT9Nm8HPdA/SOR67G6Kxa7Wh32cShE/jOL/TLFIs9NUvapttlEb95gqowT6EnqZRs9H+2J9zFWifrgbo1LLk0fhHot0IkfrIqGVdNzX5k7VNliiitvVneNeFSCvjpC00=
+	t=1773096854; cv=none; b=SAxokznMma0PKoBHWUT72aj5mvw9yzhQxdy2kMGmjYzNiSgIhIBdYi9R2Hwlmkmb+uDyjbExEww1JVxsODYcTIK4h6HJ28S07DUdyV+1aeXM0irIjcxXrXpCicYfcEMFAPaa4T9Z+DlJ3TLiMoZLqvl6nU11Gcf94CaSpA/qXRc=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1773094934; c=relaxed/simple;
-	bh=lbYlYio7yRTLGbmrhTZno0aoYKpgCegKKayYiZWX1C8=;
+	s=arc-20240116; t=1773096854; c=relaxed/simple;
+	bh=hXXNERDFg0nvT0ekNEuMpDDEUYibgJYSFmcPvKj/nNA=;
 	h=Date:From:To:cc:Subject:In-Reply-To:Message-ID:References:
-	 MIME-Version:Content-Type; b=GsAHPlhvsKRqZZ2TCJEtHC/zqM+K4iVTEVab3ytFphWDgB0VPUnh+SK7KwWLRD0Hjs0OxgYlQsAy1eYaLB4AAzF87AX2Fs/VsxiqFHpWl9YLBvgN0Vv3jMT04T4tBHL7QtWX8L64eVGVv4xpgKzqC7oowagOEnAJAXprHuas6iE=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=irRl1at9; arc=none smtp.client-ip=209.85.222.179
+	 MIME-Version:Content-Type; b=HkW8pkW33FE0T7qSiFzV6cmOrx5EUfEx+NFt0reAEepFui3xl/gF2FDB1FI/HujyJxta/h68OfoPhqUFwV5beC4K8gx/+d2+bvVcu+cDSwG0iIhC1NC5sd9AdhRnJ249jQD9ypT6MmagPwSYjMXpW3J1T6ied3hg+dSj7oScz2c=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=CoaJzmiy; arc=none smtp.client-ip=209.85.219.43
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="irRl1at9"
-Received: by mail-qk1-f179.google.com with SMTP id af79cd13be357-8cd751a4e93so177193985a.0
-        for <linux-rt-users@vger.kernel.org>; Mon, 09 Mar 2026 15:22:12 -0700 (PDT)
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="CoaJzmiy"
+Received: by mail-qv1-f43.google.com with SMTP id 6a1803df08f44-899fb030812so123503006d6.2
+        for <linux-rt-users@vger.kernel.org>; Mon, 09 Mar 2026 15:54:13 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1773094932; x=1773699732; darn=vger.kernel.org;
+        d=gmail.com; s=20230601; t=1773096853; x=1773701653; darn=vger.kernel.org;
         h=mime-version:references:message-id:in-reply-to:subject:cc:to:from
          :date:from:to:cc:subject:date:message-id:reply-to;
-        bh=l/7spltg2PH1ogFLsR44bxsiLS/iSOb9Ymi0KBFbABM=;
-        b=irRl1at9VVglUKrybsMxgmHZQx6L/7o1tEcpQ/QW77GRpUTV2hmyGX8kGuAruJdWiI
-         YTODY0hiGO9e5XMl2xt98LvqlhgLVO5An9WCJqPQNkTCvEm9N+Afz4PlE/Kxurtg0rwA
-         OaV+DqMyvP1J4LMNDDvqpaMALzavd0Emw1XeD14hAD91B5Q2ompEt+2F4QmonHVwTISt
-         JLTDPTBsmVLCpoN0zN8I/rdCpt+BJirhIVldQyTYB2bS6oeKAOWiwGclfKrXIB0+yWwu
-         73Ctqd2BHT3FmD1I2pxGrfzVR0H65N/N1cEM+NaNlC+kC8O7nwdcWJhfl5mtMbVK67X3
-         1ivA==
+        bh=IKX6xu6AzOmH1xG1jEMxVknHhdETs0/aXjbtJJRHXTE=;
+        b=CoaJzmiyOn/xDgragW5H2PruBJ9dDk9lZ30Z4a3b0TF2ozIQsknWQmv2FOGIpkFPin
+         wBNCT6Xbbv4Q56PiKcvDLdWjBu1VR3AMZ7noJlYhw2xDkY5nXtbHKdNLrvy8cCTUQ+PP
+         2cbH7g7gUCDT+cuT1eGdNtEPPCki9UrknLx3a2oXvOLJbU2Q/niZrARP8hwHDBGDYevF
+         RC6N5vadxXaFc2IFz3jMQ90EIUpzWzuvl/kbdgNT0Z5Uc+YyL8czoetqUxfDS2S8PZRB
+         l1MHSjDAAdQsG2x7Ny1qAZJzag32xCDE+gYK1u98p7WxomeuLPkd021RNQua+2vGMGug
+         XHQg==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1773094932; x=1773699732;
+        d=1e100.net; s=20230601; t=1773096853; x=1773701653;
         h=mime-version:references:message-id:in-reply-to:subject:cc:to:from
          :date:x-gm-gg:x-gm-message-state:from:to:cc:subject:date:message-id
          :reply-to;
-        bh=l/7spltg2PH1ogFLsR44bxsiLS/iSOb9Ymi0KBFbABM=;
-        b=kHCNRYrdm49C0hsrrPCFheCXyPt8x2CwmXpaWMBKP1YSP+5ZWnYHg699h9vsyOkA4P
-         E36jeU34G2b2Thh3sjxKBbUe/2ynV4SDq8uum5x4j4kOb0/srlnkDFZhhnSfEbU7a9D2
-         xLAo9ztNCwMuXvjAm4h4xaqtT1ZbIYYOYstlQOYdhc0OKtjSq2XTCcKaSqHlHlDZH0Sr
-         d7RTXa/F2ceDM7D8LSZ0jD8VLYRn+C4oDm0wq+gb276R6qW8DC5frEBBUMcYfQK7ud9p
-         qXTwIL7T663MYLCf/8IuP6Mtbw7/F0DI5Id01K0/VA767InTOMLKK6l0rEbXkvk+rdln
-         vEag==
-X-Gm-Message-State: AOJu0YxYYhZkl8JMT+Rc+q5c0nltLwSexry5+pJLrCEt+yNEM3ETiT0e
-	J1Q2kVf9eL220Lq6A4MRNFSyg6gIkLhQgVAiFJof4dlDGXIRpOSIomxILbB4ZA==
-X-Gm-Gg: ATEYQzxUSduwAI7NVOzYuvU7fmNtkSqclIrQnPxdQE0JjH8zLM4Ghnbt8gbmY8IxZxs
-	afEbdL1bJjKjQRVnHNwYyafR6L2zKR/3Hp8LjosSaYhqsm5yfxtFb+WOcGftk80P3VIay00KrA+
-	glPNw3oipLh6z7pgIJj0xeISvZVsHcJRngBFrFUXawzWAQMrdf5pBpzBSDo+QzLJIxipbI3wDa7
-	q1z2wD/7WD/+xj2xkgYSPBfKns7i5UU7EtxI+xmSI4hJ5GHgm4HCoa9CBP/Z9ACVESN8bzT3BRp
-	zn95tzqlM/E/js5qINHymJExeUsgDmIHb5zk4c1KWpXNSZzWms0sszWd3wsU3j+G0cZdcJhSZDp
-	OJxCRL0m5lPNK26tsS8wbgQNgVyaov3KixgkmmxtaG2qVZWpXQPOCM/Du4DoiAV0m37Flry1F0c
-	51C7Y2W26Cq75w6CSCyMPhOY1EMGF+9uDrzBOLBqL7nlrQny8Kt8jRoXp7095Hoh5oiRZU13Krs
-	Q==
-X-Received: by 2002:a05:620a:f05:b0:8c5:2ce6:dae with SMTP id af79cd13be357-8cd6d371a2bmr1612168985a.29.1773094931703;
-        Mon, 09 Mar 2026 15:22:11 -0700 (PDT)
+        bh=IKX6xu6AzOmH1xG1jEMxVknHhdETs0/aXjbtJJRHXTE=;
+        b=enPAcW7kbuHF1jVY6zd+rXKyHVjQs3KBG1ZNXmgmLFFLGR+wGBNEetc4OkEpFfKBfK
+         mjjZCCIak3g5FqIO+N+sdIKXpSgblEsqTy0VuMr3cfGKGqdKyOu6AU2GjMXkyyQCSgDn
+         k59WCCgvmpDcQ/JU0yqiFfHg4OTpTu8lkHvfLsgZfq5N1y7eOTj6zN6uZs6igtWKf73X
+         DS2k6gzeoyUSVHdXxXGXgqS+P5v7m7YdjupCI6Rd6h5t6wHQcvcHX/Ne1YOzzFP2jasK
+         xbXCbKsoOpg+PIz7dWgS3J5lbRqZx7rtsILjTSWN9r9eIG8Av1BT4WUVXGVwGSSqBu+S
+         101Q==
+X-Forwarded-Encrypted: i=1; AJvYcCUtFwg884cyT826u3e6+ApUJbNhRBjy2Oio8D3kn9MpGDaZ6m4tbhbuZvwIJZ11x6oIttbns1LHFA3N4QkX+A==@vger.kernel.org
+X-Gm-Message-State: AOJu0YzK33AR08G9tlNip/blCWhMKS8TDE30jZbSPrkWp8BZ2PwbvQAJ
+	FcpzbW9G6AwOJWUqBebyKxj1sYOhwVhyWvQPOV6rF9ZYYxbwC5kc7B0wZgL3uA==
+X-Gm-Gg: ATEYQzzeu9wCDnt8yEUYTxtrp9KPBcoAgUpQ5D/0DxszF11VO6Es+hxTx/tXtVkbD2Y
+	pChDYlVYjVkaP/xxBUiKVttnyiAnYxVR+1aICYboxWW+LypyXl1y4kgAHlaf8mkpx/VVpS7ayaM
+	gN4MvGQlWMh3hwj7E53z6DYroyhnEjLD8BWCloaR5kZknHw0psfZSC2l3pTFy4WvWQFmLH8Rahp
+	tg67JraxurHXhtfRRvBZrXMV7MbEFCxlugEElhqM7oWcarllIDh+Unsv2NnoKLQR+EWpJ0FiwgP
+	aMB/4vnNd0QPEIrE15yAJOYMNY62edqjB1wFH1DQgYPNk1HkOJotDj56v213f2pZQ8l4bejYffD
+	2WL7Ly0YtQvVe6eFvJ5UnXiBkcN4mxwKG69/PBW3r6VHUKrKYfcacL42NQFrVI+vqIaepDkNUo6
+	StivBIQFdaPZHa75gKU08RHXek5xqoz20ZC1sE3gvMSI+/kqvAS/5jXfr8Y1XLNUtVD2ctXzbZ8
+	g==
+X-Received: by 2002:a05:6214:cac:b0:899:e9bf:3744 with SMTP id 6a1803df08f44-89a30b1505dmr181396426d6.63.1773096852514;
+        Mon, 09 Mar 2026 15:54:12 -0700 (PDT)
 Received: from Cumhall ([70.50.116.180])
-        by smtp.gmail.com with ESMTPSA id af79cd13be357-8cd6f4840b1sm766860085a.1.2026.03.09.15.22.10
+        by smtp.gmail.com with ESMTPSA id 6a1803df08f44-89a57a1aec5sm7338846d6.8.2026.03.09.15.54.11
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Mon, 09 Mar 2026 15:22:11 -0700 (PDT)
-Date: Mon, 9 Mar 2026 18:21:59 -0400 (EDT)
+        Mon, 09 Mar 2026 15:54:12 -0700 (PDT)
+Date: Mon, 9 Mar 2026 18:54:01 -0400 (EDT)
 From: John Kacur <jkacur@gmail.com>
-To: Costa Shulyupin <costa.shul@redhat.com>
-cc: linux-rt-users <linux-rt-users@vger.kernel.org>, 
-    John Kacur <jkacur@redhat.com>, 
-    "Luis Claudio R. Goncalves" <lgoncalv@redhat.com>
-Subject: Re: [PATCH v1] rt-tests: hwlatdetect: Add timestamp delta
-In-Reply-To: <20260302193310.1712952-1-costa.shul@redhat.com>
-Message-ID: <06a3f0b6-2cee-3ac6-8b0b-c63621a76c75@gmail.com>
-References: <20260302193310.1712952-1-costa.shul@redhat.com>
+To: Lukas Beckmann <lbckmnn@mailbox.org>
+cc: John Kacur <jkacur@redhat.com>, rt-users <linux-rt-users@vger.kernel.org>
+Subject: Re: [PATCH 1/2] cyclictest: fix growing shm stat file
+In-Reply-To: <20260301212407.3146506-2-lbckmnn@mailbox.org>
+Message-ID: <5356ca11-53fd-656b-d934-cf91dfb44e39@gmail.com>
+References: <20260301212407.3146506-1-lbckmnn@mailbox.org> <20260301212407.3146506-2-lbckmnn@mailbox.org>
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
@@ -77,62 +76,37 @@ Content-Type: text/plain; charset=US-ASCII
 
 
 
-On Mon, 2 Mar 2026, Costa Shulyupin wrote:
+On Sun, 1 Mar 2026, Lukas Beckmann wrote:
 
-> Add delta field that calculates the time interval between consecutive
-> samples. For the first sample, the previous timestamp is initialized to
-> 'nan' (Not a Number), so the first delta is also 'nan'.
+> On a received USR2 signal, the current statistics are written to a file
+> in shared memory. Before that happens, it is truncated to zero to clear
+> it.
 > 
-> This helps identify periodic issues during hardware latency testing.
+> However, currently the shm file keeps growing with each received signal
+> because the seek pointer is not updated by ftruncate.
 > 
-> Signed-off-by: Costa Shulyupin <costa.shul@redhat.com>
+> This is fixed by calling fseek after truncating.
+> 
+> Signed-off-by: Lukas Beckmann <lbckmnn@mailbox.org>
 > ---
->  src/hwlatdetect/hwlatdetect.py | 10 ++++++----
->  1 file changed, 6 insertions(+), 4 deletions(-)
+>  src/cyclictest/cyclictest.c | 1 +
+>  1 file changed, 1 insertion(+)
 > 
-> diff --git a/src/hwlatdetect/hwlatdetect.py b/src/hwlatdetect/hwlatdetect.py
-> index 42b9f301718a..f95e771048f6 100755
-> --- a/src/hwlatdetect/hwlatdetect.py
-> +++ b/src/hwlatdetect/hwlatdetect.py
-> @@ -253,7 +253,8 @@     def detect(self):
->  
->      class Sample:
->          'private class for tracer sample data'
-> -        __slots__ = 'cpu', 'timestamp', 'inner', 'outer', 'count'
-> +        __slots__ = 'cpu', 'timestamp', 'delta', 'inner', 'outer', 'count'
-> +        prev = 'nan'
-
-	prev = float('nan')
-
-
->  
->          def __init__(self, line):
->              fields = line.split()
-> @@ -276,14 +277,15 @@         def __init__(self, line):
->              i, o = fields[6].split('/')
->              ts = fields[7][3:]
->              self.timestamp = str(ts)
-		ts_float = float(ts)
-
-> +            self.delta = float(ts) - float(self.__class__.prev)
-		self.delta = ts_float - self.__class__.prev
-> +            self.__class__.prev = ts
-		self.__class__.prev = ts_float
->              self.inner = int(i)
->              self.outer = int(o)
->              self.count = int(kv["count"]) if "count" in kv else None
->  
->          def __str__(self):
-> -            if self.count is not None:
-> -                return f"ts: {self.timestamp}, inner:{self.inner}, outer:{self.outer}, cpu:{self.cpu}, count:{self.count}"
-> -            return f"ts: {self.timestamp}, inner:{self.inner}, outer:{self.outer}, cpu:{self.cpu}"
-> +            s = f"ts: {self.timestamp}, delta:{self.delta:.6f}, inner:{self.inner}, outer:{self.outer}, cpu:{self.cpu}"
-> +            return s if self.count is None else s + f", count:{self.count}"
->  
->          def display(self):
->              """ convert object to string and print """
+> diff --git a/src/cyclictest/cyclictest.c b/src/cyclictest/cyclictest.c
+> index 191945e..960c905 100644
+> --- a/src/cyclictest/cyclictest.c
+> +++ b/src/cyclictest/cyclictest.c
+> @@ -1472,6 +1472,7 @@ static void sighand(int sig)
+>  			return;
+>  		}
+>  		rstat_ftruncate(rstat_fd, 0);
+> +		lseek(rstat_fd, 0, SEEK_SET);
+>  		quiet = 0;
+>  		dprintf(rstat_fd, "#---------------------------\n");
+>  		dprintf(rstat_fd, "# cyclictest current status:\n");
 > -- 
 > 2.53.0
 > 
 > 
 > 
+Signed-off-by: John Kacur <jkacur@redhat.com>
