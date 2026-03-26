@@ -1,61 +1,177 @@
-Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
-	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id AAAF833FE05;
-	Thu, 26 Mar 2026 14:52:44 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
+Received: from smtpfb2-g21.free.fr (smtpfb2-g21.free.fr [212.27.42.10])
+	by smtp.subspace.kernel.org (Postfix) with ESMTP id 152A0402428
+	for <linux-rt-users@vger.kernel.org>; Thu, 26 Mar 2026 15:34:25 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=212.27.42.10
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1774536764; cv=none; b=EGjg4pzKBBQ+qqFFODJebExJPAGFnJyIxaj0iP/0PjcsYOq3V3XdE3PCvwqOhO7lprTiu2RwO379/P2Jx1FHQFQmhUFRv2sOlPoYCdLOPPCtqiNrxyxSp5WXu5qPWwRlErSsCLJC6bQYzrW9oxCF8pEX9blgl/WfAbE0KqXLSMM=
+	t=1774539270; cv=none; b=nfGIUxAnK3imkbk8RqlhFDE4Y721FaZTGCYi5yaM3xcVAyCGP8sFIy1taVuuPVVIrXpP8cusbjEpNGtIEM/bxfZCbnFuWPw8TADINKQ/M01kRqnLySl4qKlSh5SjJHaL44t+OMoParMJndyMbLLh8QducHWMKhq+d42fLXDCbBY=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1774536764; c=relaxed/simple;
-	bh=WWp2J6XEblP+dVnCSqcs3bjGAghEOzaXbJK75udXCrE=;
-	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 Content-Type:Content-Disposition:In-Reply-To; b=BVYyGUET+TT+I4wQDs6aCVgB53XSW3kXliaUNIfKIBiblCqb4QsM/36YEtVhWzwhHvSiM4Rnrb+tv4NN0X4M+sBH5KlYivWx0E1k7RGw82or8OdqReEEwHLZo5MBCKggSchgMUQM9qMgBY6KdampMod7xkIz0Szz9KGk9ZtVe14=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (1024-bit key) header.d=linuxfoundation.org header.i=@linuxfoundation.org header.b=iHDQwHCk; arc=none smtp.client-ip=10.30.226.201
+	s=arc-20240116; t=1774539270; c=relaxed/simple;
+	bh=+BBvUQWh2/l+VOX/iiJN8/yNtATjLZ6WVnwBpADyO/0=;
+	h=Message-ID:Date:MIME-Version:To:Cc:From:Subject:Content-Type; b=cKp0D9nvRC+pm5jm7+np34Id7TGr1/JIiANkm8t7dh1MKC2kaItLIlR3+WZUAos12tdO/8EWcv0FGOjF5bfDl9mUkzA+nXwlFcRT+UijoRemD6GCyMjRbXod7661syfpW4qFBwHp5uiV9ZlmxR3QFf3N+At+l2zL/Q5/pJlOgkQ=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=free.fr; spf=pass smtp.mailfrom=free.fr; dkim=pass (2048-bit key) header.d=free.fr header.i=@free.fr header.b=ejRH8RdJ; arc=none smtp.client-ip=212.27.42.10
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=free.fr
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=free.fr
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=linuxfoundation.org header.i=@linuxfoundation.org header.b="iHDQwHCk"
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id B2727C116C6;
-	Thu, 26 Mar 2026 14:52:43 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=linuxfoundation.org;
-	s=korg; t=1774536764;
-	bh=WWp2J6XEblP+dVnCSqcs3bjGAghEOzaXbJK75udXCrE=;
-	h=Date:From:To:Cc:Subject:References:In-Reply-To:From;
-	b=iHDQwHCkYXvFmUYaEea9ADnaYtKR0Wl5Y31qShiPcnpVQVI6o5CiWvDopFwhRtuHc
-	 EQMF0GXstN1oiioWXQNpbTjnL3QdOR03KmFZwgWTOCGCPye6cKVbo4sIbg/6JwXklW
-	 bKvN45Gi+k3k2cxyG5G2s6Lv1QEoxd37A/pbpTa4=
-Date: Thu, 26 Mar 2026 15:52:20 +0100
-From: Greg KH <gregkh@linuxfoundation.org>
-To: "Ionut Nechita (Wind River)" <ionut.nechita@windriver.com>
-Cc: namcao@linutronix.de, brauner@kernel.org, linux-fsdevel@vger.kernel.org,
-	linux-rt-users@vger.kernel.org, stable@vger.kernel.org,
-	linux-kernel@vger.kernel.org, frederic@kernel.org,
-	vschneid@redhat.com, chris.friesen@windriver.com,
-	viorel-catalin.rapiteanu@windriver.com, iulian.mocanu@windriver.com
-Subject: Re: [REGRESSION] =?iso-8859-1?Q?osnoise=3A?=
- =?iso-8859-1?Q?_=22eventpoll=3A_Replace_rwlock_with_spinlock=22_causes_~5?=
- =?iso-8859-1?B?MLVz?= noise spikes on isolated PREEMPT_RT cores
-Message-ID: <2026032640-gangly-sprout-099b@gregkh>
-References: <20260326140058.272854-1-ionut.nechita@windriver.com>
+	dkim=pass (2048-bit key) header.d=free.fr header.i=@free.fr header.b="ejRH8RdJ"
+Received: from smtp3-g21.free.fr (smtp3-g21.free.fr [212.27.42.3])
+	by smtpfb2-g21.free.fr (Postfix) with ESMTP id 856B54C2B5
+	for <linux-rt-users@vger.kernel.org>; Thu, 26 Mar 2026 16:24:42 +0100 (CET)
+Received: from [IPV6:2a01:e34:ec24:52e0:6546:2334:32e8:d6eb] (unknown [IPv6:2a01:e34:ec24:52e0:6546:2334:32e8:d6eb])
+	(Authenticated sender: marc.w.gonzalez@free.fr)
+	by smtp3-g21.free.fr (Postfix) with ESMTPSA id 83B8713F8A2;
+	Thu, 26 Mar 2026 16:24:16 +0100 (CET)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=free.fr;
+	s=smtp-20201208; t=1774538674;
+	bh=+BBvUQWh2/l+VOX/iiJN8/yNtATjLZ6WVnwBpADyO/0=;
+	h=Date:To:Cc:From:Subject:From;
+	b=ejRH8RdJaT2Scgz9l2NAoAP2h5DT0RW3Jwgqw/NcR0Z4rvCD6anfq1tIhfgLtndhx
+	 6mLZvzwRYeZrei2K3cs07NZzgsJhHDo4btIeXYUtuzQzB2KsIEIt/r04N4X4RCzo8R
+	 GEvrpsYtU1N8VYmnyw3dtSFFjDDI2KLp5Nf3oB3VOEdoqqMwBldML1JP8DizGlrW2e
+	 9xg+qvnX3WWmnN9W81H0DtDkJUvxYHj5Ef8HwCvIpDMbAS5uQRS4vYlWd54wWPC8Da
+	 7du/5s+qUWgdYuoE6JH53Hqd06MHbiv+gVZV5VJWD8HwhyZlSyI3+W017gU5ZcTCm/
+	 REpqkM8FyWgig==
+Message-ID: <199905cb-04b3-4d3e-aeb3-da2b2d6428eb@free.fr>
+Date: Thu, 26 Mar 2026 16:24:16 +0100
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
 List-Subscribe: <mailto:linux-rt-users+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-In-Reply-To: <20260326140058.272854-1-ionut.nechita@windriver.com>
+User-Agent: Mozilla Thunderbird
+Content-Language: en-US
+To: linux-rt-users@vger.kernel.org
+Cc: Leon Woestenberg <leon@sidebranch.com>,
+ John Ogness <john.ogness@linutronix.de>, Steven Rostedt
+ <rostedt@goodmis.org>, Thomas Gleixner <tglx@linutronix.de>,
+ Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+ Clark Williams <williams@redhat.com>, Pavel Machek <pavel@denx.de>,
+ Luis Goncalves <lgoncalv@redhat.com>,
+ John McCalpin <mccalpin@tacc.utexas.edu>,
+ Frederic Weisbecker <fweisbec@gmail.com>, Ingo Molnar <mingo@kernel.org>,
+ Masami Hiramatsu <mhiramat@kernel.org>,
+ "Ahmed S. Darwish" <darwi@linutronix.de>, agner@agner.org,
+ Dirk Beyer <dirk.beyer@lmu.de>, Philipp Wendler <philipp.wendler@lmu.de>
+From: Marc Gonzalez <marc.w.gonzalez@free.fr>
+Subject: Unexplained variance in run-time of simple program (part 2)
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
 
-On Thu, Mar 26, 2026 at 04:00:57PM +0200, Ionut Nechita (Wind River) wrote:
-> Hi,
-> 
-> I'm reporting a regression introduced by commit 0c43094f8cc9
-> ("eventpoll: Replace rwlock with spinlock"), backported to stable 6.12.y.
+Hello (again) everyone,
 
-Does this regression also show up in the 6.18 release and newer?  If so,
-please work to address it there first, as that is where it needs to be
-handled first.
+Past discussion:
+Large(ish) variance induced by SCHED_FIFO / Unexplained variance in run-time of trivial program
+https://lore.kernel.org/linux-rt-users/0d87e3c3-8de1-4d98-802e-a292f63f1bf1@free.fr/
 
-thanks,
+SYNOPSIS:
+I have a simple(*) program.
+I want to know how long the program runs.
 
-greg k-h
+(*) By simple, I mean:
+- no system calls, no library calls, just simple bit twiddling
+- tiny code, small(ish) dataset
+(the main function uses ~900 bytes of stack & recurses 40-60 times)
+
+GOAL: Run the program 25,000 times. Get the SAME(ish) cycle count 25,000 times.
+
+Running kernel v6.8 on Haswell i5-4590 3.3 GHz
+
+I have removed "all" sources of noise / jitter / variance in the system:
+
+A) kernel boots with:
+threadirqs irqaffinity=0-2 nohz=on nohz_full=3 isolcpus=3 rcu_nocbs=3 nosmt mitigations=off single
+i.e.
+- Expose ISRs as regular processes
+- No ISRs on CPU3
+- No timer interrupt on CPU3
+- No RCU callbacks on CPU3
+- 1 thread per core
+- No side-channel mitigations
+- Single user mode, no GUI, only 1 terminal
+
+B) before program runs:
+echo -1 > /proc/sys/kernel/sched_rt_runtime_us
+for I in 0 1 2 3; do echo userspace > /sys/devices/system/cpu/cpu$I/cpufreq/scaling_governor; done
+for I in 0 1 2 3; do echo   2000000 > /sys/devices/system/cpu/cpu$I/cpufreq/scaling_setspeed; done
+sleep 0.5
+i.e
+- Let SCHED_FIFO program monopolize a CPU
+- Pin CPU frequency to 2 GHz to avoid thermal throttling & disable turbo-boost
+- Give these settings time to settle
+
+C) start the benchmark:
+for I in $(seq 1 25000); do chrt -f 99 taskset -c 3 ./bench; done
+i.e.
+- Run as SCHED_FIFO 99 = nothing can interrupt the benchmark
+- Run the program on isolated CPU 3 where nothing else is running
+$ ps -eo psr,cls,pri,cmd --sort psr,pri
+  3  FF 139 [migration/3]
+  3  FF  90 [idle_inject/3]
+  3  TS  19 [cpuhp/3]
+  3  TS  19 [ksoftirqd/3]
+  3  TS  19 [kworker/3:0-events]
+  3  TS  19 [kworker/3:1]
+
+D) prepare to run the timed code:
+	u64 v[1+4];
+	int main_fd = open_event(PERF_TYPE_HARDWARE, PERF_COUNT_HW_CPU_CYCLES, -1);
+	open_event(PERF_TYPE_HARDWARE, PERF_COUNT_HW_INSTRUCTIONS, main_fd);
+	open_event(PERF_TYPE_RAW, UOPS_EXECUTED, main_fd);
+	open_event(PERF_TYPE_RAW, EXEC_STALLS, main_fd);
+
+	void *ctx = init_ctx();
+	solve_grid(ctx); // warm up all types of caches
+
+	ioctl(main_fd, PERF_EVENT_IOC_RESET, PERF_IOC_FLAG_GROUP);
+	solve_grid(ctx);
+	if (read(main_fd, v, sizeof v) < sizeof v) return 2;
+
+	printf("%lu %lu %lu %lu\n", v[1], v[2], v[3], v[4]);
+
+- PERF_EVENT_IOC_RESET resets all counters to 0, so we're only measuring the actual program, not any setup/teardown system code.
+
+The results are unexpected, disappointing, frustrating...
+
+
+  AA     BB     CC    DD
+$ head -5 sorted.RES.5
+108018 186124 256147 23195
+108412 186124 257228 23275
+108637 186124 258963 23245
+109103 186124 258598 23507
+109167 186124 259715 23425
+
+$ tail -5 sorted.RES.5
+123824 186124 266546 30949
+124755 186122 266494 31749
+124773 186124 264435 30966
+126273 186122 267967 32376
+130967 186124 284301 33597
+
+AA = PERF_COUNT_HW_CPU_CYCLES
+BB = PERF_COUNT_HW_INSTRUCTIONS
+CC = UOPS_EXECUTED
+DD = EXEC_STALLS
+
+It seems the program runs in ~108k cycles, but unexplained perturbations can delay
+the program by up to 23k cycles = 21% (108k + 23k = 131k in the worst observed case)
+
+BEST CASE vs WORST CASE
+108018 186124 256147 23195
+130967 186124 284301 33597
+
+Run-time: +21%
+I_count: identical
+uop_count: +11%
+exec_stalls: +45%
+
+I don't see these wild deviations when I test toy programs that don't touch memory
+or only touch 1 word on the stack. So this seems to be memory-related?
+But everything fits in L1...
+Could there be some activity on other CPUs that force cache-coherence shenanigans?
+I'm stumped :(
+
+Would appreciate any insight.
+Will re-read the previous thread for anything I might have missed.
+
+Regards
