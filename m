@@ -1,153 +1,171 @@
-Received: from mta-64-228.siemens.flowmailer.net (mta-64-228.siemens.flowmailer.net [185.136.64.228])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 4D5AA3CCFBA
-	for <linux-rt-users@vger.kernel.org>; Fri, 27 Mar 2026 07:54:30 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=185.136.64.228
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 30CD4342507
+	for <linux-rt-users@vger.kernel.org>; Fri, 27 Mar 2026 16:10:13 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1774598081; cv=none; b=sDcjip5ExDB+tLXlY934xEl1MYMCpc2Nc7BrJxc+YkYWhXpenM/ZqDhIZoIdofrxlPJcaTjnrS0/FxxRY/AIBKHnEecPUBrDrPWSzsHicL8rPBY+bk7dYWEzsaVGIoNphTOpciIf7o+s8j1xEYm8KzqBQlPhGHTH1l57nAdlAX8=
+	t=1774627814; cv=none; b=hAVb+zkQ4VusJqDxG85jeYC/b6dhZMuzoK9NTPINqYSEsBAkR/P9G1OBju74vjm3DXM8k3WEzuG7VUhZPal6b5VqCuy1H6bA63Wj4r5J6SCg1b9lXbva+nQl6zNcGnfZ6ZNn2Ao/mewCuYQ3kFwgTeKjIXcgRkddPfOJIdGzius=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1774598081; c=relaxed/simple;
-	bh=QKoij/UHiladQPESXJyemd48Dww0EegD39OySnyWzpY=;
-	h=Message-ID:Subject:From:To:Cc:Date:In-Reply-To:References:
-	 Content-Type:MIME-Version; b=o0+TB5lhN2hkeMi9zwrCuBsxm3r8XMhvylxUFzZAfHPRI8a1ArAdNODYpwGype3jISu7wrH+ZxQV+R3cii4lo2q3UE/Cvjj9lfKTKLEqTwSl6bmf25oxTaaC1Pmhye19w2ZMfcv9ZbjrP+7i0IBiO6ZVccQUFhEQNq+xj2Hzgrw=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=siemens.com; spf=pass smtp.mailfrom=rts-flowmailer.siemens.com; dkim=pass (2048-bit key) header.d=siemens.com header.i=florian.bezdeka@siemens.com header.b=I3SwD6rH; arc=none smtp.client-ip=185.136.64.228
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=siemens.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=rts-flowmailer.siemens.com
+	s=arc-20240116; t=1774627814; c=relaxed/simple;
+	bh=YkcuI4UmhZbzee969mw/lAJNinkwNHJ3BxOd98qcAbo=;
+	h=From:To:Cc:Subject:In-Reply-To:References:Date:Message-ID:
+	 MIME-Version:Content-Type; b=G0h6lqK/KuWAuszzeMm6PR8mE72FoeuHCtZToKYVzJWgG8Aep3p21LrJuUhVSnG2e7d1SEpSBNn8FH2LksYOmAcW1wFXNnCsg6MCuj/XR6svzMDfJ4IwnjsSvvuJKszhKhySt6MPOHCUqDc2MMpHMDf2/VU3SaYjC7R3lXHgNsg=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=DKM1JWHb; dkim=pass (2048-bit key) header.d=redhat.com header.i=@redhat.com header.b=NKPr/JUP; arc=none smtp.client-ip=170.10.133.124
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=siemens.com header.i=florian.bezdeka@siemens.com header.b="I3SwD6rH"
-Received: by mta-64-228.siemens.flowmailer.net with ESMTPSA id 202603270744197b4c3abd1f00020796
-        for <linux-rt-users@vger.kernel.org>;
-        Fri, 27 Mar 2026 08:44:19 +0100
-DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; s=fm1;
- d=siemens.com; i=florian.bezdeka@siemens.com;
- h=Date:From:Subject:To:Message-ID:MIME-Version:Content-Type:Content-Transfer-Encoding:Cc:References:In-Reply-To;
- bh=QKoij/UHiladQPESXJyemd48Dww0EegD39OySnyWzpY=;
- b=I3SwD6rHZcWkmTh/XeYhjtnf9b8O6+K0tlI5sBGHYfv+TiUM8Z/cuyl94x+K9J1K2fV7EL
- A/qIJevINCZsStACtlFP6Ukk6w2pTfcenmTuvKmgs+31eP7BpDRbwVhkp40TiDmJf2nBidhb
- fgqdNVNjZOdQbC/LzwYDcTrAMO1WMt1U/vX8Ncu9nSD+tzIwTruxmw88g1qiHgAXiwoWUJ8H
- OGHrnl8Zq1ksiauMoNLTffqw60omF4AP8EBCQqJNaHpvevRElG9T03x0JqnAUk3V7mRUUe9L
- BcF/M50rkHgk0rnRCHPodiMuQ7O8erpTcTFg5Be40VX+MaOxjOIeTfNg==;
-Message-ID: <480f889c1744132f39983178fbad90ad11e081ed.camel@siemens.com>
-Subject: Re: [REGRESSION] osnoise: "eventpoll: Replace rwlock with spinlock"
- causes =?ISO-8859-1?Q?~50=B5s?= noise spikes on isolated PREEMPT_RT cores
-From: Florian Bezdeka <florian.bezdeka@siemens.com>
-To: Crystal Wood <crwood@redhat.com>, "Ionut Nechita (Wind River)"
-	 <ionut.nechita@windriver.com>, namcao@linutronix.de, brauner@kernel.org
-Cc: linux-fsdevel@vger.kernel.org, linux-rt-users@vger.kernel.org, 
-	stable@vger.kernel.org, linux-kernel@vger.kernel.org, frederic@kernel.org, 
-	vschneid@redhat.com, gregkh@linuxfoundation.org,
- chris.friesen@windriver.com, 	viorel-catalin.rapiteanu@windriver.com,
- iulian.mocanu@windriver.com, 	jan.kiszka@siemens.com
-Date: Fri, 27 Mar 2026 08:44:18 +0100
-In-Reply-To: <af22ac4288e36ff879fa8993790c11973f6af45d.camel@redhat.com>
-References: <20260326140058.272854-1-ionut.nechita@windriver.com>
-	 <af22ac4288e36ff879fa8993790c11973f6af45d.camel@redhat.com>
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: base64
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="DKM1JWHb";
+	dkim=pass (2048-bit key) header.d=redhat.com header.i=@redhat.com header.b="NKPr/JUP"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1774627812;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 in-reply-to:in-reply-to:references:references;
+	bh=YCK3ssWRiv4I0Dc/RzkMjz9crFU2zJlsWVTQmPeHPq8=;
+	b=DKM1JWHbA/RtRFClyPTDeqqfomXnaPExog/Q0elmdVRQtxyC2LTlNVWEpV3OpKqg5ROGpJ
+	M9+3HZ7yXcOIEvmYwtqq+7jmnZopBQPYNiDDogAY4d+BGmYKNWeM2pt2SGv9xy868oeDO9
+	/S8bha2tHfVqkdjNM6P2QOvpN5QQxCo=
+Received: from mail-wm1-f71.google.com (mail-wm1-f71.google.com
+ [209.85.128.71]) by relay.mimecast.com with ESMTP with STARTTLS
+ (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
+ us-mta-516-UQnIs3FONt6FoD-4j-0jZQ-1; Fri, 27 Mar 2026 12:10:10 -0400
+X-MC-Unique: UQnIs3FONt6FoD-4j-0jZQ-1
+X-Mimecast-MFC-AGG-ID: UQnIs3FONt6FoD-4j-0jZQ_1774627809
+Received: by mail-wm1-f71.google.com with SMTP id 5b1f17b1804b1-48531e6012bso25849915e9.1
+        for <linux-rt-users@vger.kernel.org>; Fri, 27 Mar 2026 09:10:10 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=redhat.com; s=google; t=1774627809; x=1775232609; darn=vger.kernel.org;
+        h=mime-version:message-id:date:references:in-reply-to:subject:cc:to
+         :from:from:to:cc:subject:date:message-id:reply-to;
+        bh=YCK3ssWRiv4I0Dc/RzkMjz9crFU2zJlsWVTQmPeHPq8=;
+        b=NKPr/JUPddSjd+q85TMIGOxiXZHPhdZLKkvtwDvW0TcijYvoiolxnkQmRc2DxOw/ks
+         2SBOVQQ8ye+FWIAKqNkVcP7+03NfH2/qlN+Ra92ANW7p6OxMAo/qdh+cWQ7OQIOqePaV
+         /JoMeIctWiPLfiLyEArEOxJhCHobs33Pz+S8snKvDGy3bt3nMRrjrY4Re0L2DIr7Zrx1
+         8vjxkkPp8vlJm06bhyEeKK5Ihv3U7/nq8/gPFD7t+D/nyx7nHwUqgQmmZY7008gP9sVt
+         2uuhKvQ+R1CV56l1Jcl/aMrcPbH1ioqjlgNrdYW8CqWRdDt7YOQHf02ae3T1XleUp1tx
+         y/Jw==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20251104; t=1774627809; x=1775232609;
+        h=mime-version:message-id:date:references:in-reply-to:subject:cc:to
+         :from:x-gm-gg:x-gm-message-state:from:to:cc:subject:date:message-id
+         :reply-to;
+        bh=YCK3ssWRiv4I0Dc/RzkMjz9crFU2zJlsWVTQmPeHPq8=;
+        b=PFprDWwwqdE1e30b3aApaMIT0Be6esjBfuxBXI9Y2RHex7bOlmdRIkjK6cmr8ZS7H0
+         GDCMO6V9Wymor8JnWbXc+U4qhGhY5aReMnpQGe3du2lBjRrX+UUMxoJKQfJk4YNCHhg+
+         A7R7GF3nNPX+3nA8u+0r1LHGd8M9sfTbPLxc4Q4IqXUHMG+Aj50m9z2APyjyVZkOvKMN
+         M7KYO4HorPwm9045PywXeW1qkb9qX5JUFdEGn/i5d2oopw4yjIp0wS7uRnxYWKkwEHF0
+         hfjRGokp9Ml3ExglDYar550YQXtnB3obkofLP979Gfupg1zD0/gF5YPbN6XXhWFzUxDO
+         pipw==
+X-Forwarded-Encrypted: i=1; AJvYcCW93WOGXNvVEhbjIWATnp8WTg2la2s2j9domPks8zd99141GNEwfAbtHoDV3+ICyZPw7amk3on4qQVRIWN64w==@vger.kernel.org
+X-Gm-Message-State: AOJu0YwW+Siffyqq/oPKOR6MYBzrZgqxCitr+nvtR7o/YdYWd3fyIQc4
+	ljIzggRJhibKkBZNZGhqQNca3dV8OnXzYnV/+RcAxBZ98NJtQ4UxLNsE7dHhk9iLTXkW5xELi0E
+	SlyUSdOMjjX9RXUCZRjAJhQx4pIoBr8aZMJSv6ai7KAAHGf911yh9U8e4TFWPUOYlrnV4
+X-Gm-Gg: ATEYQzzODdD6HeZMPHkD2D/j+XwGqFotaV0QppaNfHbCGLN8ZueIIyCVzviF2HvuBC3
+	AXgMy3Y1YPeNbMDZp7w440t5kb5vl+1sGg+4tDvtBSFSHCOs9LtBfHi2FoUG0CRZR37DPKXKeg5
+	FB7kLm5e7it6YAAJilgwzSXIkY/KGme/iemOwN5KxJlaj6H+THT66yvlteVc6tWlFLB77WQACe+
+	tU5xnqzEX8zNQj/7KmchSvIJygzxJ8CQ/iiGs2b3YLjTr7QfmHVxamObnbVz54mQ5Krk1zYTvoo
+	40UCxIeZV3Evn8fj1OlIlzkNoXpkVFsvMQG7uPUsQOZQm9dNNV9+4zQSzznt4OAG/7poyw3OCCc
+	hGqOy487lDjMUvlL3J3RNpY0Y9fGLF1q1jMqIENsWNPtngEcDRorBh+4J7pnZVw8y+UIcjaDy2s
+	deictCjOU=
+X-Received: by 2002:a05:600c:1393:b0:485:3c8f:e4d9 with SMTP id 5b1f17b1804b1-487280a09a2mr51509105e9.26.1774627809199;
+        Fri, 27 Mar 2026 09:10:09 -0700 (PDT)
+X-Received: by 2002:a05:600c:1393:b0:485:3c8f:e4d9 with SMTP id 5b1f17b1804b1-487280a09a2mr51508295e9.26.1774627808677;
+        Fri, 27 Mar 2026 09:10:08 -0700 (PDT)
+Received: from vschneid-thinkpadt14sgen2i.remote.csb (213-44-135-146.abo.bbox.fr. [213.44.135.146])
+        by smtp.gmail.com with ESMTPSA id 5b1f17b1804b1-48722c789ecsm101715745e9.4.2026.03.27.09.10.07
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Fri, 27 Mar 2026 09:10:08 -0700 (PDT)
+From: Valentin Schneider <vschneid@redhat.com>
+To: Ionut Nechita <ionut.nechita@windriver.com>, fweisbec@gmail.com,
+ tglx@linutronix.de
+Cc: anna-maria@linutronix.de, linux-rt-users@vger.kernel.org,
+ linux-kernel@vger.kernel.org, frederic@kernel.org,
+ chris.friesen@windriver.com, viorel-catalin.rapiteanu@windriver.com,
+ ionut_n2001@yahoo.com
+Subject: Re: NO_HZ_FULL vs NO_HZ_IDLE: ~300ns cyclictest latency regression
+ from context tracking overhead
+In-Reply-To: <20260326165725.451127-1-ionut.nechita@windriver.com>
+References: <20260326165725.451127-1-ionut.nechita@windriver.com>
+Date: Fri, 27 Mar 2026 17:10:07 +0100
+Message-ID: <xhsmhpl4pfe3k.mognet@vschneid-thinkpadt14sgen2i.remote.csb>
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
 List-Subscribe: <mailto:linux-rt-users+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-X-Flowmailer-Platform: Siemens
-Feedback-ID: 519:519-68982:519-21489:flowmailer
+Content-Type: text/plain
 
-T24gVGh1LCAyMDI2LTAzLTI2IGF0IDEzOjEyIC0wNTAwLCBDcnlzdGFsIFdvb2Qgd3JvdGU6Cj4g
-T24gVGh1LCAyMDI2LTAzLTI2IGF0IDE2OjAwICswMjAwLCBJb251dCBOZWNoaXRhIChXaW5kIFJp
-dmVyKSB3cm90ZToKPiA+IEhpLAo+ID4gCj4gPiBJJ20gcmVwb3J0aW5nIGEgcmVncmVzc2lvbiBp
-bnRyb2R1Y2VkIGJ5IGNvbW1pdCAwYzQzMDk0ZjhjYzkKPiA+ICgiZXZlbnRwb2xsOiBSZXBsYWNl
-IHJ3bG9jayB3aXRoIHNwaW5sb2NrIiksIGJhY2twb3J0ZWQgdG8gc3RhYmxlIDYuMTIueS4KPiA+
-IAo+ID4gT24gYSBQUkVFTVBUX1JUIHN5c3RlbSB3aXRoIG5vaHpfZnVsbCBpc29sYXRlZCBjb3Jl
-cywgdGhpcyBjb21taXQgY2F1c2VzCj4gPiBzaWduaWZpY2FudCBvc25vaXNlIGRlZ3JhZGF0aW9u
-IG9uIHRoZSBpc29sYXRlZCBDUFVzLgo+ID4gCj4gPiBTZXR1cDoKPiA+IMKgwqAgLSBLZXJuZWw6
-IDYuMTIuNzggd2l0aCBQUkVFTVBUX1JUCj4gPiDCoMKgIC0gSGFyZHdhcmU6IHg4Nl82NCwgZHVh
-bC1zb2NrZXQgKENQVXMgMC02MykKPiA+IMKgwqAgLSBCb290IHBhcmFtczogbm9oel9mdWxsPTEt
-MTYsMzMtNDggaXNvbGNwdXM9bm9oeixkb21haW4sbWFuYWdlZF9pcnEsMS0xNiwzMy00OAo+ID4g
-wqDCoMKgwqAgcmN1X25vY2JzPTEtMzEsMzMtNjMga3RocmVhZF9jcHVzPTAsMzIgaXJxYWZmaW5p
-dHk9MTctMzEsNDktNjMKPiA+IMKgwqAgLSBUb29sOiBvc25vaXNlIHRyYWNlciAoLi9vc25vaXNl
-IC1jIDEtMTYsMzMtNDgpCj4gCj4gSXMgU01UIGRpc2FibGVkPwo+IAo+IAo+ID4gV2l0aCBjb21t
-aXQgYXBwbGllZCAoc3BpbmxvY2ssIGtlcm5lbCA2LjEyLjc4LXZhbmlsbGEtMCk6Cj4gPiAKPiA+
-IMKgwqAgQ1BVwqDCoMKgIFJVTlRJTUXCoMKgIE1BWF9OT0lTRcKgwqAgQVZBSUwlwqDCoMKgwqDC
-oCBOT0lTRcKgIE5NScKgwqAgSVJRwqDCoCBTSVJRwqAgVGhyZWFkCj4gPiDCoMKgIFswMDFdwqDC
-oCA5NTAwMDDCoMKgwqDCoMKgwqAgNTAxNjPCoMKgIDk0LjcxOSXCoMKgwqDCoMKgwqDCoCAxNMKg
-wqDCoCAwwqDCoCA2ODY0wqDCoMKgwqAgMMKgwqDCoCA1OTIyCj4gPiDCoMKgIFswMDRdwqDCoCA5
-NTAwMDDCoMKgwqDCoMKgwqAgNTAyOTTCoMKgIDk0LjcwNSXCoMKgwqDCoMKgwqDCoCAxNMKgwqDC
-oCAwwqDCoCA2ODY0wqDCoMKgwqAgMMKgwqDCoCA1OTIwCj4gPiDCoMKgIFswMDddwqDCoCA5NTAw
-MDDCoMKgwqDCoMKgwqAgNDk3ODLCoMKgIDk0Ljc1OSXCoMKgwqDCoMKgwqDCoCAxNMKgwqDCoCAw
-wqDCoCA2ODY0wqDCoMKgwqAgMcKgwqDCoCA1OTIxCj4gPiDCoMKgIFswMzNdwqDCoCA5NTAwMDDC
-oMKgwqDCoMKgwqAgNDk1MjjCoMKgIDk0Ljc4NiXCoMKgwqDCoMKgwqDCoCAxNcKgwqDCoCAwwqDC
-oCA2ODY0wqDCoMKgwqAgMsKgwqDCoCA1OTIyCj4gPiDCoMKgIFswMTZdwqDCoCA5NTAwMDDCoMKg
-wqDCoMKgwqAgNDg1NTHCoMKgIDk0Ljg4OSXCoMKgwqDCoMKgwqDCoCAyMMKgwqDCoCAwwqDCoCA2
-ODYzwqDCoMKgIDE5wqDCoMKgIDU5NDIKPiA+IMKgwqAgWzAwOF3CoMKgIDk1MDAwMMKgwqDCoMKg
-wqDCoCA0NDM0M8KgwqAgOTUuMzMyJcKgwqDCoMKgwqDCoMKgIDE0wqDCoMKgIDDCoMKgIDY4NjTC
-oMKgwqDCoCAwwqDCoMKgIDU5MjUKPiA+IAo+ID4gV2l0aCBjb21taXQgcmV2ZXJ0ZWQgKHJ3bG9j
-ayByZXN0b3JlZCwga2VybmVsIDYuMTIuNzgtdmFuaWxsYS0xKToKPiA+IAo+ID4gwqDCoCBDUFXC
-oMKgwqAgUlVOVElNRcKgwqAgTUFYX05PSVNFwqDCoCBBVkFJTCXCoMKgwqDCoMKgIE5PSVNFwqAg
-Tk1JwqDCoCBJUlHCoMKgIFNJUlHCoCBUaHJlYWQKPiA+IMKgwqAgWzAwMV3CoMKgIDk1MDAwMMKg
-wqDCoMKgwqDCoMKgwqDCoMKgIDDCoMKgIDEwMC4wMDAlwqDCoMKgwqDCoMKgIDDCoMKgwqAgMMKg
-wqDCoMKgwqAgNsKgwqDCoMKgIDDCoMKgwqDCoMKgwqAgMAo+ID4gwqDCoCBbMDA0XcKgwqAgOTUw
-MDAwwqDCoMKgwqDCoMKgwqDCoMKgwqAgMMKgwqAgMTAwLjAwMCXCoMKgwqDCoMKgwqAgMMKgwqDC
-oCAwwqDCoMKgwqDCoCA0wqDCoMKgwqAgMMKgwqDCoMKgwqDCoCAwCj4gPiDCoMKgIFswMDddwqDC
-oCA5NTAwMDDCoMKgwqDCoMKgwqDCoMKgwqDCoCAwwqDCoCAxMDAuMDAwJcKgwqDCoMKgwqDCoCAw
-wqDCoMKgIDDCoMKgwqDCoMKgIDTCoMKgwqDCoCAwwqDCoMKgwqDCoMKgIDAKPiA+IMKgwqAgWzAz
-M13CoMKgIDk1MDAwMMKgwqDCoMKgwqDCoMKgwqDCoMKgIDDCoMKgIDEwMC4wMDAlwqDCoMKgwqDC
-oMKgIDDCoMKgwqAgMMKgwqDCoMKgwqAgNMKgwqDCoMKgIDDCoMKgwqDCoMKgwqAgMAo+ID4gwqDC
-oCBbMDE2XcKgwqAgOTUwMDAwwqDCoMKgwqDCoMKgwqDCoMKgwqAgMMKgwqAgMTAwLjAwMCXCoMKg
-wqDCoMKgwqAgMMKgwqDCoCAwwqDCoMKgwqDCoCA1wqDCoMKgwqAgMMKgwqDCoMKgwqDCoCAwCj4g
-PiDCoMKgIFswMDhdwqDCoCA5NTAwMDDCoMKgwqDCoMKgwqDCoMKgwqDCoCA3wqDCoMKgIDk5Ljk5
-OSXCoMKgwqDCoMKgwqAgN8KgwqDCoCAwwqDCoMKgwqDCoCA1wqDCoMKgwqAgMMKgwqDCoMKgwqDC
-oCAwCj4gPiAKPiA+IFN1bW1hcnkgYWNyb3NzIGFsbCBpc29sYXRlZCBjb3JlcyAoMzIgQ1BVcyk6
-Cj4gPiAKPiA+IMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDC
-oMKgwqAgV2l0aCBzcGlubG9ja8KgwqDCoMKgwqDCoCBXaXRoIHJ3bG9jayAocmV2ZXJ0ZWQpCj4g
-PiDCoMKgIE1BWCBub2lzZSAobnMpOsKgwqDCoMKgwqDCoMKgwqAgNDQsMzQzIC0gNTEsODY5wqDC
-oMKgwqAgMCAtIDEwCj4gPiDCoMKgIElSUSBjb3VudC9zYW1wbGU6wqDCoMKgwqDCoMKgIH42LDY1
-MCAtIDYsODcwwqDCoMKgwqDCoCAzIC0gNwo+ID4gwqDCoCBUaHJlYWQgbm9pc2Uvc2FtcGxlOsKg
-wqDCoCB+NSw3MDAgLSA1LDk0MMKgwqDCoMKgwqAgMCAtIDEKPiA+IMKgwqAgQ1BVIGF2YWlsYWJp
-bGl0eTrCoMKgwqDCoMKgwqAgOTQuNSUgLSA5NS4zJcKgwqDCoMKgwqDCoCB+MTAwJQo+ID4gCj4g
-PiBUaGUgcmVncmVzc2lvbiBpcyByb3VnaGx5IDMgb3JkZXJzIG9mIG1hZ25pdHVkZSBpbiBub2lz
-ZSBvbiBpc29sYXRlZAo+ID4gY29yZXMuIFRoZSB0ZXN0IHdhcyBydW4gb3ZlciBtYW55IGNvbnNl
-Y3V0aXZlIHNhbXBsZXMgYW5kIHRoZSBwYXR0ZXJuCj4gPiBpcyBjb25zaXN0ZW50OiB3aXRoIHRo
-ZSBzcGlubG9jaywgZXZlcnkgaXNvbGF0ZWQgY29yZSBzZWVzIHRob3VzYW5kcwo+ID4gb2YgSVJR
-cyBhbmQgfjUwwrVzIG9mIG5vaXNlIHBlciA5NTBtcyBzYW1wbGUgd2luZG93LiBXaXRoIHRoZSBy
-d2xvY2ssCj4gPiB0aGUgY29yZXMgYXJlIGVzc2VudGlhbGx5IHNpbGVudC4KPiA+IAo+ID4gTm90
-ZSB0aGF0IENQVSAwMTYgb2NjYXNpb25hbGx5IHNob3dzIFNJUlEgbm9pc2UgKHNvZnRpcnEpIHdp
-dGggYm90aAo+ID4ga2VybmVscywgd2hpY2ggaXMgYSBzZXBhcmF0ZSBrbm93biBpc3N1ZSB3aXRo
-IHRoZSB0aWNrIG9uIHRoZSBmaXJzdAo+ID4gbm9oel9mdWxsIENQVS4gVGhlIGV2ZW50cG9sbCBy
-ZWdyZXNzaW9uIGlzIHRoZSBkb21pbmFudCBub2lzZSBzb3VyY2UuCj4gPiAKPiA+IE15IHVuZGVy
-c3RhbmRpbmcgb2YgdGhlIHJvb3QgY2F1c2U6IHRoZSBvcmlnaW5hbCByd2xvY2sgYWxsb3dlZAo+
-ID4gZXBfcG9sbF9jYWxsYmFjaygpIChwcm9kdWNlciBzaWRlLCBydW5uaW5nIGZyb20gSVJRIGNv
-bnRleHQgb24gYW55IENQVSkKPiA+IHRvIHVzZSByZWFkX2xvY2ssIHdoaWNoIGRvZXMgbm90IGNh
-dXNlIGNyb3NzLUNQVSBjb250ZW50aW9uIG9uIGlzb2xhdGVkCj4gPiBjb3JlcyB3aGVuIG5vIGxv
-Y2FsIGVwb2xsIGFjdGl2aXR5IGV4aXN0cy4gV2l0aCB0aGUgc3BpbmxvY2sgY29udmVyc2lvbiwK
-PiA+IG9uIFBSRUVNUFRfUlQgc3BpbmxvY2tfdCBiZWNvbWVzIGFuIHJ0X211dGV4LiBUaGlzIG1l
-YW5zIHRoYXQgZXZlbiBpZgo+ID4gdGhlIGlzb2xhdGVkIGNvcmUgaXMgbm90IGludm9sdmVkIGlu
-IGFueSBlcG9sbCBhY3Rpdml0eSwgdGhlIGxvY2sncwo+ID4gY2FjaGVsaW5lIGJvdW5jaW5nIGFu
-ZCBwb3RlbnRpYWwgUEktYm9vc3RlZCB3YWtldXBzIGZyb20gaG91c2VrZWVwaW5nCj4gPiBDUFVz
-IGNhbiBpbmplY3Qgbm9pc2UgaW50byB0aGUgaXNvbGF0ZWQgY29yZXMgdmlhIElQSSBvciBjYWNo
-ZQo+ID4gaW52YWxpZGF0aW9uIHRyYWZmaWMuCj4gCj4gVGhhdCBzb3VuZHMgbGlrZSBhIGdlbmVy
-YWwgaXNvbGF0aW9uIHByb2JsZW0uLi4gaXQncyBub3QgYSBidWcgZm9yIG5vbi0KPiBpc29sYXRl
-ZCBDUFVzIHRvIGJvdW5jZSBjYWNoZWxpbmVzIG9yIHNlbmQgSVBJcyB0byBlYWNoIG90aGVyLgo+
-IAo+IFdoZXRoZXIgaXQncyBJUElzIG9yIG5vdCwgb3Nub2lzZSBpcyBzaG93aW5nIElSUXMgb24g
-dGhlIGlzb2xhdGVkIENQVXMsCj4gc28gSSdkIGxvb2sgaW50byB3aGljaCBJUlFzIGFuZCB3aHku
-wqAgRXZlbiB3aXRoIHRoZSBwYXRjaCByZXZlcnRlZCwKPiB0aGVyZSBhcmUgc29tZSBJUlFzIG9u
-IHRoZSBpc29sYXRlZCBDUFVzLgo+IAo+ID4gCj4gPiBUaGUgY29tbWl0IG1lc3NhZ2UgYWNrbm93
-bGVkZ2VzIHRoZSB0aHJvdWdocHV0IHJlZ3Jlc3Npb24gYnV0IGFyZ3Vlcwo+ID4gcmVhbCB3b3Jr
-bG9hZHMgd29uJ3Qgbm90aWNlLiBIb3dldmVyLCBmb3IgUlQvbGF0ZW5jeS1zZW5zaXRpdmUKPiA+
-IGRlcGxveW1lbnRzIHdpdGggQ1BVIGlzb2xhdGlvbiwgdGhlIGltcGFjdCBpcyBzZXZlcmUgYW5k
-IG1lYXN1cmFibGUKPiA+IGV2ZW4gd2l0aCB6ZXJvIGxvY2FsIGVwb2xsIHVzYWdlLgo+ID4gCj4g
-PiBJIGJlbGlldmUgdGhpcyBuZWVkcyBlaXRoZXI6Cj4gPiDCoMKgIGEpIEEgcmV2ZXJ0IG9mIHRo
-ZSBiYWNrcG9ydCBmb3Igc3RhYmxlIFJUIHRyZWVzLCBvcgo+IAo+IEV2ZW4gaWYgdGhlIHBhdGNo
-IHdlcmVuJ3QgdHJ5aW5nIHRvIGFkZHJlc3MgYW4gUlQgaXNzdWUgaW4gdGhlIGZpcnN0Cj4gcGxh
-Y2UsIHRoaXMgd291bGQganVzdCBiZSBhIGJhbmRhaWQgcmF0aGVyIHRoYW4gYSByZWFsIHNvbHV0
-aW9uLgoKQSByZXZlcnQgYWxvbmUgaXMgbm90IGFuIG9wdGlvbiBhcyBpdCB3b3VsZCBicmluZyBi
-YWNrIFsxXSBhbmQgWzJdIGZvcgphbGwgTFRTIHJlbGVhc2VzIHRoYXQgZGlkIG5vdCByZWNlaXZl
-IFszXS4gSWYgbXkgbWVtb3J5IGlzIGNvcnJlY3Qgb25seQo2LjE4IGhhcyBpdC4KClRoZSByZXN1
-bHQgd2FzIGEgc3lzdGVtIGxvY2t1cCBlYXNpbHkgdHJpZ2dlcmVkIGJ5IHVzaW5nIHRoZSBlcG9s
-bAppbnRlcmZhY2UuCgpbMV0gaHR0cHM6Ly9sb3JlLmtlcm5lbC5vcmcvbGludXgtcnQtdXNlcnMv
-MjAyMTA4MjUxMzI3NTQuR0E4OTU2NzVAbG90aHJpbmdlbi8KWzJdIGh0dHBzOi8vbG9yZS5rZXJu
-ZWwub3JnL2xpbnV4LXJ0LXVzZXJzL3hoc21odHRxdm5hbGwubW9nbmV0QHZzY2huZWlkLnJlbW90
-ZS5jc2IvClszXSBodHRwczovL2xvcmUua2VybmVsLm9yZy9hbGwvMjAyNTA4MjkwODExMjAuODA2
-LTEtemlxaWFubHVAYnl0ZWRhbmNlLmNvbS8KCgpGbG9yaWFuCg==
+On 26/03/26 18:57, Ionut Nechita wrote:
+> Hi,
+>
+> I'm seeing a consistent ~300ns average latency increase in cyclictest when
+> switching from CONFIG_NO_HZ_IDLE=y to CONFIG_NO_HZ_FULL=y on a PREEMPT_RT
+> kernel. I'd like to understand whether this is expected behavior or if there's
+> room for improvement in the context tracking overhead on x86.
+>
+> Hardware:
+>   - Intel Xeon Gold 6338N @ 2.20GHz (Ice Lake SP)
+>   - 32 cores / 64 threads, single socket
+>   - L3 cache: 48 MiB
+>
+> Kernel: 6.12.78-rt (PREEMPT_RT)
+>
+> Boot parameters (identical for both tests except nohz_full/isolcpus):
+>   nohz_full=1-16,33-48 isolcpus=nohz,domain,managed_irq,1-16,33-48
+>   rcu_nocbs=1-31,33-63 kthread_cpus=0,32 irqaffinity=17-31,49-63
+>   intel_pstate=none nopti nospectre_v2 nospectre_v1 psi=0
+>
+> Cyclictest command:
+>   cyclictest --priority 95 --nsecs --histofall 40000 --smi \
+>     --duration 7200 --affinity 1-15,33-47 --threads 30 --mainaffinity 0
+>
+> Config difference:
+>   NO_HZ_IDLE build:
+>     CONFIG_NO_HZ_IDLE=y
+>     # CONFIG_NO_HZ_FULL is not set
+>     # CONFIG_TICK_CPU_ACCOUNTING is not set
+>
+>   NO_HZ_FULL build:
+>     CONFIG_NO_HZ_FULL=y
+>     CONFIG_VIRT_CPU_ACCOUNTING=y
+>     CONFIG_VIRT_CPU_ACCOUNTING_GEN=y
+>
+> Results summary (30 threads, 2-hour run, values in nanoseconds):
+>
+>                     NO_HZ_IDLE          NO_HZ_FULL
+>   Min (range):      1697 - 1783         2026 - 2182
+>   Avg (range):      1876 - 2000         2131 - 2333
+>   Max (range):      2017 - 14491        6832 - 11539
+>   SMI:              0                   0
+>
+> The average latency shifts from ~1930ns to ~2270ns, a consistent ~300-350ns
+> increase across all 30 threads. The minimum latency floor also rises by
+> roughly 400ns.
+>
+> My understanding is that CONFIG_NO_HZ_FULL forces
+> CONFIG_VIRT_CPU_ACCOUNTING_GEN=y on x86, which adds context tracking overhead
+> on every kernel entry/exit. Since cyclictest does a clock_nanosleep() syscall
+> every 1ms, this overhead is hit on every cycle.
+>
+> Questions:
+>   1. Is ~300ns of additional overhead from context tracking considered
+>      acceptable/expected on Ice Lake with PREEMPT_RT?
+>   2. Has there been any work on reducing the context tracking cost on x86,
+>      or making VIRT_CPU_ACCOUNTING optional with NO_HZ_FULL?
+>   3. For RT workloads that do periodic syscalls (not pure userspace polling),
+>      is the recommendation to simply stay on NO_HZ_IDLE?
+>
+
+I can't answer for 2., but for 1. & 3.: NO_HZ_FULL is about squeezing as
+much as you can out of a CPU running a pure userspace application. Any
+kernel entry is an anomaly / interference, IOW "you lose". If you know your
+workload is going to periodically enter the kernel, put in on a CPU that
+isn't nohz_full (but maybe isolated).
+
+> I can provide full histogram data or run additional tests if helpful.
+>
+> Thanks,
+> Ionut
 
