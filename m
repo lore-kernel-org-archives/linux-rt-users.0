@@ -1,47 +1,47 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 418FE39C649
-	for <linux-rt-users@vger.kernel.org>; Mon, 30 Mar 2026 19:45:07 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 8B4D5347FE1
+	for <linux-rt-users@vger.kernel.org>; Mon, 30 Mar 2026 19:45:16 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1774899909; cv=none; b=CrmCNjoYL3XT0WDfdwISw6LfsxsxDnhu2qK8HGqjskixo+GB/cE4EwtTdT2DLYrmZT4s3TxD+Ci5AFg2kkeUnbHQtLvugmDshViK6MCd10l+QqM3rl4rCfCuh2kqvpOhx4P/az+o0w4XjXSxoXJJUFqooo9E20eA+GGDLd+rNSA=
+	t=1774899918; cv=none; b=sMhb+dh4s0AV12QvRBmuma6SvDyArOag0KjFJq7uIkzZsLZ/M7EM+EOfSgcPGjvzNsYlHqVLnlAzLq+ho2sBCmp8rbvi1e7ugyYEL2uPAF8ZyGmRns7c+9oc4vhZC9GdwjBFwbeXufFbLMzQOjdUqbk43shiGFuE36CEGF9QDXs=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1774899909; c=relaxed/simple;
-	bh=wAA91dVz+pxGwIpl9yighi6vumV/PcZ9uMxBJFm7/5s=;
+	s=arc-20240116; t=1774899918; c=relaxed/simple;
+	bh=VIi2yj8iBCwJKUl0vShWCiPWYhAmgqk+ZkY1FhYb/Xg=;
 	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=IWBqskfA1jVTFhMhr5a/zfJbbjMUAOiJ7FVOFGh/+N3SaRblaBXzt1KOBSJboELGfZzNDO1PyN9S7dwFjI2HvkMOBmmlgr5dwvAl54moQCn+zf3qsW+etDoJHv7Si77S61F+R6wmtCWw5nl9uIC89uAAP0osYfdEvN0nFRDzRVc=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=cXnTap91; arc=none smtp.client-ip=170.10.133.124
+	 MIME-Version; b=sU9wZTYCM5JHzu3OMrPejr7DFvNEqn7RGN88NAmQbw0OIYG0V1BSpt0LTgRSnrPkZROd2eQclRUENXpzfkW45XlRXNsH1u1DLBGs5XN+7DH5Hj+ZQTnXhfslTw4W1AIIcslvVSqlJR0YimemNEAOYJvzw90YI3/K9PHJCcanj2k=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=YVc9Ui2V; arc=none smtp.client-ip=170.10.129.124
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="cXnTap91"
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="YVc9Ui2V"
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1774899907;
+	s=mimecast20190719; t=1774899915;
 	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
 	 to:to:cc:cc:mime-version:mime-version:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references;
-	bh=LueNHvj17EnXMC8Dk29gK6hwed/b3K9HjlD/Sh2ZCZw=;
-	b=cXnTap91BlYlK9HSepQOH2ZXvv5O/Yo3EhWj8DiTOWZIlPeRgZGKOK3bbLFqApo3nmFrWI
-	Hr0aRYY4e9lxmbKjSOU4kMYm+GB5f7Aqd+kXlGtgffdHCNyLflljOns0JUTwD3C/hDpWX4
-	moxefRaLnfaCyAGcqBMTDOP8EusjRPU=
-Received: from mx-prod-mc-03.mail-002.prod.us-west-2.aws.redhat.com
- (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
+	bh=dxh6uWipIPsvOHzaHBGLhle5UibwvpSuCH8NAd07yFQ=;
+	b=YVc9Ui2VHLTbWGBPpwRpG9NGZRMrFOU5oo24TSC/B1B7fdYw6GnB9TjyoZUEVdDBJj0Vwn
+	pIu4r2UW0Fmdxz3dIvO6EeAIA6SGHrdY9WGKzdHnqCGCJ5ruEiO8hBiL20OohXo8KVbzyD
+	UcbhyODSb3IVv9HT+YE5/qvFviQ+0PM=
+Received: from mx-prod-mc-06.mail-002.prod.us-west-2.aws.redhat.com
+ (ec2-35-165-154-97.us-west-2.compute.amazonaws.com [35.165.154.97]) by
  relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-96-orMLjcbdNQKaFUJTsitoVA-1; Mon,
- 30 Mar 2026 15:45:06 -0400
-X-MC-Unique: orMLjcbdNQKaFUJTsitoVA-1
-X-Mimecast-MFC-AGG-ID: orMLjcbdNQKaFUJTsitoVA_1774899905
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-593-Ezi3dSVOMSy299nxMk300Q-1; Mon,
+ 30 Mar 2026 15:45:12 -0400
+X-MC-Unique: Ezi3dSVOMSy299nxMk300Q-1
+X-Mimecast-MFC-AGG-ID: Ezi3dSVOMSy299nxMk300Q_1774899911
 Received: from mx-prod-int-05.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-05.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.17])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
 	(No client certificate requested)
-	by mx-prod-mc-03.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id F353119560AA;
-	Mon, 30 Mar 2026 19:45:04 +0000 (UTC)
+	by mx-prod-mc-06.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 74D2218005B3;
+	Mon, 30 Mar 2026 19:45:11 +0000 (UTC)
 Received: from 192.168.0.12 (unknown [10.22.65.57])
-	by mx-prod-int-05.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTP id 297081954102;
-	Mon, 30 Mar 2026 19:45:01 +0000 (UTC)
+	by mx-prod-int-05.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTP id D9DBA19539A0;
+	Mon, 30 Mar 2026 19:45:08 +0000 (UTC)
 From: Wander Lairson Costa <wander@redhat.com>
 To: williams@redhat.com,
 	jkacur@redhat.com,
@@ -50,9 +50,9 @@ To: williams@redhat.com,
 	davidlt@rivosinc.com,
 	linux-rt-users@vger.kernel.org
 Cc: Wander Lairson Costa <wander@redhat.com>
-Subject: [PATCH stalld 09/36] tests/helpers: Fix relative path in backend detection functions
-Date: Mon, 30 Mar 2026 16:43:32 -0300
-Message-ID: <20260330194410.103953-10-wander@redhat.com>
+Subject: [PATCH stalld 11/36] tests/functional: Fix false positive log matching in test_logging_destinations
+Date: Mon, 30 Mar 2026 16:43:34 -0300
+Message-ID: <20260330194410.103953-12-wander@redhat.com>
 In-Reply-To: <20260330194410.103953-1-wander@redhat.com>
 References: <20260330194410.103953-1-wander@redhat.com>
 Precedence: bulk
@@ -64,43 +64,69 @@ MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 X-Scanned-By: MIMEDefang 3.0 on 10.30.177.17
 
-detect_default_backend() and is_backend_available() use a
-hardcoded relative path "../stalld" to locate the binary for
-backend detection via nm. This breaks when tests are invoked from
-a different working directory, such as when run_tests.sh executes
-them from the project root.
+The test framework's log() function sends entries to the system
+journal tagged with [stalld] via logger -t stalld. The logging
+destination tests were using grep "stalld" to verify daemon
+output in dmesg, syslog, and journalctl, which also matched
+these framework entries and caused false passes.
 
-Use ${TEST_ROOT}/../stalld instead, consistent with the path
-resolution used in start_stalld_with_log() and
-start_starvation_gen().
+Add a local has_stalld_log() filter function that matches
+"stalld" while excluding lines containing "stalld". Use grep -F
+for fixed-string matching throughout to avoid unnecessary regex
+interpretation.
 
 Signed-off-by: Wander Lairson Costa <wander@redhat.com>
 ---
- tests/helpers/test_helpers.sh | 4 ++--
- 1 file changed, 2 insertions(+), 2 deletions(-)
+ tests/functional/test_logging_destinations.sh | 14 ++++++++++----
+ 1 file changed, 10 insertions(+), 4 deletions(-)
 
-diff --git a/tests/helpers/test_helpers.sh b/tests/helpers/test_helpers.sh
-index 1750423..8ff1b80 100755
---- a/tests/helpers/test_helpers.sh
-+++ b/tests/helpers/test_helpers.sh
-@@ -816,7 +816,7 @@ pick_test_cpu() {
+diff --git a/tests/functional/test_logging_destinations.sh b/tests/functional/test_logging_destinations.sh
+index 6fa4907..171be8b 100755
+--- a/tests/functional/test_logging_destinations.sh
++++ b/tests/functional/test_logging_destinations.sh
+@@ -21,6 +21,12 @@ setup_test_environment
+ # Require root for this test
+ require_root
  
- # Detect which backend stalld was compiled with (default)
- detect_default_backend() {
--	local stalld_bin="../stalld"
-+	local stalld_bin="${TEST_ROOT}/../stalld"
- 	if [ ! -x "${stalld_bin}" ]; then
- 		echo "unknown"
- 		return 1
-@@ -839,7 +839,7 @@ detect_default_backend() {
- # Check if a specific backend is available
- is_backend_available() {
- 	local backend=$1
--	local stalld_bin="../stalld"
-+	local stalld_bin="${TEST_ROOT}/../stalld"
++# Filter stdin for stalld daemon messages, excluding the test
++# framework's own log entries tagged with [TEST].
++has_stalld_log() {
++	grep -F "stalld" | grep -Fqv "[TEST]"
++}
++
+ # Test 1: Verbose mode (-v) logs to stdout/stderr
+ echo "Test 1: Verbose mode (-v) logs to stdout"
  
- 	if [ ! -x "${stalld_bin}" ]; then
- 		return 1
+@@ -74,7 +80,7 @@ if command -v dmesg >/dev/null 2>&1; then
+ 		# Note: This might not work in all environments
+ 		if [ ${DMESG_AFTER} -gt ${DMESG_BEFORE} ]; then
+ 			# Check if recent dmesg contains stalld messages
+-			if dmesg | tail -10 | grep -q "stalld"; then
++			if dmesg | tail -10 | has_stalld_log; then
+ 				assert_equals "1" "1" "stalld messages in kernel log"
+ 			else
+ 				echo -e "  ${YELLOW}SKIP${NC}: cannot verify kernel log messages"
+@@ -113,7 +119,7 @@ if [ -n "${SYSLOG_FILE}" ]; then
+ 
+ 		if [ ${SYSLOG_AFTER} -gt ${SYSLOG_BEFORE} ]; then
+ 			# Check for stalld messages in recent syslog
+-			if tail -20 "${SYSLOG_FILE}" | grep -q "stalld"; then
++			if tail -20 "${SYSLOG_FILE}" | has_stalld_log; then
+ 				assert_equals "1" "1" "stalld messages in syslog"
+ 			else
+ 				echo -e "  ${YELLOW}SKIP${NC}: no stalld messages found in syslog"
+@@ -133,9 +139,9 @@ elif command -v journalctl >/dev/null 2>&1; then
+ 
+ 	if assert_process_running "${STALLD_PID}" "stalld with -s should be running"; then
+ 		# Check journalctl for stalld messages
+-		if journalctl -u stalld --since "1 minute ago" 2>/dev/null | grep -q "stalld"; then
++		if journalctl -u stalld --since "1 minute ago" 2>/dev/null | has_stalld_log; then
+ 			assert_equals "1" "1" "stalld messages in journalctl"
+-		elif journalctl --since "1 minute ago" 2>/dev/null | grep -q "stalld"; then
++		elif journalctl --since "1 minute ago" 2>/dev/null | has_stalld_log; then
+ 			assert_equals "1" "1" "stalld messages in system journal"
+ 		else
+ 			echo -e "  ${YELLOW}SKIP${NC}: no stalld messages in journal (may take time to appear)"
 -- 
 2.53.0
 
