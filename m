@@ -1,47 +1,47 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 0BC1539C000
-	for <linux-rt-users@vger.kernel.org>; Mon, 30 Mar 2026 19:46:17 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id E646C39DBD4
+	for <linux-rt-users@vger.kernel.org>; Mon, 30 Mar 2026 19:46:18 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1774899981; cv=none; b=ZsumrslOcVfxa4CB6DQkGVfm+JwQwWPQU30wg73KiI8Y3Z8o1t3JytzB3sTFrAxo0Ac40YMBrb2xo+rJV6NBSNwDg5wUlwMdf2PTGWzxwpJ9T3e0eheKXxKY0/op+ta/f5wPJJOzmOwQzqV5rpTDOBqpTDW1TO6gjyfQiX2cfNU=
+	t=1774899981; cv=none; b=T9nRDMcEzfPTvWkRe9DThhwfKJOV053ypnN/DNxsE75YHIxMlKpKxEsFP6VDKXbqEWpOYfFsPKmSySxJH2sLzY0VykeWAaGXUMiXwB2fD+fWnM9C5+mmD8Y94fY1ptJSWUP2KO0IfZssM0JNQEIMIrWfEusrIU6i8JCA2ZK+d7I=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
 	s=arc-20240116; t=1774899981; c=relaxed/simple;
-	bh=DUa9WYMFTLcKERvWv2qTJQENSky0ikxqOMSCOscUF9g=;
+	bh=fmse/YGOrljEKMyroD4+Y8bmsh67JMHq+/rTnsK2l8k=;
 	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version:Content-Type; b=oxZcx7Fq3k25hsGJ7+c9ZWf4tbfDhu7iTFFwGFsk5H0EtBSaxCKyQt6xtMTcSOI/z6ik0uBvSOCp8EBXTZMoJwv4Fq0AoXJPrFo+XS5dnkU9+MZ9bWJZF/S4Bgswt4TwvF2k3p9ZSY1vHucSrahf4c3Z+orsieBB52TCxoODXUA=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=OyWFz1R5; arc=none smtp.client-ip=170.10.129.124
+	 MIME-Version:Content-Type; b=TMixr1UCBJqSX90Uhnr1TzGG9/V9o9dgLaLPwWdc1DiPHYfvTatT80JVCMZ1PkQurjBNGobTILLzE2QmyFLfCzUsQdDAMy/UK9+Hm7wDpIcowCIjgW+goPMLQFnQlzsp/nc7NInPFooyY7Em2yJWbjxz83nrCCUdAC9F+kM8s/o=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=NMp1juNG; arc=none smtp.client-ip=170.10.133.124
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="OyWFz1R5"
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="NMp1juNG"
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1774899976;
+	s=mimecast20190719; t=1774899978;
 	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
 	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references;
-	bh=2nFYjhf1NqW8x7khSp137RkWt2x6IsUeUtHuWhXH6vk=;
-	b=OyWFz1R5g6QoQqspzq9GQd7Db4Ka47BvQTrBcLoMUSOxtWia53wVHGt6Vc1zrRKSthn9wB
-	Q9Hf9G6/F50PAgIrLGJOiZP4hzALalLZlbEnTQYVUwHKJAh+ZJjfRkacrGfq63fukZhg2Q
-	YCuIhTWX8ZilzLc12VCUVw2EpQmmKpY=
-Received: from mx-prod-mc-03.mail-002.prod.us-west-2.aws.redhat.com
- (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
+	bh=j2O8FNjA6eeNsF/6xd9MasP1cfL4XwiZ16XHCYagZy0=;
+	b=NMp1juNG7sRwnOAnNJxJfXzbSCg57XPAmtRmJ/jPDBAJEp1hyP3CD4P3T7l0PK9tvT2Mp8
+	6mMYNqR7YgXxqa0LvP+5eii6JJFxJkVQjoldBdpfHL4axvwubp1D5oAPNNV0x7xbQvRrNl
+	Urz1ve6bfT4PktjU9lGfxAyJTTvsI7w=
+Received: from mx-prod-mc-06.mail-002.prod.us-west-2.aws.redhat.com
+ (ec2-35-165-154-97.us-west-2.compute.amazonaws.com [35.165.154.97]) by
  relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-653-dLrRRasRPUeg67n0m_24dA-1; Mon,
- 30 Mar 2026 15:46:12 -0400
-X-MC-Unique: dLrRRasRPUeg67n0m_24dA-1
-X-Mimecast-MFC-AGG-ID: dLrRRasRPUeg67n0m_24dA_1774899971
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-634-AwdGrTibP8yfDv6Y5vjcBA-1; Mon,
+ 30 Mar 2026 15:46:16 -0400
+X-MC-Unique: AwdGrTibP8yfDv6Y5vjcBA-1
+X-Mimecast-MFC-AGG-ID: AwdGrTibP8yfDv6Y5vjcBA_1774899975
 Received: from mx-prod-int-05.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-05.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.17])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
 	(No client certificate requested)
-	by mx-prod-mc-03.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id B887F19560B4;
-	Mon, 30 Mar 2026 19:46:11 +0000 (UTC)
+	by mx-prod-mc-06.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 7AF2218005B0;
+	Mon, 30 Mar 2026 19:46:15 +0000 (UTC)
 Received: from 192.168.0.12 (unknown [10.22.65.57])
-	by mx-prod-int-05.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTP id 9866D19540C4;
-	Mon, 30 Mar 2026 19:46:07 +0000 (UTC)
+	by mx-prod-int-05.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTP id 49E691954102;
+	Mon, 30 Mar 2026 19:46:12 +0000 (UTC)
 From: Wander Lairson Costa <wander@redhat.com>
 To: williams@redhat.com,
 	jkacur@redhat.com,
@@ -50,9 +50,9 @@ To: williams@redhat.com,
 	davidlt@rivosinc.com,
 	linux-rt-users@vger.kernel.org
 Cc: Wander Lairson Costa <wander@redhat.com>
-Subject: [PATCH stalld 29/36] tests/functional: Use pass() for all test pass reporting
-Date: Mon, 30 Mar 2026 16:43:52 -0300
-Message-ID: <20260330194410.103953-30-wander@redhat.com>
+Subject: [PATCH stalld 30/36] tests: Add fail() helper and use for all test failures
+Date: Mon, 30 Mar 2026 16:43:53 -0300
+Message-ID: <20260330194410.103953-31-wander@redhat.com>
 In-Reply-To: <20260330194410.103953-1-wander@redhat.com>
 References: <20260330194410.103953-1-wander@redhat.com>
 Precedence: bulk
@@ -65,1069 +65,995 @@ Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit
 X-Scanned-By: MIMEDefang 3.0 on 10.30.177.17
 
-Replace inline log statements that manually format pass messages
-with calls to the pass() helper introduced in the previous commit.
-This ensures all pass results are consistently logged with the
-journal and counted by the test framework.
+Add a fail() function that mirrors pass(), logging a failure
+message and incrementing the failure counter. Replace all manual
+fail patterns across the test suite, including both the log-based
+and echo-based variants.
 
 Signed-off-by: Wander Lairson Costa <wander@redhat.com>
 ---
- tests/functional/test_affinity.sh             | 14 ++++----
- tests/functional/test_boost_duration.sh       |  8 ++---
- tests/functional/test_boost_period.sh         |  8 ++---
- tests/functional/test_boost_restoration.sh    | 24 ++++++-------
- tests/functional/test_boost_runtime.sh        |  8 ++---
- tests/functional/test_deadline_boosting.sh    | 24 ++++++-------
- tests/functional/test_fifo_boosting.sh        | 14 ++++----
- .../test_fifo_priority_starvation.sh          | 18 +++++-----
- tests/functional/test_force_fifo.sh           |  8 ++---
- tests/functional/test_idle_detection.sh       | 12 +++----
- tests/functional/test_pidfile.sh              | 18 +++++-----
- tests/functional/test_runqueue_parsing.sh     | 36 +++++++++----------
- tests/functional/test_starvation_detection.sh | 22 ++++++------
- tests/functional/test_starvation_threshold.sh |  6 ++--
- tests/functional/test_task_merging.sh         | 16 ++++-----
- 15 files changed, 118 insertions(+), 118 deletions(-)
+ tests/functional/test_affinity.sh             |  6 ++--
+ tests/functional/test_backend_selection.sh    |  6 ++--
+ tests/functional/test_boost_duration.sh       | 18 ++++-------
+ tests/functional/test_boost_period.sh         | 18 ++++-------
+ tests/functional/test_boost_restoration.sh    |  3 +-
+ tests/functional/test_boost_runtime.sh        | 21 +++++--------
+ tests/functional/test_cpu_selection.sh        | 18 ++++-------
+ tests/functional/test_deadline_boosting.sh    | 12 +++-----
+ tests/functional/test_fifo_boosting.sh        | 12 +++-----
+ .../test_fifo_priority_starvation.sh          | 15 ++++------
+ tests/functional/test_force_fifo.sh           |  6 ++--
+ tests/functional/test_foreground.sh           |  9 ++----
+ tests/functional/test_idle_detection.sh       |  3 +-
+ tests/functional/test_log_only.sh             |  6 ++--
+ tests/functional/test_logging_destinations.sh |  6 ++--
+ tests/functional/test_pidfile.sh              | 27 ++++++-----------
+ tests/functional/test_runqueue_parsing.sh     | 27 ++++++-----------
+ tests/functional/test_starvation_detection.sh | 30 +++++++------------
+ tests/functional/test_starvation_threshold.sh | 15 ++++------
+ tests/functional/test_task_merging.sh         |  3 +-
+ tests/helpers/test_helpers.sh                 | 11 ++++++-
+ 21 files changed, 97 insertions(+), 175 deletions(-)
 
 diff --git a/tests/functional/test_affinity.sh b/tests/functional/test_affinity.sh
-index 738822e..b74886d 100755
+index b74886d..7ecd85f 100755
 --- a/tests/functional/test_affinity.sh
 +++ b/tests/functional/test_affinity.sh
-@@ -83,7 +83,7 @@ log "ℹ INFO: Default affinity: $default_affinity"
- 
- # Typically should be all CPUs
- if [ -n "$default_affinity" ]; then
--    log "✓ PASS: stalld has default affinity: $default_affinity"
-+    pass "stalld has default affinity: $default_affinity"
- else
-     log "⚠ WARNING: Could not determine default affinity"
- fi
-@@ -107,7 +107,7 @@ sleep 2
- affinity=$(check_affinity "${STALLD_PID}")
- 
+@@ -109,8 +109,7 @@ affinity=$(check_affinity "${STALLD_PID}")
  if [ "$affinity" = "0" ]; then
--    log "✓ PASS: stalld restricted to CPU 0"
-+    pass "stalld restricted to CPU 0"
+     pass "stalld restricted to CPU 0"
  else
-     log "✗ FAIL: stalld affinity ($affinity) doesn't match requested (0)"
-     TEST_FAILED=$((TEST_FAILED + 1))
-@@ -134,7 +134,7 @@ if [ "$num_cpus" -ge 4 ]; then
- 
-     # Accept either "0,2" or "0-2" or "2,0" (different systems may report differently)
-     if echo "$affinity" | grep -qE '^0,2$|^0-2$|^2,0$'; then
--        log "✓ PASS: stalld restricted to CPUs 0,2 (affinity: $affinity)"
-+        pass "stalld restricted to CPUs 0,2 (affinity: $affinity)"
-     else
-         log "⚠ WARNING: stalld affinity ($affinity) may not match requested (0,2) - format may vary"
-         # Not failing as different systems may report differently
-@@ -164,7 +164,7 @@ if [ "$num_cpus" -ge 4 ]; then
- 
-     # Accept various formats: "0-2", "0,1,2", etc.
-     if echo "$affinity" | grep -qE '0.*1.*2|0-2'; then
--        log "✓ PASS: stalld restricted to CPU range 0-2 (affinity: $affinity)"
-+        pass "stalld restricted to CPU range 0-2 (affinity: $affinity)"
-     else
-         log "⚠ WARNING: stalld affinity ($affinity) may not match requested (0-2) - format may vary"
-     fi
-@@ -200,7 +200,7 @@ if [ "$num_cpus" -ge 2 ]; then
-     fi
- 
-     if [ "$affinity" = "$test_cpu" ]; then
--        log "✓ PASS: stalld process affinity set to CPU $test_cpu"
-+        pass "stalld process affinity set to CPU $test_cpu"
-     else
-         log "⚠ WARNING: stalld affinity ($affinity) doesn't exactly match CPU $test_cpu"
-     fi
-@@ -229,7 +229,7 @@ if [ "$num_cpus" -ge 2 ]; then
-     affinity=$(check_affinity "${STALLD_PID}")
- 
-     if [ "$affinity" = "0" ]; then
--        log "✓ PASS: stalld affinity to CPU 0 while monitoring CPU 1"
-+        pass "stalld affinity to CPU 0 while monitoring CPU 1"
-     else
-         log "⚠ WARNING: stalld affinity ($affinity) doesn't match requested (0)"
-     fi
-@@ -298,7 +298,7 @@ affinity_end=$(check_affinity "${STALLD_PID}")
- log "ℹ INFO: Affinity after 3s: $affinity_end"
- 
- if [ "$affinity_start" = "$affinity_end" ]; then
--    log "✓ PASS: CPU affinity persisted over time"
-+    pass "CPU affinity persisted over time"
- else
-     log "⚠ WARNING: CPU affinity changed (start: $affinity_start, end: $affinity_end)"
+-    log "✗ FAIL: stalld affinity ($affinity) doesn't match requested (0)"
+-    TEST_FAILED=$((TEST_FAILED + 1))
++    fail "stalld affinity ($affinity) doesn't match requested (0)"
  fi
+ 
+ stop_stalld
+@@ -270,8 +269,7 @@ ret=$?
+ if [ $ret -ne 0 ] && [ $ret -ne 124 ]; then
+     pass "Invalid CPU affinity rejected with error"
+ else
+-    log "✗ FAIL: stalld did not reject invalid CPU affinity"
+-    TEST_FAILED=$((TEST_FAILED + 1))
++    fail "stalld did not reject invalid CPU affinity"
+ fi
+ 
+ #=============================================================================
+diff --git a/tests/functional/test_backend_selection.sh b/tests/functional/test_backend_selection.sh
+index 8a22e0a..2db8353 100755
+--- a/tests/functional/test_backend_selection.sh
++++ b/tests/functional/test_backend_selection.sh
+@@ -39,8 +39,7 @@ test_backend_flag() {
+ 	CLEANUP_PIDS+=("${STALLD_PID}")
+ 
+ 	if ! wait_for_stalld_ready "${log_file}" 15; then
+-		TEST_FAILED=$((TEST_FAILED + 1))
+-		echo -e "  ${RED}FAIL${NC}: stalld failed to start (${description})"
++		fail "stalld failed to start (${description})"
+ 		stop_stalld
+ 		return 1
+ 	fi
+@@ -48,8 +47,7 @@ test_backend_flag() {
+ 	if grep -q "${expected_msg}" "${log_file}"; then
+ 		pass "${description}"
+ 	else
+-		TEST_FAILED=$((TEST_FAILED + 1))
+-		echo -e "  ${RED}FAIL${NC}: Backend message not found (${description})"
++		fail "Backend message not found (${description})"
+ 		echo "  Expected: ${expected_msg}"
+ 		echo "  Log contents:"
+ 		cat "${log_file}"
 diff --git a/tests/functional/test_boost_duration.sh b/tests/functional/test_boost_duration.sh
-index 104f298..61218e9 100755
+index 61218e9..83d8355 100755
 --- a/tests/functional/test_boost_duration.sh
 +++ b/tests/functional/test_boost_duration.sh
-@@ -67,7 +67,7 @@ start_starvation_gen -c "${TEST_CPU}" -p 80 -n 2 -d ${starvation_duration}
- 
- # Wait for starvation detection
+@@ -69,8 +69,7 @@ start_starvation_gen -c "${TEST_CPU}" -p 80 -n 2 -d ${starvation_duration}
  if wait_for_starvation_detected "${STALLD_LOG}"; then
--    log "✓ PASS: Starvation detection occurred with default duration"
-+    pass "Starvation detection occurred with default duration"
+     pass "Starvation detection occurred with default duration"
  else
-     log "✗ FAIL: No starvation detection"
-     TEST_FAILED=$((TEST_FAILED + 1))
-@@ -99,7 +99,7 @@ start_starvation_gen -c "${TEST_CPU}" -p 80 -n 2 -d ${starvation_duration}
+-    log "✗ FAIL: No starvation detection"
+-    TEST_FAILED=$((TEST_FAILED + 1))
++    fail "No starvation detection"
+ fi
  
- # Wait for starvation detection
+ # Cleanup
+@@ -101,8 +100,7 @@ start_starvation_gen -c "${TEST_CPU}" -p 80 -n 2 -d ${starvation_duration}
  if wait_for_starvation_detected "${STALLD_LOG2}"; then
--    log "✓ PASS: Starvation detection with ${short_duration}s duration"
-+    pass "Starvation detection with ${short_duration}s duration"
+     pass "Starvation detection with ${short_duration}s duration"
  else
-     log "✗ FAIL: No starvation detection with short duration"
-     TEST_FAILED=$((TEST_FAILED + 1))
-@@ -133,7 +133,7 @@ start_starvation_gen -c "${TEST_CPU}" -p 80 -n 2 -d ${long_starvation}
+-    log "✗ FAIL: No starvation detection with short duration"
+-    TEST_FAILED=$((TEST_FAILED + 1))
++    fail "No starvation detection with short duration"
+ fi
  
- # Wait for starvation detection
+ # Cleanup
+@@ -135,8 +133,7 @@ start_starvation_gen -c "${TEST_CPU}" -p 80 -n 2 -d ${long_starvation}
  if wait_for_starvation_detected "${STALLD_LOG3}"; then
--    log "✓ PASS: Starvation detection with ${long_duration}s duration"
-+    pass "Starvation detection with ${long_duration}s duration"
+     pass "Starvation detection with ${long_duration}s duration"
  else
-     log "✗ FAIL: No starvation detection with long duration"
-     TEST_FAILED=$((TEST_FAILED + 1))
-@@ -166,7 +166,7 @@ start_starvation_gen -c "${TEST_CPU}" -p 80 -n 1 -d 15
+-    log "✗ FAIL: No starvation detection with long duration"
+-    TEST_FAILED=$((TEST_FAILED + 1))
++    fail "No starvation detection with long duration"
+ fi
  
- # Wait for starvation detection
+ # Cleanup
+@@ -168,8 +165,7 @@ start_starvation_gen -c "${TEST_CPU}" -p 80 -n 1 -d 15
  if wait_for_starvation_detected "${STALLD_LOG4}"; then
--    log "✓ PASS: Starvation detection with ${duration}s boost duration"
-+    pass "Starvation detection with ${duration}s boost duration"
+     pass "Starvation detection with ${duration}s boost duration"
  else
-     log "✗ FAIL: No starvation detection"
-     TEST_FAILED=$((TEST_FAILED + 1))
+-    log "✗ FAIL: No starvation detection"
+-    TEST_FAILED=$((TEST_FAILED + 1))
++    fail "No starvation detection"
+ fi
+ 
+ # Cleanup
+@@ -202,8 +198,7 @@ ret=$?
+ if [ $ret -ne 0 ] && [ $ret -ne 124 ]; then
+     pass "Zero duration rejected with error"
+ else
+-    log "✗ FAIL: stalld did not reject invalid duration value 0"
+-    TEST_FAILED=$((TEST_FAILED + 1))
++    fail "stalld did not reject invalid duration value 0"
+ fi
+ 
+ # Test 6: Negative duration
+@@ -217,8 +212,7 @@ ret=$?
+ if [ $ret -ne 0 ] && [ $ret -ne 124 ]; then
+     pass "Negative duration rejected with error"
+ else
+-    log "✗ FAIL: stalld did not reject invalid negative duration"
+-    TEST_FAILED=$((TEST_FAILED + 1))
++    fail "stalld did not reject invalid negative duration"
+ fi
+ 
+ log ""
 diff --git a/tests/functional/test_boost_period.sh b/tests/functional/test_boost_period.sh
-index b516350..671f7cb 100755
+index 671f7cb..3f3ef46 100755
 --- a/tests/functional/test_boost_period.sh
 +++ b/tests/functional/test_boost_period.sh
-@@ -64,7 +64,7 @@ start_starvation_gen -c "${TEST_CPU}" -p 80 -n 2 -d ${starvation_duration}
- 
- # Wait for starvation detection and boosting
- if wait_for_boost_detected "${STALLD_LOG}"; then
--    log "✓ PASS: Boosting occurred with default period"
-+    pass "Boosting occurred with default period"
- 
-     # Try to find period value in logs
-     if grep -qi "period" "${STALLD_LOG}"; then
-@@ -101,7 +101,7 @@ start_starvation_gen -c "${TEST_CPU}" -p 80 -n 2 -d ${starvation_duration}
- 
- # Wait for starvation detection and boosting
- if wait_for_boost_detected "${STALLD_LOG}"; then
--    log "✓ PASS: Boosting occurred with custom period ${custom_period} ns"
-+    pass "Boosting occurred with custom period ${custom_period} ns"
+@@ -71,10 +71,9 @@ if wait_for_boost_detected "${STALLD_LOG}"; then
+         log "ℹ INFO: Period information found in logs"
+     fi
  else
-     log "✗ FAIL: No boosting with custom period"
-     TEST_FAILED=$((TEST_FAILED + 1))
-@@ -131,7 +131,7 @@ start_starvation_gen -c "${TEST_CPU}" -p 80 -n 2 -d ${starvation_duration}
+-    log "✗ FAIL: No boosting detected"
++    fail "No boosting detected"
+     log "Log contents:"
+     cat "${STALLD_LOG}"
+-    TEST_FAILED=$((TEST_FAILED + 1))
+ fi
  
- # Wait for starvation detection and boosting
+ # Cleanup
+@@ -103,8 +102,7 @@ start_starvation_gen -c "${TEST_CPU}" -p 80 -n 2 -d ${starvation_duration}
  if wait_for_boost_detected "${STALLD_LOG}"; then
--    log "✓ PASS: Boosting occurred with short period ${short_period} ns"
-+    pass "Boosting occurred with short period ${short_period} ns"
+     pass "Boosting occurred with custom period ${custom_period} ns"
  else
-     log "✗ FAIL: No boosting with short period"
-     TEST_FAILED=$((TEST_FAILED + 1))
-@@ -161,7 +161,7 @@ start_starvation_gen -c "${TEST_CPU}" -p 80 -n 2 -d ${starvation_duration}
+-    log "✗ FAIL: No boosting with custom period"
+-    TEST_FAILED=$((TEST_FAILED + 1))
++    fail "No boosting with custom period"
+ fi
  
- # Wait for starvation detection and boosting
+ # Cleanup
+@@ -133,8 +131,7 @@ start_starvation_gen -c "${TEST_CPU}" -p 80 -n 2 -d ${starvation_duration}
  if wait_for_boost_detected "${STALLD_LOG}"; then
--    log "✓ PASS: Boosting occurred with long period ${long_period} ns"
-+    pass "Boosting occurred with long period ${long_period} ns"
+     pass "Boosting occurred with short period ${short_period} ns"
  else
-     log "✗ FAIL: No boosting with long period"
-     TEST_FAILED=$((TEST_FAILED + 1))
+-    log "✗ FAIL: No boosting with short period"
+-    TEST_FAILED=$((TEST_FAILED + 1))
++    fail "No boosting with short period"
+ fi
+ 
+ # Cleanup
+@@ -163,8 +160,7 @@ start_starvation_gen -c "${TEST_CPU}" -p 80 -n 2 -d ${starvation_duration}
+ if wait_for_boost_detected "${STALLD_LOG}"; then
+     pass "Boosting occurred with long period ${long_period} ns"
+ else
+-    log "✗ FAIL: No boosting with long period"
+-    TEST_FAILED=$((TEST_FAILED + 1))
++    fail "No boosting with long period"
+ fi
+ 
+ # Cleanup
+@@ -195,8 +191,7 @@ ret=$?
+ if [ $ret -ne 0 ] && [ $ret -ne 124 ]; then
+     pass "Zero period rejected with error"
+ else
+-    log "✗ FAIL: stalld did not reject invalid period value 0"
+-    TEST_FAILED=$((TEST_FAILED + 1))
++    fail "stalld did not reject invalid period value 0"
+ fi
+ 
+ #=============================================================================
+@@ -216,8 +211,7 @@ ret=$?
+ if [ $ret -ne 0 ] && [ $ret -ne 124 ]; then
+     pass "Negative period rejected with error"
+ else
+-    log "✗ FAIL: stalld did not reject invalid negative period"
+-    TEST_FAILED=$((TEST_FAILED + 1))
++    fail "stalld did not reject invalid negative period"
+ fi
+ 
+ #=============================================================================
 diff --git a/tests/functional/test_boost_restoration.sh b/tests/functional/test_boost_restoration.sh
-index fc5a25a..024d869 100755
+index 024d869..bac73ba 100755
 --- a/tests/functional/test_boost_restoration.sh
 +++ b/tests/functional/test_boost_restoration.sh
-@@ -85,7 +85,7 @@ if [ -n "${tracked_pid}" ]; then
-     log "Initial policy: ${initial_policy} (expected: 1=SCHED_FIFO), prio: ${initial_prio}"
- 
-     if [ "$initial_policy" = "1" ]; then
--        log "✓ PASS: Initial policy is SCHED_FIFO"
-+        pass "Initial policy is SCHED_FIFO"
-     else
-         log "⚠ WARNING: Initial policy is ${initial_policy}, not SCHED_FIFO (1)"
-     fi
-@@ -100,7 +100,7 @@ if [ -n "${tracked_pid}" ]; then
-         log "Policy during boost: ${boosted_policy}"
- 
-         if [ "$boosted_policy" = "6" ]; then
--            log "✓ PASS: Task boosted to SCHED_DEADLINE (6)"
-+            pass "Task boosted to SCHED_DEADLINE (6)"
-         else
-             log "ℹ INFO: Policy is ${boosted_policy} (may be between boost cycles)"
-         fi
-@@ -117,7 +117,7 @@ if [ -n "${tracked_pid}" ]; then
-         log "Policy after boost: ${post_boost_policy}, prio: ${post_boost_prio}"
- 
-         if [ "$post_boost_policy" = "1" ]; then
--            log "✓ PASS: Policy restored to SCHED_FIFO (1) during boost cycle"
-+            pass "Policy restored to SCHED_FIFO (1) during boost cycle"
-         elif [ "$post_boost_policy" = "6" ]; then
-             log "ℹ INFO: Still in boost (DEADLINE), will check final restoration"
-         else
-@@ -139,9 +139,9 @@ if [ -n "${tracked_pid}" ] && [ -f "/proc/${tracked_pid}/sched" ]; then
-     log "Final policy: ${final_policy}, prio: ${final_prio}"
- 
-     if [ "$final_policy" = "1" ]; then
--        log "✓ PASS: Policy restored to SCHED_FIFO (1)"
-+        pass "Policy restored to SCHED_FIFO (1)"
-         if [ "$final_prio" = "$initial_prio" ]; then
--            log "✓ PASS: Priority restored to ${initial_prio}"
-+            pass "Priority restored to ${initial_prio}"
-         else
-             log "⚠ INFO: Priority is ${final_prio} (initial was ${initial_prio})"
-         fi
-@@ -219,7 +219,7 @@ if chrt -f -p 10 ${FIFO_TASK_PID} 2>/dev/null; then
-     log "Initial: policy=${initial_policy} (1=FIFO), prio=${initial_prio}"
- 
-     if [ "$initial_policy" = "1" ]; then
--        log "✓ PASS: Initial policy is SCHED_FIFO (1)"
-+        pass "Initial policy is SCHED_FIFO (1)"
-     else
-         log "⚠ WARNING: Could not set FIFO policy (got ${initial_policy})"
-     fi
-@@ -234,7 +234,7 @@ if chrt -f -p 10 ${FIFO_TASK_PID} 2>/dev/null; then
-         log "Policy during detection window: ${boosted_policy}"
- 
-         if [ "$boosted_policy" = "6" ]; then
--            log "✓ PASS: Task boosted to SCHED_DEADLINE (6)"
-+            pass "Task boosted to SCHED_DEADLINE (6)"
-         elif [ "$boosted_policy" = "1" ]; then
-             log "ℹ INFO: Still SCHED_FIFO (may not have starved yet)"
-         fi
-@@ -251,7 +251,7 @@ if chrt -f -p 10 ${FIFO_TASK_PID} 2>/dev/null; then
-         log "Final: policy=${final_policy}, prio=${final_prio}"
- 
-         if [ "$final_policy" = "1" ]; then
--            log "✓ PASS: Policy restored to SCHED_FIFO (1)"
-+            pass "Policy restored to SCHED_FIFO (1)"
-             log "ℹ INFO: Priority after restoration: ${final_prio}"
-         else
-             log "⚠ INFO: Final policy is ${final_policy}"
-@@ -340,7 +340,7 @@ if wait_for_boost_detected "${STALLD_LOG}"; then
-     log "Time difference: ${time_diff}s"
- 
-     if [ ${time_diff} -le 2 ]; then
--        log "✓ PASS: Restoration timing within acceptable margin (±2s)"
-+        pass "Restoration timing within acceptable margin (±2s)"
-     else
-         log "ℹ INFO: Restoration timing difference: ${time_diff}s"
-         log "        (may be acceptable depending on system load)"
-@@ -380,7 +380,7 @@ start_starvation_gen -c ${TEST_CPU} -p 80 -n 1 -d ${short_duration}
- 
- # Wait for starvation detection and boosting
- if wait_for_boost_detected "${STALLD_LOG}"; then
--    log "✓ PASS: Boost occurred"
-+    pass "Boost occurred"
- 
-     # At this point (12s), starvation_gen has exited (at 8s) during the boost
-     # stalld should still be running despite the task exiting during boost
-@@ -389,7 +389,7 @@ if wait_for_boost_detected "${STALLD_LOG}"; then
- 
-     # Verify stalld is still running and didn't crash after task exit
+@@ -391,8 +391,7 @@ if wait_for_boost_detected "${STALLD_LOG}"; then
      if assert_process_running "${STALLD_PID}" "stalld still running after task exit"; then
--        log "✓ PASS: stalld handled task exit during boost gracefully"
-+        pass "stalld handled task exit during boost gracefully"
+         pass "stalld handled task exit during boost gracefully"
      else
-         log "✗ FAIL: stalld crashed or exited after task died during boost"
-         TEST_FAILED=$((TEST_FAILED + 1))
-@@ -401,7 +401,7 @@ if wait_for_boost_detected "${STALLD_LOG}"; then
-         grep -iE "error.*restor|fail.*restor" "${STALLD_LOG}"
-         log "        These errors are normal when tasks exit during boost"
-     else
--        log "✓ PASS: No restoration errors (clean handling)"
-+        pass "No restoration errors (clean handling)"
+-        log "✗ FAIL: stalld crashed or exited after task died during boost"
+-        TEST_FAILED=$((TEST_FAILED + 1))
++        fail "stalld crashed or exited after task died during boost"
      fi
- else
-     log "⚠ WARNING: No boost detected in this test run"
+ 
+     # Check for error messages
 diff --git a/tests/functional/test_boost_runtime.sh b/tests/functional/test_boost_runtime.sh
-index d516604..b624fc9 100755
+index b624fc9..71e25f1 100755
 --- a/tests/functional/test_boost_runtime.sh
 +++ b/tests/functional/test_boost_runtime.sh
-@@ -67,7 +67,7 @@ start_starvation_gen -c "${TEST_CPU}" -p 80 -n 2 -d ${starvation_duration}
- 
- # Wait for detection and boosting
+@@ -69,8 +69,7 @@ start_starvation_gen -c "${TEST_CPU}" -p 80 -n 2 -d ${starvation_duration}
  if wait_for_starvation_detected "${STALLD_LOG}"; then
--    log "✓ PASS: Starvation detection with default runtime"
-+    pass "Starvation detection with default runtime"
+     pass "Starvation detection with default runtime"
  else
-     log "✗ FAIL: No starvation detection"
-     TEST_FAILED=$((TEST_FAILED + 1))
-@@ -99,7 +99,7 @@ start_starvation_gen -c "${TEST_CPU}" -p 80 -n 2 -d ${starvation_duration}
+-    log "✗ FAIL: No starvation detection"
+-    TEST_FAILED=$((TEST_FAILED + 1))
++    fail "No starvation detection"
+ fi
  
- # Wait for detection and boosting
+ # Cleanup
+@@ -101,8 +100,7 @@ start_starvation_gen -c "${TEST_CPU}" -p 80 -n 2 -d ${starvation_duration}
  if wait_for_starvation_detected "${STALLD_LOG2}"; then
--    log "✓ PASS: Starvation detection with custom runtime ${custom_runtime}ns"
-+    pass "Starvation detection with custom runtime ${custom_runtime}ns"
+     pass "Starvation detection with custom runtime ${custom_runtime}ns"
  else
-     log "✗ FAIL: No starvation detection with custom runtime"
-     TEST_FAILED=$((TEST_FAILED + 1))
-@@ -131,7 +131,7 @@ start_starvation_gen -c "${TEST_CPU}" -p 80 -n 2 -d ${starvation_duration}
+-    log "✗ FAIL: No starvation detection with custom runtime"
+-    TEST_FAILED=$((TEST_FAILED + 1))
++    fail "No starvation detection with custom runtime"
+ fi
  
- # Wait for detection and boosting
+ # Cleanup
+@@ -133,8 +131,7 @@ start_starvation_gen -c "${TEST_CPU}" -p 80 -n 2 -d ${starvation_duration}
  if wait_for_starvation_detected "${STALLD_LOG3}"; then
--    log "✓ PASS: Starvation detection with large runtime ${large_runtime}ns"
-+    pass "Starvation detection with large runtime ${large_runtime}ns"
+     pass "Starvation detection with large runtime ${large_runtime}ns"
  else
-     log "✗ FAIL: No starvation detection with large runtime"
-     TEST_FAILED=$((TEST_FAILED + 1))
-@@ -165,7 +165,7 @@ start_starvation_gen -c "${TEST_CPU}" -p 80 -n 2 -d ${starvation_duration}
+-    log "✗ FAIL: No starvation detection with large runtime"
+-    TEST_FAILED=$((TEST_FAILED + 1))
++    fail "No starvation detection with large runtime"
+ fi
  
- # Wait for detection and boosting
+ # Cleanup
+@@ -167,8 +164,7 @@ start_starvation_gen -c "${TEST_CPU}" -p 80 -n 2 -d ${starvation_duration}
  if wait_for_starvation_detected "${STALLD_LOG4}"; then
--    log "✓ PASS: Starvation detection with runtime < period"
-+    pass "Starvation detection with runtime < period"
+     pass "Starvation detection with runtime < period"
  else
-     log "✗ FAIL: No starvation detection when runtime < period"
-     TEST_FAILED=$((TEST_FAILED + 1))
+-    log "✗ FAIL: No starvation detection when runtime < period"
+-    TEST_FAILED=$((TEST_FAILED + 1))
++    fail "No starvation detection when runtime < period"
+ fi
+ 
+ # Cleanup
+@@ -202,8 +198,7 @@ ret=$?
+ if [ $ret -ne 0 ] && [ $ret -ne 124 ]; then
+     pass "Runtime > period rejected with error"
+ else
+-    log "✗ FAIL: stalld did not reject invalid runtime > period"
+-    TEST_FAILED=$((TEST_FAILED + 1))
++    fail "stalld did not reject invalid runtime > period"
+ fi
+ 
+ #=============================================================================
+@@ -224,8 +219,7 @@ ret=$?
+ if [ $ret -ne 0 ] && [ $ret -ne 124 ]; then
+     pass "Zero runtime rejected with error"
+ else
+-    log "✗ FAIL: stalld did not reject invalid runtime value 0"
+-    TEST_FAILED=$((TEST_FAILED + 1))
++    fail "stalld did not reject invalid runtime value 0"
+ fi
+ 
+ #=============================================================================
+@@ -246,8 +240,7 @@ ret=$?
+ if [ $ret -ne 0 ] && [ $ret -ne 124 ]; then
+     pass "Negative runtime rejected with error"
+ else
+-    log "✗ FAIL: stalld did not reject invalid negative runtime"
+-    TEST_FAILED=$((TEST_FAILED + 1))
++    fail "stalld did not reject invalid negative runtime"
+ fi
+ 
+ log ""
+diff --git a/tests/functional/test_cpu_selection.sh b/tests/functional/test_cpu_selection.sh
+index 2f9875d..99eac44 100755
+--- a/tests/functional/test_cpu_selection.sh
++++ b/tests/functional/test_cpu_selection.sh
+@@ -44,8 +44,7 @@ start_stalld_with_log "${STALLD_LOG}" -f -v -c 0 -l -t 5
+ if grep -q "cpu 0" "$STALLD_LOG"; then
+     pass "stalld monitoring CPU 0"
+ else
+-    TEST_FAILED=$((TEST_FAILED + 1))
+-    echo -e "  ${RED}FAIL${NC}: stalld not monitoring CPU 0"
++    fail "stalld not monitoring CPU 0"
+ fi
+ 
+ stop_stalld
+@@ -70,8 +69,7 @@ if [ "$num_cpus" -ge 4 ]; then
+     if [ "$cpu0_found" -eq 1 ] && [ "$cpu2_found" -eq 1 ]; then
+         pass "stalld monitoring CPUs 0 and 2"
+     else
+-        TEST_FAILED=$((TEST_FAILED + 1))
+-        echo -e "  ${RED}FAIL${NC}: stalld not monitoring specified CPUs (0: $cpu0_found, 2: $cpu2_found)"
++        fail "stalld not monitoring specified CPUs (0: $cpu0_found, 2: $cpu2_found)"
+     fi
+ 
+     stop_stalld
+@@ -103,8 +101,7 @@ if [ "$num_cpus" -ge 4 ]; then
+     if [ "$cpu0_found" -eq 1 ] && [ "$cpu1_found" -eq 1 ] && [ "$cpu2_found" -eq 1 ]; then
+         pass "stalld monitoring CPUs 0-2"
+     else
+-        TEST_FAILED=$((TEST_FAILED + 1))
+-        echo -e "  ${RED}FAIL${NC}: stalld not monitoring specified CPU range (0: $cpu0_found, 1: $cpu1_found, 2: $cpu2_found)"
++        fail "stalld not monitoring specified CPU range (0: $cpu0_found, 1: $cpu1_found, 2: $cpu2_found)"
+     fi
+ 
+     stop_stalld
+@@ -130,8 +127,7 @@ if [ "$num_cpus" -ge 6 ]; then
+     if [ "$monitored_cpus" -eq 4 ]; then
+         pass "stalld monitoring combined CPU specification (0,2-4)"
+     else
+-        TEST_FAILED=$((TEST_FAILED + 1))
+-        echo -e "  ${RED}FAIL${NC}: stalld not monitoring all specified CPUs (found $monitored_cpus/4)"
++        fail "stalld not monitoring all specified CPUs (found $monitored_cpus/4)"
+     fi
+ 
+     stop_stalld
+@@ -155,8 +151,7 @@ ret=$?
+ if [ $ret -ne 0 ] && [ $ret -ne 124 ]; then
+     pass "stalld rejected invalid CPU number"
+ else
+-    log "✗ FAIL: stalld did not reject invalid CPU"
+-    TEST_FAILED=$((TEST_FAILED + 1))
++    fail "stalld did not reject invalid CPU"
+ fi
+ 
+ # Test 6: Verify non-selected CPUs are NOT monitored
+@@ -170,8 +165,7 @@ if [ "$num_cpus" -ge 2 ]; then
+     if ! grep -q "cpu 1" "$STALLD_LOG" || grep -q "not monitoring.*cpu 1" "$STALLD_LOG"; then
+         pass "stalld not monitoring non-selected CPU 1"
+     else
+-        TEST_FAILED=$((TEST_FAILED + 1))
+-        echo -e "  ${RED}FAIL${NC}: stalld appears to be monitoring CPU 1 when only CPU 0 selected"
++        fail "stalld appears to be monitoring CPU 1 when only CPU 0 selected"
+     fi
+ 
+     stop_stalld
 diff --git a/tests/functional/test_deadline_boosting.sh b/tests/functional/test_deadline_boosting.sh
-index a5727da..86ca0f1 100755
+index 86ca0f1..544222a 100755
 --- a/tests/functional/test_deadline_boosting.sh
 +++ b/tests/functional/test_deadline_boosting.sh
-@@ -68,11 +68,11 @@ start_starvation_gen -c ${TEST_CPU} -p 80 -n 2 -d ${starvation_duration}
- # Wait for boosting
- log "Waiting for boost detection..."
- if wait_for_boost_detected "${STALLD_LOG}"; then
--    log "✓ PASS: Boosting occurred"
-+    pass "Boosting occurred"
- 
-     # Verify SCHED_DEADLINE was used
+@@ -74,8 +74,7 @@ if wait_for_boost_detected "${STALLD_LOG}"; then
      if grep -q "SCHED_DEADLINE" "${STALLD_LOG}"; then
--        log "✓ PASS: SCHED_DEADLINE boosting used (default)"
-+        pass "SCHED_DEADLINE boosting used (default)"
+         pass "SCHED_DEADLINE boosting used (default)"
      else
-         log "✗ FAIL: SCHED_DEADLINE not mentioned in boost message"
-         TEST_FAILED=$((TEST_FAILED + 1))
-@@ -81,7 +81,7 @@ if wait_for_boost_detected "${STALLD_LOG}"; then
+-        log "✗ FAIL: SCHED_DEADLINE not mentioned in boost message"
+-        TEST_FAILED=$((TEST_FAILED + 1))
++        fail "SCHED_DEADLINE not mentioned in boost message"
+     fi
+ 
      # Verify boost happened after threshold
-     # (starvation logged, then boosting)
-     if grep -q "starved" "${STALLD_LOG}"; then
--        log "✓ PASS: Starvation detected before boosting"
-+        pass "Starvation detected before boosting"
-     else
+@@ -86,10 +85,9 @@ if wait_for_boost_detected "${STALLD_LOG}"; then
          log "⚠ WARNING: No starvation message before boost"
      fi
-@@ -140,7 +140,7 @@ for child_pid in ${STARVE_CHILDREN}; do
- 
-         # Policy 6 = SCHED_DEADLINE
-         if [ "$policy" = "6" ]; then
--            log "✓ PASS: Task PID ${child_pid} boosted to SCHED_DEADLINE (policy 6)"
-+            pass "Task PID ${child_pid} boosted to SCHED_DEADLINE (policy 6)"
-             boosted_task_found=1
-             break
-         fi
-@@ -151,7 +151,7 @@ if [ ${boosted_task_found} -eq 0 ]; then
-     log "⚠ INFO: Could not verify DEADLINE policy in /proc (timing issue or boost already expired)"
-     # Still check if boost happened in logs
-     if grep -q "boosted.*SCHED_DEADLINE" "${STALLD_LOG}"; then
--        log "✓ PASS: SCHED_DEADLINE boost confirmed in logs"
-+        pass "SCHED_DEADLINE boost confirmed in logs"
-     else
-         log "✗ FAIL: No SCHED_DEADLINE boost detected"
-         TEST_FAILED=$((TEST_FAILED + 1))
-@@ -213,7 +213,7 @@ if [ -n "${tracked_pid}" ]; then
-     # Verify task made progress (context switches increased)
-     ctxt_delta=$((ctxt_after - ctxt_before))
-     if [ ${ctxt_delta} -gt 5 ]; then
--        log "✓ PASS: Task made progress during boost (${ctxt_delta} context switches)"
-+        pass "Task made progress during boost (${ctxt_delta} context switches)"
-     else
-         log "⚠ INFO: Limited progress detected (${ctxt_delta} context switches)"
-         log "        This may be acceptable depending on boost parameters"
-@@ -224,7 +224,7 @@ fi
- 
- # Verify boost happened
- if grep -q "boosted" "${STALLD_LOG}"; then
--    log "✓ PASS: Boost occurred as expected"
-+    pass "Boost occurred as expected"
  else
-     log "✗ FAIL: No boost detected"
-     TEST_FAILED=$((TEST_FAILED + 1))
-@@ -284,7 +284,7 @@ if [ -n "${tracked_pid}" ]; then
-     log "Policy during boost window: ${boosted_policy} (6=SCHED_DEADLINE)"
+-    log "✗ FAIL: No boosting detected"
++    fail "No boosting detected"
+     log "Log contents:"
+     cat "${STALLD_LOG}"
+-    TEST_FAILED=$((TEST_FAILED + 1))
+ fi
  
-     if [ "$boosted_policy" = "6" ]; then
--        log "✓ PASS: Policy changed to SCHED_DEADLINE during boost"
-+        pass "Policy changed to SCHED_DEADLINE during boost"
+ # Cleanup
+@@ -153,8 +151,7 @@ if [ ${boosted_task_found} -eq 0 ]; then
+     if grep -q "boosted.*SCHED_DEADLINE" "${STALLD_LOG}"; then
+         pass "SCHED_DEADLINE boost confirmed in logs"
      else
-         log "⚠ INFO: Policy is ${boosted_policy} (may have already restored or not yet boosted)"
+-        log "✗ FAIL: No SCHED_DEADLINE boost detected"
+-        TEST_FAILED=$((TEST_FAILED + 1))
++        fail "No SCHED_DEADLINE boost detected"
      fi
-@@ -299,7 +299,7 @@ if [ -n "${tracked_pid}" ]; then
-         log "Policy after boost: ${restored_policy}"
+ fi
  
-         if [ "$restored_policy" = "0" ]; then
--            log "✓ PASS: Policy restored to SCHED_OTHER (0)"
-+            pass "Policy restored to SCHED_OTHER (0)"
-         else
-             log "⚠ INFO: Policy is ${restored_policy} after boost"
-             log "        (task may have exited or restoration timing differs)"
-@@ -360,18 +360,18 @@ else
-     log "Number of boost events: ${boost_count}"
+@@ -226,8 +223,7 @@ fi
+ if grep -q "boosted" "${STALLD_LOG}"; then
+     pass "Boost occurred as expected"
+ else
+-    log "✗ FAIL: No boost detected"
+-    TEST_FAILED=$((TEST_FAILED + 1))
++    fail "No boost detected"
+ fi
  
-     if [ ${boost_count} -ge 2 ]; then
--        log "✓ PASS: Multiple boost events detected (${boost_count})"
-+        pass "Multiple boost events detected (${boost_count})"
- 
-         # Verify both CPUs mentioned
-         if grep -q "CPU ${CPU0}" "${STALLD_LOG}" && grep -q "CPU ${CPU1}" "${STALLD_LOG}"; then
--            log "✓ PASS: Boosts occurred on both CPUs"
-+            pass "Boosts occurred on both CPUs"
-         else
-             log "⚠ INFO: Could not verify boosts on both specific CPUs"
-         fi
- 
-         # Verify independent boost cycles
-         if [ ${boost_count} -gt 2 ]; then
--            log "✓ PASS: Multiple boost cycles (${boost_count} total), showing independent operation"
-+            pass "Multiple boost cycles (${boost_count} total), showing independent operation"
-         fi
-     else
-         log "⚠ INFO: Only ${boost_count} boost event(s) detected"
+ # Cleanup
 diff --git a/tests/functional/test_fifo_boosting.sh b/tests/functional/test_fifo_boosting.sh
-index 1da1c09..df26483 100755
+index df26483..50c8d14 100755
 --- a/tests/functional/test_fifo_boosting.sh
 +++ b/tests/functional/test_fifo_boosting.sh
-@@ -66,11 +66,11 @@ start_stalld_with_log "${STALLD_LOG}" -f -v -g 1 -N -F -A -t $threshold -c ${TES
- # Wait for boosting
- log "Waiting for boost detection..."
- if wait_for_boost_detected "${STALLD_LOG}"; then
--    log "✓ PASS: Boosting occurred with -F flag"
-+    pass "Boosting occurred with -F flag"
- 
-     # Verify SCHED_FIFO was used
+@@ -72,14 +72,12 @@ if wait_for_boost_detected "${STALLD_LOG}"; then
      if grep -q "SCHED_FIFO" "${STALLD_LOG}"; then
--        log "✓ PASS: SCHED_FIFO boosting used (as requested by -F)"
-+        pass "SCHED_FIFO boosting used (as requested by -F)"
+         pass "SCHED_FIFO boosting used (as requested by -F)"
      else
-         log "✗ FAIL: SCHED_FIFO not mentioned in boost message"
-         TEST_FAILED=$((TEST_FAILED + 1))
-@@ -120,7 +120,7 @@ for child_pid in ${STARVE_CHILDREN}; do
-         # Policy 1 = SCHED_FIFO
-         if [ "$policy" = "1" ]; then
-             priority=$(get_sched_priority ${child_pid})
--            log "✓ PASS: Task PID ${child_pid} boosted to SCHED_FIFO (policy 1)"
-+            pass "Task PID ${child_pid} boosted to SCHED_FIFO (policy 1)"
-             log "        Priority: ${priority}"
-             fifo_task_found=1
-             break
-@@ -132,7 +132,7 @@ if [ ${fifo_task_found} -eq 0 ]; then
-     log "⚠ INFO: Could not verify FIFO policy in /proc (timing issue or boost already expired)"
-     # FIFO emulation cycles between FIFO and OTHER, so we may catch it in OTHER state
-     if grep -q "boosted.*SCHED_FIFO" "${STALLD_LOG}"; then
--        log "✓ PASS: SCHED_FIFO boost confirmed in logs"
-+        pass "SCHED_FIFO boost confirmed in logs"
-     else
-         log "✗ FAIL: No SCHED_FIFO boost detected"
-         TEST_FAILED=$((TEST_FAILED + 1))
-@@ -186,7 +186,7 @@ boost_count=$(grep -c "boosted.*SCHED_FIFO" "${STALLD_LOG}")
- log "Number of FIFO boost events: ${boost_count}"
- 
- if [ ${boost_count} -gt 1 ]; then
--    log "✓ PASS: Multiple FIFO boost events (${boost_count}) - emulation cycling detected"
-+    pass "Multiple FIFO boost events (${boost_count}) - emulation cycling detected"
-     log "        (FIFO emulation boosts, sleeps, restores, repeats)"
+-        log "✗ FAIL: SCHED_FIFO not mentioned in boost message"
+-        TEST_FAILED=$((TEST_FAILED + 1))
++        fail "SCHED_FIFO not mentioned in boost message"
+     fi
  else
-     log "⚠ INFO: Only ${boost_count} FIFO boost event(s)"
-@@ -303,7 +303,7 @@ log "  DEADLINE: ${deadline_progress} context switches"
- log "  FIFO: ${fifo_progress} context switches"
+-    log "✗ FAIL: No boosting detected with -F flag"
++    fail "No boosting detected with -F flag"
+     log "Log contents:"
+     cat "${STALLD_LOG}"
+-    TEST_FAILED=$((TEST_FAILED + 1))
+ fi
  
- if [ ${deadline_progress} -gt 0 ] && [ ${fifo_progress} -gt 0 ]; then
--    log "✓ PASS: Both DEADLINE and FIFO allowed tasks to make progress"
-+    pass "Both DEADLINE and FIFO allowed tasks to make progress"
+ # Cleanup
+@@ -134,8 +132,7 @@ if [ ${fifo_task_found} -eq 0 ]; then
+     if grep -q "boosted.*SCHED_FIFO" "${STALLD_LOG}"; then
+         pass "SCHED_FIFO boost confirmed in logs"
+     else
+-        log "✗ FAIL: No SCHED_FIFO boost detected"
+-        TEST_FAILED=$((TEST_FAILED + 1))
++        fail "No SCHED_FIFO boost detected"
+     fi
+ fi
  
-     # Both should be effective, but exact numbers may vary
-     if [ ${deadline_progress} -gt ${fifo_progress} ]; then
-@@ -343,7 +343,7 @@ fi
+@@ -337,8 +334,7 @@ ret=$?
+ if [ $ret -ne 0 ] && [ $ret -ne 124 ]; then
+     pass "stalld exited as expected"
+ else
+-    log "✗ FAIL: stalld did not reject FIFO in single-threaded mode"
+-    TEST_FAILED=$((TEST_FAILED + 1))
++    fail "stalld did not reject FIFO in single-threaded mode"
+ fi
  
  # Check for error message in log
- if grep -qiE "single.*thread.*fifo|fifo.*single.*thread|can.*only.*deadline" "${STALLD_LOG_FAIL}"; then
--    log "✓ PASS: Error message about FIFO+single-threaded incompatibility found"
-+    pass "Error message about FIFO+single-threaded incompatibility found"
- else
-     log "ℹ INFO: Checking exit status or error messages..."
-     if [ -s "${STALLD_LOG_FAIL}" ]; then
 diff --git a/tests/functional/test_fifo_priority_starvation.sh b/tests/functional/test_fifo_priority_starvation.sh
-index 886357e..3776e6b 100755
+index 3776e6b..9554d49 100755
 --- a/tests/functional/test_fifo_priority_starvation.sh
 +++ b/tests/functional/test_fifo_priority_starvation.sh
-@@ -72,11 +72,11 @@ start_stalld_with_log "${STALLD_LOG}" -f -v -l -t $threshold -c ${TEST_CPU} -a $
- # Wait for starvation detection
- log "Waiting for starvation detection..."
- if wait_for_starvation_detected "${STALLD_LOG}"; then
--    log "✓ PASS: FIFO-on-FIFO starvation detected"
-+    pass "FIFO-on-FIFO starvation detected"
- 
-     # Verify correct CPU is logged
+@@ -78,22 +78,19 @@ if wait_for_starvation_detected "${STALLD_LOG}"; then
      if grep "starved on CPU ${TEST_CPU}" "${STALLD_LOG}"; then
--        log "✓ PASS: Correct CPU ID logged (CPU ${TEST_CPU})"
-+        pass "Correct CPU ID logged (CPU ${TEST_CPU})"
+         pass "Correct CPU ID logged (CPU ${TEST_CPU})"
      else
-         log "✗ FAIL: Wrong CPU ID in log"
-         TEST_FAILED=$((TEST_FAILED + 1))
-@@ -84,7 +84,7 @@ if wait_for_starvation_detected "${STALLD_LOG}"; then
+-        log "✗ FAIL: Wrong CPU ID in log"
+-        TEST_FAILED=$((TEST_FAILED + 1))
++        fail "Wrong CPU ID in log"
+     fi
  
      # Verify duration is logged
      if grep -E "starved on CPU ${TEST_CPU} for [0-9]+ seconds" "${STALLD_LOG}"; then
--        log "✓ PASS: Starvation duration logged"
-+        pass "Starvation duration logged"
+         pass "Starvation duration logged"
      else
-         log "✗ FAIL: Starvation duration not logged"
-         TEST_FAILED=$((TEST_FAILED + 1))
-@@ -152,7 +152,7 @@ ctxt_delta=$((ctxt_after - ctxt_before))
- log "Context switch delta: ${ctxt_delta}"
- 
- if [ ${ctxt_delta} -gt 0 ]; then
--    log "✓ PASS: Blockee task made progress (${ctxt_delta} context switches)"
-+    pass "Blockee task made progress (${ctxt_delta} context switches)"
+-        log "✗ FAIL: Starvation duration not logged"
+-        TEST_FAILED=$((TEST_FAILED + 1))
++        fail "Starvation duration not logged"
+     fi
  else
-     log "⚠ WARNING: Could not verify progress (timing issue or blockee not found)"
-     # Check if boosting occurred at least
-@@ -204,7 +204,7 @@ log "Third detection cycle should have occurred"
- # Check if we see accumulating starvation time in logs
- # Task merging means the timestamp is preserved, so duration increases
- if grep -E "starved on CPU ${TEST_CPU} for [0-9]+ seconds" "${STALLD_LOG}" | wc -l | grep -q "[2-9]"; then
--    log "✓ PASS: Multiple starvation reports found"
-+    pass "Multiple starvation reports found"
+-    log "✗ FAIL: FIFO-on-FIFO starvation not detected"
++    fail "FIFO-on-FIFO starvation not detected"
+     log "Log contents:"
+     cat "${STALLD_LOG}"
+-    TEST_FAILED=$((TEST_FAILED + 1))
+ fi
  
-     # Extract starvation durations from log
-     durations=$(grep -oE "starved on CPU ${TEST_CPU} for [0-9]+" "${STALLD_LOG}" | grep -oE "[0-9]+$")
-@@ -215,7 +215,7 @@ if grep -E "starved on CPU ${TEST_CPU} for [0-9]+ seconds" "${STALLD_LOG}" | wc
-     last_duration=$(echo "$durations" | tail -1)
+ # Cleanup
+@@ -159,8 +156,7 @@ else
+     if grep -q "boosted" "${STALLD_LOG}"; then
+         log "ℹ INFO: Boosting did occur according to logs"
+     else
+-        log "✗ FAIL: No boosting detected"
+-        TEST_FAILED=$((TEST_FAILED + 1))
++        fail "No boosting detected"
+     fi
+ fi
  
-     if [ ${last_duration} -gt ${first_duration} ]; then
--        log "✓ PASS: Starvation duration increased (${first_duration}s -> ${last_duration}s)"
-+        pass "Starvation duration increased (${first_duration}s -> ${last_duration}s)"
+@@ -218,8 +214,7 @@ if grep -E "starved on CPU ${TEST_CPU} for [0-9]+ seconds" "${STALLD_LOG}" | wc
+         pass "Starvation duration increased (${first_duration}s -> ${last_duration}s)"
          log "        This confirms task merging preserved the timestamp"
      else
-         log "✗ FAIL: Starvation duration did not increase (timestamp may have been reset)"
-@@ -258,7 +258,7 @@ start_stalld_with_log "${STALLD_LOG}" -f -v -l -t $threshold -c ${TEST_CPU} -a $
- # Wait for starvation detection
- log "Waiting for starvation detection..."
- if wait_for_starvation_detected "${STALLD_LOG}"; then
--    log "✓ PASS: Starvation detected even with close priority gap (6 vs 5)"
-+    pass "Starvation detected even with close priority gap (6 vs 5)"
- else
-     log "⚠ WARNING: Starvation not detected with close priority gap"
-     log "        (May be due to queue_track backend limitation)"
-@@ -297,12 +297,12 @@ start_stalld_with_log "${STALLD_LOG}" -f -v -N -t $threshold -c ${TEST_CPU} -a $
- # Wait for boosting
- log "Waiting for boost detection..."
- if wait_for_boost_detected "${STALLD_LOG}"; then
--    log "✓ PASS: Boosting occurred"
-+    pass "Boosting occurred"
- 
-     # Try to verify the correct task was boosted
-     # stalld logs should show the blockee task name (starvation_gen thread)
-     if grep "boosted.*starvation_gen" "${STALLD_LOG}"; then
--        log "✓ PASS: starvation_gen task was boosted (likely the blockee)"
-+        pass "starvation_gen task was boosted (likely the blockee)"
-     else
-         log "ℹ INFO: Could not verify specific task from logs"
+-        log "✗ FAIL: Starvation duration did not increase (timestamp may have been reset)"
+-        TEST_FAILED=$((TEST_FAILED + 1))
++        fail "Starvation duration did not increase (timestamp may have been reset)"
      fi
+ else
+     log "⚠ WARNING: Not enough starvation reports to verify task merging"
 diff --git a/tests/functional/test_force_fifo.sh b/tests/functional/test_force_fifo.sh
-index f8f7b4c..fec2e00 100755
+index fec2e00..ecaa7ac 100755
 --- a/tests/functional/test_force_fifo.sh
 +++ b/tests/functional/test_force_fifo.sh
-@@ -64,7 +64,7 @@ if wait_for_boost_detected "${STALLD_LOG}"; then
- 
-     # Look for SCHED_DEADLINE indicators
-     if grep -qi "deadline\|SCHED_DEADLINE" "${STALLD_LOG}"; then
--        log "✓ PASS: SCHED_DEADLINE used by default"
-+        pass "SCHED_DEADLINE used by default"
-     elif grep -qi "fifo\|SCHED_FIFO" "${STALLD_LOG}"; then
-         log "⚠ WARNING: SCHED_FIFO used instead of SCHED_DEADLINE"
-     else
-@@ -105,7 +105,7 @@ if wait_for_boost_detected "${STALLD_LOG2}"; then
- 
-     # Look for SCHED_FIFO indicators
+@@ -107,8 +107,7 @@ if wait_for_boost_detected "${STALLD_LOG2}"; then
      if grep -qi "fifo\|SCHED_FIFO" "${STALLD_LOG2}"; then
--        log "✓ PASS: SCHED_FIFO used with -F flag"
-+        pass "SCHED_FIFO used with -F flag"
+         pass "SCHED_FIFO used with -F flag"
      elif grep -qi "deadline\|SCHED_DEADLINE" "${STALLD_LOG2}"; then
-         log "✗ FAIL: SCHED_DEADLINE used despite -F flag"
-         TEST_FAILED=$((TEST_FAILED + 1))
-@@ -148,7 +148,7 @@ if grep -qi "priority\|prio" "${STALLD_LOG3}"; then
- fi
- 
- if grep -q "boost" "${STALLD_LOG3}"; then
--    log "✓ PASS: FIFO boosting with priority setting completed"
-+    pass "FIFO boosting with priority setting completed"
- else
-     log "⚠ WARNING: No boosting detected"
- fi
-@@ -187,7 +187,7 @@ if wait_for_boost_detected "${STALLD_LOG4}"; then
- 
-     # Check for restoration messages (part of FIFO emulation)
-     if grep -qi "restor\|unboosted\|normal\|original" "${STALLD_LOG4}"; then
--        log "✓ PASS: FIFO emulation with restoration detected"
-+        pass "FIFO emulation with restoration detected"
+-        log "✗ FAIL: SCHED_DEADLINE used despite -F flag"
+-        TEST_FAILED=$((TEST_FAILED + 1))
++        fail "SCHED_DEADLINE used despite -F flag"
      else
-         log "ℹ INFO: FIFO boosting completed (restoration may be implicit)"
+         log "⚠ WARNING: Scheduling policy not explicitly mentioned in logs"
      fi
+@@ -220,8 +219,7 @@ ret=$?
+ if [ $ret -ne 0 ] && [ $ret -ne 124 ]; then
+     pass "single-threaded mode rejected FIFO"
+ else
+-    log "✗ FAIL: stalld did not reject -F in single-threaded mode"
+-    TEST_FAILED=$((TEST_FAILED + 1))
++    fail "stalld did not reject -F in single-threaded mode"
+ fi
+ 
+ #=============================================================================
+diff --git a/tests/functional/test_foreground.sh b/tests/functional/test_foreground.sh
+index 2bb0282..8b89d02 100755
+--- a/tests/functional/test_foreground.sh
++++ b/tests/functional/test_foreground.sh
+@@ -38,8 +38,7 @@ if assert_process_running "${STALLD_PID}" "stalld should be running"; then
+ 		if [ "${PARENT_PID}" != "$$" ]; then
+ 			pass "stalld daemonized (parent is not test shell)"
+ 		else
+-			TEST_FAILED=$((TEST_FAILED + 1))
+-			echo -e "  ${RED}FAIL${NC}: stalld did not daemonize (parent is test shell)"
++			fail "stalld did not daemonize (parent is test shell)"
+ 		fi
+ 	fi
+ fi
+@@ -64,8 +63,7 @@ if assert_process_running "${STALLD_PID}" "stalld should be running with -f"; th
+ 	if [ "${PARENT_PID}" != "1" ]; then
+ 		pass "stalld did not daemonize with -f (parent is not init)"
+ 	else
+-		TEST_FAILED=$((TEST_FAILED + 1))
+-		echo -e "  ${RED}FAIL${NC}: stalld daemonized even with -f flag"
++		fail "stalld daemonized even with -f flag"
+ 	fi
+ fi
+ 
+@@ -84,8 +82,7 @@ if assert_process_running "${STALLD_PID}" "stalld should be running with -v"; th
+ 	if [ "${PARENT_PID}" != "1" ]; then
+ 		pass "-v implies foreground mode"
+ 	else
+-		TEST_FAILED=$((TEST_FAILED + 1))
+-		echo -e "  ${RED}FAIL${NC}: -v should imply foreground mode"
++		fail "-v should imply foreground mode"
+ 	fi
+ fi
+ 
 diff --git a/tests/functional/test_idle_detection.sh b/tests/functional/test_idle_detection.sh
-index ef1c572..af4d7a4 100755
+index af4d7a4..8757d74 100755
 --- a/tests/functional/test_idle_detection.sh
 +++ b/tests/functional/test_idle_detection.sh
-@@ -100,7 +100,7 @@ fi
- 
- # Verify CPU is actually idle
- if is_cpu_idle ${TEST_CPU}; then
--    log "✓ PASS: CPU ${TEST_CPU} is currently idle (idle time increasing)"
-+    pass "CPU ${TEST_CPU} is currently idle (idle time increasing)"
- else
-     log "⚠ INFO: CPU ${TEST_CPU} appears busy (background activity)"
- fi
-@@ -130,10 +130,10 @@ if [ -n "${idle_time1}" ] && [ -n "${idle_time2}" ]; then
-     log "Idle time delta: ${delta}"
- 
-     if [ ${delta} -gt 0 ]; then
--        log "✓ PASS: Idle time increased (CPU is idle)"
-+        pass "Idle time increased (CPU is idle)"
-         log "        stalld would skip this CPU"
-     else
--        log "✓ PASS: Idle time unchanged (CPU is busy)"
-+        pass "Idle time unchanged (CPU is busy)"
+@@ -137,8 +137,7 @@ if [ -n "${idle_time1}" ] && [ -n "${idle_time2}" ]; then
          log "        stalld would parse this CPU"
      fi
  else
-@@ -167,7 +167,7 @@ log "Waiting for stalld to detect busy CPU and starvation..."
+-    log "✗ FAIL: Could not read idle time from /proc/stat"
+-    TEST_FAILED=$((TEST_FAILED + 1))
++    fail "Could not read idle time from /proc/stat"
+ fi
  
- # Verify stalld detected starvation (meaning it resumed monitoring)
- if wait_for_starvation_detected "${STALLD_LOG}"; then
--    log "✓ PASS: stalld detected starvation on now-busy CPU"
-+    pass "stalld detected starvation on now-busy CPU"
-     log "        Monitoring resumed when CPU became busy"
+ #=============================================================================
+diff --git a/tests/functional/test_log_only.sh b/tests/functional/test_log_only.sh
+index d6257cf..21518a4 100755
+--- a/tests/functional/test_log_only.sh
++++ b/tests/functional/test_log_only.sh
+@@ -61,8 +61,7 @@ echo "Waiting for starvation detection..."
+ if wait_for_starvation_detected "${LOG_FILE}"; then
+ 	pass "stalld detected and logged starvation"
  else
-     log "⚠ INFO: No starvation detected"
-@@ -241,9 +241,9 @@ else
-     log "CPU ${CPU1} detections: ${cpu1_detections} (should be >0, it's busy)"
+-	TEST_FAILED=$((TEST_FAILED + 1))
+-	echo -e "  ${RED}FAIL${NC}: stalld did not detect starvation"
++	fail "stalld did not detect starvation"
+ 	echo "Log contents:"
+ 	cat "${LOG_FILE}"
+ fi
+@@ -71,8 +70,7 @@ fi
+ if ! grep -q "boosted" "${LOG_FILE}"; then
+ 	pass "stalld did not boost in log-only mode"
+ else
+-	TEST_FAILED=$((TEST_FAILED + 1))
+-	echo -e "  ${RED}FAIL${NC}: stalld boosted despite -l flag"
++	fail "stalld boosted despite -l flag"
+ 	echo "Log contents:"
+ 	cat "${LOG_FILE}"
+ fi
+diff --git a/tests/functional/test_logging_destinations.sh b/tests/functional/test_logging_destinations.sh
+index 35470c0..f05cd00 100755
+--- a/tests/functional/test_logging_destinations.sh
++++ b/tests/functional/test_logging_destinations.sh
+@@ -45,8 +45,7 @@ if assert_process_running "${STALLD_PID}" "stalld should be running"; then
+ 			pass "output contains expected messages"
+ 		fi
+ 	else
+-		TEST_FAILED=$((TEST_FAILED + 1))
+-		echo -e "  ${RED}FAIL${NC}: no output in verbose mode"
++		fail "no output in verbose mode"
+ 	fi
+ fi
  
-     if [ ${cpu0_detections} -eq 0 ] && [ ${cpu1_detections} -gt 0 ]; then
--        log "✓ PASS: Idle CPU skipped, busy CPU monitored"
-+        pass "Idle CPU skipped, busy CPU monitored"
-     elif [ ${cpu1_detections} -gt 0 ]; then
--        log "✓ PASS: Busy CPU ${CPU1} monitored"
-+        pass "Busy CPU ${CPU1} monitored"
-         if [ ${cpu0_detections} -gt 0 ]; then
-             log "⚠ INFO: CPU ${CPU0} also had detections (may have background activity)"
-         fi
+@@ -158,8 +157,7 @@ if assert_process_running "${STALLD_PID}" "stalld with combined logging should b
+ 	if [ -s "${LOG_FILE}" ]; then
+ 		pass "combined logging produces output"
+ 	else
+-		TEST_FAILED=$((TEST_FAILED + 1))
+-		echo -e "  ${RED}FAIL${NC}: no output with combined logging"
++		fail "no output with combined logging"
+ 	fi
+ fi
+ 
 diff --git a/tests/functional/test_pidfile.sh b/tests/functional/test_pidfile.sh
-index fbdc9fe..fd4fedc 100755
+index fd4fedc..0e4c623 100755
 --- a/tests/functional/test_pidfile.sh
 +++ b/tests/functional/test_pidfile.sh
-@@ -54,7 +54,7 @@ for pidfile in /var/run/stalld.pid /run/stalld.pid; do
-         # Verify PID matches
-         pid_from_file=$(cat "$pidfile")
+@@ -56,8 +56,7 @@ for pidfile in /var/run/stalld.pid /run/stalld.pid; do
          if [ "$pid_from_file" = "${STALLD_PID}" ]; then
--            log "✓ PASS: Default pidfile contains correct PID"
-+            pass "Default pidfile contains correct PID"
+             pass "Default pidfile contains correct PID"
          else
-             log "✗ FAIL: Default pidfile PID ($pid_from_file) doesn't match stalld PID (${STALLD_PID})"
-             TEST_FAILED=$((TEST_FAILED + 1))
-@@ -92,12 +92,12 @@ sleep 2
- 
- # Verify pidfile was created
- if [ -f "${custom_pidfile}" ]; then
--    log "✓ PASS: Custom pidfile created at ${custom_pidfile}"
-+    pass "Custom pidfile created at ${custom_pidfile}"
- 
-     # Verify content
-     pid_from_file=$(cat "${custom_pidfile}")
+-            log "✗ FAIL: Default pidfile PID ($pid_from_file) doesn't match stalld PID (${STALLD_PID})"
+-            TEST_FAILED=$((TEST_FAILED + 1))
++            fail "Default pidfile PID ($pid_from_file) doesn't match stalld PID (${STALLD_PID})"
+         fi
+         break
+     fi
+@@ -99,12 +98,10 @@ if [ -f "${custom_pidfile}" ]; then
      if [ "$pid_from_file" = "${STALLD_PID}" ]; then
--        log "✓ PASS: Custom pidfile contains correct PID ($pid_from_file)"
-+        pass "Custom pidfile contains correct PID ($pid_from_file)"
+         pass "Custom pidfile contains correct PID ($pid_from_file)"
      else
-         log "✗ FAIL: Custom pidfile PID ($pid_from_file) doesn't match stalld PID (${STALLD_PID})"
-         TEST_FAILED=$((TEST_FAILED + 1))
-@@ -113,7 +113,7 @@ log "Test 3: Verify pidfile removed on clean shutdown"
- stop_stalld
- 
- if [ ! -f "${custom_pidfile}" ]; then
--    log "✓ PASS: Pidfile removed on clean shutdown"
-+    pass "Pidfile removed on clean shutdown"
+-        log "✗ FAIL: Custom pidfile PID ($pid_from_file) doesn't match stalld PID (${STALLD_PID})"
+-        TEST_FAILED=$((TEST_FAILED + 1))
++        fail "Custom pidfile PID ($pid_from_file) doesn't match stalld PID (${STALLD_PID})"
+     fi
  else
-     log "⚠ WARNING: Pidfile still exists after shutdown (may be expected)"
-     # Not failing - some implementations keep pidfile
-@@ -139,11 +139,11 @@ start_stalld -l -t 5 --pidfile "${tmp_pidfile}"
- sleep 2
+-    log "✗ FAIL: Custom pidfile not created at ${custom_pidfile}"
+-    TEST_FAILED=$((TEST_FAILED + 1))
++    fail "Custom pidfile not created at ${custom_pidfile}"
+ fi
  
- if [ -f "${tmp_pidfile}" ]; then
--    log "✓ PASS: Pidfile created in /tmp directory"
-+    pass "Pidfile created in /tmp directory"
- 
-     pid_from_file=$(cat "${tmp_pidfile}")
+ # Test 3: Verify pidfile removed on clean shutdown
+@@ -145,12 +142,10 @@ if [ -f "${tmp_pidfile}" ]; then
      if [ "$pid_from_file" = "${STALLD_PID}" ]; then
--        log "✓ PASS: /tmp pidfile contains correct PID"
-+        pass "/tmp pidfile contains correct PID"
+         pass "/tmp pidfile contains correct PID"
      else
-         log "✗ FAIL: /tmp pidfile has incorrect PID"
-         TEST_FAILED=$((TEST_FAILED + 1))
-@@ -175,11 +175,11 @@ start_stalld -f -v -l -t 5 --pidfile "${fg_pidfile}"
- sleep 2
+-        log "✗ FAIL: /tmp pidfile has incorrect PID"
+-        TEST_FAILED=$((TEST_FAILED + 1))
++        fail "/tmp pidfile has incorrect PID"
+     fi
+ else
+-    log "✗ FAIL: Pidfile not created in /tmp"
+-    TEST_FAILED=$((TEST_FAILED + 1))
++    fail "Pidfile not created in /tmp"
+ fi
  
- if [ -f "${fg_pidfile}" ]; then
--    log "✓ PASS: Pidfile created in foreground mode"
-+    pass "Pidfile created in foreground mode"
- 
-     pid_from_file=$(cat "${fg_pidfile}")
+ stop_stalld
+@@ -181,8 +176,7 @@ if [ -f "${fg_pidfile}" ]; then
      if [ "$pid_from_file" = "${STALLD_PID}" ]; then
--        log "✓ PASS: Foreground mode pidfile contains correct PID"
-+        pass "Foreground mode pidfile contains correct PID"
+         pass "Foreground mode pidfile contains correct PID"
      else
-         log "✗ FAIL: Foreground mode pidfile has incorrect PID"
-         TEST_FAILED=$((TEST_FAILED + 1))
-@@ -250,7 +250,7 @@ sleep 2
- if [ -f "${readable_pidfile}" ]; then
-     # Try to read the pidfile as a regular user would
-     if cat "${readable_pidfile}" > /dev/null 2>&1; then
--        log "✓ PASS: Pidfile is readable"
-+        pass "Pidfile is readable"
+-        log "✗ FAIL: Foreground mode pidfile has incorrect PID"
+-        TEST_FAILED=$((TEST_FAILED + 1))
++        fail "Foreground mode pidfile has incorrect PID"
+     fi
+ else
+     log "⚠ WARNING: Pidfile not created in foreground mode (may be expected)"
+@@ -221,8 +215,7 @@ ret=$?
+ if [ $ret -ne 0 ] && [ $ret -ne 124 ]; then
+     pass "Invalid pidfile path rejected with error"
+ else
+-    log "✗ FAIL: stalld did not reject invalid pidfile path"
+-    TEST_FAILED=$((TEST_FAILED + 1))
++    fail "stalld did not reject invalid pidfile path"
+ fi
  
-         # Check permissions
+ # Cleanup
+@@ -256,12 +249,10 @@ if [ -f "${readable_pidfile}" ]; then
          perms=$(stat -c "%a" "${readable_pidfile}" 2>/dev/null || stat -f "%Lp" "${readable_pidfile}" 2>/dev/null)
+         log "ℹ INFO: Pidfile permissions: $perms"
+     else
+-        log "✗ FAIL: Pidfile not readable"
+-        TEST_FAILED=$((TEST_FAILED + 1))
++        fail "Pidfile not readable"
+     fi
+ else
+-    log "✗ FAIL: Pidfile not created"
+-    TEST_FAILED=$((TEST_FAILED + 1))
++    fail "Pidfile not created"
+ fi
+ 
+ stop_stalld
 diff --git a/tests/functional/test_runqueue_parsing.sh b/tests/functional/test_runqueue_parsing.sh
-index ccb1982..fc69fa0 100755
+index fc69fa0..ac5190e 100755
 --- a/tests/functional/test_runqueue_parsing.sh
 +++ b/tests/functional/test_runqueue_parsing.sh
-@@ -102,11 +102,11 @@ if [ ${BPF_AVAILABLE} -eq 1 ]; then
- 
-     # Wait for starvation detection
-     if wait_for_starvation_detected "${STALLD_LOG_BPF}"; then
--        log "✓ PASS: eBPF backend detected starving tasks"
-+        pass "eBPF backend detected starving tasks"
- 
-         # Verify task info is present (PID, comm)
+@@ -108,8 +108,7 @@ if [ ${BPF_AVAILABLE} -eq 1 ]; then
          if grep -E "starvation_gen.*starved on CPU ${TEST_CPU}" "${STALLD_LOG_BPF}"; then
--            log "✓ PASS: Task name (comm) correctly extracted"
-+            pass "Task name (comm) correctly extracted"
+             pass "Task name (comm) correctly extracted"
          else
-             log "✗ FAIL: Task name not found in eBPF backend output"
-             TEST_FAILED=$((TEST_FAILED + 1))
-@@ -114,7 +114,7 @@ if [ ${BPF_AVAILABLE} -eq 1 ]; then
+-            log "✗ FAIL: Task name not found in eBPF backend output"
+-            TEST_FAILED=$((TEST_FAILED + 1))
++            fail "Task name not found in eBPF backend output"
+         fi
  
          # Verify PID is logged
-         if grep -E "\[[0-9]+\].*starved on CPU" "${STALLD_LOG_BPF}"; then
--            log "✓ PASS: Task PID correctly extracted"
-+            pass "Task PID correctly extracted"
-         else
+@@ -119,10 +118,9 @@ if [ ${BPF_AVAILABLE} -eq 1 ]; then
              log "⚠ INFO: PID format may have changed"
          fi
-@@ -157,11 +157,11 @@ if [ ${SCHED_DEBUG_AVAILABLE} -eq 1 ]; then
- 
-     # Wait for starvation detection
-     if wait_for_starvation_detected "${STALLD_LOG_SCHED}"; then
--        log "✓ PASS: sched_debug backend detected starving tasks"
-+        pass "sched_debug backend detected starving tasks"
- 
-         # Verify task info is present
-         if grep -E "starvation_gen.*starved on CPU ${TEST_CPU}" "${STALLD_LOG_SCHED}"; then
--            log "✓ PASS: Task name (comm) correctly extracted"
-+            pass "Task name (comm) correctly extracted"
-         else
-             log "✗ FAIL: Task name not found in sched_debug backend output"
-             TEST_FAILED=$((TEST_FAILED + 1))
-@@ -169,7 +169,7 @@ if [ ${SCHED_DEBUG_AVAILABLE} -eq 1 ]; then
- 
-         # Verify PID is logged
-         if grep -E "\[[0-9]+\].*starved on CPU" "${STALLD_LOG_SCHED}"; then
--            log "✓ PASS: Task PID correctly extracted"
-+            pass "Task PID correctly extracted"
-         else
-             log "⚠ INFO: PID format may have changed"
-         fi
-@@ -249,14 +249,14 @@ if [ ${BPF_AVAILABLE} -eq 1 ] && [ ${SCHED_DEBUG_AVAILABLE} -eq 1 ]; then
-     # Compare results
-     log ""
-     if [ ${bpf_detections} -gt 0 ] && [ ${sched_detections} -gt 0 ]; then
--        log "✓ PASS: Both backends detected starvation"
-+        pass "Both backends detected starvation"
- 
-         # Check if detection counts are similar (within reasonable variance)
-         diff=$((bpf_detections - sched_detections))
-         diff=${diff#-}  # absolute value
- 
-         if [ ${diff} -le 2 ]; then
--            log "✓ PASS: Detection counts are consistent (eBPF: ${bpf_detections}, sched_debug: ${sched_detections})"
-+            pass "Detection counts are consistent (eBPF: ${bpf_detections}, sched_debug: ${sched_detections})"
-         else
-             log "⚠ INFO: Detection counts differ (eBPF: ${bpf_detections}, sched_debug: ${sched_detections})"
-             log "        This may be due to timing differences between backends"
-@@ -313,7 +313,7 @@ if [ -n "$test_backend" ]; then
- 
-     # Check for task name (comm field)
-     if grep -q "starvation_gen" "${log_file}"; then
--        log "✓ PASS: Task name (comm) field extracted"
-+        pass "Task name (comm) field extracted"
      else
-         log "✗ FAIL: Task name (comm) field not found"
-         TEST_FAILED=$((TEST_FAILED + 1))
-@@ -321,7 +321,7 @@ if [ -n "$test_backend" ]; then
- 
-     # Check for PID field (format: name-PID or [PID])
-     if grep -qE "(starvation_gen-[0-9]+|\[[0-9]+\])" "${log_file}"; then
--        log "✓ PASS: PID field extracted"
-+        pass "PID field extracted"
-     else
-         log "✗ FAIL: PID field not found"
-         TEST_FAILED=$((TEST_FAILED + 1))
-@@ -329,7 +329,7 @@ if [ -n "$test_backend" ]; then
- 
-     # Check for CPU ID
-     if grep -q "CPU ${TEST_CPU}" "${log_file}"; then
--        log "✓ PASS: CPU ID field extracted"
-+        pass "CPU ID field extracted"
-     else
-         log "✗ FAIL: CPU ID field not found"
-         TEST_FAILED=$((TEST_FAILED + 1))
-@@ -337,7 +337,7 @@ if [ -n "$test_backend" ]; then
- 
-     # Check for starvation duration
-     if grep -qE "for [0-9]+ seconds" "${log_file}"; then
--        log "✓ PASS: Starvation duration calculated from context switches/time"
-+        pass "Starvation duration calculated from context switches/time"
-     else
-         log "✗ FAIL: Starvation duration not found"
-         TEST_FAILED=$((TEST_FAILED + 1))
-@@ -371,21 +371,21 @@ if [ ${SCHED_DEBUG_AVAILABLE} -eq 1 ]; then
-     # Check for format detection messages
-     if grep -q "detect_task_format" "${STALLD_LOG_SCHED}"; then
-         detected_format=$(grep "detect_task_format" "${STALLD_LOG_SCHED}" | grep "detected" | tail -1)
--        log "✓ PASS: Kernel format auto-detection occurred"
-+        pass "Kernel format auto-detection occurred"
-         log "ℹ INFO: ${detected_format}"
- 
-         # Check if field offsets were detected
-         if grep -q "found 'task' at word" "${STALLD_LOG_SCHED}"; then
--            log "✓ PASS: Task field offset detected"
-+            pass "Task field offset detected"
-         fi
-         if grep -q "found 'PID' at word" "${STALLD_LOG_SCHED}"; then
--            log "✓ PASS: PID field offset detected"
-+            pass "PID field offset detected"
-         fi
-         if grep -q "found 'switches' at word" "${STALLD_LOG_SCHED}"; then
--            log "✓ PASS: Switches field offset detected"
-+            pass "Switches field offset detected"
-         fi
-         if grep -q "found 'prio' at word" "${STALLD_LOG_SCHED}"; then
--            log "✓ PASS: Priority field offset detected"
-+            pass "Priority field offset detected"
-         fi
-     else
-         log "⚠ INFO: Format detection messages not in log (may not be verbose enough)"
-@@ -393,7 +393,7 @@ if [ ${SCHED_DEBUG_AVAILABLE} -eq 1 ]; then
- 
-     # Verify the backend still works despite format
-     if grep -q "starved on CPU" "${STALLD_LOG_SCHED}"; then
--        log "✓ PASS: Backend successfully parsed tasks despite kernel format"
-+        pass "Backend successfully parsed tasks despite kernel format"
-     else
-         log "⚠ INFO: No starvation detected in this test run"
-     fi
-diff --git a/tests/functional/test_starvation_detection.sh b/tests/functional/test_starvation_detection.sh
-index 3c6fd6e..6d4d7c5 100755
---- a/tests/functional/test_starvation_detection.sh
-+++ b/tests/functional/test_starvation_detection.sh
-@@ -75,11 +75,11 @@ start_stalld_with_log "${STALLD_LOG}" -f -v -N -l -t $threshold -c ${TEST_CPU} -
- # Wait for starvation detection
- log "Waiting for starvation detection..."
- if wait_for_starvation_detected "${STALLD_LOG}"; then
--    log "✓ PASS: Starvation detected"
-+    pass "Starvation detected"
- 
-     # Verify correct CPU is logged
-     if grep "starved on CPU ${TEST_CPU}" "${STALLD_LOG}"; then
--        log "✓ PASS: Correct CPU ID logged (CPU ${TEST_CPU})"
-+        pass "Correct CPU ID logged (CPU ${TEST_CPU})"
-     else
-         log "✗ FAIL: Wrong CPU ID in log"
-         TEST_FAILED=$((TEST_FAILED + 1))
-@@ -87,7 +87,7 @@ if wait_for_starvation_detected "${STALLD_LOG}"; then
- 
-     # Verify duration is logged
-     if grep -E "starved on CPU ${TEST_CPU} for [0-9]+ seconds" "${STALLD_LOG}"; then
--        log "✓ PASS: Starvation duration logged"
-+        pass "Starvation duration logged"
-     else
-         log "✗ FAIL: Starvation duration not logged"
-         TEST_FAILED=$((TEST_FAILED + 1))
-@@ -145,7 +145,7 @@ if [ -n "${STARVE_CHILDREN}" ]; then
- 
-             ctxt_delta=$((ctxt_after - ctxt_before))
-             if [ ${ctxt_delta} -lt 5 ]; then
--                log "✓ PASS: Context switch count remained low (delta: ${ctxt_delta})"
-+                pass "Context switch count remained low (delta: ${ctxt_delta})"
-             else
-                 log "✗ FAIL: Context switches increased significantly (delta: ${ctxt_delta})"
-                 TEST_FAILED=$((TEST_FAILED + 1))
-@@ -199,7 +199,7 @@ stop_stalld
- # Task merging means the timestamp is preserved, so duration increases
- report_count=$(grep -cE "starved on CPU ${TEST_CPU} for [0-9]+ seconds" "${STALLD_LOG}")
- if [ "${report_count}" -ge 2 ]; then
--    log "✓ PASS: Multiple starvation reports found (${report_count} reports)"
-+    pass "Multiple starvation reports found (${report_count} reports)"
- 
-     # Extract starvation durations from log
-     durations=$(grep -oE "starved on CPU ${TEST_CPU} for [0-9]+" "${STALLD_LOG}" | grep -oE "[0-9]+$")
-@@ -210,7 +210,7 @@ if [ "${report_count}" -ge 2 ]; then
-     last_duration=$(echo "$durations" | tail -1)
- 
-     if [ ${last_duration} -gt ${first_duration} ]; then
--        log "✓ PASS: Starvation duration increased (${first_duration}s -> ${last_duration}s)"
-+        pass "Starvation duration increased (${first_duration}s -> ${last_duration}s)"
-         log "        This confirms task merging preserved the timestamp"
-     else
-         log "✗ FAIL: Starvation duration did not increase (timestamp may have been reset)"
-@@ -283,14 +283,14 @@ else
- 
-     # Check both CPUs detected - specifically look for starvation_gen tasks
-     if grep -qE "starvation_gen.*starved on CPU ${CPU0}|starved on CPU ${CPU0}.*starvation_gen" "${STALLD_LOG}"; then
--        log "✓ PASS: Starvation detected on CPU ${CPU0}"
-+        pass "Starvation detected on CPU ${CPU0}"
-     else
-         log "✗ FAIL: Starvation not detected on CPU ${CPU0}"
-         TEST_FAILED=$((TEST_FAILED + 1))
-     fi
- 
-     if grep -qE "starvation_gen.*starved on CPU ${CPU1}|starved on CPU ${CPU1}.*starvation_gen" "${STALLD_LOG}"; then
--        log "✓ PASS: Starvation detected on CPU ${CPU1}"
-+        pass "Starvation detected on CPU ${CPU1}"
-     else
-         log "✗ FAIL: Starvation not detected on CPU ${CPU1}"
-         TEST_FAILED=$((TEST_FAILED + 1))
-@@ -330,7 +330,7 @@ log "Creating a busy task that should NOT be starved"
-     # Verify this task was NOT reported as starved
-     # Since it's making progress, stalld shouldn't detect it
-     if ! grep "starved" "${STALLD_LOG}"; then
--        log "✓ PASS: No false positive - task making progress not reported as starved"
-+        pass "No false positive - task making progress not reported as starved"
-     else
-         # Check if our specific task was reported
-         log "Log shows starvation, checking if it's our progress-making task..."
-@@ -370,7 +370,7 @@ sleep 5
- 
- # Verify stalld is still running (didn't crash)
- if assert_process_running "${STALLD_PID}" "stalld still running after task exit"; then
--    log "✓ PASS: stalld handled task exit gracefully"
-+    pass "stalld handled task exit gracefully"
- else
-     log "✗ FAIL: stalld crashed or exited unexpectedly"
-     TEST_FAILED=$((TEST_FAILED + 1))
-@@ -383,7 +383,7 @@ if grep -iE "error|segfault|crash" "${STALLD_LOG}"; then
-     grep -iE "error|segfault|crash" "${STALLD_LOG}"
-     TEST_FAILED=$((TEST_FAILED + 1))
- else
--    log "✓ PASS: No error messages in log"
-+    pass "No error messages in log"
- fi
- 
- stop_stalld
-diff --git a/tests/functional/test_starvation_threshold.sh b/tests/functional/test_starvation_threshold.sh
-index b904867..a35f898 100755
---- a/tests/functional/test_starvation_threshold.sh
-+++ b/tests/functional/test_starvation_threshold.sh
-@@ -76,7 +76,7 @@ log "Waiting for detection (threshold: ${threshold}s)"
- 
- # Check if starvation was detected - specifically look for starvation_gen tasks
- if wait_for_starvation_detected "${STALLD_LOG}"; then
--    log "✓ PASS: Starvation detected after ${threshold}s threshold"
-+    pass "Starvation detected after ${threshold}s threshold"
- else
-     log "✗ FAIL: Starvation not detected after ${threshold}s threshold"
-     log "Log contents:"
-@@ -121,7 +121,7 @@ sleep 2
- 
- # Check that starvation_gen was NOT detected (duration less than threshold)
- if ! grep -qE "starvation_gen.*starved on CPU ${TEST_CPU}|starved on CPU ${TEST_CPU}.*starvation_gen" "${STALLD_LOG2}"; then
--    log "✓ PASS: No starvation detected for duration less than threshold"
-+    pass "No starvation detected for duration less than threshold"
- else
-     log "✗ FAIL: Starvation detected before threshold"
-     log "Found starvation_gen task in logs:"
-@@ -161,7 +161,7 @@ log "Waiting for detection (threshold: ${threshold}s)"
- 
- # Check if starvation_gen was detected
- if wait_for_starvation_detected "${STALLD_LOG3}"; then
--    log "✓ PASS: Starvation detected with ${threshold}s threshold"
-+    pass "Starvation detected with ${threshold}s threshold"
- else
-     log "✗ FAIL: Starvation not detected with ${threshold}s threshold"
-     log "Log contents:"
-diff --git a/tests/functional/test_task_merging.sh b/tests/functional/test_task_merging.sh
-index 5cd6406..b89230e 100755
---- a/tests/functional/test_task_merging.sh
-+++ b/tests/functional/test_task_merging.sh
-@@ -103,7 +103,7 @@ log "Second detection: task starved for ${second_duration}s"
- # Verify timestamp was preserved (duration increased)
- if [ "${second_duration}" -gt "${first_duration}" ]; then
-     delta=$((second_duration - first_duration))
--    log "✓ PASS: Starvation duration increased by ${delta}s"
-+    pass "Starvation duration increased by ${delta}s"
-     log "        Timestamp preserved across monitoring cycles"
- else
-     log "✗ FAIL: Duration did not increase (${first_duration}s -> ${second_duration}s)"
-@@ -122,7 +122,7 @@ fi
- log "Third detection: task starved for ${third_duration}s"
- 
- if [ "${third_duration}" -gt "${second_duration}" ]; then
--    log "✓ PASS: Duration continues to accumulate (${third_duration}s total)"
-+    pass "Duration continues to accumulate (${third_duration}s total)"
- else
-     log "⚠ INFO: Duration did not increase in third cycle"
- fi
-@@ -179,7 +179,7 @@ if [ -n "${tracked_pid}" ]; then
- 
-         delta=$((ctxsw_after - ctxsw_before))
-         if [ ${delta} -lt 5 ]; then
--            log "✓ PASS: Context switches remained low (delta: ${delta})"
-+            pass "Context switches remained low (delta: ${delta})"
-             log "        Task meeting merge criteria (same PID, same ctxsw)"
-         else
-             log "⚠ INFO: Context switches increased by ${delta}"
-@@ -191,7 +191,7 @@ if [ -n "${tracked_pid}" ]; then
-         log "Total starvation detections: ${detections}"
- 
-         if [ ${detections} -ge 2 ]; then
--            log "✓ PASS: Multiple detections indicate task merging across cycles"
-+            pass "Multiple detections indicate task merging across cycles"
-         fi
-     else
-         log "⚠ WARNING: Task exited before second check"
-@@ -242,7 +242,7 @@ if [ -n "${tracked_pid}" ]; then
-     # If task was boosted, context switches should have changed
-     # meaning timestamp should reset for next starvation period
-     if grep -q "boosted" "${STALLD_LOG}"; then
--        log "✓ PASS: Task was boosted (made progress)"
-+        pass "Task was boosted (made progress)"
- 
-         # Check if we see a new starvation period starting
-         # (This is harder to verify, but context switches changing = no merge)
-@@ -311,7 +311,7 @@ else
-         log "CPU ${CPU0}: ${cpu0_first}s -> ${cpu0_last}s"
- 
-         if [ "${cpu0_last}" -gt "${cpu0_first}" ]; then
--            log "✓ PASS: CPU ${CPU0} task merging working (timestamp preserved)"
-+            pass "CPU ${CPU0} task merging working (timestamp preserved)"
-         fi
-     fi
- 
-@@ -327,12 +327,12 @@ else
-         log "CPU ${CPU1}: ${cpu1_first}s -> ${cpu1_last}s"
- 
-         if [ "${cpu1_last}" -gt "${cpu1_first}" ]; then
--            log "✓ PASS: CPU ${CPU1} task merging working (timestamp preserved)"
-+            pass "CPU ${CPU1} task merging working (timestamp preserved)"
-         fi
-     fi
- 
-     if [ ${cpu0_detections} -ge 2 ] && [ ${cpu1_detections} -ge 2 ]; then
--        log "✓ PASS: Independent task merging on both CPUs"
-+        pass "Independent task merging on both CPUs"
+-        log "✗ FAIL: eBPF backend did not detect starvation"
++        fail "eBPF backend did not detect starvation"
+         log "Log contents:"
+         cat "${STALLD_LOG_BPF}"
+-        TEST_FAILED=$((TEST_FAILED + 1))
      fi
  
      # Cleanup
+@@ -163,8 +161,7 @@ if [ ${SCHED_DEBUG_AVAILABLE} -eq 1 ]; then
+         if grep -E "starvation_gen.*starved on CPU ${TEST_CPU}" "${STALLD_LOG_SCHED}"; then
+             pass "Task name (comm) correctly extracted"
+         else
+-            log "✗ FAIL: Task name not found in sched_debug backend output"
+-            TEST_FAILED=$((TEST_FAILED + 1))
++            fail "Task name not found in sched_debug backend output"
+         fi
+ 
+         # Verify PID is logged
+@@ -180,10 +177,9 @@ if [ ${SCHED_DEBUG_AVAILABLE} -eq 1 ]; then
+             log "ℹ INFO: Kernel format detected: $format"
+         fi
+     else
+-        log "✗ FAIL: sched_debug backend did not detect starvation"
++        fail "sched_debug backend did not detect starvation"
+         log "Log contents:"
+         cat "${STALLD_LOG_SCHED}"
+-        TEST_FAILED=$((TEST_FAILED + 1))
+     fi
+ 
+     # Cleanup
+@@ -262,8 +258,7 @@ if [ ${BPF_AVAILABLE} -eq 1 ] && [ ${SCHED_DEBUG_AVAILABLE} -eq 1 ]; then
+             log "        This may be due to timing differences between backends"
+         fi
+     else
+-        log "✗ FAIL: One or both backends failed to detect starvation"
+-        TEST_FAILED=$((TEST_FAILED + 1))
++        fail "One or both backends failed to detect starvation"
+     fi
+ else
+     log ""
+@@ -315,32 +310,28 @@ if [ -n "$test_backend" ]; then
+     if grep -q "starvation_gen" "${log_file}"; then
+         pass "Task name (comm) field extracted"
+     else
+-        log "✗ FAIL: Task name (comm) field not found"
+-        TEST_FAILED=$((TEST_FAILED + 1))
++        fail "Task name (comm) field not found"
+     fi
+ 
+     # Check for PID field (format: name-PID or [PID])
+     if grep -qE "(starvation_gen-[0-9]+|\[[0-9]+\])" "${log_file}"; then
+         pass "PID field extracted"
+     else
+-        log "✗ FAIL: PID field not found"
+-        TEST_FAILED=$((TEST_FAILED + 1))
++        fail "PID field not found"
+     fi
+ 
+     # Check for CPU ID
+     if grep -q "CPU ${TEST_CPU}" "${log_file}"; then
+         pass "CPU ID field extracted"
+     else
+-        log "✗ FAIL: CPU ID field not found"
+-        TEST_FAILED=$((TEST_FAILED + 1))
++        fail "CPU ID field not found"
+     fi
+ 
+     # Check for starvation duration
+     if grep -qE "for [0-9]+ seconds" "${log_file}"; then
+         pass "Starvation duration calculated from context switches/time"
+     else
+-        log "✗ FAIL: Starvation duration not found"
+-        TEST_FAILED=$((TEST_FAILED + 1))
++        fail "Starvation duration not found"
+     fi
+ 
+     # Cleanup
+diff --git a/tests/functional/test_starvation_detection.sh b/tests/functional/test_starvation_detection.sh
+index 6d4d7c5..680cf39 100755
+--- a/tests/functional/test_starvation_detection.sh
++++ b/tests/functional/test_starvation_detection.sh
+@@ -81,22 +81,19 @@ if wait_for_starvation_detected "${STALLD_LOG}"; then
+     if grep "starved on CPU ${TEST_CPU}" "${STALLD_LOG}"; then
+         pass "Correct CPU ID logged (CPU ${TEST_CPU})"
+     else
+-        log "✗ FAIL: Wrong CPU ID in log"
+-        TEST_FAILED=$((TEST_FAILED + 1))
++        fail "Wrong CPU ID in log"
+     fi
+ 
+     # Verify duration is logged
+     if grep -E "starved on CPU ${TEST_CPU} for [0-9]+ seconds" "${STALLD_LOG}"; then
+         pass "Starvation duration logged"
+     else
+-        log "✗ FAIL: Starvation duration not logged"
+-        TEST_FAILED=$((TEST_FAILED + 1))
++        fail "Starvation duration not logged"
+     fi
+ else
+-    log "✗ FAIL: Starvation not detected"
++    fail "Starvation not detected"
+     log "Log contents:"
+     cat "${STALLD_LOG}"
+-    TEST_FAILED=$((TEST_FAILED + 1))
+ fi
+ 
+ # Cleanup
+@@ -147,8 +144,7 @@ if [ -n "${STARVE_CHILDREN}" ]; then
+             if [ ${ctxt_delta} -lt 5 ]; then
+                 pass "Context switch count remained low (delta: ${ctxt_delta})"
+             else
+-                log "✗ FAIL: Context switches increased significantly (delta: ${ctxt_delta})"
+-                TEST_FAILED=$((TEST_FAILED + 1))
++                fail "Context switches increased significantly (delta: ${ctxt_delta})"
+             fi
+             break
+         fi
+@@ -213,14 +209,12 @@ if [ "${report_count}" -ge 2 ]; then
+         pass "Starvation duration increased (${first_duration}s -> ${last_duration}s)"
+         log "        This confirms task merging preserved the timestamp"
+     else
+-        log "✗ FAIL: Starvation duration did not increase (timestamp may have been reset)"
+-        TEST_FAILED=$((TEST_FAILED + 1))
++        fail "Starvation duration did not increase (timestamp may have been reset)"
+     fi
+ else
+-    log "✗ FAIL: Not enough starvation reports to verify task merging (found ${report_count}, need >= 2)"
++    fail "Not enough starvation reports to verify task merging (found ${report_count}, need >= 2)"
+     log "Log contents:"
+     cat "${STALLD_LOG}"
+-    TEST_FAILED=$((TEST_FAILED + 1))
+ fi
+ 
+ # Cleanup starvation generator
+@@ -285,15 +279,13 @@ else
+     if grep -qE "starvation_gen.*starved on CPU ${CPU0}|starved on CPU ${CPU0}.*starvation_gen" "${STALLD_LOG}"; then
+         pass "Starvation detected on CPU ${CPU0}"
+     else
+-        log "✗ FAIL: Starvation not detected on CPU ${CPU0}"
+-        TEST_FAILED=$((TEST_FAILED + 1))
++        fail "Starvation not detected on CPU ${CPU0}"
+     fi
+ 
+     if grep -qE "starvation_gen.*starved on CPU ${CPU1}|starved on CPU ${CPU1}.*starvation_gen" "${STALLD_LOG}"; then
+         pass "Starvation detected on CPU ${CPU1}"
+     else
+-        log "✗ FAIL: Starvation not detected on CPU ${CPU1}"
+-        TEST_FAILED=$((TEST_FAILED + 1))
++        fail "Starvation not detected on CPU ${CPU1}"
+     fi
+ 
+     # Cleanup
+@@ -372,16 +364,14 @@ sleep 5
+ if assert_process_running "${STALLD_PID}" "stalld still running after task exit"; then
+     pass "stalld handled task exit gracefully"
+ else
+-    log "✗ FAIL: stalld crashed or exited unexpectedly"
+-    TEST_FAILED=$((TEST_FAILED + 1))
++    fail "stalld crashed or exited unexpectedly"
+ fi
+ 
+ # Check for error messages
+ if grep -iE "error|segfault|crash" "${STALLD_LOG}"; then
+-    log "✗ FAIL: Error messages found in log"
++    fail "Error messages found in log"
+     log "Errors:"
+     grep -iE "error|segfault|crash" "${STALLD_LOG}"
+-    TEST_FAILED=$((TEST_FAILED + 1))
+ else
+     pass "No error messages in log"
+ fi
+diff --git a/tests/functional/test_starvation_threshold.sh b/tests/functional/test_starvation_threshold.sh
+index a35f898..a2cd420 100755
+--- a/tests/functional/test_starvation_threshold.sh
++++ b/tests/functional/test_starvation_threshold.sh
+@@ -78,10 +78,9 @@ log "Waiting for detection (threshold: ${threshold}s)"
+ if wait_for_starvation_detected "${STALLD_LOG}"; then
+     pass "Starvation detected after ${threshold}s threshold"
+ else
+-    log "✗ FAIL: Starvation not detected after ${threshold}s threshold"
++    fail "Starvation not detected after ${threshold}s threshold"
+     log "Log contents:"
+     cat "${STALLD_LOG}"
+-    TEST_FAILED=$((TEST_FAILED + 1))
+ fi
+ 
+ # Cleanup
+@@ -123,10 +122,9 @@ sleep 2
+ if ! grep -qE "starvation_gen.*starved on CPU ${TEST_CPU}|starved on CPU ${TEST_CPU}.*starvation_gen" "${STALLD_LOG2}"; then
+     pass "No starvation detected for duration less than threshold"
+ else
+-    log "✗ FAIL: Starvation detected before threshold"
++    fail "Starvation detected before threshold"
+     log "Found starvation_gen task in logs:"
+     grep -E "starvation_gen.*starved on CPU|starved on CPU.*starvation_gen" "${STALLD_LOG2}"
+-    TEST_FAILED=$((TEST_FAILED + 1))
+ fi
+ 
+ # Cleanup
+@@ -163,10 +161,9 @@ log "Waiting for detection (threshold: ${threshold}s)"
+ if wait_for_starvation_detected "${STALLD_LOG3}"; then
+     pass "Starvation detected with ${threshold}s threshold"
+ else
+-    log "✗ FAIL: Starvation not detected with ${threshold}s threshold"
++    fail "Starvation not detected with ${threshold}s threshold"
+     log "Log contents:"
+     cat "${STALLD_LOG3}"
+-    TEST_FAILED=$((TEST_FAILED + 1))
+ fi
+ 
+ # Cleanup
+@@ -193,8 +190,7 @@ ret=$?
+ if [ $ret -ne 0 ] && [ $ret -ne 124 ]; then
+     pass "Zero threshold rejected with error"
+ else
+-    log "✗ FAIL: stalld did not reject invalid threshold value 0"
+-    TEST_FAILED=$((TEST_FAILED + 1))
++    fail "stalld did not reject invalid threshold value 0"
+ fi
+ 
+ # Test with negative threshold
+@@ -208,8 +204,7 @@ ret=$?
+ if [ $ret -ne 0 ] && [ $ret -ne 124 ]; then
+     pass "Negative threshold rejected with error"
+ else
+-    log "✗ FAIL: stalld did not reject invalid negative threshold"
+-    TEST_FAILED=$((TEST_FAILED + 1))
++    fail "stalld did not reject invalid negative threshold"
+ fi
+ 
+ log ""
+diff --git a/tests/functional/test_task_merging.sh b/tests/functional/test_task_merging.sh
+index b89230e..e1a4cc1 100755
+--- a/tests/functional/test_task_merging.sh
++++ b/tests/functional/test_task_merging.sh
+@@ -106,9 +106,8 @@ if [ "${second_duration}" -gt "${first_duration}" ]; then
+     pass "Starvation duration increased by ${delta}s"
+     log "        Timestamp preserved across monitoring cycles"
+ else
+-    log "✗ FAIL: Duration did not increase (${first_duration}s -> ${second_duration}s)"
++    fail "Duration did not increase (${first_duration}s -> ${second_duration}s)"
+     log "        Timestamp may have been reset (task merging failed)"
+-    TEST_FAILED=$((TEST_FAILED + 1))
+ fi
+ 
+ # Wait for third detection to confirm continued accumulation
+diff --git a/tests/helpers/test_helpers.sh b/tests/helpers/test_helpers.sh
+index 144114c..20f8a3c 100755
+--- a/tests/helpers/test_helpers.sh
++++ b/tests/helpers/test_helpers.sh
+@@ -114,6 +114,15 @@ pass() {
+ 	TEST_PASSED=$((TEST_PASSED + 1))
+ }
+ 
++# Record a test failure with a description message.
++#
++# Usage: fail "description"
++fail() {
++	local message=${1:-""}
++	log "✗ FAIL: ${message}"
++	TEST_FAILED=$((TEST_FAILED + 1))
++}
++
+ # Assert functions
+ assert_equals() {
+ 	local expected=$1
+@@ -1130,7 +1139,7 @@ start_starvation_gen() {
+ 
+ # Export functions for use in tests
+ export -f start_test end_test
+-export -f pass assert_equals assert_contains assert_not_contains
++export -f pass fail assert_equals assert_contains assert_not_contains
+ export -f assert_file_exists assert_file_not_exists
+ export -f assert_process_running assert_process_not_running
+ export -f start_stalld stop_stalld kill_existing_stalld cleanup
 -- 
 2.53.0
 
