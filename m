@@ -1,47 +1,47 @@
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 3502A397E75
-	for <linux-rt-users@vger.kernel.org>; Mon, 30 Mar 2026 19:44:41 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id CC6A539C012
+	for <linux-rt-users@vger.kernel.org>; Mon, 30 Mar 2026 19:44:46 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1774899883; cv=none; b=dWBHahhRRBPGkwOjSoC4jjaE4AtvedEP/mAudKtotsIYY86ikcuqBe8I2sS80RgXQUMp+UfQ6VioJ8vxsVw3wdN7J2lyqbtKx0DePxQ6V13YGOiS0LI/zC54bWCEZ+EdPC3TGC5CC/Q3iyZSK1jJxvSWYcAKWXhE6o5rUt2BLJI=
+	t=1774899891; cv=none; b=lS1g3WOOTn0EOsRbw9xQVmbmnrblwuOXJemA1q1e7lOh4HEhE4bifHP9tswDPQ7ofZlAxymW4Dz1xcEbmnBNaHsTHFIwTHx8KKgxzoDSSSi8g/cpANJcOEQPowbLV5CrcCtHwhPU0vJYvFgJgxjOPKaIhgegCBXESHJZkpX2McE=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1774899883; c=relaxed/simple;
-	bh=Y6KQ8wiIbHNopY4/6uLGU87+uwrHcNvl4P+kl2Q10V8=;
+	s=arc-20240116; t=1774899891; c=relaxed/simple;
+	bh=tAoE5/pvxPjDIm4YQQy5Qtfay5K1nqRRhuBcTZldY94=;
 	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version:Content-Type; b=MV9QQkWjhf/JFYb2+HiX97Gt3lxVHQl7jBayeIvtVblrBTdjNR0Oq45TogRfuIbjfbUWwB1aM51jwA4W/8TPX3xHUFm4OXPuBEYRsbu5DJJBrvr8SZctlGbu3R6JCA2nl5yPoHT0ouzQJMBn1rD67uxx7ytHI3thk903RV1ad7k=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=jIfMaLll; arc=none smtp.client-ip=170.10.129.124
+	 MIME-Version; b=UKAn17n2QWUQWtg3cWO44eNeXRlWlYPPpQxWS2PLAobqPCqT4NvkBrhgFp9xqoSb/7GE/CR+IukziV/fyoOIVNG3eOM2gvxpZLO9r8lj+hKKMKUzvmwCK+OoF6uAC14w6CjdJPRWBV4JhGTPE69uSyrqtk51SKjaw3YCQdmsDpQ=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=MrEObrkl; arc=none smtp.client-ip=170.10.129.124
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="jIfMaLll"
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="MrEObrkl"
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1774899881;
+	s=mimecast20190719; t=1774899886;
 	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 to:to:cc:cc:mime-version:mime-version:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references;
-	bh=90O4AA+o6NwIsOfcXfwXfGaA4KUbXO+4z1CaZF34Vak=;
-	b=jIfMaLllOaK+p492NOdCuEfexB5gDrQgzfmEj/e1gXjIsKOZFe+ZDEfc1Hz5tkujY2U0lN
-	EDLRNky5J+V4NVPeo+0SrNiSwO3vWNPeyardzBJgDWk99dsRvC+6PruvwKHt/XqzRwB9sx
-	HsDCicqkvGVGxVjanIST8bxVbTesqMs=
-Received: from mx-prod-mc-05.mail-002.prod.us-west-2.aws.redhat.com
+	bh=v6jsSvB403TAF3rOGheJjj8/E9mVwnFKEFkuXXqG7nQ=;
+	b=MrEObrkln8Ot8OOkrh5OJ/jjCEOkfJh+GQdxkrUG3fYlGuZ9Ts9m1OW3wkuZRn/h7toSWO
+	PBwuaGsRVt0UpvnEfcp5LBkIMP0FAK2aRtkKuN5ke7q8uGUWnvg1m+XJC6OjTyRJ3KsKkm
+	xiURN8pqON2wPQfDWqeQjP2szb0rtXo=
+Received: from mx-prod-mc-03.mail-002.prod.us-west-2.aws.redhat.com
  (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
  relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-365-Nri5zVlmNCWLcpINJKBJ9A-1; Mon,
- 30 Mar 2026 15:44:39 -0400
-X-MC-Unique: Nri5zVlmNCWLcpINJKBJ9A-1
-X-Mimecast-MFC-AGG-ID: Nri5zVlmNCWLcpINJKBJ9A_1774899878
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-209-FS6ILXjaPf2Uuf7D3CdhIg-1; Mon,
+ 30 Mar 2026 15:44:42 -0400
+X-MC-Unique: FS6ILXjaPf2Uuf7D3CdhIg-1
+X-Mimecast-MFC-AGG-ID: FS6ILXjaPf2Uuf7D3CdhIg_1774899881
 Received: from mx-prod-int-05.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-05.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.17])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
 	(No client certificate requested)
-	by mx-prod-mc-05.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 21037195608E;
-	Mon, 30 Mar 2026 19:44:38 +0000 (UTC)
+	by mx-prod-mc-03.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 5C793195607B;
+	Mon, 30 Mar 2026 19:44:41 +0000 (UTC)
 Received: from 192.168.0.12 (unknown [10.22.65.57])
-	by mx-prod-int-05.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTP id 4398D1954102;
-	Mon, 30 Mar 2026 19:44:34 +0000 (UTC)
+	by mx-prod-int-05.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTP id A4FBC1954102;
+	Mon, 30 Mar 2026 19:44:38 +0000 (UTC)
 From: Wander Lairson Costa <wander@redhat.com>
 To: williams@redhat.com,
 	jkacur@redhat.com,
@@ -49,11 +49,10 @@ To: williams@redhat.com,
 	luffyluo@tencent.com,
 	davidlt@rivosinc.com,
 	linux-rt-users@vger.kernel.org
-Cc: Claude <noreply@anthropic.com>,
-	Wander Lairson Costa <wander@redhat.com>
-Subject: [PATCH stalld 01/36] tests: Add pre-test and post-test cleanup of stalld processes
-Date: Mon, 30 Mar 2026 16:43:24 -0300
-Message-ID: <20260330194410.103953-2-wander@redhat.com>
+Cc: Wander Lairson Costa <wander@redhat.com>
+Subject: [PATCH stalld 02/36] tests/helpers: Fix stalld daemon detection in start_stalld()
+Date: Mon, 30 Mar 2026 16:43:25 -0300
+Message-ID: <20260330194410.103953-3-wander@redhat.com>
 In-Reply-To: <20260330194410.103953-1-wander@redhat.com>
 References: <20260330194410.103953-1-wander@redhat.com>
 Precedence: bulk
@@ -62,167 +61,101 @@ List-Id: <linux-rt-users.vger.kernel.org>
 List-Subscribe: <mailto:linux-rt-users+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit
 X-Scanned-By: MIMEDefang 3.0 on 10.30.177.17
 
-From: Clark Williams <williams@redhat.com>
+The start_stalld() test helper function incorrectly assumed that
+daemonized processes would always have a parent PID (PPID) of 1 (init)
+or 2 (kthreadd). This assumption is no longer valid on modern Linux
+systems utilizing systemd, where orphaned processes are commonly
+re-parented to the user's systemd session, not directly to the global
+init process.
 
-Add kill_existing_stalld() function to test_helpers.sh and
-kill_existing_stalld_processes() function to run_tests.sh to ensure
-no stale stalld processes from previous test runs interfere with new
-tests. This prevents orphaned processes from interrupted test runs
-from causing false negatives or unexpected behavior.
+This led to failures in the test_foreground test on both sched_debug
+and queue_track backends due to the helper failing to correctly
+identify the daemonized stalld process.
 
-Changes:
-- test_helpers.sh: Add kill_existing_stalld() with graceful then
-  forced shutdown, export the function, and call from
-  setup_test_environment()
-- run_tests.sh: Add kill_existing_stalld_processes() with logging,
-  call from init_tests() before tests start, and call from
-  cleanup_runner() on exit
+To address this, the daemon detection logic has been refactored.
+Instead of relying on PPID checks, the helper now first waits for the
+initial shell background process (shell_pid) that started stalld to
+exit. This exit signals that stalld has successfully performed its
+double-fork and daemonized. Once the parent shell process has exited,
+the helper then uses pgrep -n -x stalld to reliably find the newest
+running stalld instance, which corresponds to the daemonized process.
+This approach provides a more robust and platform-agnostic method for
+detecting stalld when it runs in daemon mode.
 
-This ensures clean test environment initialization and proper cleanup
-even when test runs are interrupted.
-
-🤖 Generated with [Claude Code](https://claude.ai/code)
-
-Co-Authored-By: Claude <noreply@anthropic.com>
-Assisted-By: git-scm-master (claude-sonnet-4 / 36f1d1f06f2e)
-Signed-off-by: Clark Williams <williams@redhat.com>
 Signed-off-by: Wander Lairson Costa <wander@redhat.com>
 ---
- tests/helpers/test_helpers.sh | 35 ++++++++++++++++++++++++++++-
- tests/run_tests.sh            | 42 +++++++++++++++++++++++++++++++++++
- 2 files changed, 76 insertions(+), 1 deletion(-)
+ tests/helpers/test_helpers.sh | 45 ++++++++++-------------------------
+ 1 file changed, 13 insertions(+), 32 deletions(-)
 
 diff --git a/tests/helpers/test_helpers.sh b/tests/helpers/test_helpers.sh
-index 630601a..c42dab3 100755
+index c42dab3..5a384a7 100755
 --- a/tests/helpers/test_helpers.sh
 +++ b/tests/helpers/test_helpers.sh
-@@ -407,6 +407,36 @@ stop_stalld() {
+@@ -321,48 +321,29 @@ start_stalld() {
+ 				fi
+ 			fi
+ 		else
+-			# Daemon mode: parent forks, child becomes daemon (ppid=1), parent exits
+-			# We need to wait for and find the DAEMON child, not the exiting parent
++			# Daemon mode: stalld double-forks, so the shell_pid will exit
++			# and the daemon will be re-parented. Wait for the shell process
++			# to exit, then find the newest stalld process.
+ 			while [ $attempt -lt $max_attempts ]; do
+ 				sleep 0.5
+ 
+-				# Get all stalld processes
+-				local pids=$(pgrep -x stalld 2>/dev/null)
+-
+-				for pid in $pids; do
+-					if kill -0 $pid 2>/dev/null; then
+-						# Check parent PID - daemon should have ppid=1 (init) or ppid=2 (kthreadd)
+-						local ppid=$(ps -o ppid= -p $pid 2>/dev/null | tr -d ' ')
+-
+-						# For daemonized processes, wait for ppid=1 or 2
+-						if [ "$ppid" = "1" ] || [ "$ppid" = "2" ]; then
+-							STALLD_PID=$pid
+-							# Wait a bit to ensure daemon is stable
+-							sleep 0.5
+-							# Verify it's still running
+-							if kill -0 $pid 2>/dev/null; then
+-								break 2  # Break out of both loops
+-							else
+-								# Daemon died, keep looking
+-								STALLD_PID=""
+-							fi
+-						fi
++				# Check if shell_pid has exited (daemonization complete)
++				if ! kill -0 ${shell_pid} 2>/dev/null; then
++					# Shell process exited, daemon should be running
++					# Use pgrep -n to find the newest stalld process
++					STALLD_PID=$(pgrep -n -x stalld 2>/dev/null)
++					if [ -n "${STALLD_PID}" ] && kill -0 ${STALLD_PID} 2>/dev/null; then
++						break
+ 					fi
+-				done
+-
+-				# If we found a daemonized process, we're done
+-				if [ -n "${STALLD_PID}" ]; then
+-					break
+ 				fi
+ 
+ 				attempt=$((attempt + 1))
+ 			done
+ 
+-			# Last resort: use the shell PID if nothing else worked
++			# If we still don't have a PID, try one more time
+ 			if [ -z "${STALLD_PID}" ]; then
+-				if kill -0 ${shell_pid} 2>/dev/null; then
+-					STALLD_PID=${shell_pid}
+-				fi
++				sleep 1
++				STALLD_PID=$(pgrep -n -x stalld 2>/dev/null)
+ 			fi
+ 		fi
  	fi
- }
- 
-+# Kill any existing stalld processes (cleanup from previous runs)
-+# This ensures a clean slate before starting tests
-+kill_existing_stalld() {
-+	local pids=$(pgrep -x stalld 2>/dev/null)
-+	if [ -n "${pids}" ]; then
-+		echo "Killing existing stalld processes: ${pids}"
-+		for pid in ${pids}; do
-+			# Try graceful shutdown first
-+			kill ${pid} 2>/dev/null || true
-+		done
-+		sleep 0.5
-+		# Force kill any remaining
-+		pids=$(pgrep -x stalld 2>/dev/null)
-+		if [ -n "${pids}" ]; then
-+			for pid in ${pids}; do
-+				kill -9 ${pid} 2>/dev/null || true
-+			done
-+			sleep 0.2
-+		fi
-+		# Verify all killed
-+		pids=$(pgrep -x stalld 2>/dev/null)
-+		if [ -n "${pids}" ]; then
-+			echo -e "${YELLOW}WARNING: Could not kill all stalld processes: ${pids}${NC}"
-+			return 1
-+		fi
-+		echo "All existing stalld processes killed"
-+	fi
-+	return 0
-+}
-+
- # Cleanup function (call in trap)
- cleanup() {
- 	local exit_code=$?
-@@ -712,6 +742,9 @@ disable_dl_server() {
- setup_test_environment() {
- 	echo "Setting up test environment..."
- 
-+	# Kill any existing stalld processes from previous runs
-+	kill_existing_stalld
-+
- 	# Save and disable RT throttling
- 	save_rt_throttling
- 	disable_rt_throttling
-@@ -1022,7 +1055,7 @@ export -f start_test end_test
- export -f assert_equals assert_contains assert_not_contains
- export -f assert_file_exists assert_file_not_exists
- export -f assert_process_running assert_process_not_running
--export -f start_stalld stop_stalld cleanup
-+export -f start_stalld stop_stalld kill_existing_stalld cleanup
- export -f wait_for_log_message
- export -f get_thread_policy get_thread_priority
- export -f create_cpu_load
-diff --git a/tests/run_tests.sh b/tests/run_tests.sh
-index c6adc49..16b6750 100755
---- a/tests/run_tests.sh
-+++ b/tests/run_tests.sh
-@@ -220,6 +220,15 @@ cleanup_runner() {
- 	fi
- 
- 	if [ $EUID -eq 0 ]; then
-+		# Kill any remaining stalld processes
-+		local pids=$(pgrep -x stalld 2>/dev/null)
-+		if [ -n "${pids}" ]; then
-+			echo -e "${BLUE}Cleaning up remaining stalld processes: ${pids}${NC}"
-+			for pid in ${pids}; do
-+				kill -9 ${pid} 2>/dev/null || true
-+			done
-+		fi
-+
- 		restore_dl_server_state
- 		restore_rt_throttling_state
- 	fi
-@@ -236,6 +245,34 @@ handle_interrupt() {
- trap cleanup_runner EXIT
- trap handle_interrupt INT TERM
- 
-+# Kill any existing stalld processes before tests
-+kill_existing_stalld_processes() {
-+	local pids=$(pgrep -x stalld 2>/dev/null)
-+	if [ -n "${pids}" ]; then
-+		echo -e "${BLUE}Killing existing stalld processes: ${pids}${NC}" | tee -a "${LOG_FILE}"
-+		for pid in ${pids}; do
-+			kill ${pid} 2>/dev/null || true
-+		done
-+		sleep 0.5
-+		# Force kill any remaining
-+		pids=$(pgrep -x stalld 2>/dev/null)
-+		if [ -n "${pids}" ]; then
-+			for pid in ${pids}; do
-+				kill -9 ${pid} 2>/dev/null || true
-+			done
-+			sleep 0.2
-+		fi
-+		# Verify
-+		pids=$(pgrep -x stalld 2>/dev/null)
-+		if [ -n "${pids}" ]; then
-+			echo -e "${YELLOW}WARNING: Could not kill all stalld processes: ${pids}${NC}" | tee -a "${LOG_FILE}"
-+		else
-+			echo -e "${GREEN}All existing stalld processes killed${NC}" | tee -a "${LOG_FILE}"
-+		fi
-+		echo "" | tee -a "${LOG_FILE}"
-+	fi
-+}
-+
- # Initialize
- init_tests() {
- 	mkdir -p "${RESULTS_DIR}"
-@@ -243,6 +280,11 @@ init_tests() {
- 	print_banner | tee "${LOG_FILE}"
- 	echo "" | tee -a "${LOG_FILE}"
- 
-+	# Kill any existing stalld processes from previous runs
-+	if [ $EUID -eq 0 ]; then
-+		kill_existing_stalld_processes
-+	fi
-+
- 	# Save and disable RT throttling if running as root
- 	if [ $EUID -eq 0 ]; then
- 		save_and_disable_rt_throttling
 -- 
 2.53.0
 
