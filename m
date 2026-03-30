@@ -1,47 +1,47 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 0516539DBC1
-	for <linux-rt-users@vger.kernel.org>; Mon, 30 Mar 2026 19:46:31 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 02A9F39D6DF
+	for <linux-rt-users@vger.kernel.org>; Mon, 30 Mar 2026 19:46:35 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1774899993; cv=none; b=Pd95KMv3+r29+xSYvvL/1jNIzTFvR6rPNcISjpJS5+3aSB4qmgzl7PvsBqm+eADTcXCsqQLcWMzxhpNrjsxzPgCdyhWiqkuklkkpq291KfGCvOiq2ZPvQIDghiaxEAZGCdUPt4UNksMKP5jbQgffmnElPvn6MTdYAhtU8E0PHWs=
+	t=1774899997; cv=none; b=MOjcgTFC3zmIasIsAEfb5rrmmHv2Lk6TfwoZKyrzTQg9wg0lM9mdIjRbZWV1luFKGEbNtIb/cm9C0KRXjfyiIQrCGOh7bp02XTE/4BAY44Nxy4SC8tXf4zge/IHM1Xw5/Agqhdw3Yo4KOKqLUxuXx7PGgg25fOQnbwAb9Tnl9iA=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1774899993; c=relaxed/simple;
-	bh=t4v0E9aL4y5353mMiiYHIHl/x7piP/Q5np4iKYvdeYQ=;
+	s=arc-20240116; t=1774899997; c=relaxed/simple;
+	bh=asVZ07tOReWDwfGcwcd50l+AGipaxHrCfE2bamtxkiw=;
 	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=oR3uvQLwFv/8eLsOFoFKNjT7LxtrnqGh09IGbbUiqfuXDC6s+l3+Ji72TwT/vekvUfEffNHuaOh+lR6a3vkKa7URdYksBtNRa0x4iQIamAkVKcRINE4GslyGih3/ax4ZL55jUICLaGMmQVu0iYLQbB7njl7USGapXwe64Z9KvWg=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=TcSalllG; arc=none smtp.client-ip=170.10.133.124
+	 MIME-Version; b=McoIlMlIibJmXFRbCAMtvfq1XL7ufxUSCYXt8XPnF+egtROggu0aYr/kT+qbYDi+dNNVMG0b09aNaUeWw/5i1tEP/BrHrr1jVRyOLZ/2UAx68jSO+MzjbVQgTSNUmfGSTGuJQpvhdK4Gz3HFiGe9BRfc6V55P/vfRMdWPYFnK74=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=ZVXXaS+R; arc=none smtp.client-ip=170.10.129.124
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="TcSalllG"
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="ZVXXaS+R"
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1774899991;
+	s=mimecast20190719; t=1774899995;
 	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
 	 to:to:cc:cc:mime-version:mime-version:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references;
-	bh=UP1pMO0Ix153s2NIOrDBZQ4pE7hQ2pWLgiNYu2S/jnE=;
-	b=TcSalllGlgngHbhge9JN/VUHFu722psyS9he9AZSe7C8t0Kt5Sl6uuWfbJZ6t6wXHwTUWv
-	CR4KQJqfwFBb734Wy25SfVlEpMsaJSQ5faEmGX/i605qmpL2I5DPfMh34EY/WHzN1GP1un
-	Zw+Ye3Eo9Rktw+GNLTjsTylyF9tY/UI=
-Received: from mx-prod-mc-03.mail-002.prod.us-west-2.aws.redhat.com
+	bh=IwIdKhqnEy6jE58SSmemswAWmGcrQpYalvMfidZ8I7M=;
+	b=ZVXXaS+R/k4rHX1087DncuqHOrd71q+DTcu5eyi/+FZuXSkC1jYs8qHuSuEjviuYTM01o/
+	sP1eGgHajt3YMMDz7SgyiELSRjzqc2WLrCLwuPJWqIBBT03RVWHj4YZEMmqO4Slw6fWEAU
+	F7dX6JMHXS1mT2wU6MRuH0te+ezwlKI=
+Received: from mx-prod-mc-05.mail-002.prod.us-west-2.aws.redhat.com
  (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
  relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-208-3lnPh34iMeqwP4CC21EMDQ-1; Mon,
- 30 Mar 2026 15:46:28 -0400
-X-MC-Unique: 3lnPh34iMeqwP4CC21EMDQ-1
-X-Mimecast-MFC-AGG-ID: 3lnPh34iMeqwP4CC21EMDQ_1774899987
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-511-WBVLCVuPOFK8c78GbVSi7w-1; Mon,
+ 30 Mar 2026 15:46:33 -0400
+X-MC-Unique: WBVLCVuPOFK8c78GbVSi7w-1
+X-Mimecast-MFC-AGG-ID: WBVLCVuPOFK8c78GbVSi7w_1774899992
 Received: from mx-prod-int-05.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-05.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.17])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
 	(No client certificate requested)
-	by mx-prod-mc-03.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id D1DB619560B4;
-	Mon, 30 Mar 2026 19:46:27 +0000 (UTC)
+	by mx-prod-mc-05.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id A6AC1195609E;
+	Mon, 30 Mar 2026 19:46:32 +0000 (UTC)
 Received: from 192.168.0.12 (unknown [10.22.65.57])
-	by mx-prod-int-05.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTP id 4513E1954102;
-	Mon, 30 Mar 2026 19:46:25 +0000 (UTC)
+	by mx-prod-int-05.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTP id 611FD1954102;
+	Mon, 30 Mar 2026 19:46:28 +0000 (UTC)
 From: Wander Lairson Costa <wander@redhat.com>
 To: williams@redhat.com,
 	jkacur@redhat.com,
@@ -50,9 +50,9 @@ To: williams@redhat.com,
 	davidlt@rivosinc.com,
 	linux-rt-users@vger.kernel.org
 Cc: Wander Lairson Costa <wander@redhat.com>
-Subject: [PATCH stalld 34/36] tests/functional: Fix readiness detection and FIFO fallback in test_force_fifo
-Date: Mon, 30 Mar 2026 16:43:57 -0300
-Message-ID: <20260330194410.103953-35-wander@redhat.com>
+Subject: [PATCH stalld 35/36] tests/functional: Fix invalid pidfile test in test_pidfile
+Date: Mon, 30 Mar 2026 16:43:58 -0300
+Message-ID: <20260330194410.103953-36-wander@redhat.com>
 In-Reply-To: <20260330194410.103953-1-wander@redhat.com>
 References: <20260330194410.103953-1-wander@redhat.com>
 Precedence: bulk
@@ -64,47 +64,36 @@ MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 X-Scanned-By: MIMEDefang 3.0 on 10.30.177.17
 
-Add "skipping" to the wait_for_stalld_ready() pattern to handle
-aggressive mode with idle detection, where stalld prints "skipping
-next phase" instead of "checking cpu" or "waiting tasks". Also
-accept stalld's fallback to adaptive mode when given -F without -A,
-matching the fix already applied to test_fifo_boosting.
+The test created a directory with no write permission and expected
+stalld to fail writing the pidfile. Since the tests run as root,
+the permission restriction has no effect and stalld succeeds. Use
+a non-existent parent directory instead so fopen() fails regardless
+of privileges.
 
 Signed-off-by: Wander Lairson Costa <wander@redhat.com>
 ---
- tests/functional/test_force_fifo.sh | 4 +++-
- tests/helpers/test_helpers.sh       | 2 +-
- 2 files changed, 4 insertions(+), 2 deletions(-)
+ tests/functional/test_pidfile.sh | 8 ++------
+ 1 file changed, 2 insertions(+), 6 deletions(-)
 
-diff --git a/tests/functional/test_force_fifo.sh b/tests/functional/test_force_fifo.sh
-index ecaa7ac..239bc37 100755
---- a/tests/functional/test_force_fifo.sh
-+++ b/tests/functional/test_force_fifo.sh
-@@ -218,8 +218,10 @@ ret=$?
+diff --git a/tests/functional/test_pidfile.sh b/tests/functional/test_pidfile.sh
+index 0e4c623..76be14a 100755
+--- a/tests/functional/test_pidfile.sh
++++ b/tests/functional/test_pidfile.sh
+@@ -192,12 +192,8 @@ log "=========================================="
+ log "Test 6: Invalid pidfile path (permission denied)"
+ log "=========================================="
  
- if [ $ret -ne 0 ] && [ $ret -ne 124 ]; then
-     pass "single-threaded mode rejected FIFO"
-+elif grep -qiE "single.*thread|falling back|adaptive" "${FIFO_SINGLE_LOG}"; then
-+    pass "stalld detected incompatibility and fell back to adaptive mode"
- else
--    fail "stalld did not reject -F in single-threaded mode"
-+    fail "stalld silently accepted FIFO in single-threaded mode"
- fi
+-# Create a directory with no write permissions
+-test_dir="/tmp/stalld_test_no_write_$$"
+-mkdir -p "${test_dir}"
+-chmod 555 "${test_dir}"
+-invalid_pidfile="${test_dir}/stalld.pid"
+-CLEANUP_FILES+=("${test_dir}")
++# Use a non-existent parent directory so fopen() fails even as root
++invalid_pidfile="/nonexistent_${$}/stalld.pid"
  
- #=============================================================================
-diff --git a/tests/helpers/test_helpers.sh b/tests/helpers/test_helpers.sh
-index 6e29a3b..9d49b55 100755
---- a/tests/helpers/test_helpers.sh
-+++ b/tests/helpers/test_helpers.sh
-@@ -537,7 +537,7 @@ wait_for_log_message() {
- wait_for_stalld_ready() {
- 	local log_file=$1
- 	local timeout=${2:-15}
--	wait_for_log_message "checking cpu\|waiting tasks" "${timeout}" "${log_file}"
-+	wait_for_log_message "checking cpu\|waiting tasks\|skipping" "${timeout}" "${log_file}"
- }
- 
- # Wait for stalld to detect a starving task.
+ INVALID_LOG="/tmp/stalld_test_pidfile_invalid_$$.log"
+ CLEANUP_FILES+=("${INVALID_LOG}")
 -- 
 2.53.0
 
