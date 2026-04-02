@@ -1,218 +1,192 @@
-Received: from galois.linutronix.de (Galois.linutronix.de [193.142.43.55])
+Received: from mx0b-0064b401.pphosted.com (mx0b-0064b401.pphosted.com [205.220.178.238])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 47B0A366060;
-	Thu,  2 Apr 2026 04:42:37 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=193.142.43.55
-ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1775104958; cv=none; b=mnLs4aWBf6iOK7W4i6wBW9ej7d3FmqI5bph6FmEyeKmf2mVz8CeTJ+yLQCzTF2LqLi/8ClIXMxFlJhOyfDIVucLggw0CrBETgEmtjcDncqFILJQ5vHAGICqhceV0nr88xY5ZxBj0HlR/x4u+s9CVVfa7rk4cK7vbpukG/hMGaH0=
-ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1775104958; c=relaxed/simple;
-	bh=XIVO2rDhF7vl2myZmgFd67wiPZXQ7C/T7hTBVST245I=;
-	h=From:To:Cc:Subject:In-Reply-To:References:Date:Message-ID:
-	 MIME-Version:Content-Type; b=qqxidG+4BXu2XvZDrPu/kW1j/CZm8ACOXyr5JdH7OUkRyfSYdPMypDCNxROD0IQJgWAQwbnfCyTuOjFSlci0gtMvtf2JGmcxmHT7WGEFzs246daPgWWyUjEaRvRw8Rv6L9brHJ83YchcHAagrpNHjeczxoZvGInxYL9CG7psk5Y=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linutronix.de; spf=pass smtp.mailfrom=linutronix.de; dkim=pass (2048-bit key) header.d=linutronix.de header.i=@linutronix.de header.b=vWXGzyn1; dkim=permerror (0-bit key) header.d=linutronix.de header.i=@linutronix.de header.b=IurlPxyt; arc=none smtp.client-ip=193.142.43.55
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linutronix.de
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=linutronix.de
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 0948854774;
+	Thu,  2 Apr 2026 09:00:23 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=fail smtp.client-ip=205.220.178.238
+ARC-Seal:i=2; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
+	t=1775120425; cv=fail; b=PrZEVS+UA//LCAEG8MSoaoJeUkq4os0b3Mf8OTkToSzgt/pSrIIbPKClZTDlmpDs+QRi5CwM2PCI8DgGSOQGPEsWooLbGTUeq4QXSoNjOtD1YDRdTz99b92+5HfELDJPRUhAbhKKsU7Oec5e+37V+zkc/vKD0XU1TaEQaBgbDFk=
+ARC-Message-Signature:i=2; a=rsa-sha256; d=subspace.kernel.org;
+	s=arc-20240116; t=1775120425; c=relaxed/simple;
+	bh=K8Mw+4++mKi+Ms+iR0XLRhwPDkObnsp96UZUaIBDStk=;
+	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
+	 Content-Type:MIME-Version; b=YV3h5UPS4tW+OijW7jrdtHSeRLYHMOVnizCpsgIBhQGyCl7OAl77OQ3ngMvb7KrD7QpELK6lUE4JRUazp4Md3CnOFGaoY1POs0f+t02HFfpsDSd9BwvUIhKd4qe7Hhtr9ZXOVmpv5R4VkNmLmMS6xOmB+dHym7kirzSoOSph1HA=
+ARC-Authentication-Results:i=2; smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=windriver.com; spf=pass smtp.mailfrom=windriver.com; dkim=pass (2048-bit key) header.d=windriver.com header.i=@windriver.com header.b=sBqfBBj+; arc=fail smtp.client-ip=205.220.178.238
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=windriver.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=windriver.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="vWXGzyn1";
-	dkim=permerror (0-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="IurlPxyt"
-From: Nam Cao <namcao@linutronix.de>
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
-	s=2020; t=1775104955;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references;
-	bh=MJvxgmla7GJ40kGY75h8wil3XQl50FCUl05/E1jznUo=;
-	b=vWXGzyn1Ah4NVW1Mlx6bVWLSBj6AYX9pCd9DrDOplQTmbGujEMKDfVdk9UuQSy4q/EB+8j
-	JbSoHM0OO3CXsGn4pqDs8ysla/YeDW81rKvL9oMlDSU/wJwEwNXBwVEXmKQxttdHCCtWHo
-	7bMByldcwMuRdSwyAqbIbVhr09Nh5iOZuF3dTgEvAYv8muo0576uG3wW0ftYbyCT+1GWyq
-	gsQhjmiz6dYjOVC7gzheLv3qXVvheTKJr8qE9ktdT2m9XlyVi9m5J2OKt1IAYR7+G81PSc
-	Ccn6ATCGsbpr6A2imtJGqLjtn/4UiXtw+q2mleqWmx/aU5fGJJjqJADChxr5xg==
-DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
-	s=2020e; t=1775104955;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references;
-	bh=MJvxgmla7GJ40kGY75h8wil3XQl50FCUl05/E1jznUo=;
-	b=IurlPxyt1Bfb+kV3Q+c8hoyBvdrj8JLeMIg7p9Kgwjh781UgDqCuCKKy/ODbWXkRUht4Vn
-	3iR/ddfJc1aykxAQ==
-To: "Ionut Nechita (Wind River)" <ionut.nechita@windriver.com>,
- jan.kiszka@siemens.com
-Cc: crwood@redhat.com, florian.bezdeka@siemens.com,
- ionut.nechita@windriver.com, brauner@kernel.org,
- linux-fsdevel@vger.kernel.org, linux-rt-users@vger.kernel.org,
- stable@vger.kernel.org, linux-kernel@vger.kernel.org, bpf@vger.kernel.org,
- frederic@kernel.org, vschneid@redhat.com, gregkh@linuxfoundation.org,
- chris.friesen@windriver.com, viorel-catalin.rapiteanu@windriver.com,
- iulian.mocanu@windriver.com
-Subject: Re: [REGRESSION] osnoise: "eventpoll: Replace rwlock with spinlock"
- causes ~50us noise spikes on isolated PREEMPT_RT cores
-In-Reply-To: <20260401165841.532687-1-ionut.nechita@windriver.com>
-References: <22ffc044-4cc7-468c-b11d-9b838c92e82b@siemens.com>
- <20260401165841.532687-1-ionut.nechita@windriver.com>
-Date: Thu, 02 Apr 2026 06:42:32 +0200
-Message-ID: <878qb6x9af.fsf@yellow.woof>
+	dkim=pass (2048-bit key) header.d=windriver.com header.i=@windriver.com header.b="sBqfBBj+"
+Received: from pps.filterd (m0250812.ppops.net [127.0.0.1])
+	by mx0a-0064b401.pphosted.com (8.18.1.11/8.18.1.11) with ESMTP id 6320kKIe576753;
+	Thu, 2 Apr 2026 09:00:02 GMT
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=windriver.com;
+	 h=cc:content-transfer-encoding:content-type:date:from
+	:in-reply-to:message-id:mime-version:references:subject:to; s=
+	PPS06212021; bh=LJyczQnu+bQNRjmD0CzxpfZM3Vrwp9kkBHcsRrvX0QY=; b=
+	sBqfBBj+xKIjqw22sasjKeMQByQtBEaXKDcBotpI83chtVZH7X/iXk1NfFoliwiu
+	pdd/aIDv5uLvJuB78ZECEhJqQPbpw+mwe1m+O+K76q/0TjxRRvcHoPq91mTeBm3F
+	jW7My1yZLbSrG72ndXWPdw2dw0/yj05Lcn1rWs6VFkM5JcQd8KnQXObGfxrZSei1
+	m0Ie/oODNwVK+e5uXB6TArpth8UOpwIBly2+O1JFLpdbQDzNFCpaHgOC1tUVBiFG
+	AjIP2N93Z66axZDSzPaDzwY7Rsd50iB+FBotRkQqjcTKz4/xFG6Tg13eB/L6h9J2
+	7ZaIHLo6KuIPTG9gXfwI4Q==
+Received: from sj2pr03cu001.outbound.protection.outlook.com (mail-westusazon11012062.outbound.protection.outlook.com [52.101.43.62])
+	by mx0a-0064b401.pphosted.com (PPS) with ESMTPS id 4d65y4fhxt-1
+	(version=TLSv1.3 cipher=TLS_AES_256_GCM_SHA384 bits=256 verify=NOT);
+	Thu, 02 Apr 2026 09:00:02 +0000 (GMT)
+ARC-Seal: i=1; a=rsa-sha256; s=arcselector10001; d=microsoft.com; cv=none;
+ b=l0R6Snd42K5voDTNFX2bSMP7Dx6YmoHeT+690/4XohFF7hK0+6m102afW+cEfl+K5ktGv7vDD/FlP4+kPCQOmCMTdVMdVV3gxZFsE6XtDFhCqal7571tUGq1uSZs9oQMezpS3AMFDScwXspGBHbHcCE3kRCgC3kampwa1FRY+5SnUnE5FkXOcB2Ie7fJfB4ybNMe7fnh6a9IrmdTYqZZkFwC3l+SWQcpxNbNxVgpZDfxSHXC0/Oy2h5mFOi6iFXpO28GpHMKTIiQZpQO7mMZvThjB0P8w7HL+aK/JgC0LtwePAyx8XpUsJ4FGkY1MPQvyaC2pGPvIP0L/+jiJG//IA==
+ARC-Message-Signature: i=1; a=rsa-sha256; c=relaxed/relaxed; d=microsoft.com;
+ s=arcselector10001;
+ h=From:Date:Subject:Message-ID:Content-Type:MIME-Version:X-MS-Exchange-AntiSpam-MessageData-ChunkCount:X-MS-Exchange-AntiSpam-MessageData-0:X-MS-Exchange-AntiSpam-MessageData-1;
+ bh=LJyczQnu+bQNRjmD0CzxpfZM3Vrwp9kkBHcsRrvX0QY=;
+ b=HMbBev/NeEtSs4/adXFbUlGEaDgHXeWNTjgTQYdmtmA640ERK+LZcdXdG4hV7okC3bGIywMHBd4VHGfC4NyxRfRSVVFNUcU6EwNp7tUMOE2MVbhKl0B/all2JOVzZa5fZYHFBvgbrKBTHdoz1LfNOxKry5q4wSA7gcI/jiVD/At8tfhaBpPVtqlQDm3pkkFeWPNyGEpJpIx9+JSxy+GZ0rXlHDX3NxD53FQLIWTYYiYSVixTKJA8fy4pM5Qo2zDYXhVwu6TYjyrcShghlHIgtaI66t04PVSNu8ZCmYV8yd5MPxCa+bo2HbCHZUi5q4vZQ1wzHhkGFZgLZFvgMyaQmQ==
+ARC-Authentication-Results: i=1; mx.microsoft.com 1; spf=pass
+ smtp.mailfrom=windriver.com; dmarc=pass action=none
+ header.from=windriver.com; dkim=pass header.d=windriver.com; arc=none
+Received: from SJ2PR11MB7546.namprd11.prod.outlook.com (2603:10b6:a03:4cc::8)
+ by DS0PR11MB8687.namprd11.prod.outlook.com (2603:10b6:8:1be::22) with
+ Microsoft SMTP Server (version=TLS1_2,
+ cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.20.9769.16; Thu, 2 Apr
+ 2026 08:59:59 +0000
+Received: from SJ2PR11MB7546.namprd11.prod.outlook.com
+ ([fe80::ca9b:dcf:8881:bced]) by SJ2PR11MB7546.namprd11.prod.outlook.com
+ ([fe80::ca9b:dcf:8881:bced%5]) with mapi id 15.20.9769.016; Thu, 2 Apr 2026
+ 08:59:59 +0000
+From: "Ionut Nechita (Wind River)" <ionut.nechita@windriver.com>
+To: namcao@linutronix.de
+Cc: jan.kiszka@siemens.com, crwood@redhat.com, florian.bezdeka@siemens.com,
+        ionut.nechita@windriver.com, brauner@kernel.org,
+        linux-fsdevel@vger.kernel.org, linux-rt-users@vger.kernel.org,
+        stable@vger.kernel.org, linux-kernel@vger.kernel.org,
+        bpf@vger.kernel.org, frederic@kernel.org, vschneid@redhat.com,
+        gregkh@linuxfoundation.org, chris.friesen@windriver.com,
+        viorel-catalin.rapiteanu@windriver.com, iulian.mocanu@windriver.com
+Subject: Re: [REGRESSION] osnoise: "eventpoll: Replace rwlock with spinlock" causes ~50us noise spikes on isolated PREEMPT_RT cores
+Date: Thu,  2 Apr 2026 11:59:32 +0300
+Message-ID: <20260402085932.49162-1-ionut.nechita@windriver.com>
+X-Mailer: git-send-email 2.43.0
+In-Reply-To: <878qb6x9af.fsf@yellow.woof>
+References: <878qb6x9af.fsf@yellow.woof>
+Content-Transfer-Encoding: 8bit
+Content-Type: text/plain
+X-ClientProxiedBy: VI1PR02CA0069.eurprd02.prod.outlook.com
+ (2603:10a6:802:14::40) To SJ2PR11MB7546.namprd11.prod.outlook.com
+ (2603:10b6:a03:4cc::8)
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
 List-Subscribe: <mailto:linux-rt-users+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: quoted-printable
+X-MS-PublicTrafficType: Email
+X-MS-TrafficTypeDiagnostic: SJ2PR11MB7546:EE_|DS0PR11MB8687:EE_
+X-MS-Office365-Filtering-Correlation-Id: bbbea15b-a8aa-48d3-18ba-08de909637a1
+X-MS-Exchange-SenderADCheck: 1
+X-MS-Exchange-AntiSpam-Relay: 0
+X-Microsoft-Antispam:
+	BCL:0;ARA:13230040|376014|1800799024|7416014|52116014|366016|38350700014|18002099003|22082099003|56012099003;
+X-Microsoft-Antispam-Message-Info:
+	JTW67vQvlAN+3/0yhG5QkCTddrLUYKL1QB3WS3M6v5mFnKBfbH6holHm/G13gS3whV2aHxpOZKrL23ua0WrBDOBagquhbtl40pzyieFMv+X3YEtIHkhrJAlq5MJHPyxNrdkshH7ycoWhGP4F1NBdyL9ox9lDi3aFH7wra4+7+3De6oX1nJZEd6Ha8EVSpSMOK3Y5OxDypcckYcMRRp+njoIhoE/iq7xUwHKXBjn7FQksIwq7gWWBoF5R6yFyPKsPEqEyO/5QSgZ6HS5PGyPS30dG552gn0h+bre42jnGmeSocTUNgAXZ/3OIkD0/C4zEX0yOSu3oEleNwJuOQRxwhDc28TnLnOAp8Wn4rKQK9iWDkH+PLITd+qq/2fSDx8cvY+cM7jLb9VVPro5GBHHlRzo0H2+8MfN+90JdAz0VqGpWECeoF8mnmTbK0nw+5n2kC8COnxpwkRpXrhqC2dtXr7mmge+a9u33pHORgo6OiGJf3HBT5KOa1AttOqLKOQ7Cl66sRTiJCFbw1y+0VFouWkFxIrIIdGom8aNMROHxhq2IyK7oseVhJM9VGTKkr5tnBXoOZhb1eB8m1Wfgc63WnzhlKa/6HLzd9hF+BxIoCoSmgkiWVpttOksEuqxMj+qxchgVnUqBXzeBdyc9gt6nf8Mvk+fCXLs3ME4GD5kJJjrE0gr2Jg9YD4fXAic0Xj4e7DRn+dV6Vqb/XwEq/NWWQpusgaGJ+bqGIKKw6bIW0Y+VnSkD7bf9auITrdyyWqakBBWFI7NSk/wgjI9ZcrM+Jj8dogNQsqjNLeFpZwSxzBA=
+X-Forefront-Antispam-Report:
+	CIP:255.255.255.255;CTRY:;LANG:en;SCL:1;SRV:;IPV:NLI;SFV:NSPM;H:SJ2PR11MB7546.namprd11.prod.outlook.com;PTR:;CAT:NONE;SFS:(13230040)(376014)(1800799024)(7416014)(52116014)(366016)(38350700014)(18002099003)(22082099003)(56012099003);DIR:OUT;SFP:1101;
+X-MS-Exchange-AntiSpam-MessageData-ChunkCount: 1
+X-MS-Exchange-AntiSpam-MessageData-0:
+	=?us-ascii?Q?2ISD0e3NklphZconG48XR+5x3vjx75ONFm1qyPmX3jFWzNHs3Dx5FmmkGNd/?=
+ =?us-ascii?Q?M5xIonGPDH0Jfe5naDqHTihSjETq9UZgVIIWTOkrKBedZA6PGIs48tl/PyII?=
+ =?us-ascii?Q?WH5Sq1DTIxnNgbtk37mCcwRzrCnfrJ39sEUZXeHD41kjlWkN2GToewfMVOdr?=
+ =?us-ascii?Q?NCsS5C8QDFYKcfhFkbZfHiHPY/864zhnaxzgzqHVUQcd3wesEStgt9WXDTPB?=
+ =?us-ascii?Q?Lf0+b5m74OM8x1w753/zABFTSb/nUs1nFPsiIlx2PJl9wgkuK8Dbfpa1Vnva?=
+ =?us-ascii?Q?WzVcLRlHdjBVYMFWMSCnqrINRnqety5Y/SUJ/XJaYdjwIx0fDN/9Zq9KeUdp?=
+ =?us-ascii?Q?HCRXgEPLXFjKLNisCrFnVzRdkIq0pgTxXcys2ucBfoeOSQ08BJFl/LNtBd9F?=
+ =?us-ascii?Q?0Pu66w8KIasdx+Y2EtQvHgD9F5R4XbqiuzcLEiwoKOKQpvU6yVmOFwrFK2/Y?=
+ =?us-ascii?Q?UEzf9FYCQ0CJV8rBfpjoi9rkNlS/qtvUN3otz31SsL3C1PW+CiWH7GTpROAW?=
+ =?us-ascii?Q?magDejgKbnEHCOeWsejumCq1knTTJkjznQLEOvx2UywaWMGRUU2X8I68lWau?=
+ =?us-ascii?Q?Yh482wJNE/3+uoK5MadH46ZCnnGHytcgYmLd2zAJ7fwWq1sbJx0501d3NWhZ?=
+ =?us-ascii?Q?0jRWN0CVmUkojoZGu+5bDPvVPUOioo63ZLsq8yO6GIhdfqvW6WSoqyFrHtEU?=
+ =?us-ascii?Q?3r4hGk9a3WklzyxaBanSclWu6Q4eZA8JmdN1XC43vccqMr9GWVIT4tqn2flf?=
+ =?us-ascii?Q?5mtG5Rh6j3hLIi7ASAv8Yyi2cbGMVUHmE9SQ6aoq4dvV0E5SeBphf28Spjfc?=
+ =?us-ascii?Q?7Ov28fdDC9iB8+1PXp37On+cciuMINdkRDnh+gzuwMrZa3hOeblho2yvyuSf?=
+ =?us-ascii?Q?dkF3mhxqhHXQ1ihAYpaCTi38QuUlOQ678WEeCa8KQbuX+vtqMQHJeLjgJfwZ?=
+ =?us-ascii?Q?DlUZbl6YfR4AZLjK5Cb9EBXI1dZnq2N80bX86XQ6FXQ5YetRo/ViG0eaPoji?=
+ =?us-ascii?Q?sQz6P80JdrXWCz576rdKJ7MiT2pgo1EJZfyqfC4GRUw+ljoi75j2aYWw0/AZ?=
+ =?us-ascii?Q?BhHadaxW2wi4X3Q1ZDoQC2JO8WKHB9Cq3MnFITa6a6V8gjJvPWBdNwdyUCnZ?=
+ =?us-ascii?Q?7me280O3EMlKbPsEXieF3Hbj+R+f34WjCjwnLIGM1h4VC/karCUJBIkTTI5Y?=
+ =?us-ascii?Q?LbALFsV/0d8ri3Xp/Cql9Lp1ti6jVMaYt2iEIEj234hxxoXf4//6fruuWlhu?=
+ =?us-ascii?Q?HXULhSm2LH2hLACzvwYlqSf6cQ5dly/oi83dZ7DPglHeYjD9eBfKpTY/ANpI?=
+ =?us-ascii?Q?mstxnw2kUm/gzhmFTNVEtQ8Zxm+FfCcamlWYZX15oFIZWNJ3wi1M+cd8EhVI?=
+ =?us-ascii?Q?XB+Z3VsGy5O+zGITBOzUXRYjDzOSkP02B0amsjQ8RYOsz6fgPnDkRJOmhjnI?=
+ =?us-ascii?Q?IEhS4kX6l/c5wwump10m99bD9QzaNUD3EUgX7f8viIL+3OLzRCcRQq2eVltd?=
+ =?us-ascii?Q?T3QT5aNjlqMfckfeYriTZvgwNSNZmG8UtFKClMWcIYO1lBKnhlekgBcPKYuX?=
+ =?us-ascii?Q?Ganb6fRazu2jXcDx2MTJsMfCcAG+U1zrFh9zYygJwCb5OPSUFqSuzVpGt8gd?=
+ =?us-ascii?Q?RwEmex/Y0c5wabZXADD9LiPlU1NlExFRVFtvTfyCZ+KckwixKx7baIe7z0N2?=
+ =?us-ascii?Q?e0l0W7+zIUN9NuuZKxJzefG5pGwxtj+Nx7eTa2YTFHjeXMM4HnVv42DbHdW1?=
+ =?us-ascii?Q?TLAZKK2i9mwXSIooHj2PmbRKSeuDc4I=3D?=
+X-Exchange-RoutingPolicyChecked:
+	Lyj3GPG0iMkU2KK+FcO2QoIUAiLuT2KCGWpdu2u5BP8AeKo0wMezY6HgzV7/JejLVZAaoLO7Ppu2T+3gXCPtSEhw+VOI0kjv8FNcFCFaHXi746ST/WeHCBbSOV58u2rrs8f9QMQznwsMOPyEbhqsdgEFJnNa63DPOER/2mMdQt24a0tt7ROUohfXc9B6dMe1FrrEKt3vqH5gIf+zFjkgp4WfdNr9tfF/+yBzjReZbRpw2lJ8Q5H3Cnl5i7aPdkKfM2PGXuuKHV7t6KAsgXhAkAP6IUwT5aDUVkzale81WrA8KRi4hu0mCTQPec+tCFT/mTEjt3vLxU7FYLdbmhthBA==
+X-OriginatorOrg: windriver.com
+X-MS-Exchange-CrossTenant-Network-Message-Id: bbbea15b-a8aa-48d3-18ba-08de909637a1
+X-MS-Exchange-CrossTenant-AuthSource: SJ2PR11MB7546.namprd11.prod.outlook.com
+X-MS-Exchange-CrossTenant-AuthAs: Internal
+X-MS-Exchange-CrossTenant-OriginalArrivalTime: 02 Apr 2026 08:59:58.9642
+ (UTC)
+X-MS-Exchange-CrossTenant-FromEntityHeader: Hosted
+X-MS-Exchange-CrossTenant-Id: 8ddb2873-a1ad-4a18-ae4e-4644631433be
+X-MS-Exchange-CrossTenant-MailboxType: HOSTED
+X-MS-Exchange-CrossTenant-UserPrincipalName: EIFEyW7anIsGKv09k4X0BON8QNRu65gfOzDBcktoIL/On755DjWJQGp89sIsRDsTHw8A0JOL1nf25MwRH8SkxjiRoXmPbmfhxJozhbiWukA=
+X-MS-Exchange-Transport-CrossTenantHeadersStamped: DS0PR11MB8687
+X-Authority-Analysis: v=2.4 cv=QaZrf8bv c=1 sm=1 tr=0 ts=69ce3012 cx=c_pps
+ a=qMfGPIaByV4ZnHoTJsbowg==:117 a=6eWqkTHjU83fiwn7nKZWdM+Sl24=:19
+ a=z/mQ4Ysz8XfWz/Q5cLBRGdckG28=:19 a=lCpzRmAYbLLaTzLvsPZ7Mbvzbb8=:19
+ a=xqWC_Br6kY4A:10 a=A5OVakUREuEA:10 a=VkNPw1HP01LnGYTKEx00:22
+ a=bi6dqmuHe4P4UrxVR6um:22 a=fTW__CHxibyLmBMfj2wP:22 a=t7CeM3EgAAAA:8
+ a=n9AEmsn67eXyJ6AevBkA:9 a=FdTzh2GWekK77mhwV6Dw:22
+X-Proofpoint-Spam-Details-Enc: AW1haW4tMjYwNDAyMDA3OSBTYWx0ZWRfX9Oe0227oMDs1
+ eWORC9Y1CLmE7m2AMQ93ZYzvBo7YJettEJNtU9DLIYqfNc4dQPCwfpFs18jd13nzWgKemymaGJW
+ so7lH3NRsIFvb2Uy3blRnpcn1rI0qgM8FrVU2/zk8KEvCjtBKaiU9AUGayxAsgQgFZSn83g4UaF
+ elO4x8Sda7jQhXL3Q7O3n+Ssf2PhHDFVK14BJStulzgPTuByptjS8gqJIsRmW2gJqFby5Y6DFB+
+ am8Ixteft/mGGSyP4hp510myLIrxb1mpoaYNO6So3bG9NupRz6RkuxWwIN1LDKcFTPfIpOyKZqN
+ czk18GvTHSUa+5dj0jhzJZ4fPYUQ6Xvan9Yl4Pqk/47t8DRR72w+BMRSyecbWCz8emGpQZ5b4lu
+ BDV9tLcEBk69d+gE5+j8W9Anv1EAyihp+XS/jbRxAVV1X27GTzlwhZaWQ8+Z30LDhznoYAJNlln
+ iKwPFAxugW823cJTWoA==
+X-Proofpoint-GUID: hXDs8adFyl4qJeQ-B9d9Rd_--NDWm0G4
+X-Proofpoint-ORIG-GUID: hXDs8adFyl4qJeQ-B9d9Rd_--NDWm0G4
+X-Proofpoint-Virus-Version: vendor=baseguard
+ engine=ICAP:2.0.293,Aquarius:18.0.1143,Hydra:6.1.51,FMLib:17.12.100.49
+ definitions=2026-04-02_01,2026-04-02_01,2025-10-01_01
+X-Proofpoint-Spam-Details: rule=outbound_notspam policy=outbound score=0
+ spamscore=0 phishscore=0 bulkscore=0 priorityscore=1501 lowpriorityscore=0
+ malwarescore=0 adultscore=0 suspectscore=0 clxscore=1015 impostorscore=0
+ classifier=typeunknown authscore=0 authtc= authcc= route=outbound adjust=0
+ reason=mlx scancount=1 engine=8.22.0-2603050001 definitions=main-2604020079
 
-"Ionut Nechita (Wind River)" <ionut.nechita@windriver.com> writes:
-> Crystal, Jan, Florian, thanks for the detailed feedback. I've redone
-> all testing addressing each point raised. All tests below use HT
-> disabled (sibling cores offlined), as Jan requested.
->
-> Setup:
->   - Hardware: Intel Xeon Gold 6338N (Ice Lake, single socket,
->     32 cores, HT disabled via sibling cores offlined)
->   - Boot: nohz_full=3D1-16 isolcpus=3Dnohz,domain,managed_irq,1-16
->     rcu_nocbs=3D1-31 kthread_cpus=3D0 irqaffinity=3D17-31
->     iommu=3Dpt nmi_watchdog=3D0 intel_pstate=3Dnone skew_tick=3D1
->   - eosnoise run with: ./osnoise -c 1-15
->   - Duration: 120s per test
->
-> Tested kernels (all vanilla, built from upstream sources):
->   - 6.18.20-vanilla      (non-RT, PREEMPT_DYNAMIC)
->   - 6.18.20-vanilla      (PREEMPT_RT, with and without rwlock revert)
->   - 7.0.0-rc6-next-20260331 (PREEMPT_RT, with and without rwlock revert)
->
-> I tested 6 configurations to isolate the exact failure mode:
->
->   #  Kernel          Config   Tool            Revert  Result
->   -- --------------- -------- --------------- ------- ----------------
->   1  6.18.20         non-RT   eosnoise        no      clean (100%)
->   2  6.18.20         RT       eosnoise        no      D state (hung)
->   3  6.18.20         RT       eosnoise        yes     clean (100%)
->   4  6.18.20         RT       kernel osnoise  no      clean (99.999%)
->   5  7.0-rc6-next    RT       eosnoise        no      93% avail, 57us
->   6  7.0-rc6-next    RT       eosnoise        yes     clean (99.99%)
+From: Ionut Nechita <ionut.nechita@windriver.com>
 
-Thanks for the detailed analysis.
+Nam, thanks for the feedback. I agree with your analysis -- this is
+really two separate problems:
 
-> Key findings:
->
-> 1. On 6.18.20-rt with spinlock, eosnoise hangs permanently in D state.
->
->    The process blocks in do_epoll_ctl() during perf_buffer__new() setup
->    (libbpf's perf_event_open + epoll_ctl loop). strace shows progressive
->    degradation as fds are added to the epoll instance:
->
->      CPU  0-13:  epoll_ctl  ~8 us     (normal)
->      CPU 14:     epoll_ctl  16 ms     (2000x slower)
->      CPU 15:     epoll_ctl  80 ms     (10000x slower)
->      CPU 16:     epoll_ctl  80 ms
->      CPU 17:     epoll_ctl  20 ms
->      CPU 18:     epoll_ctl  -- hung, never returns --
->
->    Kernel stack of the hung process (3+ minutes in D state):
->
->      [<0>] do_epoll_ctl+0xa57/0xf20
->      [<0>] __x64_sys_epoll_ctl+0x5d/0xa0
->      [<0>] do_syscall_64+0x7c/0xe30
->      [<0>] entry_SYSCALL_64_after_hwframe+0x76/0x7e
->
-> 2. On 7.0-rc6-next-rt with spinlock, eosnoise runs but with severe
->    noise. The difference from 6.18 is likely additional fixes in
->    linux-next that prevent the complete deadlock but not the contention.
->
-> 3. Kernel osnoise tracer (test #4) shows zero noise on the same
->    6.18.20-rt+spinlock kernel where eosnoise hangs. This confirms the
->    issue is specifically in the epoll rt_mutex path, not in osnoise
->    measurement methodology.
->
->    Kernel osnoise output (6.18.20-rt, spinlock, no revert):
->      99.999% availability, 1-4 ns max noise, RES=3D6 total in 120s
->
-> 4. Non-RT kernel (test #1) with the same spinlock change shows zero
->    noise. This confirms the issue is the spinlock-to-rt_mutex conversion
->    on PREEMPT_RT, not the spinlock change itself.
->
-> IRQ deltas on isolated CPU1 (120s):
->
->                     6.18.20-rt   6.18.20-rt   6.18.20      6.18.20-rt
->                     spinlock     rwlock(rev)  non-RT       kernel osnoise
->   RES (IPI):        (D state)    3            1            6
->   LOC (timer):      (D state)    3,325        1,185        245
->   IWI (irq work):   (D state)    565,988      1,433        121
->
->                     7.0-rc6-rt   7.0-rc6-rt
->                     spinlock     rwlock(rev)
->   RES (IPI):        330,000+     2
->   LOC (timer):      120,585      120,585
->   IWI (irq work):   585,785      585,785
->
-> The mechanism, refined:
->
-> Crystal was right that this is specific to the BPF perf_event_output +
-> epoll pattern, not any arbitrary epoll user. I verified this: a plain
-> perf_event_open + epoll_ctl program without BPF does not trigger the
-> issue.
->
-> What triggers it is libbpf's perf_buffer__new(), which creates one
-> PERF_COUNT_SW_BPF_OUTPUT perf_event per CPU, mmaps the ring buffer,
-> and adds all fds to a single epoll instance. When BPF programs are
-> attached to high-frequency tracepoints (irq_handler_entry/exit,
-> softirq_entry/exit, sched_switch), every interrupt on every CPU calls
-> bpf_perf_event_output() which invokes ep_poll_callback() under
-> ep->lock.
->
-> On PREEMPT_RT, ep->lock is an rt_mutex. With 15+ CPUs generating
-> callbacks simultaneously into the same epoll instance, the rt_mutex
-> PI mechanism creates unbounded contention.  On 6.18 this results in
-> a permanent D state hang. On 7.0 it results in ~330,000 reschedule
-> IPIs hitting isolated cores over 120 seconds (~2,750/s per core).
->
-> With rwlock, ep_poll_callback() uses read_lock which allows concurrent
-> readers without cross-CPU contention =E2=80=94 the callbacks execute in
-> parallel without generating IPIs.
+1. epoll_ctl D state hang on 6.18.20-rt (kernel-side)
 
-These IPIs do not exist without eosnoise running. eosnoise introduces
-these noises into the system. For a noise tracer tool, it is certainly
-eosnoise's responsibility to make sure it does not measure noises
-originating from itself.
+   This hang does not reproduce on 7.0-rc6-next which still uses the
+   spinlock, so something between 6.18.20 and 7.0-rc6-next fixed it.
+   A git bisect would identify the fix. I'll try to get to it when
+   time permits, but since this is a different issue from the original
+   report it will be prioritized separately.
 
-> This pattern (BPF tracepoint programs + perf ring buffer + epoll) is
-> the standard architecture used by BCC tools (opensnoop, execsnoop,
-> biolatency, tcpconnect, etc.), bpftrace, and any libbpf-based
-> observability tool. A permanent D state hang when running such tools
-> on PREEMPT_RT is a significant regression.
+2. eosnoise self-noise on PREEMPT_RT (tool-side)
 
-7.0-rc6-next is still using spin lock but has no hang problem. Likely
-you are hitting a different problem here which appears when spin lock is
-used, which has been fixed somewhere between 6.18.20 and 7.0-rc6-next.
+   You're right that the noise and IPIs measured on 7.0-rc6-next
+   originate from eosnoise itself -- the BPF callbacks on every
+   tracepoint hit generate ep_poll_callback() contention that the
+   tool then measures as system noise. This is a tool problem, not
+   a kernel regression.
 
-If you still have the energy for it, a git bisect between 6.18.20 and
-7.0-rc6-next will tell us which commit made the hang issue disappear.
+   I'll flag this internally with my team. The fix is likely one of:
+   switching to BPF ring buffer (BPF_MAP_TYPE_RINGBUF) which avoids
+   the per-cpu perf buffer + epoll path entirely, using per-CPU epoll
+   instances, polling as you suggested, or switching to a different
+   tool altogether.
 
-> I'm not proposing a specific fix -- the previous suggestions
-> (raw_spinlock trylock, lockless path) were rightly rejected. But the
-> regression exists and needs to be addressed. The ep->lock contention
-> under high-frequency BPF callbacks on PREEMPT_RT is a new problem
-> that the rwlock->spinlock conversion introduced.
->
-> Separate question: could eosnoise itself be improved to avoid this
-> contention? For example, using one epoll instance per CPU instead of
-> a single shared one, or using BPF ring buffer (BPF_MAP_TYPE_RINGBUF)
-> instead of the per-cpu perf buffer which requires epoll. If the
-> consensus is that the kernel side is working as intended and the tool
-> should adapt, I'd like to understand what the recommended pattern is
-> for BPF observability tools on PREEMPT_RT.
+Thanks to everyone for the thorough review -- it helped separate what
+initially looked like one problem into two distinct issues.
 
-I am not familiar with eosnoise, I can't tell you. I tried compiling
-eosnoise but that failed. I managed to fix the compile failure, then I
-got run-time failure.
-
-It depends on what eosnoise is using epoll for. If it is just waiting
-for PERF_COUNT_SW_BPF_OUTPUT to happen, perhaps we can change to some
-sort of polling implementation (e.g. wake up every 100ms to check for
-data).
-
-Best regards,
-Nam
+Ionut
