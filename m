@@ -1,133 +1,167 @@
-Received: from mta-65-228.siemens.flowmailer.net (mta-65-228.siemens.flowmailer.net [185.136.65.228])
+Received: from smtp3-g21.free.fr (smtp3-g21.free.fr [212.27.42.3])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id DFF363AA1B2
-	for <linux-rt-users@vger.kernel.org>; Tue,  7 Apr 2026 10:39:28 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=185.136.65.228
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id BD85B1EEE6
+	for <linux-rt-users@vger.kernel.org>; Tue,  7 Apr 2026 13:53:05 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=212.27.42.3
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1775558373; cv=none; b=uCqznXu/kkaSpnclJGfiboYheVun/Xnj60WNuGmBXRUSgL6T3ODM2IAP9C36OoSaqFNXO9JlD0EIgl8ZG6eAbeyn9rdJUTd2eVdxVvvfQkHbY/Dz1sev3e9FJUUubtkGncnX8CaEhdMw4zkqEK/OTyAdkO3fVSzg5O6FQotGAHw=
+	t=1775569988; cv=none; b=PkwWulyKdwDag/q7fUW1AoWRfqC+TxTX9x71x/xoJPU0fWcKXmkqVjw9/zQHmnREZmsS7iMlA7EKi4E6BzpjUpJ4SVZEY6yuaz5vDxYI22J9UiKhJU39Ci5uOHSv0P5fQUWM0zlS8VraDofQI5sfE1IaES2t3Cu3wr/19Yseq+k=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1775558373; c=relaxed/simple;
-	bh=TafFvF5vUG8OZxMCr8uhUwXtdR9zM9vHnia7/WHBXzs=;
-	h=Message-ID:Subject:From:To:Cc:Date:In-Reply-To:References:
-	 Content-Type:MIME-Version; b=Kqvz0u2uv5zt84A/sSZC6POVayKYNn1q4cKDc7ox5acpvxiUaz1Rg6fD5GcGRsfMmuYcIGkOfoAKbmiMd0oqfQC8aMvza03JGVfi4Clh7PNH+Fu1IP6AsWyb3E9l7yhrOUuhhG6vb+yVRaWwfAlCdIUapRay63oVNVxjItgLJBQ=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=siemens.com; spf=pass smtp.mailfrom=rts-flowmailer.siemens.com; dkim=pass (2048-bit key) header.d=siemens.com header.i=florian.bezdeka@siemens.com header.b=eqmZmRIp; arc=none smtp.client-ip=185.136.65.228
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=siemens.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=rts-flowmailer.siemens.com
+	s=arc-20240116; t=1775569988; c=relaxed/simple;
+	bh=QWxDKiCnQ6K2XtY0+jWV0DGzRyLcjnkfjXA8cimjav0=;
+	h=Message-ID:Date:MIME-Version:Subject:To:Cc:References:From:
+	 In-Reply-To:Content-Type; b=og0hIYM5XKxTR1r7fKgQNkH0IblQWae5n+JW94zeZYDEaWHOF4ZIV24WNfh0tfPtwR1hPghBTdCrG+hhiicPTW4oV5PCcCMkahVeaTPhmhTQm/EWkOWwhn1+If68wzXBMubqknHwOxWqLxHgghJo4bSSHdQGFP7HwO62YOHnnpw=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=free.fr; spf=pass smtp.mailfrom=free.fr; dkim=pass (2048-bit key) header.d=free.fr header.i=@free.fr header.b=lYW9Hu78; arc=none smtp.client-ip=212.27.42.3
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=free.fr
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=free.fr
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=siemens.com header.i=florian.bezdeka@siemens.com header.b="eqmZmRIp"
-Received: by mta-65-228.siemens.flowmailer.net with ESMTPSA id 2026040708590247790f65a6000207a0
-        for <linux-rt-users@vger.kernel.org>;
-        Tue, 07 Apr 2026 10:59:03 +0200
-DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; s=fm2;
- d=siemens.com; i=florian.bezdeka@siemens.com;
- h=Date:From:Subject:To:Message-ID:MIME-Version:Content-Type:Content-Transfer-Encoding:Cc:References:In-Reply-To;
- bh=NJQ7zjj0Y8BcGaHJDmTsP23/fOSsq61kxNxpUEXBrgc=;
- b=eqmZmRIpiSOcGTjcY6j/KGCqHG8FiKqH5u3T2dy9EOjXPXusI4RhMc1UovYTXORT9ObqEg
- DXQNsmr+tepTg4llI7z0YAO7lbI453hCptMvY6NXsNj9vdHI7Q+47MIo1ixulfuDuRTNSNa6
- /KcjTIXCPmjrimlqYyFA2KtBNhdYZsEzNRaBdijDtle+GQ5/xU2m9O7cFskX2Itqjhvmbqp9
- ouFB7kl4sUofcu8RO+59hSzP2p4UPjKFHEfb6rI05AXy+rslPZXBNIn99BnEwzOIsrOOLyCI
- cG253PuG1GlrrB6aNTfO8Wyba7qWWtIUReF3g49x+BX94eARoacWLq9g==;
-Message-ID: <90d5b8544743831fb3701bb0d440c8383532ad30.camel@siemens.com>
-Subject: Re: [PATCH 3/6] cyclictest: Fix error error returns for uclibc
- clock_nanosleep() fallback
-From: Florian Bezdeka <florian.bezdeka@siemens.com>
-To: Thomas =?ISO-8859-1?Q?Wei=DFschuh?= "(Schneider Electric)"
-	 <thomas.weissschuh@linutronix.de>
-Cc: Clark Williams <williams@redhat.com>, John Kacur <jkacur@redhat.com>, 
-	linux-rt-users@vger.kernel.org
-Date: Tue, 07 Apr 2026 10:59:02 +0200
-In-Reply-To: <20260407104610-a319819e-8194-473b-982f-9afbb27b3b0b@linutronix.de>
-References: <20260407-auxclocks-v1-0-1ef80d14eb0a@linutronix.de>
-	 <20260407-auxclocks-v1-3-1ef80d14eb0a@linutronix.de>
-	 <c9ad9da28d83b9f991bc735861c6c21b22b79eec.camel@siemens.com>
-	 <20260407104610-a319819e-8194-473b-982f-9afbb27b3b0b@linutronix.de>
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
+	dkim=pass (2048-bit key) header.d=free.fr header.i=@free.fr header.b="lYW9Hu78"
+Received: from [IPV6:2a01:e34:ec24:52e0:ba49:5fc1:b1a1:93e0] (unknown [IPv6:2a01:e34:ec24:52e0:ba49:5fc1:b1a1:93e0])
+	(Authenticated sender: marc.w.gonzalez@free.fr)
+	by smtp3-g21.free.fr (Postfix) with ESMTPSA id 2328E13F8A7;
+	Tue,  7 Apr 2026 15:52:38 +0200 (CEST)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=free.fr;
+	s=smtp-20201208; t=1775569978;
+	bh=QWxDKiCnQ6K2XtY0+jWV0DGzRyLcjnkfjXA8cimjav0=;
+	h=Date:Subject:To:Cc:References:From:In-Reply-To:From;
+	b=lYW9Hu784ZGf9dy2eCV+5gI9ODLRgkAujRse/eHtMkpHqE4IdVT9dlwTu8vpmLN8l
+	 lRLKYveGOudSXrjgl17zVZ0Chz6PDaJeJHfwoih+TJlrUJ5p+jJ+S8ScSp2YhM7t3L
+	 fbTTpFkYa86gNEFJXolklRfHP+YZuqP1nvjRO+BRutB4190pkeEjf0qQMzz2K93gZt
+	 2FpS6wiPynFsn3K+6vSsTBbdSQvod0NiFQ001rlXWIvGPtj5n5FTmDXjiyqe1WXUe7
+	 kCPmw5dvMUvdCK346pvdXii92ECzOkBPZkv9imjP7XoWhEPW/DR0oxiGDk/w51Crp2
+	 njJdxEhihz+WQ==
+Message-ID: <b73d91c0-2fc8-45fc-959e-5fc2b484e0fe@free.fr>
+Date: Tue, 7 Apr 2026 15:52:37 +0200
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
 List-Subscribe: <mailto:linux-rt-users+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-X-Flowmailer-Platform: Siemens
-Feedback-ID: 519:519-68982:519-21489:flowmailer
+User-Agent: Mozilla Thunderbird
+Subject: Re: Unexplained variance in run-time of simple program (part 2)
+To: "John D. McCalpin" <john@mccalpin.com>
+Cc: linux-rt-users@vger.kernel.org, Daniel Wagner <dwagner@suse.de>,
+ Leon Woestenberg <leon@sidebranch.com>,
+ John Ogness <john.ogness@linutronix.de>, Steven Rostedt
+ <rostedt@goodmis.org>, Thomas Gleixner <tglx@linutronix.de>,
+ Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+ Clark Williams <williams@redhat.com>, Pavel Machek <pavel@denx.de>,
+ Luis Goncalves <lgoncalv@redhat.com>,
+ Frederic Weisbecker <fweisbec@gmail.com>, Ingo Molnar <mingo@kernel.org>,
+ Masami Hiramatsu <mhiramat@kernel.org>,
+ "Ahmed S. Darwish" <darwi@linutronix.de>, Agner Fog <agner@agner.org>,
+ Dirk Beyer <dirk.beyer@lmu.de>, Philipp Wendler <philipp.wendler@lmu.de>,
+ Matt Godbolt <matt@godbolt.org>
+References: <199905cb-04b3-4d3e-aeb3-da2b2d6428eb@free.fr>
+ <5397d0cd-9266-44ae-97f2-75164d89bf48@free.fr>
+ <b1630867-0e0c-47fd-8de2-ffca2f517da3@free.fr>
+ <17537284-FA52-40E5-A70F-1120FCEB8BC6@mccalpin.com>
+Content-Language: en-US
+From: Marc Gonzalez <marc.w.gonzalez@free.fr>
+In-Reply-To: <17537284-FA52-40E5-A70F-1120FCEB8BC6@mccalpin.com>
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
 
-On Tue, 2026-04-07 at 10:50 +0200, Thomas Wei=C3=9Fschuh (Schneider Electri=
-c)
-wrote:
-> On Tue, Apr 07, 2026 at 10:16:08AM +0200, Florian Bezdeka wrote:
-> > On Tue, 2026-04-07 at 08:48 +0200, Thomas Wei=C3=9Fschuh (Schneider Ele=
-ctric)
-> > wrote:
-> > > clock_nanosleep() is expected to return errors as a positive number,
-> > > without relying on errno.
-> > >=20
-> > > Signed-off-by: Thomas Wei=C3=9Fschuh (Schneider Electric) <thomas.wei=
-ssschuh@linutronix.de>
-> > > ---
-> > >  src/cyclictest/cyclictest.c | 8 +++++++-
-> > >  1 file changed, 7 insertions(+), 1 deletion(-)
-> > >=20
-> > > diff --git a/src/cyclictest/cyclictest.c b/src/cyclictest/cyclictest.=
-c
-> > > index 0c30e767e685..dacf0b7a718e 100644
-> > > --- a/src/cyclictest/cyclictest.c
-> > > +++ b/src/cyclictest/cyclictest.c
-> > > @@ -62,12 +62,18 @@
-> > >  static int clock_nanosleep(clockid_t clock_id, int flags, const stru=
-ct timespec *req,
-> > >  			   struct timespec *rem)
-> > >  {
-> > > +	int retval;
-> > > +
-> > >  	if (clock_id =3D=3D CLOCK_THREAD_CPUTIME_ID)
-> > >  		return -EINVAL;
-> > >  	if (clock_id =3D=3D CLOCK_PROCESS_CPUTIME_ID)
-> > >  		clock_id =3D MAKE_PROCESS_CPUCLOCK(0, CPUCLOCK_SCHED);
-> > > =20
-> > > -	return syscall(__NR_clock_nanosleep, clock_id, flags, req, rem);
-> > > +	retval =3D syscall(__NR_clock_nanosleep, clock_id, flags, req, rem)=
-;
-> > > +	if (retval =3D=3D 0)
-> > > +		return 0;
-> > > +
-> > > +	return errno;
-> >=20
-> > That doesn't match with the commit message above, does it? syscall() to
-> > my knowledge will not set/touch errno. syscall() will return whatever
-> > came back from the kernel.
->=20
-> syscall() *does* indeed touch errno. From syscall(2):
-> "A -1 return value indicates an error, and an error number is stored in e=
-rrno."
+Hello Doctor Bandwidth,
 
-Right. I stopped reading to early.=20
+I was secretly hoping you would chime in! :)
 
-I would vote for
+You've moved to Spain if I understand correctly?
 
-if (retval =3D=3D -1)
-	return errno;
+On 07/04/2026 10:37, John D. McCalpin wrote:
 
-then. But that's just a minor detail.
+> Going back to the example discussed at [in 2025-09], it looks like
+> the benchmark takes ~2500 ns and that you are executing the
+> benchmark 2^16 times.   Does that mean you are launching a new
+> process 2^16 times?  If so, exactly what mechanism are you using?
+> The variation you are reporting of 0.1 to 0.3 microseconds per
+> execution seems very small to me.  Are you sure that the variation
+> is in the "execution time", or could it be associated with the
+> launching of the execution?   If the benchmark code is being
+> executed 2^16 times in a loop in a single execution, then the
+> situation quite different and performance counters should be very
+> effective at determining the cause of the variability.
 
->=20
-> Unfortunately there is no standard variant of syscall() which does not
-> touch errno.
->=20
-> > The value of errno is "undefined" (in terms of "contains the last error
-> > code, wherever this is coming from") here.
-> >=20
-> > Looking at patch 4: Looks like this patch can be dropped.
->=20
-> No, this patch (patch 3) is only for the fallback definition of uclibc.
-> Patch 4 is necessary for all libcs. For some (to me unknown) reason
-> clock_nanosleep() works different from all the other libc functions.
 
-POSIX...
-> >=20
+I understand that process creation is a costly operation.
+I do run the benchmark several times from the same process.
+(I plan on revisiting your above remarks after I digest them.)
 
-Thanks for the clarifications. Here as well as in the other thread.
 
-Best regards,
-Florian
+> For the performance counter side of things, I would recommend
+> programming the performance counters externally to the benchmark
+> process and using inline RDPMC instructions to get the counter
+> values (inside the benchmark executable).
+
+
+Why do you suggest programming the PMCs from outside the benchmark process?
+(Is it perhaps because it's simpler than using the kernel API?)
+
+It never occurred to me that I could read the PMCs from user-space!
+
+This is what I've been doing until now:
+
+int open_event(u64 type, u64 config, int fd)
+{
+	struct perf_event_attr attr = {
+		.type = type,
+		.size = sizeof(attr),
+		.config = config,
+		.read_format = PERF_FORMAT_GROUP,
+	};
+
+	return syscall(SYS_perf_event_open, &attr, 0, 3, fd, 0);
+}
+
+	int main_fd = open_event(PERF_TYPE_HARDWARE, PERF_COUNT_HW_CPU_CYCLES, -1);
+	open_event(PERF_TYPE_HARDWARE, PERF_COUNT_HW_INSTRUCTIONS, main_fd);
+	open_event(PERF_TYPE_RAW, UOPS_EXECUTED, main_fd);
+	open_event(PERF_TYPE_RAW, EXEC_STALLS, main_fd);
+
+	for (int i = 0; i < 1000000; ++i)
+	{
+		ioctl(main_fd, PERF_EVENT_IOC_RESET, PERF_IOC_FLAG_GROUP);
+		for (int i = 0; i < N; ++i) spin(ctx);
+		if (read(main_fd, v, sizeof v) < sizeof v) return 2;
+		printf("%lu %lu %lu %lu\n", v[1]/N, v[2]/N, v[3]/N, v[4]/N);
+	}
+
+The problem with that technique is that the PMCs are "polluted" by
+the exit from ioctl & the entry into read.
+
+Reading the PMCs from user-space with RDPMC solves this issue!
+
+Found this interesting suggestion from 10 years ago:
+https://community.intel.com/t5/Software-Tuning-Performance/How-to-read-performance-counters-by-rdpmc-instruction/m-p/1009043
+I think you might be familiar with the responder ;)
+
+
+> I am not certain what the lowest overhead mechanism might be for
+> getting those performance counter values out of the program — I
+> would probably try attaching to a persistent System V shared memory
+> segment and simply storing the values in memory for later post-processing.
+
+
+Are you implying that simply using printf might disturb the caches
+from the write calls? (I redirect the output to a tmpfs.)
+
+
+> On Intel SKX processors I measured the overhead of an RDPMC
+> instruction at as low as ~25 cycles, with RDTSCP instructions taking
+> a little bit longer (~40 cycles), but most importantly inline RDPMC
+> does not involve any uncontrolled code paths or any hardware
+> accesses outside the core.  RDTSCP is similar, but might be
+> accessing off-core resources — the timing depends on both the core
+> and uncore clock frequencies.
+
+Thanks for the great suggestion. I'll be reading up on RDPMC.
+
+Why do you think I would need RDTSCP?
+At the moment, I just pin all cores at 2 GHz & count cycles using PMCs.
+
+Reference for myself:
+https://www.codestudy.net/blog/difference-between-rdtscp-rdtsc-memory-and-cpuid-rdtsc/
+
+Regards
+
