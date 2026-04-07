@@ -1,146 +1,160 @@
 Received: from galois.linutronix.de (Galois.linutronix.de [193.142.43.55])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 4FDA238C2C3
-	for <linux-rt-users@vger.kernel.org>; Tue,  7 Apr 2026 06:51:36 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id C0A8D2ED141
+	for <linux-rt-users@vger.kernel.org>; Tue,  7 Apr 2026 08:46:05 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=193.142.43.55
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1775544697; cv=none; b=DmcspoxKWffFA/sTCQlrfWKBVaoLAgV8pv1kjaeuJFQiXnD5qtLswcKAlt2z8LYjH9iTVE868xOoXgMkGBslIsawy4uXepteQnhb0HuTAF0aJG151iMGn9Rm+b1BybrEBsLWuxYqXYurqVYc42KQIbz5zByag/wr69I6FR6ewQE=
+	t=1775551567; cv=none; b=nUN8qbZF3+19nZmuc9D+YkLK6tvLoQ7AwSEsHA6EowgOmk+jflSUT51dc5TKbR9Tk7Uq7dOgt0xYjdQUVr3zEFh6hUSNrVocxffKQLMRT9kWX1CCYXZjm3XLvQkC54aKRQaXtQ2jICrbRq734AED5NDJEbC7yBn9mjudRL3bQik=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1775544697; c=relaxed/simple;
-	bh=ZDNa1hWfQHdg6+TdVaEWwZbQmcaI5Ip1MmdgCYVcfZQ=;
-	h=From:Date:Subject:MIME-Version:Content-Type:Message-Id:References:
-	 In-Reply-To:To:Cc; b=jLWODP5EwAhqCpFdfkSYCDIFAE98JfaECGu/cpgXBgU7EFZ5wIwS8ROd0R6ygSh36CLTWyFe7Jjt7lT95Evb3mri8Zz6btFb/2Rb6f06aPUTzli9fHs5j0o6Zmt2fIYR5h4wBPrwAGSiyv5e0lcmRbpUs9UymH/BYI8d6Hu798I=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linutronix.de; spf=pass smtp.mailfrom=linutronix.de; dkim=pass (2048-bit key) header.d=linutronix.de header.i=@linutronix.de header.b=fwOe+heE; dkim=permerror (0-bit key) header.d=linutronix.de header.i=@linutronix.de header.b=ZNhiGMfz; arc=none smtp.client-ip=193.142.43.55
+	s=arc-20240116; t=1775551567; c=relaxed/simple;
+	bh=DM9pvRz27l8Alpjhds+t2xn54epmAm87RVbens6GBg4=;
+	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
+	 Content-Type:Content-Disposition:In-Reply-To; b=SD4NncU/TMtZF2DJcTMkrVtbpnjbMyaukMVjsJxvC1EPTSQAxbLKPyRlGwAbQRNfUYZ7iBTs/V+e2yllynUKwr8RpwV1lwe+cW69Fl5dFH+9P6k33BXn4N0VQSq6r1wGOfkZScjLF1Mi4+Ztz+iIa6NaRPFh2eJzjEmpGOAg0Ys=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linutronix.de; spf=pass smtp.mailfrom=linutronix.de; dkim=pass (2048-bit key) header.d=linutronix.de header.i=@linutronix.de header.b=srPU194/; dkim=permerror (0-bit key) header.d=linutronix.de header.i=@linutronix.de header.b=orKaJh9R; arc=none smtp.client-ip=193.142.43.55
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linutronix.de
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=linutronix.de
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="fwOe+heE";
-	dkim=permerror (0-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="ZNhiGMfz"
-From: =?utf-8?q?Thomas_Wei=C3=9Fschuh_=28Schneider_Electric=29?= <thomas.weissschuh@linutronix.de>
+	dkim=pass (2048-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="srPU194/";
+	dkim=permerror (0-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="orKaJh9R"
+Date: Tue, 7 Apr 2026 10:45:57 +0200
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
-	s=2020; t=1775544694;
+	s=2020; t=1775551563;
 	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
 	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references;
-	bh=LwbEOaPZrurC/8Ntf/xR5nyOjx1lWlvcTJCp4Ctf6Ec=;
-	b=fwOe+heEOdYeBMBtkz3fuxzc7lHaVTzY5MFkGcEMNzWXgfxBAwKcqFVsMMZ6nk/tASRD8r
-	3FwSoAQmDU7wZSTZMwpKXDeN3rVzWZFYJH+wlWv7FysX2ESEB/dc8Up1WWnMzlri6XyUBT
-	DB9RrnIdI4qhCWOq80G0sHFo7wODx4qTLqDulg5Imj21gjAFhzEd/kmcCi4iS2fgtT3BUe
-	LxzJ/cqmu+C39D2QnyW5dMSYBeZLPY6hXayWAiAVQnR5APsC44TghgtfnRoQ0f0dqL6BD7
-	bng0xeou1uiTEEoiAht5N1gVJfO76+tK/UGSEa/41W2ZF2hOlnxhuBFXmoE4Rg==
+	bh=gQFXYbB09/jTduCx9l7pnzZELWhTBdgB2isWhvQ5Iww=;
+	b=srPU194/LpZ6OnROtgjBJpFSMipeb3Se3uadLRMddT4ZU2RX+HoiCJA7OhtgbcCJeroXvJ
+	WszIf8GlJpykYMEMtGMypcTrjIGqtBCpUmCd/H910CkdKj0wG+SZ5Xk1+TYLWFrgqY1Vf4
+	26ja85erUrVTQ5p7/IqBTr5Fbt9CEBF0ssO4Ln5Alfn4fAWFJd4YXZsGPB1I6S1yh4UnTi
+	nYSW9xeGBTilHYI2+Ctu7voliLgcZRhDdxI/jA/g5ngreNUz8K4EJGRP7MmvdCpZnkBN/+
+	Mj0hNjNN7/jY2eYTmPYSoCFe/88zUkRpYl7t0cxxqgLPAGCi38jXm+RY0RmPBQ==
 DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
-	s=2020e; t=1775544694;
+	s=2020e; t=1775551563;
 	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
 	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references;
-	bh=LwbEOaPZrurC/8Ntf/xR5nyOjx1lWlvcTJCp4Ctf6Ec=;
-	b=ZNhiGMfzC3AfBGI9BSFGkr7eF2FVDZKJHVV/gCPovIaJrYGq87FEJdHgX5LTOPB5UPCjuX
-	Gg3fpjfalkvvcECA==
-Date: Tue, 07 Apr 2026 08:48:46 +0200
-Subject: [PATCH 6/6] cyclictest: Add support for auxiliary clocks
+	bh=gQFXYbB09/jTduCx9l7pnzZELWhTBdgB2isWhvQ5Iww=;
+	b=orKaJh9RF7mFa3FydVAisCplBB9Jsks7Q0zTvNGYmUeWCgwtBCqsRg5MU8UMfdElUSVUOb
+	DalRN0LvKjegcSCw==
+From: Thomas =?utf-8?Q?Wei=C3=9Fschuh_=28Schneider_Electric=29?= <thomas.weissschuh@linutronix.de>
+To: Florian Bezdeka <florian.bezdeka@siemens.com>
+Cc: Clark Williams <williams@redhat.com>, John Kacur <jkacur@redhat.com>, 
+	linux-rt-users@vger.kernel.org
+Subject: Re: [PATCH 1/6] cyclictest: Centralize clock option parsing
+Message-ID: <20260407104207-fec29583-fca9-4ae6-ab2b-20976fd28591@linutronix.de>
+References: <20260407-auxclocks-v1-0-1ef80d14eb0a@linutronix.de>
+ <20260407-auxclocks-v1-1-1ef80d14eb0a@linutronix.de>
+ <578d66745469e6263ba3fd6c7a0ec4d92d4f39d9.camel@siemens.com>
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
 List-Subscribe: <mailto:linux-rt-users+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
+Content-Type: text/plain; charset=iso-8859-1
+Content-Disposition: inline
 Content-Transfer-Encoding: 8bit
-Message-Id: <20260407-auxclocks-v1-6-1ef80d14eb0a@linutronix.de>
-References: <20260407-auxclocks-v1-0-1ef80d14eb0a@linutronix.de>
-In-Reply-To: <20260407-auxclocks-v1-0-1ef80d14eb0a@linutronix.de>
-To: Clark Williams <williams@redhat.com>, John Kacur <jkacur@redhat.com>
-Cc: linux-rt-users@vger.kernel.org, 
- =?utf-8?q?Thomas_Wei=C3=9Fschuh_=28Schneider_Electric=29?= <thomas.weissschuh@linutronix.de>
-X-Developer-Signature: v=1; a=ed25519-sha256; t=1775544676; l=2818;
- i=thomas.weissschuh@linutronix.de; s=20240209; h=from:subject:message-id;
- bh=ZDNa1hWfQHdg6+TdVaEWwZbQmcaI5Ip1MmdgCYVcfZQ=;
- b=SHt3lemRA/bdOgmP6m4Hlps7keIF56c98NW+SyVQrOG+ALlnEV72dpGJLwXQ6wo6ukBIhUoJo
- 31590KDZ/JLCodMhI+TRmWO0AZ+cCkXFPjE2XmepXAvdSFwGCWOJzXy
-X-Developer-Key: i=thomas.weissschuh@linutronix.de; a=ed25519;
- pk=pfvxvpFUDJV2h2nY0FidLUml22uGLSjByFbM6aqQQws=
+In-Reply-To: <578d66745469e6263ba3fd6c7a0ec4d92d4f39d9.camel@siemens.com>
 
-The Linux kernel provides support for non-standard auxiliary clocks.
-These run independently from the system clock and each other.
+On Tue, Apr 07, 2026 at 10:27:39AM +0200, Florian Bezdeka wrote:
+> On Tue, 2026-04-07 at 08:48 +0200, Thomas Weiﬂschuh (Schneider Electric)
+> wrote:
+> > Currently the lookup of the clockid from the commandline options is done
+> > in multiple places. This makes the addition of symbolic clock names and
+> > new clocks cumbersome.
+> > 
+> > Move all of the clock option parsing into a new helper function.
+> > 
+> > As a side-effect fix an off-by-one error in the validation of the
+> > clock command line argument.
+> > 
+> > The new variable can not be named 'clock' as that would conflict with
+> > the libc function of the same name.
+> > 
+> > Signed-off-by: Thomas Weiﬂschuh (Schneider Electric) <thomas.weissschuh@linutronix.de>
+> > ---
+> >  src/cyclictest/cyclictest.c | 35 ++++++++++++++++++-----------------
+> >  1 file changed, 18 insertions(+), 17 deletions(-)
+> > 
+> > diff --git a/src/cyclictest/cyclictest.c b/src/cyclictest/cyclictest.c
+> > index 960c90560668..592cf9d9387d 100644
+> > --- a/src/cyclictest/cyclictest.c
+> > +++ b/src/cyclictest/cyclictest.c
+> > @@ -1022,7 +1022,7 @@ static int priority;
+> >  static int policy = SCHED_OTHER;	/* default policy if not specified */
+> >  static int num_threads = 1;
+> >  static int max_cycles;
+> > -static int clocksel = 0;
+> > +static clockid_t used_clock;
+> >  static int quiet;
+> >  static int interval = DEFAULT_INTERVAL;
+> >  static int distance = -1;
+> > @@ -1031,10 +1031,17 @@ static struct bitmask *main_affinity_mask = NULL;
+> >  static int smp = 0;
+> >  static int setaffinity = AFFINITY_UNSPECIFIED;
+> >  
+> > -static int clocksources[] = {
+> > -	CLOCK_MONOTONIC,
+> > -	CLOCK_REALTIME,
+> > -};
+> > +static int handleclock(const char *clockarg)
+> > +{
+> > +	if (strcmp(clockarg, "0") == 0)
+> > +		used_clock = CLOCK_MONOTONIC;
+> > +	else if (strcmp(clockarg, "1") == 0)
+> > +		used_clock = CLOCK_REALTIME;
+> > +	else
+> > +		return 1;
+> > +
+> > +	return 0;
+> > +}
+> 
+> What happens to "unexpected" cmdline parameters now? used_clocks will
+> not be set and ...
 
-Allow cyclictest to also use those.
+Then handleclock() will return 1 ...
 
-Signed-off-by: Thomas Wei√üschuh (Schneider Electric) <thomas.weissschuh@linutronix.de>
+> >  
+> >  static void handlepolicy(char *polname)
+> >  {
+> > @@ -1195,7 +1202,7 @@ static void process_options(int argc, char *argv[], int max_cpus)
+> >  			tracelimit = atoi(optarg); break;
+> >  		case 'c':
+> >  		case OPT_CLOCK:
+> > -			clocksel = atoi(optarg); break;
+> > +			error |= handleclock(optarg); break;
 
----
-Currently clock_nanosleep() for these auxiliary clocks is not yet in the
-mainline kernel.
+... which will set the error flag here.
 
-Instead of having a dedicated parsing function, I used the unrolled
-switch-case as it keeps the logic simple in the face of error handling.
----
- src/cyclictest/cyclictest.8 |  2 ++
- src/cyclictest/cyclictest.c | 21 +++++++++++++++++++++
- 2 files changed, 23 insertions(+)
+> >  		case OPT_DEFAULT_SYSTEM:
+> >  			power_management = 1; break;
+> >  		case 'd':
+> > @@ -1377,9 +1384,6 @@ static void process_options(int argc, char *argv[], int max_cpus)
+> >  			      "on this processor\n");
+> >  	}
+> >  
+> > -	if (clocksel < 0 || clocksel > ARRAY_SIZE(clocksources))
+> > -		error = 1;
+> > -
+> 
+> ... the validation check has been removed. As unused_clock is static
+> (and with that initialized to zero) all invalid parameter values will
+> silently be "migrated" to CLOCK_REALTIME. Right?
 
-diff --git a/src/cyclictest/cyclictest.8 b/src/cyclictest/cyclictest.8
-index 1a59d3b29048..f3390bc5c57d 100644
---- a/src/cyclictest/cyclictest.8
-+++ b/src/cyclictest/cyclictest.8
-@@ -59,6 +59,8 @@ select clock
- monotonic (default)
- .br
- realtime
-+.br
-+aux0 - aux7
- .TP
- .B \-\-deepest\-idle\-state=n
- Reduce exit from idle latency by limiting idle state up to n on used cpus (-1 disables all idle states). Power management is not suppresed on other cpus.
-diff --git a/src/cyclictest/cyclictest.c b/src/cyclictest/cyclictest.c
-index 2d1ff968f8aa..afc3a8c452da 100644
---- a/src/cyclictest/cyclictest.c
-+++ b/src/cyclictest/cyclictest.c
-@@ -52,6 +52,10 @@
- #define SCHED_NORMAL SCHED_OTHER
- #endif
- 
-+#ifndef CLOCK_AUX
-+#define CLOCK_AUX 16
-+#endif
-+
- #define sigev_notify_thread_id _sigev_un._tid
- 
- #ifdef __UCLIBC__
-@@ -952,6 +956,7 @@ static void display_help(int error)
- 	       "-c CLOCK --clock=CLOCK     select clock\n"
- 	       "                           monotonic (default)\n"
- 	       "                           realtime\n"
-+	       "                           aux0 - aux7\n"
- 	       "         --deepest-idle-state=n\n"
- 	       "                           Reduce exit from idle latency by limiting idle state\n"
- 	       "                           up to n on used cpus (-1 disables all idle states).\n"
-@@ -1049,6 +1054,22 @@ static int handleclock(const char *clockarg)
- 		used_clock = CLOCK_REALTIME;
- 	else if (strcmp(clockarg, "realtime") == 0)
- 		used_clock = CLOCK_REALTIME;
-+	else if (strcmp(clockarg, "aux0") == 0)
-+		used_clock = CLOCK_AUX + 0;
-+	else if (strcmp(clockarg, "aux1") == 0)
-+		used_clock = CLOCK_AUX + 1;
-+	else if (strcmp(clockarg, "aux2") == 0)
-+		used_clock = CLOCK_AUX + 2;
-+	else if (strcmp(clockarg, "aux3") == 0)
-+		used_clock = CLOCK_AUX + 3;
-+	else if (strcmp(clockarg, "aux4") == 0)
-+		used_clock = CLOCK_AUX + 4;
-+	else if (strcmp(clockarg, "aux5") == 0)
-+		used_clock = CLOCK_AUX + 5;
-+	else if (strcmp(clockarg, "aux6") == 0)
-+		used_clock = CLOCK_AUX + 6;
-+	else if (strcmp(clockarg, "aux7") == 0)
-+		used_clock = CLOCK_AUX + 7;
- 	else
- 		return 1;
- 
+I don't think so, see above.
 
--- 
-2.53.0
+> I would vote for an error/warn message to avoid that a fat fingered
+> cmdline argument invalidates your measurements.
 
+With this patch in its current form, the usage guide will be printed
+in case of invalid clock ids. I also just noticed that the behavior
+*before* this patch is to silently treat non-numeric arguments as
+CLOCK_REALTIME.
+
+> >  	if (oscope_reduction < 1)
+> >  		error = 1;
+
+(...)
