@@ -1,44 +1,46 @@
 Received: from galois.linutronix.de (Galois.linutronix.de [193.142.43.55])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id E065738A734
-	for <linux-rt-users@vger.kernel.org>; Tue,  7 Apr 2026 06:51:26 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 2823938A734
+	for <linux-rt-users@vger.kernel.org>; Tue,  7 Apr 2026 06:51:28 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=193.142.43.55
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1775544688; cv=none; b=fzqMVauhh1/WfnyDUGkE6ZRNiZ0+xx2w2vUrSExcGu5zbJAMIqcr3b7GAxbUj6ZDR6p2aJ51Hw1IbcRQGz+eQX3dx7MemIITu9VJLhwbmpkgsSPdWYVxZPsb01xAdytBLADAE1/lncE/JL773k+EiNO94PlARioxud8DzDCj63k=
+	t=1775544690; cv=none; b=VOUYhxl7uncj0rygyHpxEMMh59zF1jK1AYPC8MZgRQYDgmQOirwVJarOYrHU3xiMq8HOAo3iaPLUxxD6RtNPGcji2fJeGWnN3VWz9MyGxUx6vA5bF+dQoZORxLWe1udgYbE1B2qgOf7qZCjXDr3gNYFubI6+y37g6wb7tG74API=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1775544688; c=relaxed/simple;
-	bh=2NabicHggRDNu9fmA3O7dcRmTVGn9soVazFqcGZ1oiE=;
-	h=From:Subject:Date:Message-Id:MIME-Version:Content-Type:To:Cc; b=et8aqXPCnUtTynbcWOkXpRrZiKv8Kv1jhZm7kLKDDiAp7ezwCVWBODhBP5OJc22CLhuaBvm02tB99APfQ10pE9H6m5dJfT3Dm9p8+uHRVzXLjvIaXj1aryhZVzgN3CcNCGuPEfIEC1nnrxo/EDvQ4HiXrdwPKWMByTvmwmJE2dk=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linutronix.de; spf=pass smtp.mailfrom=linutronix.de; dkim=pass (2048-bit key) header.d=linutronix.de header.i=@linutronix.de header.b=MPDlIysI; dkim=permerror (0-bit key) header.d=linutronix.de header.i=@linutronix.de header.b=dGn/Wyje; arc=none smtp.client-ip=193.142.43.55
+	s=arc-20240116; t=1775544690; c=relaxed/simple;
+	bh=HsHlYJX6RRNAAPrPhzVYVqFP/QFPrL6sSfAGEwFO0qg=;
+	h=From:Date:Subject:MIME-Version:Content-Type:Message-Id:References:
+	 In-Reply-To:To:Cc; b=G10GxiGhAqLohHgJjT7UbGci2+ouM8De+1P0U5WKu/XjDvW9guzA5xTQRHSCjoCPSgvTYzH0yZH9onmBR7BItunK6KKmDBplTbgfKzocc5puHzgkU4uNB0G7HWQebt3ECkaj924pOUBf1LLos8iKmkKggsBvv8nXbGwegQySkhE=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linutronix.de; spf=pass smtp.mailfrom=linutronix.de; dkim=pass (2048-bit key) header.d=linutronix.de header.i=@linutronix.de header.b=mp2sDI6m; dkim=permerror (0-bit key) header.d=linutronix.de header.i=@linutronix.de header.b=ysmJ7X3p; arc=none smtp.client-ip=193.142.43.55
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linutronix.de
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=linutronix.de
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="MPDlIysI";
-	dkim=permerror (0-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="dGn/Wyje"
+	dkim=pass (2048-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="mp2sDI6m";
+	dkim=permerror (0-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="ysmJ7X3p"
 From: =?utf-8?q?Thomas_Wei=C3=9Fschuh_=28Schneider_Electric=29?= <thomas.weissschuh@linutronix.de>
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
-	s=2020; t=1775544678;
+	s=2020; t=1775544684;
 	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
 	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding;
-	bh=n7pevMom6/WYJsoO8/CU/Xdhn2SA4Sea2UUHqQ5iuLE=;
-	b=MPDlIysI4SeLA8fEfnxJSuMHLkgLiYN4LulhS/iH7rxJT3FwKJo5inYJiZWxdaB+4YzPhZ
-	ATXng+zFAAcnHYd1vfvAn7Kd0t2uU4mX551QETxx0VMu6QzthM+uzaA9tjC1GwM+P0JYgP
-	nb1R48+GztgmyOti3d1eE4txU2jjMBCddDiB4FcGnb6KvGBNy+9x0/JQGQm5ht9jS1P5Vq
-	8YR4+JEi8VKYgPZRbHd3gEMsjcpKvit7/ZLzJLq6xB3gHkzu3xujJg1CR0D61OUJkwgSt1
-	qXklHMMcx6wAlPWuVeV6sDpHxOZ+mHrfS1hh4jghbdELY3gfkk8Ij4ZbPbRUyA==
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references;
+	bh=HEqE6nePE8LfPabX2ABsaLaK44CDmUVIddA/Pyasm0c=;
+	b=mp2sDI6mtni+xH2X59EE8lXjiu2VXRzU3y7xUCVCJV1WZzpf76KBXHiGmaAiSOlL30mTmS
+	Gpbz66IKMNNdkONaB4vEoC1lDUz5UInF/CxTlc7ZgwLYIA+KBjbGdQFp8+kafYoX9S0LD+
+	AIDfGebZd32n0lj6km6YapbtzPZmXi0eYa5G9A/xc23fuz6OOB62VadOOyEcTSNPyhyAvD
+	plzwRIWmiHimN+O8AOHizfPqn9Yj5zbOdmaUyCE0n1TaF4UHAdRHcVVJvW006lThXmd16L
+	OXnhSIPycU/E7uEZ74FM+PlkVB2y0h87Puzzwk2V3Ohtod3VTEH0LIzGYWFYQQ==
 DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
-	s=2020e; t=1775544678;
+	s=2020e; t=1775544684;
 	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
 	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding;
-	bh=n7pevMom6/WYJsoO8/CU/Xdhn2SA4Sea2UUHqQ5iuLE=;
-	b=dGn/WyjeYexkJQ9yIMxuaAXLmwx8AE1/n/VqVpHfAvxr6ViDpqhQ5S6GEDZ2/Ny/yVTyDA
-	cQ62+RZ7868VTOAw==
-Subject: [PATCH 0/6] cyclictest: Add support for auxiliary clocks
-Date: Tue, 07 Apr 2026 08:48:40 +0200
-Message-Id: <20260407-auxclocks-v1-0-1ef80d14eb0a@linutronix.de>
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references;
+	bh=HEqE6nePE8LfPabX2ABsaLaK44CDmUVIddA/Pyasm0c=;
+	b=ysmJ7X3paQRDju4b0CGJQuvqv0+it08y7NrWax6RkNYHCcEo3tMvs+sZXM+OmcNwuVN7kZ
+	upsTfbple0PzXyBg==
+Date: Tue, 07 Apr 2026 08:48:42 +0200
+Subject: [PATCH 2/6] cyclictest: Test the return value of timer_create()
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
@@ -47,44 +49,45 @@ List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="utf-8"
 Content-Transfer-Encoding: 8bit
-X-B4-Tracking: v=1; b=H4sIAAAAAAAC/6tWKk4tykwtVrJSqFYqSi3LLM7MzwNyDHUUlJIzE
- vPSU3UzU4B8JSMDIzMDQyND3cTSiuSc/OTsYl3zNONEQ+OkpGRDS0sloPqCotS0zAqwWdGxtbU
- AkaR2dFsAAAA=
-X-Change-ID: 20260121-auxclocks-7f3a13bbc199
+Message-Id: <20260407-auxclocks-v1-2-1ef80d14eb0a@linutronix.de>
+References: <20260407-auxclocks-v1-0-1ef80d14eb0a@linutronix.de>
+In-Reply-To: <20260407-auxclocks-v1-0-1ef80d14eb0a@linutronix.de>
 To: Clark Williams <williams@redhat.com>, John Kacur <jkacur@redhat.com>
 Cc: linux-rt-users@vger.kernel.org, 
  =?utf-8?q?Thomas_Wei=C3=9Fschuh_=28Schneider_Electric=29?= <thomas.weissschuh@linutronix.de>
-X-Developer-Signature: v=1; a=ed25519-sha256; t=1775544676; l=1039;
+X-Developer-Signature: v=1; a=ed25519-sha256; t=1775544676; l=943;
  i=thomas.weissschuh@linutronix.de; s=20240209; h=from:subject:message-id;
- bh=2NabicHggRDNu9fmA3O7dcRmTVGn9soVazFqcGZ1oiE=;
- b=EaveVUzLa0l7Zb5GxOsXjnBR4SzcKj4b9woSQTg31ExaSlVjTXFR9ibXuDA9AUE2M2cyFIIMW
- qJU8lEzwvxRBSGZLTFr/48NI3Yd7er3U/RssLQIU7w3ZwwnZy4fWvoj
+ bh=HsHlYJX6RRNAAPrPhzVYVqFP/QFPrL6sSfAGEwFO0qg=;
+ b=t3h0DCj19jA0B4Q2jVTgQthmGzgvlXctWVaH/4zpuG+DvwwdLDUvSFJ1PD0aP1EDhZfkOnkna
+ aYj5RTn2w6MDu5Xo0lHb3LOUlvltbi3HywQ5+7V/CubVF2LFKG6la7b
 X-Developer-Key: i=thomas.weissschuh@linutronix.de; a=ed25519;
  pk=pfvxvpFUDJV2h2nY0FidLUml22uGLSjByFbM6aqQQws=
 
-The Linux kernel provides support for non-standard auxiliary clocks.
-These run independently from the system clock and each other.
+The operating system may not support timers for the select clock.
 
-Allow cyclictest to also use those.
+Report these errors to the user.
 
 Signed-off-by: Thomas Weißschuh (Schneider Electric) <thomas.weissschuh@linutronix.de>
 ---
-Thomas Weißschuh (Schneider Electric) (6):
-      cyclictest: Centralize clock option parsing
-      cyclictest: Test the return value of timer_create()
-      cyclictest: Fix error error returns for uclibc clock_nanosleep() fallback
-      cyclictest: Correctly print clock_nanosleep() errors
-      cyclictest: Allow symbolic clock names
-      cyclictest: Add support for auxiliary clocks
+ src/cyclictest/cyclictest.c | 4 +++-
+ 1 file changed, 3 insertions(+), 1 deletion(-)
 
- src/cyclictest/cyclictest.8 |  6 ++--
- src/cyclictest/cyclictest.c | 80 ++++++++++++++++++++++++++++++++-------------
- 2 files changed, 61 insertions(+), 25 deletions(-)
----
-base-commit: f9c82184ce88d8de3ffe588279b0bc41d3887998
-change-id: 20260121-auxclocks-7f3a13bbc199
+diff --git a/src/cyclictest/cyclictest.c b/src/cyclictest/cyclictest.c
+index 592cf9d9387d..0c30e767e685 100644
+--- a/src/cyclictest/cyclictest.c
++++ b/src/cyclictest/cyclictest.c
+@@ -671,7 +671,9 @@ static void *timerthread(void *param)
+ 		sigev.sigev_notify = SIGEV_THREAD_ID | SIGEV_SIGNAL;
+ 		sigev.sigev_signo = par->signal;
+ 		sigev.sigev_notify_thread_id = stat->tid;
+-		timer_create(par->clock, &sigev, &timer);
++		if (timer_create(par->clock, &sigev, &timer))
++			fatal("timerthread%d: failed to create timer for clock %d, errno: %d\n",
++			      par->cpu, par->clock, errno);
+ 		tspec.it_interval = interval;
+ 	}
+ 
 
-Best regards,
---  
-Thomas Weißschuh (Schneider Electric) <thomas.weissschuh@linutronix.de>
+-- 
+2.53.0
 
