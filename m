@@ -1,147 +1,171 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+Received: from smtp6-g21.free.fr (smtp6-g21.free.fr [212.27.42.6])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id E7FCB3D525E
-	for <linux-rt-users@vger.kernel.org>; Wed,  8 Apr 2026 19:03:04 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 433F037DE9B
+	for <linux-rt-users@vger.kernel.org>; Fri, 10 Apr 2026 17:16:54 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=212.27.42.6
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1775674986; cv=none; b=MDSuP8KMP9tfnSKs3pQ8+kjGBiUNMUCCd7BPSvEArxOiy5PK/LXiJspzMkyiWMQvRX0/EFBseipAMZRNaAqpX5YUVcNdhGDRKL6O0xfXtmX8CSffOCJIg8E5g0Fq+i8Uvv/Gn09zr1eX2B/7adK4FIIRNZQy1I1AgHzmh0hkoR4=
+	t=1775841417; cv=none; b=mwEaM/JD9PbZpXMV8VWnEd0NGtlE8IuYnMMRuVOHTA5hJuWwHyUNWea7egwupm9fl+87GklNGyCsBqmEwBne8SOhmG3Axhr2CpmOBL78a3dswISNv+3Pdyk2X6kYxZ1jN5wj2A4Qb5ooSuz4HbJKGiKJGHxJOBL/G6REdlJ2/PA=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1775674986; c=relaxed/simple;
-	bh=659fINYMzuF9gp4K+aEZo09YRrj+DY/LkaT3HyOjrDA=;
-	h=Date:From:To:Subject:Message-ID:MIME-Version:Content-Type:
-	 Content-Disposition; b=LeFfSmjWgXtwxzZGfYtZHzLz5S/hnFOtR5tLT/fuOBLJnNgh0GSWNcNEsba30MMlQCHGPDMWk4w6Dh4+j11aLax7nEpQjBQa/bkuEu3VF34dhX1uFtA83spSkR9uKoc3+HfbQ9z5vpfGl5ofvpKzYDCBI+V/2vlo5K9OyzGhV0g=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=in3u9jqL; arc=none smtp.client-ip=170.10.129.124
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
+	s=arc-20240116; t=1775841417; c=relaxed/simple;
+	bh=wJiI4S0mZwFqV8qBG5ZW++/ImEuBIIBe75RO8ukVdbU=;
+	h=Message-ID:Date:MIME-Version:Subject:To:Cc:References:From:
+	 In-Reply-To:Content-Type; b=VoeHJuqS/Pht6w+LJ+KLi8nQaALVwo+gyJHz87Unl9qRC9Q+p2Yu8vZ27Y3+cXo4NhEvigogj+/AV5yCrcZrxiSWyVPGS8qg2yPDzUz1YYMzZhkJbGXkTXaNWMdqmaMSp1pqbmz0qduj3OmQD0kP6D7VOnZHvzxPKRYjiEo0/vw=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=free.fr; spf=pass smtp.mailfrom=free.fr; dkim=pass (2048-bit key) header.d=free.fr header.i=@free.fr header.b=rQUcwJ8p; arc=none smtp.client-ip=212.27.42.6
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=free.fr
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=free.fr
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="in3u9jqL"
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1775674983;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:mime-version:mime-version:content-type:content-type;
-	bh=zD5/SJRGIuICEqBcH6gXNeLxWlrHiv3BXKk1bJihrps=;
-	b=in3u9jqLVOisyJW58dcNZGPhM3ZhbbeB/1ullmcZ5BlLhCqTE4MA4c7GKt8FOVBvyRafcn
-	qXIl0WByxP3LG/mfZbl++hGlZJxt8JH4FSvWEjjI90Ymsci95lPYcvcrMKK/mKt3gOHKPg
-	hvowhYqZhnYsDieBcdvVIpw1TSItTl4=
-Received: from mx-prod-mc-01.mail-002.prod.us-west-2.aws.redhat.com
- (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
- relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-232-mW72pzsWMMGtnVolyxWxqw-1; Wed,
- 08 Apr 2026 15:01:12 -0400
-X-MC-Unique: mW72pzsWMMGtnVolyxWxqw-1
-X-Mimecast-MFC-AGG-ID: mW72pzsWMMGtnVolyxWxqw_1775674863
-Received: from mx-prod-int-05.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-05.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.17])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
-	(No client certificate requested)
-	by mx-prod-mc-01.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 6BC7B1956060;
-	Wed,  8 Apr 2026 19:01:03 +0000 (UTC)
-Received: from localhost (unknown [10.22.64.112])
-	by mx-prod-int-05.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTP id 658771955D84;
-	Wed,  8 Apr 2026 19:01:02 +0000 (UTC)
-Date: Wed, 8 Apr 2026 16:01:01 -0300
-From: "Luis Claudio R. Goncalves" <lgoncalv@redhat.com>
-To: LKML <linux-kernel@vger.kernel.org>,
-	linux-rt-users <linux-rt-users@vger.kernel.org>,
-	stable-rt <stable-rt@vger.kernel.org>,
-	Steven Rostedt <rostedt@goodmis.org>,
-	Thomas Gleixner <tglx@linutronix.de>,
-	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-	Daniel Wagner <daniel.wagner@suse.com>,
-	Clark Williams <williams@redhat.com>,
-	Jiayuan Chen <jiayuan.chen@linux.dev>,
-	Mark Gross <markgross@kernel.org>, Pavel Machek <pavel@denx.de>,
-	Jeff Brady <jeffreyjbrady@gmail.com>,
-	Jan Kiszka <jan.kiszka@siemens.com>,
-	Luis Goncalves <lgoncalv@redhat.com>
-Subject: [ANNOUNCE] 5.10.252-rt148
-Message-ID: <adal7eFyI7ckCSzm@redhat.com>
+	dkim=pass (2048-bit key) header.d=free.fr header.i=@free.fr header.b="rQUcwJ8p"
+Received: from [IPV6:2a01:e34:ec24:52e0:f488:e842:4484:d629] (unknown [IPv6:2a01:e34:ec24:52e0:f488:e842:4484:d629])
+	(Authenticated sender: marc.w.gonzalez@free.fr)
+	by smtp6-g21.free.fr (Postfix) with ESMTPSA id 5C1EF780333;
+	Fri, 10 Apr 2026 19:16:26 +0200 (CEST)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=free.fr;
+	s=smtp-20201208; t=1775841406;
+	bh=wJiI4S0mZwFqV8qBG5ZW++/ImEuBIIBe75RO8ukVdbU=;
+	h=Date:Subject:To:Cc:References:From:In-Reply-To:From;
+	b=rQUcwJ8pA0eQblQWPWM8VLrCNWzgZP9t+rPvwHE6kb5galBTvlAbQ/dGIVGjFWs6J
+	 rJVJ9jwqObJax81Hwi/jNTYY/1ei0YCU8REBhskBeOu+T8HfW1lq5kgS6ItQZtqBVm
+	 viMXPIHvMUzjQu28jvv/yweaYStY2LSsX6zORfL13zVkGvRY/m9k8/b0If7Tgcs25/
+	 s7Y2yUKdu9KQ9D84vh4eifrY430P7Dv0QVkoji9qN15Oh+Ugdye02ofls6n3cuLZDM
+	 iiZpoqN8d9hOe5Rb5c2r4XFiCIhHb7JPyot/TyH7YWyvrPu7RRNnUweyXlPtQc15eZ
+	 7BbF71+9STLQg==
+Message-ID: <1137e806-eddc-409d-8694-4465e2123764@free.fr>
+Date: Fri, 10 Apr 2026 19:16:25 +0200
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
 List-Subscribe: <mailto:linux-rt-users+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-X-Scanned-By: MIMEDefang 3.0 on 10.30.177.17
+User-Agent: Mozilla Thunderbird
+Subject: Re: Unexplained variance in run-time of simple program (part 2)
+To: "John D. McCalpin" <john@mccalpin.com>
+Cc: linux-rt-users@vger.kernel.org, Daniel Wagner <dwagner@suse.de>,
+ Leon Woestenberg <leon@sidebranch.com>,
+ John Ogness <john.ogness@linutronix.de>, Steven Rostedt
+ <rostedt@goodmis.org>, Thomas Gleixner <tglx@linutronix.de>,
+ Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+ Clark Williams <williams@redhat.com>, Pavel Machek <pavel@denx.de>,
+ Luis Goncalves <lgoncalv@redhat.com>,
+ Frederic Weisbecker <fweisbec@gmail.com>, Ingo Molnar <mingo@kernel.org>,
+ Masami Hiramatsu <mhiramat@kernel.org>,
+ "Ahmed S. Darwish" <darwi@linutronix.de>, Agner Fog <agner@agner.org>,
+ Dirk Beyer <dirk.beyer@lmu.de>, Philipp Wendler <philipp.wendler@lmu.de>,
+ Matt Godbolt <matt@godbolt.org>
+References: <199905cb-04b3-4d3e-aeb3-da2b2d6428eb@free.fr>
+ <5397d0cd-9266-44ae-97f2-75164d89bf48@free.fr>
+ <b1630867-0e0c-47fd-8de2-ffca2f517da3@free.fr>
+ <17537284-FA52-40E5-A70F-1120FCEB8BC6@mccalpin.com>
+ <b73d91c0-2fc8-45fc-959e-5fc2b484e0fe@free.fr>
+ <7FA25B6F-71A1-4B2B-9488-46D91445DAF3@mccalpin.com>
+Content-Language: en-US
+From: Marc Gonzalez <marc.w.gonzalez@free.fr>
+In-Reply-To: <7FA25B6F-71A1-4B2B-9488-46D91445DAF3@mccalpin.com>
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
 
-Hello RT-list!
+On 08/04/2026 11:29, John D. McCalpin wrote:
 
-I'm pleased to announce the 5.10.252-rt148 stable release.
+> I am still not clear on exactly what you mean by “executing the benchmark 2^16 times”.
+> Are you forking a new process 2^16 times, or is a single process executing a block of code 2^16 times.
+> The difference is critical for determining where to look for sources of performance variability.
+Based on your very insightful feedback (thanks again!) I currently use this wrapper:
 
-This release is an RT-only update. All the changes here are specific to RT.
+#include <stdlib.h>
+#include <stdio.h>
 
-You can get this release via the git tree at:
+typedef unsigned int u32;
 
-  git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
+// Ignore id: process will be pinned to core 3
+// Ignore hi: t1-t0 < 2^32 cycles (1.3 seconds)
+static inline u32 rdtscp(void)
+{
+	u32 hi, lo, id;
+	asm volatile("rdtscp" : "=d"(hi), "=a"(lo), "=c"(id));
+	return lo;
+}
 
-  branch: v5.10-rt
-  Head SHA1: 226bc47dbb388ecf009cd2569e44b0c2c2125c7e
+extern void init(void);
+extern void spin(void); // THE CODE UNDER BENCHMARK
 
-Or to build 5.10.252-rt148 directly, the following patches should be applied:
+static u32 v[4];
 
-  https://www.kernel.org/pub/linux/kernel/v5.x/linux-5.10.tar.xz
+int main(int argc, char **argv)
+{
+	if (argc != 3) return 1;
 
-  https://www.kernel.org/pub/linux/kernel/v5.x/patch-5.10.252.xz
+	const u32 N = strtoul(argv[1], NULL, 10);
+	const u32 S = strtoul(argv[2], NULL, 10);
 
-  https://www.kernel.org/pub/linux/kernel/projects/rt/5.10/older/patch-5.10.252-rt148.patch.xz
+	void *buf = aligned_alloc(4096, N * sizeof v);
 
-Signing key fingerprint:
+	for (u32 n = 0; n < N; ++n)
+	{
+		for (u32 i = 0; i < 4; ++i)
+		{
+			u32 t0 = rdtscp();
+			for (u32 s = 0; s < S; ++s) spin();
+			u32 t1 = rdtscp();
+			v[i] = t1 - t0;
+		}
+		__builtin_ia32_movntdq(buf + n * sizeof v, __builtin_ia32_movntdqa((void *)v));
+	}
 
-  9354 0649 9972 8D31 D464  D140 F394 A423 F8E6 7C26
+	for (int i = 0; i < N * 4; ++i) printf("%u\n", ((u32 *)buf)[i]);
 
-All keys used for the above files and repositories can be found on the
-following git repository:
+	return 0;
+}
 
-   git://git.kernel.org/pub/scm/docs/kernel/pgpkeys.git
+N times: time the code 4 times, and transfer the 4 results to memory using a non-temporal store.
+Once measuring is done, print all the results.
+Would it be more efficient to write a full cache line with movntdq? (64 bytes vs 16 bytes)
 
-Enjoy!
-Luis
 
-Changes from v5.10.252-rt147:
----
+The baseline code (to check for correct results) is:
 
-Jiayuan Chen (1):
-      ipv6: fix a BUG in rt6_get_pcpu_route() under PREEMPT_RT
+spin:
+	xor eax, eax
+	mov ecx, 1000
+loop:
+	times 60 inc eax ; 120 bytes
+	dec ecx
+	jnz loop ; 8-bit offset
+	ret
 
-Luis Claudio R. Goncalves (1):
-      Linux 5.10.252-rt148
----
-localversion-rt  |  2 +-
- net/ipv6/route.c | 13 ++++++++++++-
- 2 files changed, 13 insertions(+), 2 deletions(-)
----
-diff --git a/localversion-rt b/localversion-rt
-index d3fa072b6b43..857407b62668 100644
---- a/localversion-rt
-+++ b/localversion-rt
-@@ -1 +1 @@
---rt147
-+-rt148
-diff --git a/net/ipv6/route.c b/net/ipv6/route.c
-index b47f89600c2f..455f76f07e2e 100644
---- a/net/ipv6/route.c
-+++ b/net/ipv6/route.c
-@@ -1419,7 +1419,18 @@ static struct rt6_info *rt6_make_pcpu_route(struct net *net,
- 
- 	p = this_cpu_ptr(res->nh->rt6i_pcpu);
- 	prev = cmpxchg(p, NULL, pcpu_rt);
--	BUG_ON(prev);
-+	if (unlikely(prev)) {
-+		/*
-+		 * Another task on this CPU already installed a pcpu_rt.
-+		 * This can happen on PREEMPT_RT where preemption is possible.
-+		 * Free our allocation and return the existing one.
-+		 */
-+		WARN_ON_ONCE(!IS_ENABLED(CONFIG_PREEMPT_RT));
-+
-+		dst_dev_put(&pcpu_rt->dst);
-+		dst_release(&pcpu_rt->dst);
-+		return prev;
-+	}
- 
- 	if (res->f6i->fib6_destroying) {
- 		struct fib6_info *from;
+
+I ran the following experiments:
+./run.sh ./baseline 200000 1
+./run.sh ./baseline 200000 2
+./run.sh ./baseline 200000 4
+
+
+The results in histogram (in 50-cycle steps) :
+
+histo.1
+99000: 199999
+99100: 1
+
+histo.2
+197950: 85290
+198000: 114706
+198050: 1
+198200: 2
+198250: 1
+
+$ cat histo.4
+395900: 110104
+395950: 89891
+396000: 1
+396150: 2
+396200: 1
+396450: 1
+
+1st col: cycles @ 3.3 GHz
+2nd col: number of times result fell in that interval
+
+I think this is looking pretty good!
+I just need to test on my actual code that uses L1$.
+
+Regards
 
