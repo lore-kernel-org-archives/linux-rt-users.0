@@ -1,72 +1,72 @@
-Received: from mail-qv1-f52.google.com (mail-qv1-f52.google.com [209.85.219.52])
+Received: from mail-qk1-f181.google.com (mail-qk1-f181.google.com [209.85.222.181])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id E36F233F8CA
-	for <linux-rt-users@vger.kernel.org>; Wed, 15 Apr 2026 14:48:06 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.219.52
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 5443037A481
+	for <linux-rt-users@vger.kernel.org>; Wed, 15 Apr 2026 14:48:22 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.222.181
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1776264488; cv=none; b=LF8wKAgE0RvaEI0V3QFTPri3nx9TalhreB+sdswVCPtK5OGKFbD/eX0GIaBM3DYRJPTXYGgEHZrpst7fEKdZ2or6JXV2Vb0AdTTewFA/pPT9tJat3JieqOZGaoXFFkOBEnl/2jYWT0uCodY9cwP9gHApQARIFYr1BCdh05xvnqE=
+	t=1776264503; cv=none; b=FTH7rOj03+xRvgp5derP5P0pZ0IEJkX24rJw4T0umjVXJVq7W/zN7LeZ9RZrUbGGxyngtpbbz/wiwQq9cQh/r85+jgho4iQGkp/NIbVgXTT9MmLwlkp+yMjUKots5XHRoI/EIYCcNicB0UrofiKSOdPT/NZS+EKYs6ZCvSbMfGs=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1776264488; c=relaxed/simple;
-	bh=o5fW87APlSwwZVMVW0ea8y06A44tbpfrFBXCVR889PY=;
+	s=arc-20240116; t=1776264503; c=relaxed/simple;
+	bh=oQKwZF3s/xGduH73Xo4W4kmKzSsX2RJ3Rll7nqIpq6w=;
 	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version:Content-Type; b=tlEqcnOg+uEtVZkOcbUgc/WHtyLFO9SbHW9woiyaEBPfL4h/Bfnj6pMpZMt97s/HWf9m2g5HbJyzGqPlpV6yXD11ThUEZ9N09NZTNBMnoRZC3P62cN31jFxzzYFpHW7wnHFTzbnSedjB5aAprGpPHM/0zULimKEtXamJhSpWFsE=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=fail (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=lodFjr/q; arc=none smtp.client-ip=209.85.219.52
+	 MIME-Version:Content-Type; b=qRogPkuyccQYzbG2UFy2mHsmS0uTQgx3bqpSS3KyjnJxOGPLYFqB3h9LGo/jWHsVBxQeAErSXtl74PZOVO5uPmVUKw/eZLP1o2Zxekbemi5KAV5wUeWUhe4rtVRwrnUrCVIYqJd7LgSHM2MP2D1fYVqi+YvFXTZCmILzMBkd85I=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=fail (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=e09ILjGN; arc=none smtp.client-ip=209.85.222.181
 Authentication-Results: smtp.subspace.kernel.org; dmarc=fail (p=quarantine dis=none) header.from=redhat.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="lodFjr/q"
-Received: by mail-qv1-f52.google.com with SMTP id 6a1803df08f44-8acb3daf2aaso43668666d6.0
-        for <linux-rt-users@vger.kernel.org>; Wed, 15 Apr 2026 07:48:06 -0700 (PDT)
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="e09ILjGN"
+Received: by mail-qk1-f181.google.com with SMTP id af79cd13be357-8cfc5941028so992081185a.1
+        for <linux-rt-users@vger.kernel.org>; Wed, 15 Apr 2026 07:48:22 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20251104; t=1776264486; x=1776869286; darn=vger.kernel.org;
+        d=gmail.com; s=20251104; t=1776264501; x=1776869301; darn=vger.kernel.org;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:sender:from:to:cc:subject:date
          :message-id:reply-to;
-        bh=o5fW87APlSwwZVMVW0ea8y06A44tbpfrFBXCVR889PY=;
-        b=lodFjr/qg+KPgfzbW9fUycEcq8Nf0uTirSbac68uDuX5n7S8KfWGKh76c/LaAR1ciT
-         e86TnATL6lrnwLt6q2CbJPM8uvv04SQC2yNwu6yu7odc1ooOMg12c8ysjfJ7FKsqHdor
-         WyINFEBqJmT52U0fznB9QIDITMn4Nn5dIxq8ZzqOFfyXgcO2tmvHVXu3Q9LLY+cj4jo6
-         qsYmQRQC8UHJ0Dqfv4T4fUIwjvLCeorpLuuA6/2uLnIz5LmPueTPoXE/ou4WnsanOdtO
-         bUmdZJy3UevWsXszwLCAAn5ffzo3ggUAnkQT9b4gLh8Z3HRLjI+XzRgz6uYPU8orNtQy
-         TwZQ==
+        bh=oQKwZF3s/xGduH73Xo4W4kmKzSsX2RJ3Rll7nqIpq6w=;
+        b=e09ILjGNWHxOuCDtO30lxb92qjFfsimfnrD7vHc+PC0CZLwvXrftb8gIBSue2NCl1C
+         xAyqQEocDt6x/tKOGl8D5Y601q3pajErggPk9GnGLA4g9feiSy+59/00jyCSlqebURje
+         I5vAs/yD6vGMx+BwWc0RPTA0oG23CzyX7o+qTxbs+/6dseCtPbWP3lBRp2MWMDgzp4zi
+         by8+HlzTftFiTRGD5khAtC/aUVPR/LTtFFc/nu3wvKCbmY9/QIUTD6kKxy0QepIQkr67
+         NSqSGYKzBcpgwwDWYFr5U/BaACbpqAPSh7FNWnHUp1VLch18CCsDP0C7t09wJf5cseJx
+         X6Mg==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20251104; t=1776264486; x=1776869286;
+        d=1e100.net; s=20251104; t=1776264501; x=1776869301;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:sender:x-gm-gg
          :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
-        bh=o5fW87APlSwwZVMVW0ea8y06A44tbpfrFBXCVR889PY=;
-        b=EaiZ/00No3pAaq9MwnFCRqYLWZKBjwX7CM8+mObpZ3VVhi0StaOOGo/kxNVex+nFB/
-         VqGiRomqNvpMUsoy8PXkGqTM66Sqoj7dLGu+E39zAImFEEdQb6NGQJ7TS6V5cKUi9COn
-         ZX3H5vscIMocEaLLNe4rk9QN7d0mrt01K2KBx5IVKnjPVJ23zLRl6JxUjwG3Su7EIF9R
-         bQInAh2XGZKmeu62JWkKTOQAh7aNhf5+bfV5/29Tn/6Hx2roUU2j6InErSLhZ+NVTxwc
-         B5HJ7W1F/t3PxA1p6dS97/XdrY5zzZG6Fa0maANdQJbHZEwhNVBhD2jhYeCD5VKEEuBB
-         CB3Q==
-X-Gm-Message-State: AOJu0YwbNSUIwV3YqmfZBliC17QrFnE3oTfNh0efeoxPWXcXrSVtkXw6
-	AbClmUMHKm8ys7/sqQ/joNqmIrpNqOTDHrGtoPR5TG+UyW0tQ85z9sEVIZxP7w==
-X-Gm-Gg: AeBDietwvEHR7NlhDrppjG/AvxF17qNqjm8FvhXidIuvsa2jfm5JiwwVSu8AR6uQ/n4
-	pMMeOo7XmyxjAVgx7Mik18cpj3qk4hU3PUctbFRQj/3mU6uZlDyxS8TmI/BAWJObyenj1Dd4ruu
-	2CUegP/MZKoMk6d6bZqi9cin9r/DwBecXRGT4V6xLogOZaA8fFoKQ1J3ZDUGxVsKSR80vRTgqv+
-	xYtl1udmFeyDC5GXva4+O7Wa3PaMHJk4JXrljrA1YPrVTfvS246CN5SSOmhLd5MmgMklDTQu8bu
-	Z8rRgrJcYuyim+jRhFrVdEw+zextTha341n6fkEWwQw1/x9+1xtcZ98W8r7uKPIzPXClvd4lwQA
-	cJ70VCOjYOgYlNYMQs2o/2LZTiUaNu1Bt4ARaVIwvn0YO0cbyL82I+Ds9f5zYl7rFbo1rbP+D5n
-	gW1dvKPotijwLxaSYkX+G9gCG4R8tVSMuGum/Hxbyyz/rjDcwHToRK9l4DVwrFeZ2LuwzgzfpaS
-	X+oAP1srVmTINsyirc=
-X-Received: by 2002:a0c:f118:0:b0:89a:1575:e1d3 with SMTP id 6a1803df08f44-8ac861b012emr277266536d6.12.1776264485869;
-        Wed, 15 Apr 2026 07:48:05 -0700 (PDT)
+        bh=oQKwZF3s/xGduH73Xo4W4kmKzSsX2RJ3Rll7nqIpq6w=;
+        b=BSvZCNXvFBHhxVVJdwLDnk/foVuZrDSAYxGuaTRopaOeSY4wpJ23ilf5MlDhNGIKFW
+         /zgV+FHSTLzRzLz9AlkImW4fLuBPvszyWYKEOtvaKvFVdZzXNQRBPPMG9LMLex7i2nZX
+         2t5AQdtS9iIvNH/IYNNfdqAjOitXtkTqsB8lD+nUuX6ZM7Lvbgo3/x2ItBQq/XDxFURo
+         I4QTFSes+ZVSS+/qZgvvXqLvIx3i1fwKAnjEa3iwGdKCiwBw2TpYhaWfojesXDK2hgkk
+         texxyVka/dfaRrbT6o8HWQFd/N3KLQYPviPfXkZLKSjlUDnJgXCSL91u7AHWpEFCBRwB
+         ZDjA==
+X-Gm-Message-State: AOJu0YwbxpHChQrJXO4ej1b7HucCnYSvS2en20KGz4jRJXSJ2mx69H4H
+	DIqRNZm7XGSzavzxtO2bN2/VaXrDArH7vFvXelZvM/QCmxBfZ/gIuh0XJzPv6w==
+X-Gm-Gg: AeBDieu2yBN41EN+MRUhR36Lrw9ovA/eq20CALb+aW7++9iwqyrAil47AMHvEbJmGaH
+	eNG2tvW2JNALFYNQrV/dIZkMTeeqJLM1Co5tUQnZ5aZtBxU8UvNmsBeXo+I+G+8zpWZCL7YbsVz
+	EO30bkVWSYeJEGrocvzfPbWnSaoEOqGbH16aqWDuJViy8UtPmBfD0EKiK4l0sBv9hR6PB9M3aqs
+	gvbrF5BD8KOlswNbOd5JRpRpEYcuq6MNB+2asgo0L6qsPxHMFVkmZAbE0nc3pOu9U52UY+uIUWq
+	jrL0USInhlN7uxAYP3ATAoAok6lFb9ymXzvjm/bZZW4pH5ljOic19XaqtbYA19sfBoIVGwZb0Nm
+	earuGvJkM6XU0Tig8Z4WOM36DT8O0mOGxrE9ti/w7Oe8087pXJdGdznrZTyZUDgn75zrtGfaDNb
+	Yz5ZSpskGWoYoS/wRQHP9w9MONeD0TWcwUtWPdOkPlzFFS7hN/Hv9Wo9zCKOydUkuPSZdW2RENy
+	sSjsv4bTNqyJ9lCJiE=
+X-Received: by 2002:a05:620a:4612:b0:8cd:b315:6af6 with SMTP id af79cd13be357-8ddcd4ff455mr3239166385a.8.1776264501143;
+        Wed, 15 Apr 2026 07:48:21 -0700 (PDT)
 Received: from Cumhall.redhat.com ([216.209.112.32])
-        by smtp.gmail.com with ESMTPSA id 6a1803df08f44-8ae6c938368sm16549656d6.5.2026.04.15.07.48.04
+        by smtp.gmail.com with ESMTPSA id af79cd13be357-8e4ec18f2b0sm134176585a.0.2026.04.15.07.48.20
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Wed, 15 Apr 2026 07:48:05 -0700 (PDT)
+        Wed, 15 Apr 2026 07:48:20 -0700 (PDT)
 Sender: John Kacur <jkacur@gmail.com>
 From: John Kacur <jkacur@redhat.com>
 To: =?UTF-8?q?Thomas=20Wei=C3=9Fschuh?= <thomas.weissschuh@linutronix.de>
 Cc: linux-rt-users@vger.kernel.org
-Subject: Re: [PATCH 4/6] cyclictest: Correctly print clock_nanosleep() errors
-Date: Wed, 15 Apr 2026 10:47:50 -0400
-Message-ID: <20260415144750.109690-1-jkacur@redhat.com>
+Subject: Re: [PATCH 5/6] cyclictest: Allow symbolic clock names
+Date: Wed, 15 Apr 2026 10:48:06 -0400
+Message-ID: <20260415144806.109829-1-jkacur@redhat.com>
 X-Mailer: git-send-email 2.53.0
-In-Reply-To: <20260407-auxclocks-v1-4-1ef80d14eb0a@linutronix.de>
+In-Reply-To: <20260407-auxclocks-v1-5-1ef80d14eb0a@linutronix.de>
 References: 
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
@@ -77,8 +77,8 @@ MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit
 
-On Tue, 07 Apr 2026 at 08:48:44AM +0200, Thomas Weißschuh (Schneider Electric) wrote:
-> cyclictest: Correctly print clock_nanosleep() errors
+On Tue, 07 Apr 2026 at 08:48:45AM +0200, Thomas Weißschuh (Schneider Electric) wrote:
+> cyclictest: Allow symbolic clock names
 
 Applied, thanks!
 
