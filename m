@@ -1,119 +1,114 @@
-Received: from mail-qk1-f178.google.com (mail-qk1-f178.google.com [209.85.222.178])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from galois.linutronix.de (Galois.linutronix.de [193.142.43.55])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id C53243859F4
-	for <linux-rt-users@vger.kernel.org>; Wed, 15 Apr 2026 19:27:56 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.222.178
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 06EB537C0F1
+	for <linux-rt-users@vger.kernel.org>; Thu, 16 Apr 2026 12:28:22 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=193.142.43.55
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1776281277; cv=none; b=ROY6uELUv+aRkJl2K8DSyzg/6sGovTrFlorsWL+XASnuoFrlLJ/CoCmm4biiXIBnO4jK/oCOkRamYG+CwZh68BJWPs6Q05Zz35EyK9QZzexnIfJavDg8IhsqnWJs0JOK9cbPisNMyqPH8OZm0o5ypkv9XomwzohrRqFrqxV/Ais=
+	t=1776342505; cv=none; b=tEIr8FqIs2XRp4K1d5cwZvc71dDZcfLK+SQZnrJI7h0m/Uu0xAaILM6s3f+Hf6vcRrXzMvNkPtuZ8uhABYOJKYbuIFCFAIjamnBlS6TfmWIy3ZQRZUn8u5L+T/+opdop0DscliqJYgp63SJfZJuJFO5QwKIxgLQQrtLljINdOpk=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1776281277; c=relaxed/simple;
-	bh=elJk2c4W6wJAHlYvUx3U6UPuPrO5Y0WVj4VOekg4gfY=;
-	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version:Content-Type; b=MhSyiWv2noZORoU28CxHaCShYycj5F/HZ3UTi1z7GiBJOMClPakiiw3MuAgD1XlEca6eFqXv5fmVI2YjGstVPURTnGAyOHheO+GqGlou7PtNUcCp8tPy6Bt+Wvl/QlElPsckL/cluqzGbNMvOtrMZcy7RezlsZvmx/eq8G5OTNY=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=fail (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=VG2zf2MO; arc=none smtp.client-ip=209.85.222.178
-Authentication-Results: smtp.subspace.kernel.org; dmarc=fail (p=quarantine dis=none) header.from=redhat.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
+	s=arc-20240116; t=1776342505; c=relaxed/simple;
+	bh=sWvMxCtsPOV10cpIK3sSsqr5FnSrM4Ew9e9iki/QTZI=;
+	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
+	 Content-Type:Content-Disposition:In-Reply-To; b=YlKJM7gqOqzE+ndNGsKHVVzz/vS6UCwbfGz/GgK+/vRCyK0Vv7vM9JPXoxOjYWXBTYOOieZYT/Un+MOZRfMRUSdhxohV4+AMlQ+we0rMug2gGwnRUq4THxSLTbasyKdjI3elpM8dpD14yDYWVpnxkTINRZKy/Qelw8qen0F4g98=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linutronix.de; spf=pass smtp.mailfrom=linutronix.de; dkim=pass (2048-bit key) header.d=linutronix.de header.i=@linutronix.de header.b=NEWj1CDK; dkim=permerror (0-bit key) header.d=linutronix.de header.i=@linutronix.de header.b=f/bKCTEu; arc=none smtp.client-ip=193.142.43.55
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linutronix.de
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=linutronix.de
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="VG2zf2MO"
-Received: by mail-qk1-f178.google.com with SMTP id af79cd13be357-8cb3bae8d3eso631112785a.1
-        for <linux-rt-users@vger.kernel.org>; Wed, 15 Apr 2026 12:27:56 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20251104; t=1776281276; x=1776886076; darn=vger.kernel.org;
-        h=content-transfer-encoding:mime-version:references:in-reply-to
-         :message-id:date:subject:cc:to:from:sender:from:to:cc:subject:date
-         :message-id:reply-to;
-        bh=m5yUYtHDpN4JyGaiDu88WU/SmHGWK5TduzZdBvvpMjs=;
-        b=VG2zf2MOrPLfvWFyb89MGLCFSiR8cPdj7eidRaUP1YRpfGkhSXruO29PCRo7LBbyyC
-         5vSCJz5Y34eqTbHP4WcA9JxjMD6ZWNmldo6LAQr//vHjmjxraPWgU88KR5gWvtZmFo7a
-         ocFb5+xggs05T7HuJ0HpZ72b/yzujjZXolPWSlDf3QYdzsHP3uPx7zWNKcQgtQVjS9XY
-         0UZ7Zte+JD6/Ep5YIfPSYXQhIbGL4zpJqmyIdbu0EJ4rwc3zWbCYL7xdHdTqfrRX+jaA
-         N5B2kJjCKbVa4zfj3sSOs2Qn3h+ZgsTkhGhEqWq7fFy0ddlBFhETVxt23a9vZ7WbxuKS
-         w3pA==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20251104; t=1776281276; x=1776886076;
-        h=content-transfer-encoding:mime-version:references:in-reply-to
-         :message-id:date:subject:cc:to:from:sender:x-gm-gg
-         :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
-        bh=m5yUYtHDpN4JyGaiDu88WU/SmHGWK5TduzZdBvvpMjs=;
-        b=i1423eQjuox+ntDujbwZOj3gKiZFG/90egf/ebjW+GFzDtsKDeSulkUwgqbYWVsHrh
-         MXUVhJVCRBae1CAM0MvckPc2iHUopoPb8XsvRXioMujO7f2Sxq68AJRB4aPLtCf+uP/7
-         Zuwmwt81wsgnRZ5zT3Md4tOdX9b4ZPAp4+fXKfYP3sP6ooxW3SQxC0Y02Vr0ftKrDiQP
-         Q3M3Yr4VQdMEDbUorkfn9RzeGhznVzW8mAFA03h1zKWpvnxcuFxNyqr3SHCdiAOcSylL
-         owjp8OGtOvJHaHZv8ua8dosiL/T2Xdp9Uv+WKC/6hNqAE7U5EzeY6m5kYHZ35AHJjOoB
-         t2cA==
-X-Gm-Message-State: AOJu0Yw1nzmcwfMCpOivxZ+I4CoFGh6Q85pvH78Gp+992XZycsKukwes
-	oV2x95ajoeRnwEybElLOKcfWboM0m0l6GBWmxk06c2xZk/8ztVJucjRNjOPjqw==
-X-Gm-Gg: AeBDievv82Z4WqvHkrT/ojfAFcPQQHaovEvisauvLYM1jI8fkC0H25MhLPS8nVx88b5
-	l4B5IPSy9SvAGbK9JD2zv0W1GbviP/5IRhWjMS+PW3M0rUk4Bpvdc+D5FHfOucTrhIrqHQkkqto
-	8hKmSWhSnVtrDNU5YcPNvxR7mLnjQt23Fzi+jyrXedYrRyeu6T3rsOjqvoS0c+zF8oQ1AIxwpFY
-	1tpNwZUFmT2J3aPuHWgf78xIE9kOhsxFuttskvFSdDD+698ERNrb9mdJxc/p0fkoaMhkoQZfC34
-	jbTqZpbtLrKZOBSRCNE1BS4mkuz2W4UN1Ewk+AWNNoOsmGgiKS3HyHBXSy2KDKKFDK86fwoVVe8
-	EpBNqHKO7Lj4DYYe2m4O7kWg+CxFhODBTBTY3PdX0AnnPEslUpSL9G9axZoHE3EMhIxXRKvjp3K
-	ddM9tbPn5Zsr73D0QV/2oqkZEPgLDmFUrs8eb8WMUXX5WiH5KsZkkKUfPTl5eRpa6iFP3GX4F83
-	hLe2WvbuVwLltgdpb56PWCYDDbqKT+MpNXgpfzaF8meJkkQuhZs61elCryYNrigBN0ZuZf/qRL7
-	6NxK/ccQ
-X-Received: by 2002:a05:620a:d85:b0:8cf:d62a:c81d with SMTP id af79cd13be357-8ddcded6af2mr3432560385a.29.1776281275620;
-        Wed, 15 Apr 2026 12:27:55 -0700 (PDT)
-Received: from Cumhall.redhat.com (bras-base-rdwyon0604w-grc-03-216-209-112-32.dsl.bell.ca. [216.209.112.32])
-        by smtp.gmail.com with ESMTPSA id af79cd13be357-8e4f31f5062sm190136685a.41.2026.04.15.12.27.52
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Wed, 15 Apr 2026 12:27:55 -0700 (PDT)
-Sender: John Kacur <jkacur@gmail.com>
-From: John Kacur <jkacur@redhat.com>
-To: Costa Shulyupin <costa.shul@redhat.com>
-Cc: linux-rt-users@vger.kernel.org,
-	"Luis Claudio R . Goncalves" <lgoncalv@redhat.com>
-Subject: Re: [PATCH v1] rt-tests: hwlatdetect: Add --time-format argument
-Date: Wed, 15 Apr 2026 15:27:29 -0400
-Message-ID: <20260415192729.175250-1-jkacur@redhat.com>
-X-Mailer: git-send-email 2.53.0
-In-Reply-To: <20260323160346.230639-1-costa.shul@redhat.com>
-References: 
+	dkim=pass (2048-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="NEWj1CDK";
+	dkim=permerror (0-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="f/bKCTEu"
+Date: Thu, 16 Apr 2026 14:28:17 +0200
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
+	s=2020; t=1776342499;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references;
+	bh=FmB+96GYExRl8vtqB1ZquKSLnwZGnKgAS81NRKyfGGI=;
+	b=NEWj1CDKfwFKiydcynIP305gTk2OQeYD2JmuSfXDMsJfNUrwmrj2Pg8+mJNJReoqopB1Ys
+	h99yNwyT15Yck4V8QJ8DxzcSxiAgOKUaDoMzDdForuysUm1fQTRGWgSY4FWFoOkbkJF3Ti
+	2jXh+tp7cStxvRhDgwXahu93EsBqZiQiCRh60UYgO60nCtMDnc6gJyTzC3urQ4AV9QGVH+
+	rPFkG8gKBIKM8NLVa9DE0Wpmb3EpemJh4XbEAziL+LXWtwZyL6cH3dE3mKZjthPHILmN4W
+	U6T4MWERWTqf7/i+5g87j6r4fvMTghMqMFe5ye6OZpc+DXaiy/wpNgty2+ajKw==
+DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
+	s=2020e; t=1776342499;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references;
+	bh=FmB+96GYExRl8vtqB1ZquKSLnwZGnKgAS81NRKyfGGI=;
+	b=f/bKCTEujaBIk8BqhJe48o36jQLBJFUmt2C0OvJekpfHZZ5HZCnyp/1USQaVplmSmT/GqF
+	GzoO+x8E5R0XNNAA==
+From: Thomas =?utf-8?Q?Wei=C3=9Fschuh?= <thomas.weissschuh@linutronix.de>
+To: John Kacur <jkacur@redhat.com>
+Cc: linux-rt-users@vger.kernel.org, Clark Williams <williams@redhat.com>
+Subject: Re: [PATCH] cyclictest: Simplify auxiliary clock parsing
+Message-ID: <20260416142521-9f639d90-a475-43ad-b160-24b344465d2c@linutronix.de>
+References: <20260415154249.139258-1-jkacur@redhat.com>
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
 List-Subscribe: <mailto:linux-rt-users+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
+Content-Type: text/plain; charset=iso-8859-1
+Content-Disposition: inline
 Content-Transfer-Encoding: 8bit
+In-Reply-To: <20260415154249.139258-1-jkacur@redhat.com>
 
-On Mon, 23 Mar 2026 at 18:03:46 +0200, Costa Shulyupin wrote:
-> Add --time-format argument to customize timestamp output format using
-> strftime directives. By default raw timestamps are output for
-> backward compatibility.
+On Wed, Apr 15, 2026 at 11:42:49AM -0400, John Kacur wrote:
+> Replace eight individual strcmp() calls for aux0-aux7 with a single
+> pattern-matching implementation that extracts and validates the digit.
+> 
+> Assisted-by: Claude Sonnet 4.5 <noreply@anthropic.com>
+> Signed-off-by: John Kacur <jkacur@redhat.com>
+> ---
+>  src/cyclictest/cyclictest.c | 24 +++++++-----------------
+>  1 file changed, 7 insertions(+), 17 deletions(-)
+> 
+> diff --git a/src/cyclictest/cyclictest.c b/src/cyclictest/cyclictest.c
+> index afc3a8c452da..71cf5cb25c22 100644
+> --- a/src/cyclictest/cyclictest.c
+> +++ b/src/cyclictest/cyclictest.c
+> @@ -1054,23 +1054,13 @@ static int handleclock(const char *clockarg)
+>  		used_clock = CLOCK_REALTIME;
+>  	else if (strcmp(clockarg, "realtime") == 0)
+>  		used_clock = CLOCK_REALTIME;
+> -	else if (strcmp(clockarg, "aux0") == 0)
+> -		used_clock = CLOCK_AUX + 0;
+> -	else if (strcmp(clockarg, "aux1") == 0)
+> -		used_clock = CLOCK_AUX + 1;
+> -	else if (strcmp(clockarg, "aux2") == 0)
+> -		used_clock = CLOCK_AUX + 2;
+> -	else if (strcmp(clockarg, "aux3") == 0)
+> -		used_clock = CLOCK_AUX + 3;
+> -	else if (strcmp(clockarg, "aux4") == 0)
+> -		used_clock = CLOCK_AUX + 4;
+> -	else if (strcmp(clockarg, "aux5") == 0)
+> -		used_clock = CLOCK_AUX + 5;
+> -	else if (strcmp(clockarg, "aux6") == 0)
+> -		used_clock = CLOCK_AUX + 6;
+> -	else if (strcmp(clockarg, "aux7") == 0)
+> -		used_clock = CLOCK_AUX + 7;
+> -	else
+> +	else if (strncmp(clockarg, "aux", 3) == 0 && strlen(clockarg) == 4) {
+> +		int aux_num = clockarg[3] - '0';
+> +		if (aux_num >= 0 && aux_num <= 7)
+> +			used_clock = CLOCK_AUX + aux_num;
+> +		else
+> +			return 1;
+> +	} else
 
-Hi Costa,
+That works, too.
 
-Thanks for this patch. The --time-format feature is useful, but I have a few
-concerns about the implementation:
+Reviewed-by: Thomas Weiﬂschuh <thomas.weissschuh@linutronix.de>
 
-1. The format_timestamp() method assumes the timestamp always contains a
-   decimal point:
+Though if it gets cleaned up, it might as well handle potentially larger
+values of MAX_AUX_CLOCKS.
 
-       t, ns = self.timestamp.split('.')
-
-   This will fail with ValueError if the timestamp doesn't have a '.' for
-   any reason. Please add error handling.
-
-2. There's no try/except around strftime(). If a user provides an invalid
-   format string, the code will crash. This should be handled gracefully.
-
-3. The use of a class variable for time_format is unconventional:
-
-       Tracer.Sample.time_format = args.time_format
-
-   While it works, this makes all Sample instances share state in a way that
-   could be surprising. Consider passing the format through instance
-   initialization or as a method parameter instead.
-
-4. Minor: The comment about "Float precision is safe for microseconds until
-   year 2242" is misleading. The issue is that datetime only supports
-   microsecond precision, not nanoseconds, which is why the custom %n
-   handling is needed.
-
-Could you please send a v2 with these improvements?
-
-Thanks,
-John
+>  		return 1;
+>  
+>  	return 0;
+> -- 
+> 2.53.0
+> 
