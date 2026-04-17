@@ -1,114 +1,136 @@
-Received: from galois.linutronix.de (Galois.linutronix.de [193.142.43.55])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+Received: from mail-qt1-f179.google.com (mail-qt1-f179.google.com [209.85.160.179])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 06EB537C0F1
-	for <linux-rt-users@vger.kernel.org>; Thu, 16 Apr 2026 12:28:22 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=193.142.43.55
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 5BC1A2264D6
+	for <linux-rt-users@vger.kernel.org>; Fri, 17 Apr 2026 19:51:33 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.160.179
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1776342505; cv=none; b=tEIr8FqIs2XRp4K1d5cwZvc71dDZcfLK+SQZnrJI7h0m/Uu0xAaILM6s3f+Hf6vcRrXzMvNkPtuZ8uhABYOJKYbuIFCFAIjamnBlS6TfmWIy3ZQRZUn8u5L+T/+opdop0DscliqJYgp63SJfZJuJFO5QwKIxgLQQrtLljINdOpk=
+	t=1776455494; cv=none; b=hArhuYoyZY1iUNg+sf3wGPFGSQbE0xpSQysXtFhfyW0x+PTZ+1HvnA+cUqT7qBYUo1YMAQPEUln5OYOkK9iZLFrrVyDdHgj8e+yCd/O/ajHIzDmHsCMMaTC2nZNQJLpC9tD7fe2xzeehbfpBiHEt0aW8emvEA9GBcmo93YMSiWY=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1776342505; c=relaxed/simple;
-	bh=sWvMxCtsPOV10cpIK3sSsqr5FnSrM4Ew9e9iki/QTZI=;
-	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 Content-Type:Content-Disposition:In-Reply-To; b=YlKJM7gqOqzE+ndNGsKHVVzz/vS6UCwbfGz/GgK+/vRCyK0Vv7vM9JPXoxOjYWXBTYOOieZYT/Un+MOZRfMRUSdhxohV4+AMlQ+we0rMug2gGwnRUq4THxSLTbasyKdjI3elpM8dpD14yDYWVpnxkTINRZKy/Qelw8qen0F4g98=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linutronix.de; spf=pass smtp.mailfrom=linutronix.de; dkim=pass (2048-bit key) header.d=linutronix.de header.i=@linutronix.de header.b=NEWj1CDK; dkim=permerror (0-bit key) header.d=linutronix.de header.i=@linutronix.de header.b=f/bKCTEu; arc=none smtp.client-ip=193.142.43.55
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linutronix.de
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=linutronix.de
+	s=arc-20240116; t=1776455494; c=relaxed/simple;
+	bh=lgkj3QBx2nHhguxFdJ/rO5LcNxGiQ4tD0lfvrythx4k=;
+	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=stkDdSzd9r6lG+m7EIomsBzfdCDZ7r8XDtp+P7UHi2bwSsgpy4eoTHrJMlfFJVqr39IME/oUpkdHJ+t8tpIu3lrWa2b3nYaeAI9eE5fI8DXnwedRCatHC3iCkeo7r2ft0TSjcl96TuEM640C5NpMKLqlBYYSoLWiUB2Rws53ps4=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=fail (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=XZG4ryFW; arc=none smtp.client-ip=209.85.160.179
+Authentication-Results: smtp.subspace.kernel.org; dmarc=fail (p=quarantine dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="NEWj1CDK";
-	dkim=permerror (0-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="f/bKCTEu"
-Date: Thu, 16 Apr 2026 14:28:17 +0200
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
-	s=2020; t=1776342499;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references;
-	bh=FmB+96GYExRl8vtqB1ZquKSLnwZGnKgAS81NRKyfGGI=;
-	b=NEWj1CDKfwFKiydcynIP305gTk2OQeYD2JmuSfXDMsJfNUrwmrj2Pg8+mJNJReoqopB1Ys
-	h99yNwyT15Yck4V8QJ8DxzcSxiAgOKUaDoMzDdForuysUm1fQTRGWgSY4FWFoOkbkJF3Ti
-	2jXh+tp7cStxvRhDgwXahu93EsBqZiQiCRh60UYgO60nCtMDnc6gJyTzC3urQ4AV9QGVH+
-	rPFkG8gKBIKM8NLVa9DE0Wpmb3EpemJh4XbEAziL+LXWtwZyL6cH3dE3mKZjthPHILmN4W
-	U6T4MWERWTqf7/i+5g87j6r4fvMTghMqMFe5ye6OZpc+DXaiy/wpNgty2+ajKw==
-DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
-	s=2020e; t=1776342499;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references;
-	bh=FmB+96GYExRl8vtqB1ZquKSLnwZGnKgAS81NRKyfGGI=;
-	b=f/bKCTEujaBIk8BqhJe48o36jQLBJFUmt2C0OvJekpfHZZ5HZCnyp/1USQaVplmSmT/GqF
-	GzoO+x8E5R0XNNAA==
-From: Thomas =?utf-8?Q?Wei=C3=9Fschuh?= <thomas.weissschuh@linutronix.de>
-To: John Kacur <jkacur@redhat.com>
-Cc: linux-rt-users@vger.kernel.org, Clark Williams <williams@redhat.com>
-Subject: Re: [PATCH] cyclictest: Simplify auxiliary clock parsing
-Message-ID: <20260416142521-9f639d90-a475-43ad-b160-24b344465d2c@linutronix.de>
-References: <20260415154249.139258-1-jkacur@redhat.com>
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="XZG4ryFW"
+Received: by mail-qt1-f179.google.com with SMTP id d75a77b69052e-50d6b9bca48so12859951cf.2
+        for <linux-rt-users@vger.kernel.org>; Fri, 17 Apr 2026 12:51:33 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20251104; t=1776455492; x=1777060292; darn=vger.kernel.org;
+        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+         :to:from:sender:from:to:cc:subject:date:message-id:reply-to;
+        bh=pIUS8Vw/6NJJnzthu4GFxotpmVxTDbX/A8z0h4OOOWs=;
+        b=XZG4ryFWVC45HcA2SYAYroCN3oLBMPHAyt1bJZTEoPRyf1Pr5cRsxnDB6fYD5wFPu2
+         NhFRXv5+8B5E1EUJQ3MK5QIDBynGKxXEzTalvsgTGRc84wikTPbklYXs7EalBz2mYmrR
+         cfXRqUMQDOzia4m342GKD6JxvziYqF7SL5QJqaYmAjbYmmatWOXCGyMLg/VXm9qrAQQ4
+         ofVeQTu8O3lkjfFHCZT3Ji6fTPjMcL/DZm9H7gwevXIF+EBt68/Mz/Wulg9Io0mtZ7/E
+         WVKtzpDwt6hM7PoFrjRMBhRgWJxS+xaH26maCLsJI/m3Ba1F2dHC2uk+edIctZVgQ4Oo
+         sSWw==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20251104; t=1776455492; x=1777060292;
+        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+         :to:from:sender:x-gm-gg:x-gm-message-state:from:to:cc:subject:date
+         :message-id:reply-to;
+        bh=pIUS8Vw/6NJJnzthu4GFxotpmVxTDbX/A8z0h4OOOWs=;
+        b=pKqK7orsrY1QBjrgjmRYPCb8FFuWiRpuLF6ftKivY0sNOyyvy6QhCQV05H+EWFMGQa
+         lyBFrlTCfIr1qi3IYYqiNVZ9kQwzzukwht6APssGrCBzTiasqKXuyxUQRUZqDLD73hG9
+         SyjGJTyW2IbUSyH/9qngf2ngEPw3pF8GxVqYfidpT3jwF1KZadw8Ed89Q74NFLzyTR1h
+         tOwAbe9zPL0fidy6SFnks8yd2+f7cY8UPLfj2ObZUqLTRc3AWjf4VCDzMg1dTQ3KPS3M
+         TtzlgIIUDMDhh4+BvqHhN+CgeSgaXo/KcXNf//NpALSM3+kZ5GxNpoLjbdYs+Y3aGxlg
+         9DsQ==
+X-Gm-Message-State: AOJu0Yx5upx2VeRYmzt5P2l7fDGDHUeYKkL1rPVl0jwGl+lAGbSvziWJ
+	FGKGf+4yRyWz+CkUZz4qE9xLAz3kNjW9uT8u/MeiL7XbQ3rdGzZqWCIFzz4g4Q==
+X-Gm-Gg: AeBDietr/hlIB7+uIdporFlABlsdGXLm3RcI/QTkX5ropxUvczrXIsDI3G8d82CzKQK
+	U+ngD+1ZBPzyEHgipUH3nTRy8ZX2lPsIWPUKLwnd5TClAclyf1TTXD62uYEZ7kdYcsgFGv+KGQ5
+	YDxeYuanTOaMOBjX3ZWpH8DWy4njmTDipdW8twsqRnSlr6ytl0siS6mBUkohC7vfHEiznNOFuI3
+	Q1p8bzWYqLNHeXN9kkjZPG37eAOQflU8GeakCGIGcQbzm0SLUiSyMSWLEOrvCHDKHmfEe2VBn31
+	nM+XBQIaHcRM4GZtL7Ih99te6msX6QoDyXrXqLHKk+3By3NBRMYvMLLjIXpeXOyuM0Fn6RNk+fJ
+	6MK4oe4IowkPTAnKYWFG2x1BWdU1k1jG772ly5Ol3ZUdFRgTDADf/O5nOk0xT6uQX1l8JWFevXL
+	DnAMLTj5b56Q3nleUedh65Ph6Z1gw3gMRZuw+bLp7smeO+vQ4d0+AWfigMjmr4x5lxY44he5ar/
+	lfdgrzxjcotsNkrnh4HGJa0HOerCA==
+X-Received: by 2002:a05:622a:5a13:b0:50d:ea46:7eb3 with SMTP id d75a77b69052e-50e36b640d9mr62827981cf.26.1776455491790;
+        Fri, 17 Apr 2026 12:51:31 -0700 (PDT)
+Received: from Cumhall.redhat.com ([216.209.112.32])
+        by smtp.gmail.com with ESMTPSA id d75a77b69052e-50e3bf260fbsm20673601cf.10.2026.04.17.12.51.30
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Fri, 17 Apr 2026 12:51:31 -0700 (PDT)
+Sender: John Kacur <jkacur@gmail.com>
+From: John Kacur <jkacur@redhat.com>
+To: linux-rt-users@vger.kernel.org
+Cc: Clark Williams <williams@redhat.com>,
+	Tomas Glozar <tglozar@redhat.com>
+Subject: [PATCH 0/6] rteval: Improve CPU management infrastructure and add housekeeping option
+Date: Fri, 17 Apr 2026 15:51:07 -0400
+Message-ID: <20260417195113.177799-1-jkacur@redhat.com>
+X-Mailer: git-send-email 2.53.0
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
 List-Subscribe: <mailto:linux-rt-users+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=iso-8859-1
-Content-Disposition: inline
 Content-Transfer-Encoding: 8bit
-In-Reply-To: <20260415154249.139258-1-jkacur@redhat.com>
 
-On Wed, Apr 15, 2026 at 11:42:49AM -0400, John Kacur wrote:
-> Replace eight individual strcmp() calls for aux0-aux7 with a single
-> pattern-matching implementation that extracts and validates the digit.
-> 
-> Assisted-by: Claude Sonnet 4.5 <noreply@anthropic.com>
-> Signed-off-by: John Kacur <jkacur@redhat.com>
-> ---
->  src/cyclictest/cyclictest.c | 24 +++++++-----------------
->  1 file changed, 7 insertions(+), 17 deletions(-)
-> 
-> diff --git a/src/cyclictest/cyclictest.c b/src/cyclictest/cyclictest.c
-> index afc3a8c452da..71cf5cb25c22 100644
-> --- a/src/cyclictest/cyclictest.c
-> +++ b/src/cyclictest/cyclictest.c
-> @@ -1054,23 +1054,13 @@ static int handleclock(const char *clockarg)
->  		used_clock = CLOCK_REALTIME;
->  	else if (strcmp(clockarg, "realtime") == 0)
->  		used_clock = CLOCK_REALTIME;
-> -	else if (strcmp(clockarg, "aux0") == 0)
-> -		used_clock = CLOCK_AUX + 0;
-> -	else if (strcmp(clockarg, "aux1") == 0)
-> -		used_clock = CLOCK_AUX + 1;
-> -	else if (strcmp(clockarg, "aux2") == 0)
-> -		used_clock = CLOCK_AUX + 2;
-> -	else if (strcmp(clockarg, "aux3") == 0)
-> -		used_clock = CLOCK_AUX + 3;
-> -	else if (strcmp(clockarg, "aux4") == 0)
-> -		used_clock = CLOCK_AUX + 4;
-> -	else if (strcmp(clockarg, "aux5") == 0)
-> -		used_clock = CLOCK_AUX + 5;
-> -	else if (strcmp(clockarg, "aux6") == 0)
-> -		used_clock = CLOCK_AUX + 6;
-> -	else if (strcmp(clockarg, "aux7") == 0)
-> -		used_clock = CLOCK_AUX + 7;
-> -	else
-> +	else if (strncmp(clockarg, "aux", 3) == 0 && strlen(clockarg) == 4) {
-> +		int aux_num = clockarg[3] - '0';
-> +		if (aux_num >= 0 && aux_num <= 7)
-> +			used_clock = CLOCK_AUX + aux_num;
-> +		else
-> +			return 1;
-> +	} else
+This patch series enhances rteval's CPU management capabilities by adding
+cgroup v2 cpuset support, refactoring CPU list handling, and introducing
+a new --housekeeping option for finer control over isolated CPU usage.
 
-That works, too.
+The series includes:
 
-Reviewed-by: Thomas Weiﬂschuh <thomas.weissschuh@linutronix.de>
+1. A new cpuset module providing comprehensive cgroup v2 cpuset management
+   with support for cpuset.cpus.partition and modern Linux interfaces
 
-Though if it gets cleaned up, it might as well handle potentially larger
-values of MAX_AUX_CLOCKS.
+2. A minor test fix for the xmlout unit test XSL file path
 
->  		return 1;
->  
->  	return 0;
-> -- 
-> 2.53.0
-> 
+3. A new CpuList class that provides an object-oriented interface for CPU
+   list manipulation while maintaining backward compatibility with existing
+   module-level functions
+
+4. Migration of existing code to use the new CpuList class where it adds
+   value (chaining, filtering) while keeping functional interfaces for
+   simple operations
+
+5. Comprehensive unit tests for the CpuList class covering all major
+   functionality
+
+6. A new --housekeeping option that allows users to reserve specific
+   isolated CPUs for system housekeeping tasks, preventing rteval's
+   measurement and load modules from using them
+
+The --housekeeping feature is particularly useful for systems with isolated
+CPUs where some cores need to handle essential system tasks while the rest
+are dedicated to real-time workloads.
+
+All changes maintain backward compatibility and existing tests pass.
+
+John Kacur
+
+John Kacur (6):
+  rteval: Add cpuset module for cgroup v2 management
+  rteval: Fix xmlout unit test XSL file path
+  rteval: Add CpuList class to cpulist_utils module
+  rteval: Migrate call sites to use CpuList class where beneficial
+  rteval: Add unit tests for CpuList class
+  rteval: Add --housekeeping option to reserve isolated CPUs
+
+ rteval-cmd                             |  62 ++++-
+ rteval/cpulist_utils.py                | 161 +++++++++++-
+ rteval/cpupower.py                     |   4 +-
+ rteval/cpuset.py                       | 350 +++++++++++++++++++++++++
+ rteval/modules/loads/__init__.py       |   7 +-
+ rteval/modules/loads/hackbench.py      |   9 +-
+ rteval/modules/loads/kcompile.py       |  14 +-
+ rteval/modules/loads/stressng.py       |   8 +-
+ rteval/modules/measurement/__init__.py |   6 +-
+ rteval/systopology.py                  |  52 ++--
+ rteval/xmlout.py                       |   4 +-
+ tests/test_cpulist_class.py            | 121 +++++++++
+ 12 files changed, 738 insertions(+), 60 deletions(-)
+ create mode 100755 rteval/cpuset.py
+ create mode 100644 tests/test_cpulist_class.py
+
+-- 
+2.53.0
+
