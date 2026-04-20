@@ -1,239 +1,148 @@
-Received: from mail-qv1-f44.google.com (mail-qv1-f44.google.com [209.85.219.44])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 2129C346E74
-	for <linux-rt-users@vger.kernel.org>; Fri, 17 Apr 2026 19:51:39 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.219.44
-ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1776455501; cv=none; b=ffmaFXQEU5XhM/ro6CsCjFRX9hJWX1GvFqs2c/hs11G8ZhFxUoLfqV5T2gqDSwScNOA5VvUG/5WUy/pwYINq36YYAa8yjr4PA4eAO2sVo8cIqhCNzCw0bTOcAarRTd2h6mr3CQEGEFxQh/zMdCd+/f0/NAUS3X1gZ756oOtlwLY=
-ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1776455501; c=relaxed/simple;
-	bh=1lBbFnwgnvefWsM/Tj2++Yn8s+J+C+Ik1L7VN1LOsqM=;
-	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=G9Cdztv3KzpUelZLlDte8CBHybSWBaZsmioKHz54ILtkDZz1KC2jOsQ5Q429qY+I382XvAtDBQLMq1tmpt2dkNaBZuBbpMUUr3cK+9LwtgfAaZAhcAtFsqU1Jmr/d98u/USgDEH7qPW6s9F2QJyC1NFfTeZpL0S+6F4lIV9ywn8=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=fail (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=ZDQi3yr5; arc=none smtp.client-ip=209.85.219.44
-Authentication-Results: smtp.subspace.kernel.org; dmarc=fail (p=quarantine dis=none) header.from=redhat.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 728393822A8
+	for <linux-rt-users@vger.kernel.org>; Mon, 20 Apr 2026 09:33:22 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=pass smtp.client-ip=170.10.133.124
+ARC-Seal:i=2; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
+	t=1776677603; cv=pass; b=tXg+lTn6ksxmRxK6wsHpCl9FoDt4G1lixQg+5z0sKvQsqW+M0wrUR3CNcpVISRJ9rlzPrOjFOb6WEfdSYbM8YSxn8TeDzS2oZj6x7xh0KCKcWEiWu7HOaheEX2TWPiDdwwN3UMZ/ztjSCTZ9FNVbfSJldbFzmLeUwajpumLjT1E=
+ARC-Message-Signature:i=2; a=rsa-sha256; d=subspace.kernel.org;
+	s=arc-20240116; t=1776677603; c=relaxed/simple;
+	bh=9o37wNZnWGKOebwaLIZHqps4S6G1B2Ybp2oi7Z0sjfE=;
+	h=MIME-Version:References:In-Reply-To:From:Date:Message-ID:Subject:
+	 To:Cc:Content-Type; b=przMBJ9QU3mHGtgKv0L82XiolBTfx/CoY0S5YgBABA27E/iDt3iMsEF5KnFwoiIm5eKBQyPMEey1qgMFqVaLlTOkq878pqbk8KhhAo6zDijx3evi4gbXVkTR5PWm7EIiucD0UzY3xKhtQ9JRFmutXMtdEDSlRGP32VGCb6Gy2YU=
+ARC-Authentication-Results:i=2; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=RPh6IFkP; dkim=pass (2048-bit key) header.d=redhat.com header.i=@redhat.com header.b=JKy+wTAB; arc=pass smtp.client-ip=170.10.133.124
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="ZDQi3yr5"
-Received: by mail-qv1-f44.google.com with SMTP id 6a1803df08f44-8ac9ef74131so15549026d6.1
-        for <linux-rt-users@vger.kernel.org>; Fri, 17 Apr 2026 12:51:39 -0700 (PDT)
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="RPh6IFkP";
+	dkim=pass (2048-bit key) header.d=redhat.com header.i=@redhat.com header.b="JKy+wTAB"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1776677601;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references;
+	bh=EBQCIVaGZ19dIlPxuUTWB/foA5812Ope2iKpep01jpE=;
+	b=RPh6IFkPjUvTX5b0T+XNgwl9QpFH+nPdRirqyOXs6FXPd5XB4vGFwCIV1RWnDT3na8rbcY
+	MQZsWaKh7SNDw3loymddpevWinEf6gvytpbIrZ69Az8VhRfB9zg//ptHn6//pTnFlIE/A0
+	4O73Kp0468ItuL3RRyge9dap9ayUH+4=
+Received: from mail-ej1-f69.google.com (mail-ej1-f69.google.com
+ [209.85.218.69]) by relay.mimecast.com with ESMTP with STARTTLS
+ (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
+ us-mta-582-DxeW-k8jMr2pImOph9hAPg-1; Mon, 20 Apr 2026 05:33:19 -0400
+X-MC-Unique: DxeW-k8jMr2pImOph9hAPg-1
+X-Mimecast-MFC-AGG-ID: DxeW-k8jMr2pImOph9hAPg_1776677599
+Received: by mail-ej1-f69.google.com with SMTP id a640c23a62f3a-b90bb54d034so369318066b.0
+        for <linux-rt-users@vger.kernel.org>; Mon, 20 Apr 2026 02:33:19 -0700 (PDT)
+ARC-Seal: i=1; a=rsa-sha256; t=1776677598; cv=none;
+        d=google.com; s=arc-20240605;
+        b=P70Bpkeo2hMJeWHJhjcIhMv4yject7IjHFMR8txnESMJecnszk8a2Tl6rci7ZyWYvY
+         EwQmGF0scFRX80qqKIrpjGeU8BDS5eBfTLnp2sW3atg28d3ZSahXCeiZ+jWDtElvYDb/
+         ScgCp6n8uxkoefquBt/7vBdwzdXYAV882AxkbhDRmpULlHkvYiWfJIFt3yV0PfLu3uvN
+         G6nG1hPU2cilMxHN4fAYIj445w7GtXC8MJInWM4d6Urs3T8BuSceuiWlUJAepXh3bTw8
+         412znN8Whr1KMsiJTXxLKTbU4Z0fLsCT/yF0U6VlJk7erZjFR1ZQCGUOYqb9WLkoUGha
+         onAg==
+ARC-Message-Signature: i=1; a=rsa-sha256; c=relaxed/relaxed; d=google.com; s=arc-20240605;
+        h=content-transfer-encoding:cc:to:subject:message-id:date:from
+         :in-reply-to:references:mime-version:dkim-signature;
+        bh=EBQCIVaGZ19dIlPxuUTWB/foA5812Ope2iKpep01jpE=;
+        fh=OkIEyi8OUrK0g1hM0ooVM1ZoZsXqwb2xvg6VnU0U59g=;
+        b=eHtHRLktK1MXQxeqo36iPWmk+u9oLEzDnY7PMnZqGEUynzCEPtSMMFGc09NewkjxkG
+         mxGxSNYI9//MdCvdsPpK14aB2/ClvZQVf+CAwY/rDmQZzsBQpWmEZHVhDVz1JWd62Vsa
+         DsoLf+HXRqK/KnZu6WZO7izSgrN3ZsIyVKB5ADBJYYKyxGvdXUpi4ihPvt00GZ+uY0a3
+         fX0Vb8GMc8OpQ0iBXPjQAkqnODgXgaMHhkcnAUyPqGsrL+GSn/1/vLy6pLn/Oz/Av0gs
+         Zmlim+tbt1te9jbAgT4dtlDKvyPH/covadXQPB2Y60Xa8Ti9GpYyjnDT9BScurMpMnda
+         QRWg==;
+        darn=vger.kernel.org
+ARC-Authentication-Results: i=1; mx.google.com; arc=none
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20251104; t=1776455499; x=1777060299; darn=vger.kernel.org;
-        h=content-transfer-encoding:mime-version:references:in-reply-to
-         :message-id:date:subject:cc:to:from:sender:from:to:cc:subject:date
+        d=redhat.com; s=google; t=1776677598; x=1777282398; darn=vger.kernel.org;
+        h=content-transfer-encoding:cc:to:subject:message-id:date:from
+         :in-reply-to:references:mime-version:from:to:cc:subject:date
          :message-id:reply-to;
-        bh=Fwfs3o8TqDPjCf9GTPIOVCkKR0gkVPpPg4+t1wuhmJk=;
-        b=ZDQi3yr5qWo9fsJn2aVNnngXd9CbBJXbkTQhSJ44pzUT2jdJvLttS46CdF58OP2jCE
-         xLGs+owwD6lyqKMrcRiCZPnTEnv6V9wT446ZQzCqyPDwyB7CngI67KYg4fDILQR+3uiq
-         n9k0oBfpkjxdxJMzGi37GVrerK/RAGuMdx1b+xaSjeHnoCLt30aV6Ww7AuR4Lx9G9X/L
-         Sy6oM2rhoJrHrWzvHqgNbAk/wMIV4LHjD4eBixl8LqCuYF75kn2PGEH50/QHcQEOfPat
-         zuWyiMXi/IsVn6TD3g1r8lLNJjMrxOfK8H8kURt8mWj/A5IFjisuLwLb6V46+v95KcYF
-         0hPg==
+        bh=EBQCIVaGZ19dIlPxuUTWB/foA5812Ope2iKpep01jpE=;
+        b=JKy+wTAB65Y4Z7AhNLaVHtQu1a3oGYyQAE3imSrQyLu8f04u77OHw5r14bryHmAxU/
+         4usk8ptTpPJ026uNvTJ4uYWDjTlasA7Ik+Twz6F5RlQyLbAr2OrVsYkOw7OZPTTFztFS
+         BSx/wFIpE3AqPTXd4V6mjvOkCFn4c8nfhBKgZ65r+drGC7uY/yD0p9e326St7I+X5DbO
+         VJFmilwQwLVDZcgFvK5GAAbi/9S3mlvoDm7z48BvH6TdO3RLa7wmrj9d/SScLqQZ79S4
+         hXtLzsWUsMa+NGCr8Qx4rCjYnpIx2KPLYAVPbiNKkgTmzuwMvFN1g97svZhLidvV49EO
+         Q+/Q==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20251104; t=1776455499; x=1777060299;
-        h=content-transfer-encoding:mime-version:references:in-reply-to
-         :message-id:date:subject:cc:to:from:sender:x-gm-gg
-         :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
-        bh=Fwfs3o8TqDPjCf9GTPIOVCkKR0gkVPpPg4+t1wuhmJk=;
-        b=LeD4uKotp9ggbiTemPNecPkzcrkf4uUDKjSHAlSCrXGu+Dg7hlEL92ghuxaOzv99hA
-         0QxsuohkRygoScYLsaeUClBsrKvzubHqLkTANlRarPc9OJfwp+w3UG0Zln4BDkZsUAW0
-         stnyg/XLZ2f3KA24goQga8TS9tDzLWpdBwq6CLjFGGL81UF5RATCnDx34PNcGj89jfKN
-         x36e2iid10WaV3hmtqSSHeRx0QZTLC9EdCo2uytx9iGuJsl1ehGRql5TuojKfTiH++H3
-         x1Y87Ah18Ic4hKFo6DjuUgH4oRa5TCW2yiVORxFaixKtEbbz2zI5mDJN1ct5zUZyYsJi
-         J+2g==
-X-Gm-Message-State: AOJu0YxW6IqFK5s+pgJVDplNoOrp2b9fOX5PdI5VkcZPEzfg03lnZIzE
-	7w5e2KAdFXVNUH4VzM+oH68nvnMtY6gif8ySCMw7Ae/cH8XFPOqXdR5tIGBGBw==
-X-Gm-Gg: AeBDievcvSHCVXseh42wOQ7gCl5FNShUHg9Q9qnZ9Nvjz+/lr+owA5XkE5F3nYww0GF
-	WlEpa7+1tcpeWpLPUBpGeW8YgANOEca7lbLM/vrmmbK5TBg8ik4aqLvMoKmAWaBsy6HAGDzm9gK
-	YnIhjAyXOBvQ0snyF/JR9kJsy3pUZT48i9aVz8iVcgQcgANdd4lcXRy0nVTIQ8fJIx67/+ASx3X
-	jQRjs5C+q45Ot78InHAfZAoqZpYk4b4WrjnQPhRgQ6eBX3FbRgPdx+GvqA7afQgDIVlM1nekvzh
-	QDlMLACx521xjXo0JzBp9hgmhElPNQnECDGPs7vtahb0DmIqkcCRSiQZ1zcsyK3oSL/+1vly6NG
-	N4ANWe6J1nwfzoObfyN0wAcJeK8fyxg1GyaYewYmVlb/K6OW+TaJCUcBYqQBaeqD6DSjtG/Zbyt
-	I10qYwaKSysydYGW7hqeHc+roTAMvM11LiOjoymnm7w09FWpw7J4eNq8fvvGb5vs2BxtFywi2Xc
-	ppm0dE+QEcqkqILtZRJoUEBWId9sQ==
-X-Received: by 2002:a05:622a:22a1:b0:50d:8c8f:f94d with SMTP id d75a77b69052e-50e36c74311mr62094381cf.52.1776455498726;
-        Fri, 17 Apr 2026 12:51:38 -0700 (PDT)
-Received: from Cumhall.redhat.com ([216.209.112.32])
-        by smtp.gmail.com with ESMTPSA id d75a77b69052e-50e3bf260fbsm20673601cf.10.2026.04.17.12.51.37
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Fri, 17 Apr 2026 12:51:38 -0700 (PDT)
-Sender: John Kacur <jkacur@gmail.com>
-From: John Kacur <jkacur@redhat.com>
-To: linux-rt-users@vger.kernel.org
-Cc: Clark Williams <williams@redhat.com>,
-	Tomas Glozar <tglozar@redhat.com>
-Subject: [PATCH 6/6] rteval: Add --housekeeping option to reserve isolated CPUs
-Date: Fri, 17 Apr 2026 15:51:13 -0400
-Message-ID: <20260417195113.177799-7-jkacur@redhat.com>
-X-Mailer: git-send-email 2.53.0
-In-Reply-To: <20260417195113.177799-1-jkacur@redhat.com>
-References: <20260417195113.177799-1-jkacur@redhat.com>
+        d=1e100.net; s=20251104; t=1776677598; x=1777282398;
+        h=content-transfer-encoding:cc:to:subject:message-id:date:from
+         :in-reply-to:references:mime-version:x-gm-gg:x-gm-message-state:from
+         :to:cc:subject:date:message-id:reply-to;
+        bh=EBQCIVaGZ19dIlPxuUTWB/foA5812Ope2iKpep01jpE=;
+        b=ZSoad70iCXJTmbtEBnPitUMYVeLfh7RgRfuMqpurpHHkvHaKmj8/SdG0T+P9lJBjCA
+         CHEdH+YqhkAymwwc25F3wmpcyzkRBui7LHBwj10qHl/DtPkdrePTVbHx8T73hhKRuTWr
+         Hqu2wy2guekTVtOEySYXk2US1BJGC2stserXQUPSVpnEBV/uTq5aMgOEeztyVC8CtvAz
+         NOF5mYEUxOlwfDA2S6jl9GOcpLx3YOSI3qGaLf7BVhIiZTyhyiV15goF+4K/V8RlmIM9
+         VOsbW0Unk1p3staRY5VjTT5EgSBpOpqV4pgqBTnMPW+GFNWAx+SUwhM5o1CvKuQ+JO7/
+         R0GA==
+X-Gm-Message-State: AOJu0YxHd3bSxzefE/qFuJD/QShIoXlxjxOG9O5hBOUc7hR+n1SPJAC1
+	iUNEtqprbYS2jkssdPjfTbCdjhr/dJJOwMtCz0+h7zwADcT0IKj+0qZvG/Wt/0EwvZZJrQORzjn
+	5dcaZ/ZhR7OuF7Xq/JJxXcXv6MBo+3Grd8K10s4ILnP1D8TgJk8KUot7T2pqT39pY4RdGRdgjk3
+	Vz0XeHcrnoPrc4busUfpzPlk4FNxbMcotL6fRTCttX8Yw=
+X-Gm-Gg: AeBDiesd4mID670V7CHFdR7olD95pEFwocObNsjZUEsfkwVgk/M3RP/Nm/ecn5wrI3I
+	RKlYRh/jmaaIIf4IytWvgTcPH8DdMjleh3V88R+s6mILYJgtE3xSBFZYJxNTMhGugpJzZH+JCll
+	LYg16Gs88CFlAoneenV2F26mnl4AiSi9Yc08kE3d1YEnz5mFyTLyO1AaNtVlBYoJVBRPtivo45K
+	qOcek6ih0YQYyGFIuHZFw3yMxTk1TrMUihwptdB1vq5BXs=
+X-Received: by 2002:a17:907:2dab:b0:b96:e1de:db04 with SMTP id a640c23a62f3a-ba421debdebmr519246166b.18.1776677598534;
+        Mon, 20 Apr 2026 02:33:18 -0700 (PDT)
+X-Received: by 2002:a17:907:2dab:b0:b96:e1de:db04 with SMTP id
+ a640c23a62f3a-ba421debdebmr519244966b.18.1776677598087; Mon, 20 Apr 2026
+ 02:33:18 -0700 (PDT)
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
 List-Subscribe: <mailto:linux-rt-users+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
+References: <20260417195113.177799-1-jkacur@redhat.com> <20260417195113.177799-7-jkacur@redhat.com>
+In-Reply-To: <20260417195113.177799-7-jkacur@redhat.com>
+From: Tomas Glozar <tglozar@redhat.com>
+Date: Mon, 20 Apr 2026 11:33:05 +0200
+X-Gm-Features: AQROBzCx9exUfTQKIE4giWg_Iy4OyaUfVLWPARGM7wwkUO52q8cp3hxlypFNWE0
+Message-ID: <CAP4=nvQLbPBhQva-fBqeC1_ApGDYmNG7tSzuBNxMFg-EiFp7ag@mail.gmail.com>
+Subject: Re: [PATCH 6/6] rteval: Add --housekeeping option to reserve isolated CPUs
+To: John Kacur <jkacur@redhat.com>
+Cc: linux-rt-users@vger.kernel.org, Clark Williams <williams@redhat.com>
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
 
-Add a new --housekeeping option that allows users to specify isolated CPUs
-that should be reserved for system housekeeping tasks and not used by
-rteval's measurement or load modules.
+p=C3=A1 17. 4. 2026 v 21:51 odes=C3=ADlatel John Kacur <jkacur@redhat.com> =
+napsal:
+>
+> Add a new --housekeeping option that allows users to specify isolated CPU=
+s
+> that should be reserved for system housekeeping tasks and not used by
+> rteval's measurement or load modules.
+>
+> Key features:
+> - Validates that housekeeping CPUs are in the isolated CPU list (isolcpus=
+)
+> - Detects conflicts with explicitly specified --measurement-cpulist or
+>   --loads-cpulist options and exits with a clear error message
+> - Filters housekeeping CPUs from both measurement and load CPU lists
+> - Correctly excludes housekeeping CPUs from inverted CPU lists when only
+>   one of measurement/loads is specified
+>
+> Example usage:
+>   rteval --housekeeping 0-3 --measurement-run-on-isolcpus
+>     Reserves isolcpus 0-3 for system tasks, runs measurements on
+>     remaining isolated CPUs (4+) plus non-isolated CPUs
+>
+> Implementation:
+> - systopology.py: Add validate_housekeeping_cpus() function to validate
+>   that housekeeping CPUs are in isolcpus
+> - rteval-cmd: Add --housekeeping argument, conflict checking, filtering,
+>   and fix inversion logic to exclude housekeeping CPUs
+>
 
-Key features:
-- Validates that housekeeping CPUs are in the isolated CPU list (isolcpus)
-- Detects conflicts with explicitly specified --measurement-cpulist or
-  --loads-cpulist options and exits with a clear error message
-- Filters housekeeping CPUs from both measurement and load CPU lists
-- Correctly excludes housekeeping CPUs from inverted CPU lists when only
-  one of measurement/loads is specified
+This might be a good opportunity to additionally pin the rteval
+process to the housekeeping CPUs, as well as pass them to rtla's -H
+option.
 
-Example usage:
-  rteval --housekeeping 0-3 --measurement-run-on-isolcpus
-    Reserves isolcpus 0-3 for system tasks, runs measurements on
-    remaining isolated CPUs (4+) plus non-isolated CPUs
-
-Implementation:
-- systopology.py: Add validate_housekeeping_cpus() function to validate
-  that housekeeping CPUs are in isolcpus
-- rteval-cmd: Add --housekeeping argument, conflict checking, filtering,
-  and fix inversion logic to exclude housekeeping CPUs
-
-This feature is purely additive and does not change existing behavior
-when --housekeeping is not specified.
-
-Assisted-by: Claude Sonnet 4.5 <noreply@anthropic.com>
-Signed-off-by: John Kacur <jkacur@redhat.com>
----
- rteval-cmd            | 46 ++++++++++++++++++++++++++++++++++++++++++-
- rteval/systopology.py | 24 ++++++++++++++++++++++
- 2 files changed, 69 insertions(+), 1 deletion(-)
-
-diff --git a/rteval-cmd b/rteval-cmd
-index 0ad90cf29ec4..a903b537c891 100755
---- a/rteval-cmd
-+++ b/rteval-cmd
-@@ -31,7 +31,7 @@ from rteval.modules.loads import LoadModules
- from rteval.modules.measurement import MeasurementModules
- from rteval import cpupower
- from rteval.version import RTEVAL_VERSION
--from rteval.systopology import SysTopology, parse_cpulist_from_config
-+from rteval.systopology import SysTopology, parse_cpulist_from_config, validate_housekeeping_cpus
- from rteval.modules.loads.kcompile import ModuleParameters
- from rteval.cpulist_utils import CpuList, is_relative, collapse_cpulist
- 
-@@ -113,6 +113,9 @@ def parse_options(cfg, parser, cmdargs):
-     parser.add_argument("-i", "--installdir", dest="rteval___installdir",
-                       type=str, default=rtevcfg.installdir, metavar="DIRECTORY",
-                       help=f"place to locate installed templates (default: {rtevcfg.installdir})")
-+    parser.add_argument("--housekeeping", dest="rteval___housekeeping",
-+                      type=str, default="", metavar="CPULIST",
-+                      help="isolated CPUs reserved for system tasks (not used by rteval)")
-     parser.add_argument("-s", "--sysreport", dest="rteval___sysreport",
-                       action="store_true", default=rtevcfg.sysreport,
-                       help=f'run sysreport to collect system data (default: {rtevcfg.sysreport})')
-@@ -370,6 +373,13 @@ if __name__ == '__main__':
- 
-         ldcfg = config.GetSection('loads')
-         msrcfg = config.GetSection('measurement')
-+
-+        # Validate and process housekeeping CPUs
-+        housekeeping_cpus = []
-+        if rtevcfg.housekeeping:
-+            housekeeping_cpus = validate_housekeeping_cpus(rtevcfg.housekeeping)
-+            logger.log(Log.DEBUG, f"housekeeping cpulist: {collapse_cpulist(housekeeping_cpus)}")
-+
-         # Remember if cpulists were explicitly set by the user before running
-         # parse_cpulist_from_config, which generates default value for them
-         msrcfg_cpulist_present = msrcfg.cpulist != ""
-@@ -382,17 +392,51 @@ if __name__ == '__main__':
-         msrcfg.cpulist = collapse_cpulist(cpulist)
-         cpulist = parse_cpulist_from_config(ldcfg.cpulist)
-         ldcfg.cpulist = collapse_cpulist(cpulist)
-+
-+        # Check for conflicts between housekeeping and measurement/load cpulists
-+        if housekeeping_cpus:
-+            msrcfg_cpus = CpuList(msrcfg.cpulist).cpus if msrcfg.cpulist else []
-+            ldcfg_cpus = CpuList(ldcfg.cpulist).cpus if ldcfg.cpulist else []
-+
-+            # Check measurement conflicts
-+            if msrcfg_cpulist_present:
-+                conflicts = [cpu for cpu in housekeeping_cpus if cpu in msrcfg_cpus]
-+                if conflicts:
-+                    raise RuntimeError(
-+                        f"Housekeeping CPUs {collapse_cpulist(conflicts)} conflict with "
-+                        f"--measurement-cpulist {msrcfg.cpulist}"
-+                    )
-+
-+            # Check load conflicts
-+            if ldcfg_cpulist_present:
-+                conflicts = [cpu for cpu in housekeeping_cpus if cpu in ldcfg_cpus]
-+                if conflicts:
-+                    raise RuntimeError(
-+                        f"Housekeeping CPUs {collapse_cpulist(conflicts)} conflict with "
-+                        f"--loads-cpulist {ldcfg.cpulist}"
-+                    )
-+
-+            # Filter out housekeeping CPUs from measurement and load lists
-+            msrcfg_cpus = [cpu for cpu in msrcfg_cpus if cpu not in housekeeping_cpus]
-+            ldcfg_cpus = [cpu for cpu in ldcfg_cpus if cpu not in housekeeping_cpus]
-+            msrcfg.cpulist = collapse_cpulist(msrcfg_cpus) if msrcfg_cpus else ""
-+            ldcfg.cpulist = collapse_cpulist(ldcfg_cpus) if ldcfg_cpus else ""
-+
-         # if we only specified one set of cpus (loads or measurement)
-         # default the other to the inverse of the specified list
-         if not ldcfg_cpulist_present and msrcfg_cpulist_present:
-             tmplist = CpuList(msrcfg.cpulist).cpus
-             tmplist = SysTopology().invert_cpulist(tmplist)
-             tmplist = CpuList(tmplist).online().cpus
-+            # Exclude housekeeping CPUs from the inverted list
-+            tmplist = [cpu for cpu in tmplist if cpu not in housekeeping_cpus]
-             ldcfg.cpulist = collapse_cpulist(tmplist)
-         if not msrcfg_cpulist_present and ldcfg_cpulist_present:
-             tmplist = CpuList(ldcfg.cpulist).cpus
-             tmplist = SysTopology().invert_cpulist(tmplist)
-             tmplist = CpuList(tmplist).online().cpus
-+            # Exclude housekeeping CPUs from the inverted list
-+            tmplist = [cpu for cpu in tmplist if cpu not in housekeeping_cpus]
-             msrcfg.cpulist = collapse_cpulist(tmplist)
- 
-         if ldcfg_cpulist_present:
-diff --git a/rteval/systopology.py b/rteval/systopology.py
-index 7305fc278995..5f2bc291f608 100644
---- a/rteval/systopology.py
-+++ b/rteval/systopology.py
-@@ -239,6 +239,30 @@ class SysTopology:
-         return [c for c in self.online_cpus() if c in cpulist]
- 
- 
-+def validate_housekeeping_cpus(housekeeping_cpulist):
-+    """
-+    Validates that housekeeping CPUs are in isolated CPU list
-+    :param housekeeping_cpulist: CPU list string for housekeeping CPUs
-+    :return: Sorted list of validated housekeeping CPUs as integers
-+    :raises: RuntimeError if housekeeping CPUs are not in isolcpus
-+    """
-+    if not housekeeping_cpulist:
-+        return []
-+
-+    housekeeping = CpuList(housekeeping_cpulist).online().cpus
-+    isolcpus = SysTopology().isolated_cpus()
-+
-+    # Check if all housekeeping CPUs are in isolcpus
-+    not_isolated = [cpu for cpu in housekeeping if cpu not in isolcpus]
-+    if not_isolated:
-+        isolcpus_str = collapse_cpulist(isolcpus) if isolcpus else "none"
-+        raise RuntimeError(
-+            f"Housekeeping CPUs {collapse_cpulist(not_isolated)} are not in isolated CPUs [{isolcpus_str}]"
-+        )
-+
-+    return sorted(housekeeping)
-+
-+
- def parse_cpulist_from_config(cpulist, run_on_isolcpus=False):
-     """
-     Generates a cpulist based on --*-cpulist argument given by user
--- 
-2.53.0
+Tomas
 
