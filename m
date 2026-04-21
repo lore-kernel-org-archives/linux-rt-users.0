@@ -1,72 +1,72 @@
-Received: from mail-qk1-f181.google.com (mail-qk1-f181.google.com [209.85.222.181])
+Received: from mail-qk1-f173.google.com (mail-qk1-f173.google.com [209.85.222.173])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 7F0A237703B
-	for <linux-rt-users@vger.kernel.org>; Tue, 21 Apr 2026 18:26:38 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.222.181
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 63FE2374E41
+	for <linux-rt-users@vger.kernel.org>; Tue, 21 Apr 2026 18:26:42 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.222.173
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1776796013; cv=none; b=KG58aC9P9nSYFezWU5zatLRjwwnxb51eAzcalGXUhDmdyK/po3ijNQhGlSwJhxLqxsqE4Ft0UZ50N4ZUXXTN3vjV4Z5qyqkDgnhopbdhNQptZ4MbQWPFfwK1Zvp/vPb+gwxPGuxOCzMTDbWvHUua11Wi4cH3d1FfjG/+QtIPS9k=
+	t=1776796010; cv=none; b=PLrCq0hQjyJTdwZBty90V6QeNjVIoM11Z+WEw+hUQZY8VuXuQXCNngyKNIIRCl5I0aSRLLa0aVFSusy43wmqjViS+JKTAzsun9EYpumvu/poNigi12TjQhQRmQA37WfhyMwj9I3/iYDgJDJdcY/U4vuBoberArgh8lRl8g6f/Q8=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1776796013; c=relaxed/simple;
-	bh=nvBgiXgcBcylJ+pM9MQFXOngcwryk9Nct3/FpSAFPeQ=;
+	s=arc-20240116; t=1776796010; c=relaxed/simple;
+	bh=OIZw7bzStauVMv6MTQbNTWbDU4sXrCPqLTj/ogBJvJQ=;
 	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=HZsAoYYsOY4o6sK9w0zcy5r8Nv8f6wGnRNsZDb5Lk77EQgXsR6kNQHAlx8iCmQBerDqCkmHSiERQK9ZOdJo4cGEQKbZi9gO3VXv/eBaV8nM97Iqt9XNI1NyL9HGNj3+0a0l1F0ybnm97SVzPkWX53c5EsKrLtqpeVhffD+4i/WU=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=fail (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=nXYvRAMt; arc=none smtp.client-ip=209.85.222.181
+	 MIME-Version; b=LxBE5XCaEFab39t6TBvaUfIVwdpxB+f6OsksPERFcwiCfoZFNwFRLNp2m+xqZFdGfHV2fUkjXAsI7Mg7UIZ+gXKwj3ti94jn2R8mcLtN2oUqUQ7vEOREk8eT/0Wk12UEJSIBkkypXzuJPc1c0So9QRUY+Cz3Q0D4/xxcWglRV9U=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=fail (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=ifUd7ndb; arc=none smtp.client-ip=209.85.222.173
 Authentication-Results: smtp.subspace.kernel.org; dmarc=fail (p=quarantine dis=none) header.from=redhat.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="nXYvRAMt"
-Received: by mail-qk1-f181.google.com with SMTP id af79cd13be357-8ef0ba61d46so62534885a.2
-        for <linux-rt-users@vger.kernel.org>; Tue, 21 Apr 2026 11:26:37 -0700 (PDT)
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="ifUd7ndb"
+Received: by mail-qk1-f173.google.com with SMTP id af79cd13be357-8ef45a6d9dfso45341885a.0
+        for <linux-rt-users@vger.kernel.org>; Tue, 21 Apr 2026 11:26:40 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20251104; t=1776795994; x=1777400794; darn=vger.kernel.org;
+        d=gmail.com; s=20251104; t=1776795997; x=1777400797; darn=vger.kernel.org;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:sender:from:to:cc:subject:date
          :message-id:reply-to;
-        bh=jzy6ZBZNBC/fcW8GQ8ZXzxlpSejYNCCHSyac/ROXrbk=;
-        b=nXYvRAMt3YZHdc1y6BZvMVgro6c0EntXMNWCMPLat7eJwUT5OTRpN6v0etFXLKqVZy
-         LB3Tb9TjCYoSTkEHYqbA26lLr5Nyes6jPANDNs1Vnz+cy4E7pjwg6kOExqou/mkxm4/B
-         vpARDLKVLPJwpEa86i3t6PGPF2E+oi8Offq7V+2LS0GwhIx80BOt9EVw/Ku5Iz/tx0aB
-         FkHursE5jG8cjkOZmjljRG2OvnreodfoL4LED26ABCApRCDotoG8HFGNU/U53B3AnvNr
-         LNAJFsZ0GvysW+/mjECVT1TKgnheL1SjxgxFsSNxQV+WiIX9oStG3bBlamo/fWIh6aYO
-         7F/A==
+        bh=Ba09x6YrOv7SRQkdsjbPVN9fWWwC4/CxDD9A9uJAQPI=;
+        b=ifUd7ndbzCEqewUhx7QeA733ELwtjGxduaeFvQtH/zRBISo+uxuYsrIxIeCsICng1b
+         oAEJRSNjQYRmNyiKD95Fwf+1GqXOMReUpXSAMtgwU8ZS/i5CC4GEArD5d/01n/+ei8qW
+         11hKimnFCR0x9wG8y2ZxZExfeysiCvZyB455C1R0NYhBMpcRl7muahI4/GXqSMrcKnjp
+         3IQYsop1gW9Gac8zrayVApuj4IOi8ZuJWeDC46Yvss52GIqpXGQj8Mh3/123nQS0zWsj
+         dZ8PhC8LS9UNJkAFmldRTOs0aELggri95XgBzKBXMfPaV/hXWzVpFeP2Org/++0EDHlD
+         mu5A==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20251104; t=1776795994; x=1777400794;
+        d=1e100.net; s=20251104; t=1776795997; x=1777400797;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:sender:x-gm-gg
          :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
-        bh=jzy6ZBZNBC/fcW8GQ8ZXzxlpSejYNCCHSyac/ROXrbk=;
-        b=flDPBBB019Q+OT6/PPq5vNAjZaugy2N3fhFmvkdLdaaCuySdyypmcy9Rg0Pf//VUWu
-         6wlaW2pZbcVaNdGqABP16mCF11geMh5LGR6vsg/JKfWINCuDW9sJ3neOMZF9eoyYcvT9
-         FqTWHwqY5Hji650w4EtQNnlFcFARsW/+S9rWs8G18Y0jeWwgtVH94dWba2qKoukT88+Z
-         1F2nySqeRa3EuWwDtIQBJag+FgbQPyhmf5IEB1zQGAyMchJWMDHCPJV9xpGPP+Hn3oZV
-         dTwtWTHP/ioPxP5j84ShY5x7gykzZbIAgyuYENBSYNkh3hikNJAewmybe3oF8PO8+M07
-         5bxg==
-X-Gm-Message-State: AOJu0YyLw5AdJt+fnO5gzKMQDLFXyHdS0ApvuNMeHjee66ydIuff+rx9
-	d9Pe09H/TJk06Ug9ECEXIjEr4x6fXlr4rtC9ZaJpu5R/RVOc56ResZQTtM+Tjg==
-X-Gm-Gg: AeBDies3UgkxFlYcEaKoCG60jytcbymcoefGsDTIIjJxBYK2QMbdVmUp5vGouC9O2yl
-	bzTZmrLZ84+XI7czzEvvrqFMy68tJNFPQv2AIz+AmfmPj/wAR9zzY97howYCS+W3JnUiFZncYSB
-	5OxFdpeWtaebj+OMx7EUQGlrpPAUqE8zge1Zx/o82DsZMRDhzMMFLmzZbAVHl2CSPIlsZSa81jC
-	jCwBhFwS6cyXGW04abDSU1OFuQtbELTv3tsKxRiBniWf6fMlF9S3TOTpz8y1xyZO9JFvQkXQgvM
-	T+KoFOo9uJq37Cn3Rpl6kMPTysZZxn/yBLjFuFkSYbt9q41MGlIWXkivT6d7SsG1ns9r9WJLV9V
-	Z2zgPrsV6O4P8Lp6UsE99d3D0mxD0qxcq+Rc9OMe2Lj7nWJ34VRAoZJkwpNDAXh7fk/+U8xm4JO
-	OgBwXundSBxA+lHP6X4Ptt9mvpQHIz4+tkEmIOw71J0Eb2O1DBr1bxOwMAjQsOsJ6qgPhJavNtP
-	9XhFISv9DzWzRY7+nwdHDlOZH+8WFfXeEYDVcUsp56WJfHCwskMA2+3A8E5BbszCh5t+7j3BOU5
-	QO+BOaiHg1s0uSrPKmhDS7evtHvIxA==
-X-Received: by 2002:a05:620a:29c8:b0:8cd:8569:b957 with SMTP id af79cd13be357-8e79217c725mr2693909285a.43.1776795994355;
-        Tue, 21 Apr 2026 11:26:34 -0700 (PDT)
+        bh=Ba09x6YrOv7SRQkdsjbPVN9fWWwC4/CxDD9A9uJAQPI=;
+        b=Rfd4/RaPGixjWTML6/M4sP5efzsyZWl8gQ0XoflaOGu+gAVufjqxzSSdPr6eHL/7nh
+         vxW1BhmOm2m2jpRCwYQxMmlCPJEjUO37VnGlWcX9Ijdzz87QwXC7pZ5mgALZ7d8vH+2w
+         ki+VdjUvVFtK+vOySZHfjzb/oOaurhQpVGPiZd57/6yi2DqYUSJFQVrmmT3riEZQPavW
+         imI3m/QKWnQaTSiOFOP6cJPNUpK9j3Um/K24yLn68MSbvZRZ1gsmH8vtJeVdSOmmutlf
+         Y8gZ1m/GsdELxZ4nrzaiPLOuCaJaoZIxxHc6eZsdxB3q0Yt++wiuqS2FrXYplNPcG3og
+         xQ7Q==
+X-Gm-Message-State: AOJu0Yx5Ci4D7qxqtHziFzDynM/6yLyPPe+3Ygf6+RVAPzCp3uY8Rpkz
+	JxkDA92ky8KHQY4CUpvzmgxzJ/UZ8RFZkqS1LnY7FOunthKP6P4Kzm2udT24Nw==
+X-Gm-Gg: AeBDiesZ7wKL2OAihYJNkOUAq7M9yx6m/Cj3451VtZW5yNJ0sAYADTisqqThneREmHc
+	BS4o/hVBwxIrNqPi/yaTB+3IG9xx46Xu+OVFgk2r2CrhkeW4DOTIyJ9N/Fv+wAHdmpx/GcfOyP2
+	IGWh2rEiIg5eC05faVV2gKQBTb2KEQZiWAsN8mZhsQD/DH1rRmM+EWEnUTzozC49Vs/SbY09NEB
+	cW+FMwUb1PmK9OkjiefdOdwFTWhbspqAHcv10ZaMOcRSAzZppPgOncf12HmK62VRR6lHP+jQWRu
+	wWXJAVzBb/QC7Cn7TTvpf4iTkkBcPLXl50zquCfONDad1BqJIrz8pq53hMjoZ5GHao6jTJ7hmvc
+	Dg9k86/b5RcM45FN4/bvd6+oHe7370eTT7zXk94c3XDUsnyY447UnQqIoJEx/s9l/oURuHYOjJi
+	gdC4QEnMVjKTrJQ9Ks4he8NtKuQamx+Z/uVj2gW5QgpqRqlT+BKku7JkNawqcN9N+ys1k5rPhfm
+	WzGsK5LYGVmQ6MmeHAZl7c190dFWbULNtpApPaWaxF+8suKES3Dctybnm+Y5H8uDCAqJt5kLTbr
+	KGZIZ6kHdSy0FZL0LoY=
+X-Received: by 2002:a05:620a:4143:b0:8cd:871c:909d with SMTP id af79cd13be357-8e792276312mr2584064985a.53.1776795997321;
+        Tue, 21 Apr 2026 11:26:37 -0700 (PDT)
 Received: from Cumhall.redhat.com (bras-base-rdwyon0604w-grc-03-216-209-112-32.dsl.bell.ca. [216.209.112.32])
-        by smtp.gmail.com with ESMTPSA id af79cd13be357-8e7d64caf37sm1112713685a.11.2026.04.21.11.26.33
+        by smtp.gmail.com with ESMTPSA id af79cd13be357-8e7d64caf37sm1112713685a.11.2026.04.21.11.26.36
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Tue, 21 Apr 2026 11:26:33 -0700 (PDT)
+        Tue, 21 Apr 2026 11:26:36 -0700 (PDT)
 Sender: John Kacur <jkacur@gmail.com>
 From: John Kacur <jkacur@redhat.com>
 To: linux-rt-users <linux-rt-users@vger.kernel.org>
 Cc: Clark Williams <williams@redhat.com>,
 	Tomas Glozar <tglozar@redhat.com>
-Subject: [PATCH 1/7] rteval: Add CoreSiblings class for CPU core topology queries
-Date: Tue, 21 Apr 2026 14:26:12 -0400
-Message-ID: <20260421182618.261347-2-jkacur@redhat.com>
+Subject: [PATCH 3/7] rteval: Include core sharing warnings in XML report
+Date: Tue, 21 Apr 2026 14:26:14 -0400
+Message-ID: <20260421182618.261347-4-jkacur@redhat.com>
 X-Mailer: git-send-email 2.53.0
 In-Reply-To: <20260421182618.261347-1-jkacur@redhat.com>
 References: <20260421182618.261347-1-jkacur@redhat.com>
@@ -78,148 +78,137 @@ List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 
-Add a new CoreSiblings class in rteval/sysinfo/coresiblings.py that
-provides a simple interface for querying which CPUs share physical cores.
+Add core sharing validation warnings to the CPUtopology section of the
+XML report, making isolation issues part of the permanent test record.
 
-The class reads /sys/devices/system/cpu/cpu*/topology/thread_siblings_list
-to build a mapping of CPU core siblings and provides three methods:
+This complements the console warnings added in the previous commit by
+ensuring that core sharing conflicts are documented in the XML output,
+allowing users to analyze test runs later even if they missed the
+console warnings during execution.
 
-- share_core(cpu1, cpu2): Check if two CPUs share a physical core
-- get_siblings(cpu): Get all CPUs that share a core with a given CPU
-- get_core_groups(): Get all unique core sibling groups
+Implementation:
+- CPUtopology.add_core_sharing_warnings(): New method to add warnings
+  to the CPUtopology XML node after CPU lists are finalized
+- rteval-cmd: Call add_core_sharing_warnings() after RtEval object is
+  created and CPU lists are available
+- XML structure: CoreSharingWarnings appears at the end of CPUtopology
+  node, after all CPU entries and summary properties
 
-The implementation is generic and works with any SMT configuration:
-- No SMT (1 CPU per core)
-- 2-way SMT (typical Intel hyperthreading)
-- 4-way SMT (some IBM POWER processors)
-- 8-way SMT (IBM POWER8/9)
+Note: The warnings must be added after SystemInfo initialization because
+CPU lists are finalized in rteval-cmd after the config is processed,
+which happens after SystemInfo is created. We call the method explicitly
+once the CPU lists are known.
 
-This provides a foundation for cpuset management features where we need
-to understand CPU core topology for proper isolation.
+Example XML output:
+  <CPUtopology num_cpu_cores="16" ...>
+    <cpu name="cpu0" ... isolated="1"/>
+    <cpu name="cpu8" ... isolated="1"/>
+    ...
+    <CoreSharingWarnings>
+      <warning>Warning: Housekeeping CPU 0 (isol) shares core with measurement CPU 8 (isol)</warning>
+    </CoreSharingWarnings>
+  </CPUtopology>
+
+The warnings use the same format as console output, clearly indicating
+which CPUs are isolated with "(isol)" markers.
 
 Assisted-by: Claude Sonnet 4.5 <noreply@anthropic.com>
 Signed-off-by: John Kacur <jkacur@redhat.com>
 ---
- rteval/sysinfo/coresiblings.py | 110 +++++++++++++++++++++++++++++++++
- 1 file changed, 110 insertions(+)
- create mode 100644 rteval/sysinfo/coresiblings.py
+ rteval-cmd                    | 13 +++++++++----
+ rteval/sysinfo/__init__.py    |  3 +++
+ rteval/sysinfo/cputopology.py | 33 +++++++++++++++++++++++++++++++++
+ 3 files changed, 45 insertions(+), 4 deletions(-)
 
-diff --git a/rteval/sysinfo/coresiblings.py b/rteval/sysinfo/coresiblings.py
-new file mode 100644
-index 000000000000..3c97439d0a39
---- /dev/null
-+++ b/rteval/sysinfo/coresiblings.py
-@@ -0,0 +1,110 @@
-+# -*- coding: utf-8 -*-
-+# SPDX-License-Identifier: GPL-2.0-or-later
-+#
-+#   Copyright 2026   John Kacur <jkacur@redhat.com>
-+#
+diff --git a/rteval-cmd b/rteval-cmd
+index f0efb0117726..b3f9fac2c2cf 100755
+--- a/rteval-cmd
++++ b/rteval-cmd
+@@ -447,10 +447,11 @@ if __name__ == '__main__':
+         logger.log(Log.DEBUG, f"workdir: {rtevcfg.workdir}")
+ 
+         # Validate core sharing between housekeeping, measurement, and load CPUs
+-        if housekeeping_cpus or msrcfg_cpus or ldcfg_cpus:
+-            core_warnings = validate_core_sharing(housekeeping_cpus, msrcfg_cpus, ldcfg_cpus)
+-            for warning in core_warnings:
+-                logger.log(Log.WARN, warning)
++        msrcfg_cpus = CpuList(msrcfg.cpulist).cpus if msrcfg.cpulist else []
++        ldcfg_cpus = CpuList(ldcfg.cpulist).cpus if ldcfg.cpulist else []
++        core_warnings = validate_core_sharing(housekeeping_cpus, msrcfg_cpus, ldcfg_cpus)
++        for warning in core_warnings:
++            logger.log(Log.WARN, warning)
+ 
+         # if --summarize was specified then just parse the XML, print it and exit
+         if cmd_opts.rteval___summarize:
+@@ -487,6 +488,10 @@ if __name__ == '__main__':
+             cpupower_controller.enable_idle_state()
+ 
+         rteval = RtEval(config, loadmods, measuremods, logger)
 +
-+import os
-+from rteval.cpulist_utils import expand_cpulist
++        # Add core sharing warnings to the XML report now that CPU lists are finalized
++        rteval._sysinfo.add_core_sharing_warnings(housekeeping_cpus, msrcfg_cpus, ldcfg_cpus)
 +
-+class CoreSiblings:
-+    """Query CPU core topology to determine which CPUs share physical cores"""
-+
-+    def __init__(self, root="/"):
-+        self.sysdir = os.path.join(root, 'sys', 'devices', 'system', 'cpu')
-+        self.core_map = {}  # Maps cpu -> set of sibling cpus
-+        self._parse()
-+
-+    def _parse(self):
-+        """Parse thread_siblings_list for each CPU"""
-+        for dirname in os.listdir(self.sysdir):
-+            # Only parse cpu<integer> directories
-+            if dirname.startswith('cpu') and os.path.isdir(os.path.join(self.sysdir, dirname)):
-+                try:
-+                    cpu_id = int(dirname[3:])
-+                except ValueError:
-+                    continue
-+
-+                siblings_file = os.path.join(self.sysdir, dirname, 'topology', 'thread_siblings_list')
-+                if os.path.exists(siblings_file):
-+                    with open(siblings_file, 'r') as f:
-+                        siblings_str = f.read().strip()
-+                        # expand_cpulist returns a list of cpu numbers
-+                        siblings = set(expand_cpulist(siblings_str))
-+                        self.core_map[cpu_id] = siblings
-+
-+    def share_core(self, cpu1, cpu2):
+         rteval.Prepare(rtevcfg.onlyload)
+ 
+         if rtevcfg.onlyload:
+diff --git a/rteval/sysinfo/__init__.py b/rteval/sysinfo/__init__.py
+index 4b7b03cda626..56a0c57b2cbc 100644
+--- a/rteval/sysinfo/__init__.py
++++ b/rteval/sysinfo/__init__.py
+@@ -35,6 +35,9 @@ class SystemInfo(KernelInfo, SystemServices, dmi.DMIinfo, CPUtopology,
+         self.ProcessWarnings()
+ 
+         # Parse CPU info
++        # Note: CPU lists are not available at this point (they're finalized in rteval-cmd),
++        # so we can't add core sharing warnings to the XML report yet.
++        # Console warnings are still generated in rteval-cmd.
+         CPUtopology._parse(self)
+ 
+ 
+diff --git a/rteval/sysinfo/cputopology.py b/rteval/sysinfo/cputopology.py
+index db30635a0488..a21c19179f28 100644
+--- a/rteval/sysinfo/cputopology.py
++++ b/rteval/sysinfo/cputopology.py
+@@ -94,6 +94,39 @@ class CPUtopology:
+         return self.__cputop_n
+ 
+ 
++    def add_core_sharing_warnings(self, housekeeping_cpus, measurement_cpus, load_cpus):
 +        """
-+        Check if two CPUs share the same physical core.
++        Add core sharing warnings to the CPUtopology XML node.
++        Should be called after CPU lists are finalized.
 +
-+        Args:
-+            cpu1: First CPU ID (int)
-+            cpu2: Second CPU ID (int)
-+
-+        Returns:
-+            True if CPUs share a core, False otherwise
++        :param housekeeping_cpus: List of housekeeping CPU integers
++        :param measurement_cpus: List of measurement CPU integers
++        :param load_cpus: List of load CPU integers
 +        """
-+        if cpu1 not in self.core_map:
-+            return False
-+        return cpu2 in self.core_map[cpu1]
++        if self.__cputop_n is None:
++            return
 +
-+    def get_siblings(self, cpu):
-+        """
-+        Get all CPUs that share a core with the given CPU.
++        # Remove any existing CoreSharingWarnings section
++        existing = self.__cputop_n.xpathEval('CoreSharingWarnings')
++        if existing:
++            for node in existing:
++                node.unlinkNode()
++                node.freeNode()
 +
-+        Args:
-+            cpu: CPU ID (int)
++        # Generate new warnings
++        from rteval.systopology import validate_core_sharing
++        warnings = validate_core_sharing(
++            housekeeping_cpus or [],
++            measurement_cpus or [],
++            load_cpus or []
++        )
 +
-+        Returns:
-+            Set of CPU IDs that share a core with cpu (includes cpu itself)
-+        """
-+        return self.core_map.get(cpu, set())
++        # Add warnings to XML if any were found
++        if warnings:
++            warnings_n = self.__cputop_n.newChild(None, 'CoreSharingWarnings', None)
++            for warning in warnings:
++                warnings_n.newChild(None, 'warning', warning)
 +
-+    def get_core_groups(self):
-+        """
-+        Get all unique core sibling groups.
-+
-+        Returns:
-+            List of sets, where each set contains CPUs that share a core
-+        """
-+        seen = set()
-+        groups = []
-+
-+        for cpu, siblings in self.core_map.items():
-+            # Use frozenset as a hashable representation
-+            group_key = frozenset(siblings)
-+            if group_key not in seen:
-+                seen.add(group_key)
-+                groups.append(siblings)
-+
-+        return groups
-+
-+
-+def unit_test():
-+    """Simple unit test"""
-+    try:
-+        cs = CoreSiblings()
-+
-+        print("Core Sibling Groups:")
-+        for i, group in enumerate(cs.get_core_groups()):
-+            print(f"  Core {i}: {sorted(group)}")
-+
-+        # Test share_core with first two CPUs if they exist
-+        if len(cs.core_map) >= 2:
-+            cpus = sorted(cs.core_map.keys())
-+            cpu1, cpu2 = cpus[0], cpus[1]
-+            print(f"\nDo CPU {cpu1} and CPU {cpu2} share a core? {cs.share_core(cpu1, cpu2)}")
-+            print(f"CPU {cpu1} siblings: {sorted(cs.get_siblings(cpu1))}")
-+            print(f"CPU {cpu2} siblings: {sorted(cs.get_siblings(cpu2))}")
-+
-+        return 0
-+    except Exception as e:
-+        print(f"** EXCEPTION: {e}")
-+        import traceback
-+        traceback.print_exc()
-+        return 1
-+
-+
-+if __name__ == '__main__':
-+    import sys
-+    sys.exit(unit_test())
+     def MakeReport(self):
+         return self.__cputop_n
+ 
 -- 
 2.53.0
 
