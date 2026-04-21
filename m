@@ -1,72 +1,72 @@
-Received: from mail-qk1-f179.google.com (mail-qk1-f179.google.com [209.85.222.179])
+Received: from mail-qk1-f170.google.com (mail-qk1-f170.google.com [209.85.222.170])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 8281C364EB1
-	for <linux-rt-users@vger.kernel.org>; Tue, 21 Apr 2026 18:26:48 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.222.179
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 3697536894F
+	for <linux-rt-users@vger.kernel.org>; Tue, 21 Apr 2026 18:26:44 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.222.170
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1776796017; cv=none; b=A6Hhs7LrRJeQmuuiPFNGW5rOPlKwOGFeCsKLHeskYbhp4goChQeCkId+47hu0kXqwdIJfU5tGaMf5d9GX+yIoek6jOBFfPhdLsh2m7gc6a7Qlor23eaJcKcEZQxv0KpBVX56O81kvqeJZmXSfYZEmocpM0A+TV4pbJ4b8KTgep8=
+	t=1776796017; cv=none; b=eCxJFLhNtISKAcwLXMTYA/8EUm1Nj5waeplaQ2kaWZBrYsZ5buquIrv6yFJkeEkWKXjUgL7y58ZOAm5O2sD6LnpfeRlIyvoKjmXA9Q4Pdulel7srwmFRBUSss1yXDaQQLmsMx+TpEWQYvdgUqQozy0AUCbQMEjFUFZILpBZ3M80=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
 	s=arc-20240116; t=1776796017; c=relaxed/simple;
-	bh=Rm7LgPmCLKClpmgBs1QR2SqlcgQgCIdlgJNKZzW+I00=;
+	bh=Ko00K1nrigUJVxA5DYhHY83XuXmnkI4TwUKLyk0J0+w=;
 	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=pW0/OS8w+tgQFwkqUcYHDy84fycAZTLuoBdhAjPqQx0l0JBRLf6Z36L+Nq+fTUwzNx6NCaNa3Uua0Mez+uJ4CrT7G6GjL6/+1eIqe9v235ND4UeagbSRXiyeW1MuWIN4fFMR71bQ02kMOcpXxnruGcVffL9vsx0+TQEH4YpLkVE=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=fail (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=dBV/iGp1; arc=none smtp.client-ip=209.85.222.179
+	 MIME-Version; b=FUlUG1iaV3iHyc7vvB+U/AuF/NZLZZWBp0lhueLlCL+TrYRkjaIwxFh2oRFtW6ezxkcpnIJjzvfZ5QduRO9BIYTK+QX4aWNspm1loW/efsZ0xUgzCu78XgaCIy4Sm6SuufST8VRVUGb695azBFy9XeizilZu6EBpt8O3DxyKfng=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=fail (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=Mx5t33Yz; arc=none smtp.client-ip=209.85.222.170
 Authentication-Results: smtp.subspace.kernel.org; dmarc=fail (p=quarantine dis=none) header.from=redhat.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="dBV/iGp1"
-Received: by mail-qk1-f179.google.com with SMTP id af79cd13be357-8cfc2d1fdbfso333396085a.3
-        for <linux-rt-users@vger.kernel.org>; Tue, 21 Apr 2026 11:26:45 -0700 (PDT)
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="Mx5t33Yz"
+Received: by mail-qk1-f170.google.com with SMTP id af79cd13be357-8e8c0c2d2bcso556516085a.1
+        for <linux-rt-users@vger.kernel.org>; Tue, 21 Apr 2026 11:26:44 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20251104; t=1776796003; x=1777400803; darn=vger.kernel.org;
+        d=gmail.com; s=20251104; t=1776796000; x=1777400800; darn=vger.kernel.org;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:sender:from:to:cc:subject:date
          :message-id:reply-to;
-        bh=23/+ihUkCAzvBfxF7gEb4x/3MLs8Hs1eElLGHiib5/U=;
-        b=dBV/iGp15dHF/3OdHpue6RRh9ch232jPoO5/J/+DX8vKlbmONH6hrKlNQXDAPkXmQz
-         pyTYoAEQHL5/JQX2BZ4df6kw++8R0YfX7ve2HxfVG+hEjYk0dfkhbWp7ctGW0isE3jvZ
-         n0bVw0z4VkV0Wb9DTTop8gZqKnR9kNnppKSiy98iBrTm1mV3XrsW8YBecYj6+dhMy4PQ
-         kfUAX95oVbq4I/ueuryMx130op+3+4epxSDLyw2iool9xndxn9XvZYPZI4AQhZrlWe5R
-         bttlOwLOhH5/uH2/X1EGrPqIfG+wB9gPJ86kpQfZNtayZa7yVjnpo+ZDKb3BYzOLrkih
-         uAdg==
+        bh=f3jZLlv6aE/2+QAr600kbXGxxZkyJzbM6AID7HyLnyQ=;
+        b=Mx5t33YzGZ99VQbeeHVELxB+ygjQBpr3GGHq11maoCDzFHnsqN8s0DHk76Pz0lctjR
+         qugNMDbvjrxn6saqs338nfM/Ict9g4WPm2pMH6S8AVoXaX5ycGQgsrOQi1PLQhO5/ueu
+         RDeNVBF6n/gYMzmyIvi9ocnDDT2Rx+KMY+rk4TZst6dA/Hc4bkzRPRmLjl1QGdRPAlkQ
+         VbbBh225Lm9cxUuqbXrBIcJx7YU12iQsXEO5q5ayt9azUtqr4JT4ECdStu9/y1j5bUsR
+         CfjnaTtga5oaFusElOO32UO8Y/OXwxtsCejktUsnCTPr85kH28Tl2oN7s0vCl6YOnsjI
+         wySA==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20251104; t=1776796003; x=1777400803;
+        d=1e100.net; s=20251104; t=1776796000; x=1777400800;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:sender:x-gm-gg
          :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
-        bh=23/+ihUkCAzvBfxF7gEb4x/3MLs8Hs1eElLGHiib5/U=;
-        b=Np3M5lV7bYJ+B3QoyBL5dt1XrV/9//g/25oybl9IbY51Xekpx3qdD+8AqelgXsNw04
-         xdHZzt+fCPryLKjRDJqUYMO7HsT5FpjB3x87sVBeL0HZAiRfhpgnEmz48FMl8n+/ERRN
-         Gf3EqXZCTp5P5EuX4mCIoKJxlneCBbU/t+Ti706oKwwLmZUh8rm0Tr5bGh++d0DQ8ved
-         PLWLqVumCug0ogfeFrms1J4TDEKXjLdp7G6ufkedR2xdPFMcJBTpLSV+p5yneH8a6fuv
-         rnBnsy/atYmqExGf6vRS0Pcsd+5FqV1jQPI9KYc9JheA3NDj77GI7v0d4GaHIlQhWWjS
-         fzqQ==
-X-Gm-Message-State: AOJu0Yw5RP8IqQ0gqinyA0WX8qLWI/tJ0xNr1FTmFt6BBVFlEoDUVV+k
-	KqcoJ1aaN8XJl55IKlWYpPnTQvzg17L3vp33fWsOxVE5CXB8ufWv7cic/3lXaQ==
-X-Gm-Gg: AeBDiesUEhf7ec9IioZZ5rS02QLKjAaxGqHD9BEuvXaI6daePLS/5QeKj04QrUocY85
-	6kRrn1mAFIZ1cWQhYCEm27PKDwTuPKq97VkXVzOvF0sO9ZyHJKL02vopk0Z0LpIhFiyXkHdOC86
-	kekWNuuN28VzeOvZXOYfQsTCXuY6+giqCilXAcZ9UIPEWH3l+oNQfzLe138g4Uce+e0zq+y9A/o
-	xm7BX3M3hOXKuOJDy2V8f6fg6YeUsgZLmLRxoRkpm8QcaTUpTxr3H45yBLeFRYGQegEXwql6R1t
-	tmrfB4ZQkOqGFJabHOzs8uOd0moPI7n1oUK3dkOCQnfTAzLfZn/V1heLMRHZ2wPsNt7zWLrDkJ4
-	iU7XTF0vIFhKGmUf+MIzytgPHJ1JCU5bTArc6sQ2tHkXcvbh+d/IbvpLb3aK9UPofQOKXZtuWjY
-	35ad1oTY2k/oooFVQNOx51UazpEwLttG9SGI6/tLzu15Li7oVUGbnx5dsXwvGZUKbrWhagLTW5r
-	w9AJq69lUVmUzUjojGW3B/GMqawHmbWUa9IhALiKwurwODeRVT9pKl0/vQyuRRA4+G14X9x8VJ0
-	ReBxeldMnBz2XF7e5uo=
-X-Received: by 2002:a05:620a:40c1:b0:8c6:d309:f9c0 with SMTP id af79cd13be357-8e78f72ff79mr2518607985a.8.1776796003073;
-        Tue, 21 Apr 2026 11:26:43 -0700 (PDT)
+        bh=f3jZLlv6aE/2+QAr600kbXGxxZkyJzbM6AID7HyLnyQ=;
+        b=kDGhHgFy1LkWiQ2F32YhcvtBFW4vX4gTA6J3T8PKWu8n+e/a06s28+s3uI187vDAXd
+         X42DMP9tZh400lddJF+dkZBlPN7yjHb/kFMRjbFCjqkDxZqOzqPzbsZKLeh5KX4jGYlv
+         +hkZjkI/64mjh7roCYiWtf6iwfY+K1c4XbQk52xUwAzIBAYmOVoXkssJq9VlVkexqUxo
+         BjQAY1HY2IvthLnPg1IuDk4eFxUFvs5Bau7jjhV6z51CAsA1zab3TjTkip/OcyHMBmk4
+         lDV+yWrYiZwFzESNAPwPGByDKejcvsuejmSoH3ImaYTxNbt8tdeefcE+pTKqPxJnEXzF
+         oX8Q==
+X-Gm-Message-State: AOJu0YwwIGC7DPGrTslWGA5oYBXFGH7Xl2WRLBcltFM87rV1SOHhTOJn
+	X7MYQBfDNxeTy/heHfegiCb6wBVnesCUwj3DIZrXmgv1V0jLpc7uvS+POjo76g==
+X-Gm-Gg: AeBDietFQZ8rf06Kw3pkalQFNGArzxFgXrP6FB1hXXvVdMxWqzlYvrjYc/26Q3tT9Gs
+	gQDTbmfV/Raq9RI9pqctYPj51olFmB8dzIWgksuZDV1/hFrA2jU3ZhvcAFMB2IZPeXWyLcp/oB4
+	/5Ct7AW9P7PRSV5z+eoSyZLUxXwcwX/dmm9JOdmmTU5PmVrI3uodPO8qlk/JTncgzjb3K1N0NEc
+	WkJWC5SDWcWSH82prL88EifZ5ItxtuC1Ue9SrJDvumQGlj3dSAq8TIHUai2dU3DpiSnHF9YcbYU
+	/K45GwGQif87adIp91BnOuz4xo99Lz/WfDxoRacez/hJii4Tjhj4qR6geimxLxHsxo7neOV+bTb
+	MoKaWUEk+iJaHJJ34s9vrqrpRy7Eey06vPTh0wVXvVXa08ukSn2Ujp+zt4Kn8a4ED3YbMPXNP8Q
+	4+bH+Kx7bkID3dRBN7R6ClIXtP3sJ36Qhmc5YOcb9JH/QPzeRpl9oTJJDAacmYiW2/dP+EgwC8y
+	zZec8aWfWpn7UafarzILgXoPOh3WgBQj0zc4kXihuMdGnsB5+hTXJPymDaMDPIzOiTJW27jC5kB
+	GVDoq1RbBDx4w1akgv4=
+X-Received: by 2002:a05:620a:2892:b0:8ee:21b3:2eb4 with SMTP id af79cd13be357-8ee21b330e5mr710032085a.33.1776796000034;
+        Tue, 21 Apr 2026 11:26:40 -0700 (PDT)
 Received: from Cumhall.redhat.com (bras-base-rdwyon0604w-grc-03-216-209-112-32.dsl.bell.ca. [216.209.112.32])
-        by smtp.gmail.com with ESMTPSA id af79cd13be357-8e7d64caf37sm1112713685a.11.2026.04.21.11.26.41
+        by smtp.gmail.com with ESMTPSA id af79cd13be357-8e7d64caf37sm1112713685a.11.2026.04.21.11.26.38
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Tue, 21 Apr 2026 11:26:41 -0700 (PDT)
+        Tue, 21 Apr 2026 11:26:39 -0700 (PDT)
 Sender: John Kacur <jkacur@gmail.com>
 From: John Kacur <jkacur@redhat.com>
 To: linux-rt-users <linux-rt-users@vger.kernel.org>
 Cc: Clark Williams <williams@redhat.com>,
 	Tomas Glozar <tglozar@redhat.com>
-Subject: [PATCH 7/7] rteval: Include --warn-non-isolated-core-sharing warnings in XML report
-Date: Tue, 21 Apr 2026 14:26:18 -0400
-Message-ID: <20260421182618.261347-8-jkacur@redhat.com>
+Subject: [PATCH 5/7] rteval: Display core sharing warnings in text report
+Date: Tue, 21 Apr 2026 14:26:16 -0400
+Message-ID: <20260421182618.261347-6-jkacur@redhat.com>
 X-Mailer: git-send-email 2.53.0
 In-Reply-To: <20260421182618.261347-1-jkacur@redhat.com>
 References: <20260421182618.261347-1-jkacur@redhat.com>
@@ -78,77 +78,52 @@ List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 
-Extend the add_core_sharing_warnings() method to accept the warn_non_isolated
-parameter and pass it through to validate_core_sharing(). This ensures that
-warnings generated by the --warn-non-isolated-core-sharing flag are included
-in the XML report's CoreSharingWarnings section.
+Add XSLT template to display CoreSharingWarnings in the text report
+generated with the -Z option. The warnings appear after the "Tuned state"
+section and before "System load" in the report output.
 
-Previously, the flag only affected console warnings. Now the warnings are
-also preserved in the XML report and will appear in text reports generated
-with -Z option, since the XSLT stylesheet already displays any warnings
-found in the CoreSharingWarnings section.
+The template conditionally displays the "Core Sharing Warnings:" section
+only when warnings are present in the XML, keeping the report clean when
+there are no core sharing issues detected.
 
-Changes:
-- rteval/sysinfo/cputopology.py: Add warn_non_isolated parameter to
-  add_core_sharing_warnings() and pass it to validate_core_sharing()
-- rteval-cmd: Pass cmd_opts.rteval___warn_non_isolated_core_sharing to
-  add_core_sharing_warnings() when adding warnings to XML
+Example output:
+   Core Sharing Warnings:
+       Warning: Housekeeping CPU 0 (isol) shares core with measurement CPU 8 (isol)
+       Warning: Measurement CPU 1 (isol) shares core with load CPU 9 (isol)
 
-This completes the --warn-non-isolated-core-sharing feature by ensuring
-warnings appear in console output, XML reports, and text summaries.
+This completes the core sharing validation feature by making the warnings
+visible in both the XML report and the human-readable text summary.
 
 Assisted-by: Claude Sonnet 4.5 <noreply@anthropic.com>
 Signed-off-by: John Kacur <jkacur@redhat.com>
 ---
- rteval-cmd                    | 3 ++-
- rteval/sysinfo/cputopology.py | 6 ++++--
- 2 files changed, 6 insertions(+), 3 deletions(-)
+ rteval/rteval_text.xsl | 13 ++++++++++++-
+ 1 file changed, 12 insertions(+), 1 deletion(-)
 
-diff --git a/rteval-cmd b/rteval-cmd
-index 3180e1a7857a..f730d3177290 100755
---- a/rteval-cmd
-+++ b/rteval-cmd
-@@ -494,7 +494,8 @@ if __name__ == '__main__':
-         rteval = RtEval(config, loadmods, measuremods, logger)
- 
-         # Add core sharing warnings to the XML report now that CPU lists are finalized
--        rteval._sysinfo.add_core_sharing_warnings(housekeeping_cpus, msrcfg_cpus, ldcfg_cpus)
-+        rteval._sysinfo.add_core_sharing_warnings(housekeeping_cpus, msrcfg_cpus, ldcfg_cpus,
-+                                                  cmd_opts.rteval___warn_non_isolated_core_sharing)
- 
-         rteval.Prepare(rtevcfg.onlyload)
- 
-diff --git a/rteval/sysinfo/cputopology.py b/rteval/sysinfo/cputopology.py
-index a21c19179f28..f650eca8db8d 100644
---- a/rteval/sysinfo/cputopology.py
-+++ b/rteval/sysinfo/cputopology.py
-@@ -94,7 +94,7 @@ class CPUtopology:
-         return self.__cputop_n
- 
- 
--    def add_core_sharing_warnings(self, housekeeping_cpus, measurement_cpus, load_cpus):
-+    def add_core_sharing_warnings(self, housekeeping_cpus, measurement_cpus, load_cpus, warn_non_isolated=False):
-         """
-         Add core sharing warnings to the CPUtopology XML node.
-         Should be called after CPU lists are finalized.
-@@ -102,6 +102,7 @@ class CPUtopology:
-         :param housekeeping_cpus: List of housekeeping CPU integers
-         :param measurement_cpus: List of measurement CPU integers
-         :param load_cpus: List of load CPU integers
-+        :param warn_non_isolated: If True, also warn about measurement vs load sharing even when neither is isolated
-         """
-         if self.__cputop_n is None:
-             return
-@@ -118,7 +119,8 @@ class CPUtopology:
-         warnings = validate_core_sharing(
-             housekeeping_cpus or [],
-             measurement_cpus or [],
--            load_cpus or []
-+            load_cpus or [],
-+            warn_non_isolated
-         )
- 
-         # Add warnings to XML if any were found
+diff --git a/rteval/rteval_text.xsl b/rteval/rteval_text.xsl
+index 146302744f58..54dc7d2f9a07 100644
+--- a/rteval/rteval_text.xsl
++++ b/rteval/rteval_text.xsl
+@@ -160,7 +160,18 @@
+         </xsl:otherwise>
+     </xsl:choose>
+     <xsl:text>&#10;&#10;</xsl:text>
+-   
++
++    <!-- Display core sharing warnings if present -->
++    <xsl:if test="SystemInfo/CPUtopology/CoreSharingWarnings/warning">
++      <xsl:text>   Core Sharing Warnings:&#10;</xsl:text>
++      <xsl:for-each select="SystemInfo/CPUtopology/CoreSharingWarnings/warning">
++        <xsl:text>       </xsl:text>
++        <xsl:value-of select="."/>
++        <xsl:text>&#10;</xsl:text>
++      </xsl:for-each>
++      <xsl:text>&#10;</xsl:text>
++    </xsl:if>
++
+     <xsl:text>   System load:&#10;</xsl:text>
+     <xsl:text>       Load average: </xsl:text>
+     <xsl:value-of select="loads/@load_average"/>
 -- 
 2.53.0
 
