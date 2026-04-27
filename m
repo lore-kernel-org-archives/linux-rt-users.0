@@ -1,47 +1,47 @@
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 6F2DA3B7763
-	for <linux-rt-users@vger.kernel.org>; Mon, 27 Apr 2026 11:18:08 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id C0FB03B7771
+	for <linux-rt-users@vger.kernel.org>; Mon, 27 Apr 2026 11:18:10 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1777288690; cv=none; b=IN0VurJTmDRPMpJdml5ZZl8UDHG/KtbsJrkJ04ppeBKjKtEw0c3cMYd6sOGfEl0F8UOPZLKMB9TRy2ORXUjXcOMmG7Ll2jir1Ex7Gv1gyi/759yjC+ze0sz7NSq1BR1LwQsw+Kt6adUcgvMmI10Ra8mDmF3WtvEpWZCDk1oKKOs=
+	t=1777288692; cv=none; b=TipdxavKQwF2GQeYKvXDS8u/whlLfsohja3lKzq+ob/eeu6sQcyqNHTyN6MS3NoM76qT7LJxMZc7SkbwnFDsv6wX8Mh+RaJyroA2ibP3jWNIYnCm8Ta7E9Vry9NG7ONAOosksaA3xlFvO8loSjXYGyxPdDBD1iyVozOHeuTrrzc=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1777288690; c=relaxed/simple;
-	bh=c6aI7OyXWH4jygvjsP1IhPq9ktinyQ23v10OSxnbFUQ=;
+	s=arc-20240116; t=1777288692; c=relaxed/simple;
+	bh=qkYPx6SXINeb7DTtdCTqWD0vWxkxMSzJ5D1PKBim8Js=;
 	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version:Content-Type; b=WNF18RCfVUDEtJQIxh0Yxon5fW7bwu44u3nXdsuJLpRTDRwzEFScv4vbFU/FoWvZdPoQLSMypkv9KQiSBs5Pjxg2H1VZ1tEVu5N9Ti3uBQPvKkPE3UbDT8UU/3Cg7Q8ZjpKZ+DrYgpn2XE2o+MTALPKSUGweqCuCKdq6O10wRsA=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=ZB/ZJkPZ; arc=none smtp.client-ip=170.10.133.124
+	 MIME-Version:Content-Type; b=sDKDVE9sd832wpFcSP5jY+tdf6Rde7NzQKDbVWR1exO3TkBK6b9LEBwh6AnXZy3Hk4FiArMruYRwSzkeICJIYvOb3Ojq1r1newuX2AUsovRCMM91AaPqvS34VK/Sn2rcEsbVYdZ4nWKOkdI0Nqfy2YFW2MygXNrgfvkwSdubRjw=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=YW6dDarM; arc=none smtp.client-ip=170.10.133.124
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="ZB/ZJkPZ"
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="YW6dDarM"
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1777288687;
+	s=mimecast20190719; t=1777288689;
 	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
 	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references;
-	bh=hx7EkaABRMgyCSHKevlyCJ4G+XeOdu5zDTcn06BheeU=;
-	b=ZB/ZJkPZI/3LQxnGyz7rxLWDR9MjkMnjYy3TEY+Z4dZezI7x9Efj8iLtD94/3iw8fZGJ4H
-	M8+1yDeBqvIMKXJ6I/sroKZwCib/woUZPIdwsKVwwcz1cnmQE+0J1X0444czPqmBxgeCqt
-	olCDvyxuodzIRcCbYbtk5PE2+IIHL0U=
-Received: from mx-prod-mc-03.mail-002.prod.us-west-2.aws.redhat.com
- (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
+	bh=JU2fCmalNnbZfDKlWVVxU8eUUbulecEM+v4gvqD1R8M=;
+	b=YW6dDarMpUUk9kqJkKqFDy0fksbFEl/GVbmWMc+mV0NTHM7BzNmk1SZvEVn+tEodJ8eLwk
+	6Gp89FUTE9T+/tgdrfTcgzTyQAXcf47fwvVtbauvet88d8bGrmZTuSIPkbgbqjoTR38PKW
+	Fx0/J9Xi7krffnus+XJpnvu5xDD7dLA=
+Received: from mx-prod-mc-06.mail-002.prod.us-west-2.aws.redhat.com
+ (ec2-35-165-154-97.us-west-2.compute.amazonaws.com [35.165.154.97]) by
  relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-474-s_6GmHmxNMuzNJ96xkYvdQ-1; Mon,
- 27 Apr 2026 07:18:06 -0400
-X-MC-Unique: s_6GmHmxNMuzNJ96xkYvdQ-1
-X-Mimecast-MFC-AGG-ID: s_6GmHmxNMuzNJ96xkYvdQ_1777288685
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-186-se5gZ6i0M66Rmx-qS5kVYQ-1; Mon,
+ 27 Apr 2026 07:18:08 -0400
+X-MC-Unique: se5gZ6i0M66Rmx-qS5kVYQ-1
+X-Mimecast-MFC-AGG-ID: se5gZ6i0M66Rmx-qS5kVYQ_1777288687
 Received: from mx-prod-int-06.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-06.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.93])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
 	(No client certificate requested)
-	by mx-prod-mc-03.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 135AC19560B5;
-	Mon, 27 Apr 2026 11:18:05 +0000 (UTC)
+	by mx-prod-mc-06.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 8DE931800651;
+	Mon, 27 Apr 2026 11:18:07 +0000 (UTC)
 Received: from 192.168.0.21 (unknown [10.22.88.120])
-	by mx-prod-int-06.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTP id 02BC2180047F;
-	Mon, 27 Apr 2026 11:18:02 +0000 (UTC)
+	by mx-prod-int-06.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTP id 7D58E180047F;
+	Mon, 27 Apr 2026 11:18:05 +0000 (UTC)
 From: Wander Lairson Costa <wander@redhat.com>
 To: Clark Wiliams <williams@redhat.com>,
 	John Kacur <jkacur@redhat.com>,
@@ -50,9 +50,9 @@ Cc: Juri Lelli <juri.lelli@redhat.com>,
 	luffyluo@tencent.com,
 	davidlt@rivosinc.com,
 	Wander Lairson Costa <wander@redhat.com>
-Subject: [stalld PATCH 21/23] tests: Remove if-wrappers around assert calls
-Date: Mon, 27 Apr 2026 08:16:23 -0300
-Message-ID: <20260427111632.24500-22-wander@redhat.com>
+Subject: [stalld PATCH 22/23] tests: Abort immediately on test failure
+Date: Mon, 27 Apr 2026 08:16:24 -0300
+Message-ID: <20260427111632.24500-23-wander@redhat.com>
 In-Reply-To: <20260427111632.24500-1-wander@redhat.com>
 References: <20260427111632.24500-1-wander@redhat.com>
 Precedence: bulk
@@ -65,217 +65,205 @@ Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit
 X-Scanned-By: MIMEDefang 3.4.1 on 10.30.177.93
 
-This is the second commit in a series introducing fail-fast semantics
-to the test suite. Currently, several test scripts wrap assertion calls
-in conditional blocks to guard subsequent execution steps.
+This is the third commit in a series introducing fail-fast semantics
+to the test suite. By modifying the fail helper to invoke end_test
+and exit immediately, tests will now abort on the first failure. This
+provides faster feedback and produces much shorter, more focused error
+logs rather than cascading failures.
 
-Since the guarded test logic only makes sense when the initial assertion
-passes, these conditional wrappers create unnecessary nesting. Once the
-failure mechanism is updated to be immediately fatal in the next commit,
-these protective conditional structures will become completely
-redundant.
-
-Removing the conditional structures and flattening the code flow across
-the foreground, logging, pidfile, and starvation test scripts improves
-overall readability and maintainability. Branches handling non-fatal
-conditions such as skips or informational warnings have been preserved
-in their original form.
+To support exiting directly from the fail helper, diagnostic logging
+in seven assert functions is relocated to occur before the failure
+is triggered. Dead return statements are removed from all twelve
+assert functions since fail never returns and the return after pass
+is unnecessary. Additionally, the stalld rejection assertion now
+registers its temporary file in the cleanup tracking array to ensure
+trap-based exit handlers correctly reap the resource even when the
+test aborts prematurely.
 
 Signed-off-by: Wander Lairson Costa <wander@redhat.com>
 Assisted-by: Claude Code:claude-opus-4-6[1m] [PAL]
 ---
- tests/functional/test_foreground.sh           | 36 +++++++----------
- tests/functional/test_logging_destinations.sh | 20 +++-------
- tests/functional/test_pidfile.sh              | 39 +++++--------------
- tests/functional/test_starvation_detection.sh |  7 +---
- 4 files changed, 29 insertions(+), 73 deletions(-)
+ tests/helpers/test_helpers.sh | 41 ++++++++++-------------------------
+ 1 file changed, 11 insertions(+), 30 deletions(-)
 
-diff --git a/tests/functional/test_foreground.sh b/tests/functional/test_foreground.sh
-index f5de736..792aee0 100755
---- a/tests/functional/test_foreground.sh
-+++ b/tests/functional/test_foreground.sh
-@@ -26,17 +26,13 @@ test_section "Test 1: stalld daemonizes by default"
- start_stalld -l -t 5
- sleep 2
+diff --git a/tests/helpers/test_helpers.sh b/tests/helpers/test_helpers.sh
+index 49292aa..c51361f 100755
+--- a/tests/helpers/test_helpers.sh
++++ b/tests/helpers/test_helpers.sh
+@@ -164,12 +164,10 @@ assert_starvation_detected() {
  
--# Check if stalld is running
--if assert_process_running "${STALLD_PID}" "stalld should be running"; then
--	# Check parent process - should be init (PID 1) or systemd
--	PARENT_PID=$(ps -o ppid= -p ${STALLD_PID} 2>/dev/null | tr -d ' ')
--	if [ "${PARENT_PID}" == "1" ] || [ "${PARENT_PID}" == "2" ]; then
--		pass "stalld daemonized (parent is init/kthreadd)"
--	else
--		# On modern systems with session leaders, ppid might not be 1
--		# Just verify it's not our shell's PID
--		assert_success "stalld daemonized (parent is not test shell)" test "${PARENT_PID}" != "$$"
--	fi
-+assert_process_running "${STALLD_PID}" "stalld should be running"
-+
-+PARENT_PID=$(ps -o ppid= -p ${STALLD_PID} 2>/dev/null | tr -d ' ')
-+if [ "${PARENT_PID}" == "1" ] || [ "${PARENT_PID}" == "2" ]; then
-+	pass "stalld daemonized (parent is init/kthreadd)"
-+else
-+	assert_success "stalld daemonized (parent is not test shell)" test "${PARENT_PID}" != "$$"
- fi
+ 	if wait_for_starvation_detected "${log_file}" "${timeout}" "${cpu}"; then
+ 		pass "${message}"
+-		return 0
+ 	else
+-		fail "${message}"
+ 		log "Log contents:"
+ 		cat "${log_file}"
+-		return 1
++		fail "${message}"
+ 	fi
+ }
  
- stop_stalld
-@@ -48,15 +44,10 @@ test_section "Test 2: stalld stays in foreground with -f"
- start_stalld -f -l -t 5
- sleep 2
+@@ -182,12 +180,10 @@ assert_boost_detected() {
  
--# Check if stalld is running
--if assert_process_running "${STALLD_PID}" "stalld should be running with -f"; then
--	# With -f, it should NOT daemonize, parent should be our shell
--	PARENT_PID=$(ps -o ppid= -p ${STALLD_PID} 2>/dev/null | tr -d ' ')
-+assert_process_running "${STALLD_PID}" "stalld should be running with -f"
+ 	if wait_for_boost_detected "${log_file}" "${timeout}"; then
+ 		pass "${message}"
+-		return 0
+ 	else
+-		fail "${message}"
+ 		log "Log contents:"
+ 		cat "${log_file}"
+-		return 1
++		fail "${message}"
+ 	fi
+ }
  
--	# The parent might be the subshell from start_stalld, not directly our shell
--	# So we just verify it's not PID 1
--	assert_success "stalld did not daemonize with -f (parent is not init)" test "${PARENT_PID}" != "1"
--fi
-+PARENT_PID=$(ps -o ppid= -p ${STALLD_PID} 2>/dev/null | tr -d ' ')
-+assert_success "stalld did not daemonize with -f (parent is not init)" test "${PARENT_PID}" != "1"
+@@ -217,15 +213,13 @@ assert_log_contains() {
  
- stop_stalld
+ 	if [ $found -eq 1 ]; then
+ 		pass "${message}"
+-		return 0
+ 	else
+-		fail "${message}"
+ 		if [ $negate -eq 1 ]; then
+ 			log "    Pattern '${pattern}' found in ${log_file} but should not be"
+ 		else
+ 			log "    Pattern '${pattern}' not found in ${log_file}"
+ 		fi
+-		return 1
++		fail "${message}"
+ 	fi
+ }
  
-@@ -66,11 +57,10 @@ test_section "Test 3: -v implies foreground mode"
- start_stalld -v -l -t 5
- sleep 2
+@@ -236,14 +230,15 @@ assert_stalld_rejects() {
+ 	shift
  
--if assert_process_running "${STALLD_PID}" "stalld should be running with -v"; then
--	PARENT_PID=$(ps -o ppid= -p ${STALLD_PID} 2>/dev/null | tr -d ' ')
-+assert_process_running "${STALLD_PID}" "stalld should be running with -v"
+ 	local log="/tmp/stalld_reject_$$.log"
++	CLEANUP_FILES+=("${log}")
+ 	timeout 5 ${TEST_ROOT}/../stalld ${BACKEND_FLAG} "$@" > "${log}" 2>&1
+ 	local ret=$?
+ 	if [ $ret -ne 0 ] && [ $ret -ne 124 ]; then
+ 		pass "${message}"
+ 	else
+-		fail "${message}"
+ 		log "stalld output:"
+ 		cat "${log}"
++		fail "${message}"
+ 	fi
+ 	rm -f "${log}"
+ }
+@@ -273,10 +268,8 @@ assert_success() {
  
--	assert_success "-v implies foreground mode" test "${PARENT_PID}" != "1"
--fi
-+PARENT_PID=$(ps -o ppid= -p ${STALLD_PID} 2>/dev/null | tr -d ' ')
-+assert_success "-v implies foreground mode" test "${PARENT_PID}" != "1"
+ 	if [ $success -eq 1 ]; then
+ 		pass "${message}"
+-		return 0
+ 	else
+ 		fail "${message}"
+-		return 1
+ 	fi
+ }
  
- stop_stalld
+@@ -289,13 +282,15 @@ pass() {
+ 	TEST_PASSED=$((TEST_PASSED + 1))
+ }
  
-diff --git a/tests/functional/test_logging_destinations.sh b/tests/functional/test_logging_destinations.sh
-index 5a8cc5b..a25e571 100755
---- a/tests/functional/test_logging_destinations.sh
-+++ b/tests/functional/test_logging_destinations.sh
-@@ -35,17 +35,9 @@ CLEANUP_FILES+=("${LOG_FILE}")
+-# Record a test failure with a description message.
++# Record a test failure and abort the test immediately.
+ #
+ # Usage: fail "description"
+ fail() {
+ 	local message=${1:-""}
+ 	log "✗ FAIL: ${message}"
+ 	TEST_FAILED=$((TEST_FAILED + 1))
++	end_test
++	exit 1
+ }
  
- start_stalld_with_log "${LOG_FILE}" -f -v -l -t 5
+ # Assert functions
+@@ -306,12 +301,10 @@ assert_equals() {
  
--if assert_process_running "${STALLD_PID}" "stalld should be running"; then
--	# Check that output was written to our log file
--	if [ -s "${LOG_FILE}" ]; then
--		pass "verbose mode produces output"
--
--		# Should contain initialization messages
--		assert_log_contains "${LOG_FILE}" "stalld\|version\|monitoring" "output contains expected messages"
--	else
--		fail "no output in verbose mode"
--	fi
--fi
-+assert_process_running "${STALLD_PID}" "stalld should be running"
-+assert_success "verbose mode produces output" test -s "${LOG_FILE}"
-+assert_log_contains "${LOG_FILE}" "stalld\|version\|monitoring" "output contains expected messages"
+ 	if [ "${expected}" == "${actual}" ]; then
+ 		pass "${message}"
+-		return 0
+ 	else
+-		fail "${message}"
+ 		log "    Expected: ${expected}"
+ 		log "    Actual:   ${actual}"
+-		return 1
++		fail "${message}"
+ 	fi
+ }
  
- stop_stalld
+@@ -322,11 +315,9 @@ assert_contains() {
  
-@@ -147,10 +139,8 @@ CLEANUP_FILES+=("${LOG_FILE}")
+ 	if echo "${haystack}" | grep -q "${needle}"; then
+ 		pass "${message}"
+-		return 0
+ 	else
+-		fail "${message}"
+ 		log "    String '${needle}' not found"
+-		return 1
++		fail "${message}"
+ 	fi
+ }
  
- start_stalld_with_log "${LOG_FILE}" -f -v -k -s -l -t 5
+@@ -337,11 +328,9 @@ assert_not_contains() {
  
--if assert_process_running "${STALLD_PID}" "stalld with combined logging should be running"; then
--	# Verify verbose output
--	assert_success "combined logging produces output" test -s "${LOG_FILE}"
--fi
-+assert_process_running "${STALLD_PID}" "stalld with combined logging should be running"
-+assert_success "combined logging produces output" test -s "${LOG_FILE}"
+ 	if ! echo "${haystack}" | grep -q "${needle}"; then
+ 		pass "${message}"
+-		return 0
+ 	else
+-		fail "${message}"
+ 		log "    String '${needle}' found but should not be present"
+-		return 1
++		fail "${message}"
+ 	fi
+ }
  
- stop_stalld
+@@ -351,10 +340,8 @@ assert_file_exists() {
  
-diff --git a/tests/functional/test_pidfile.sh b/tests/functional/test_pidfile.sh
-index 23c60e5..75b5359 100755
---- a/tests/functional/test_pidfile.sh
-+++ b/tests/functional/test_pidfile.sh
-@@ -60,16 +60,10 @@ log "Starting stalld with custom pidfile: ${custom_pidfile}"
- start_stalld -l -t 5 --pidfile "${custom_pidfile}"
- sleep 2
+ 	if [ -f "${file}" ]; then
+ 		pass "${message}"
+-		return 0
+ 	else
+ 		fail "${message}"
+-		return 1
+ 	fi
+ }
  
--# Verify pidfile was created
--if [ -f "${custom_pidfile}" ]; then
--    pass "Custom pidfile created at ${custom_pidfile}"
-+assert_file_exists "${custom_pidfile}" "Custom pidfile created at ${custom_pidfile}"
+@@ -364,10 +351,8 @@ assert_file_not_exists() {
  
--    # Verify content
--    pid_from_file=$(cat "${custom_pidfile}")
--    assert_success "Custom pidfile contains correct PID" test "$pid_from_file" = "${STALLD_PID}"
--else
--    fail "Custom pidfile not created at ${custom_pidfile}"
--fi
-+pid_from_file=$(cat "${custom_pidfile}")
-+assert_success "Custom pidfile contains correct PID" test "$pid_from_file" = "${STALLD_PID}"
+ 	if [ ! -f "${file}" ]; then
+ 		pass "${message}"
+-		return 0
+ 	else
+ 		fail "${message}"
+-		return 1
+ 	fi
+ }
  
- # Test 3: Verify pidfile removed on clean shutdown
- test_section "Test 3: Verify pidfile removed on clean shutdown"
-@@ -95,14 +89,10 @@ log "Starting stalld with /tmp pidfile: ${tmp_pidfile}"
- start_stalld -l -t 5 --pidfile "${tmp_pidfile}"
- sleep 2
+@@ -377,10 +362,8 @@ assert_process_running() {
  
--if [ -f "${tmp_pidfile}" ]; then
--    pass "Pidfile created in /tmp directory"
-+assert_file_exists "${tmp_pidfile}" "Pidfile created in /tmp directory"
+ 	if kill -0 ${pid} 2>/dev/null; then
+ 		pass "${message}"
+-		return 0
+ 	else
+ 		fail "${message}"
+-		return 1
+ 	fi
+ }
  
--    pid_from_file=$(cat "${tmp_pidfile}")
--    assert_success "/tmp pidfile contains correct PID" test "$pid_from_file" = "${STALLD_PID}"
--else
--    fail "Pidfile not created in /tmp"
--fi
-+pid_from_file=$(cat "${tmp_pidfile}")
-+assert_success "/tmp pidfile contains correct PID" test "$pid_from_file" = "${STALLD_PID}"
+@@ -390,10 +373,8 @@ assert_process_not_running() {
  
- stop_stalld
+ 	if ! kill -0 ${pid} 2>/dev/null; then
+ 		pass "${message}"
+-		return 0
+ 	else
+ 		fail "${message}"
+-		return 1
+ 	fi
+ }
  
-@@ -151,20 +141,11 @@ log "Starting stalld with readable pidfile: ${readable_pidfile}"
- start_stalld -l -t 5 --pidfile "${readable_pidfile}"
- sleep 2
- 
--if [ -f "${readable_pidfile}" ]; then
--    # Try to read the pidfile as a regular user would
--    if cat "${readable_pidfile}" > /dev/null 2>&1; then
--        pass "Pidfile is readable"
-+assert_file_exists "${readable_pidfile}" "Pidfile created"
-+assert_success "Pidfile is readable" cat "${readable_pidfile}"
- 
--        # Check permissions
--        perms=$(stat -c "%a" "${readable_pidfile}" 2>/dev/null || stat -f "%Lp" "${readable_pidfile}" 2>/dev/null)
--        log "ℹ INFO: Pidfile permissions: $perms"
--    else
--        fail "Pidfile not readable"
--    fi
--else
--    fail "Pidfile not created"
--fi
-+perms=$(stat -c "%a" "${readable_pidfile}" 2>/dev/null || stat -f "%Lp" "${readable_pidfile}" 2>/dev/null)
-+log "ℹ INFO: Pidfile permissions: $perms"
- 
- stop_stalld
- 
-diff --git a/tests/functional/test_starvation_detection.sh b/tests/functional/test_starvation_detection.sh
-index 1df6bb0..1d43516 100755
---- a/tests/functional/test_starvation_detection.sh
-+++ b/tests/functional/test_starvation_detection.sh
-@@ -186,12 +186,7 @@ start_starvation_gen -c ${TEST_CPU} -p 80 -n 1 -d 3
- # Wait for task to exit
- sleep 5
- 
--# Verify stalld is still running (didn't crash)
--if assert_process_running "${STALLD_PID}" "stalld still running after task exit"; then
--    pass "stalld handled task exit gracefully"
--else
--    fail "stalld crashed or exited unexpectedly"
--fi
-+assert_process_running "${STALLD_PID}" "stalld still running after task exit"
- 
- # Check for error messages
- assert_log_contains --negate --ignore-case "${STALLD_LOG}" "error\|segfault\|crash" "No error messages in log"
 -- 
 2.53.0
 
