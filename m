@@ -1,71 +1,71 @@
-Received: from mail-qk1-f172.google.com (mail-qk1-f172.google.com [209.85.222.172])
+Received: from mail-qt1-f178.google.com (mail-qt1-f178.google.com [209.85.160.178])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 0C5B82DC32A
-	for <linux-rt-users@vger.kernel.org>; Thu, 30 Apr 2026 19:32:14 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.222.172
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 659F0369203
+	for <linux-rt-users@vger.kernel.org>; Thu, 30 Apr 2026 19:32:16 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.160.178
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1777577536; cv=none; b=do067uR+7ykri1KFaln7Fq+Sz2Jd/70u6zGkmU1MMtAOcvMS1w58TbJEQgA9Yr94RIydn+PocjgXRypVULmtT+Cobq+7r3CShjb/cbeF6gt/LnJZM5pQ/yt4qIsG8EKHWgSwY1IJQcrIbVgY4n8hH2tmJaFthlgf8ZU+DwSrqVA=
+	t=1777577537; cv=none; b=DhgsVEsCKnMA6wwJBhJSjkc19bqjOsFKmipo2uMv+c5UaHp9pEkM8jM1Nb6FNrotvazX8zUVQirXJdePghmjvRLX7S40p0hIVd2wYsfQlKTDcCSktKm0xkPRnucYzhIlIth6/FmVj653xSznteXT+H3bECsgYGE0U8H/z7tX3QA=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1777577536; c=relaxed/simple;
-	bh=S16Ah6BHXsMM0+LhF2QmVp3sRGwn/61qOQGqzNU69WA=;
+	s=arc-20240116; t=1777577537; c=relaxed/simple;
+	bh=f4v/vTM+wJrMr7ETXNYr05OIXJe7NSge1AQuEtll5Eg=;
 	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=MyyaimG0wZs3VKxpma87h/5O50202vKiVApUEzJLIgi28X6RbFtRU4esDPN6TeM2VNuH9K2cxulSnpCkme3BfK2HG9tPLXOIuDmtaQA5z6HngzA6nTy3KRh6yYnFB8y2aoPnciPwmAuBSu7Z4L4F/w4Ofzd+BHUSr1giT7KXFKA=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=fail (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=JIl9N7cz; arc=none smtp.client-ip=209.85.222.172
+	 MIME-Version; b=nbrF9UDEs2fzykEf5tdH+3lFRLt9wf5YWM0R7D4CH3EUvMSQ4z/t5mu/vdC7DtOYzK8C6JBATYqIKuvH5+Rb13jZ51df/ZniLyzd9xoSxhxScV8+BGnp04GCFTKo8XILReZkCmo3TnBBvTInAq1Ut/lvSBWhFDkQfB9r9ILrIhQ=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=fail (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=gH6Z7P/9; arc=none smtp.client-ip=209.85.160.178
 Authentication-Results: smtp.subspace.kernel.org; dmarc=fail (p=quarantine dis=none) header.from=redhat.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="JIl9N7cz"
-Received: by mail-qk1-f172.google.com with SMTP id af79cd13be357-8d67a483d3eso141107985a.1
-        for <linux-rt-users@vger.kernel.org>; Thu, 30 Apr 2026 12:32:14 -0700 (PDT)
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="gH6Z7P/9"
+Received: by mail-qt1-f178.google.com with SMTP id d75a77b69052e-50fbd79350dso11028611cf.3
+        for <linux-rt-users@vger.kernel.org>; Thu, 30 Apr 2026 12:32:16 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20251104; t=1777577534; x=1778182334; darn=vger.kernel.org;
+        d=gmail.com; s=20251104; t=1777577535; x=1778182335; darn=vger.kernel.org;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:sender:from:to:cc:subject:date
          :message-id:reply-to;
-        bh=S8X0Nqs3tT+K5xD/91WHirpS/DehFTp6ViOb67gT66w=;
-        b=JIl9N7czZx3Ek/bJVNn/bW5YaDaSa3l3sHvmEtk+a7HNl6z6HiP/AGfvJThS9dMg9T
-         gj0SS/RHRrwl6ozHnF9btGWk/FDf5Zn1y8Lpb7YdAln63ro85eLUtVcZNSUUsLRtI/5Y
-         tw4/Cqir3MZZl9K4bgirilOgi6EiC8c0GzHJLDx5NoTLhHoI+Nsbt46AAj3mVnH3/2hQ
-         SuQheEcNyp7OpimTPudD5pT+iscSZbiRqS/kSWhVESYdN8jth419lL3wL9CfTXpDMGa5
-         E6xF+YJowVE7XScgwPdt9xwBs9L3cMdTbMy0blWoUyvGnr+X6YFs4+1EbRKsdM+uNoA5
-         NNvg==
+        bh=35XwAdGe6sjEM/OrrkxtABWfAzmTq1225pZ71V2Sb8A=;
+        b=gH6Z7P/9fooBa/RkIqxSWII+k8Ym1uh0BHrICo6b6Y+ZGgzlXY3y97cpX5T1Ns8F6d
+         5onG9sov9Sk74s2X9cvDtr8msA6/v1n3KafcyRaxwQVzOIoNTSOc5MwgdMvTFA+4/LGW
+         XBdCttW/998RyBExOnZakZBtzFIHevd8i87I3ZYaccXXJLjaG0k0nyMsdKlJ7j8ahEWK
+         5cjN+xFz1c+zyHaAH+CopoYUoedXJyk9clxlLKdZRcrY3jfNvjLGLGOp6xfyeG7bNcPn
+         fqHhz/Db9nLeP/ibsxEUmxh7Ad+E3mNBcbJx5BOMPaLL2T6Nb3KuBFSpOETkpZiYcb9k
+         DHJg==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20251104; t=1777577534; x=1778182334;
+        d=1e100.net; s=20251104; t=1777577535; x=1778182335;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:sender:x-gm-gg
          :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
-        bh=S8X0Nqs3tT+K5xD/91WHirpS/DehFTp6ViOb67gT66w=;
-        b=hqPSXPZ4T7OdOaCHXddTGBmz2Bps9eYNgNpJE9hDI5qnRKYADTQbEGbcOBsLGruGKZ
-         qUAqigmvLIyX7Fx8mkxWkx45JyKElZxfCfcb1o3RkDwKrXsI9SDkFjfvlmHOqAcwRKfo
-         mTxKVTDWAJzQV+2mEdHnwUuwK9poJk5S/tJTuv52zflfBI5nQ5A3nZz0MJySn+HsGpd6
-         f3S+RNgoaXJZIxFj7jHCXdpeG6r2S/JRJltP75UHr8Nb71oAfox3bNJmgLOPGu6EsWvu
-         XEMTk8gxY1aJpClq/NML5oAJMVXEE699xDqJlTjXtUDr0oVJ/pWCV4f3ham1NY1v1Dib
-         hHbQ==
-X-Gm-Message-State: AOJu0Ywudn3+geC9EdjuXaSBDyW3gE4+6jktJRluy8clHE9qHon9jzIQ
-	phjmfbgQbnpYbuUZ7csRgwmbFcP0Eqw/mW3da7QdQPjQAEG9HQ6iqigxXkMHmw==
-X-Gm-Gg: AeBDieubTdzAzms7DDvZ0hy8Tc+oX5mKqc/f90/0DOT9GD8IOdlMbS8z4bdusqdCrDL
-	KUpoWS4JEYLaI+r84qI/Tmj5YPD6PTHlh4I77TVAfWAZ4Ar1zI/U53o5pLqFAHAv9b/27/yn2VD
-	7irFKXC0R/N0vRq0nVmwA95c/9XbMrlMhqQnPmp3PXQKfgp/Z9BfOOSYVLUVseMsMLZNGV3FKZ1
-	BlE2N5aU4mKjcF0H1PSL/LJlGEvSD3vIJvfTYe4g7/cqAQR4kklAp+7tmBi2x6iKhUT13eHwIsm
-	2RzTQvoBl0GSichfaNrCEr1MCjX/QysmRZ4gpdErjGEZlDx7V0jtnFJj6hp/94yWO55U2jC7fFb
-	UsjSVkVmUGUSDEL1J2BiTR3r58m5UEE2Wv7SYifulwtdq8L0DSuoLc/ieZnfIlAZvBga3y54yW8
-	GY1kVIv2ZRNTkREDJEFPDqH7dHxaVD4lKSk0XQwejL2FVie7sIdWtWDIEhELjQKyrVgZmHfurSy
-	LBhZNGc2a5WyEm4q6S2GSEi6PPW8GpQoH0MovVu
-X-Received: by 2002:ac8:5ad6:0:b0:509:4406:44e0 with SMTP id d75a77b69052e-5102ab52a6fmr62564321cf.27.1777577533535;
-        Thu, 30 Apr 2026 12:32:13 -0700 (PDT)
+        bh=35XwAdGe6sjEM/OrrkxtABWfAzmTq1225pZ71V2Sb8A=;
+        b=VNvlWI2QjPp/o4fY7UQ9Hjkxo812lWNk4SuaLVFaP5xMAtnTajJnPOFYCWvpL6p5ug
+         wWLU/UFQemJA2szUz7PUV0opGzUlKQ1figh9AwqGVbsDJDGeH02Q6pA8nkOgDqwo/YgD
+         j9aBNXKKZh7gMIjnWHh8Kr7zHDE4z8LSWmwjtBmELxw+8JWForUuNi4L9Su0+sqtFmXr
+         VbiozPXUN8vf5qB0XNaJEhKrhixYnFj0pYXnMXj7rCD02/f5X7Yqcl15uc6NSZa/EdrU
+         hCsxrGPeshYq2T2xK5aRblhvwYOwCvn520dVQGjxCXltjPtN/bu5VaadpRc+nrv8dbXM
+         aXOQ==
+X-Gm-Message-State: AOJu0YwRrdEQ9YcjnVQZcv3F9wxpx8lfz5vagkXA+0Qzx4q9L3MTrive
+	fRv3CAgG2EDY7W7CoYuqm2xPlLkDC6UqOHB8/HilVBqBfemLCDyOPFTbr4BxlQ==
+X-Gm-Gg: AeBDietD7y6BbzPKhXFfiv9NCIr3i/mLNLyryyi3idONPcmSkTI9rU1+UefsESM1BPG
+	vz/Djsd05Fv3ZmDkSFY4qRQUx+gefjTHPfaLiPVUjnzpLgQlD4KDP/DUldLUR3W9xnaTE68g3KZ
+	s/tTCUr1xU6b5GvyuPUEIX58SaF4yvFoJJMIuqsUuaXOI3WiYBlFGdUMEPOH4IwehmjWgYk0CR4
+	4eCDWKktDrxZR5ie2/6VqCOYcHndRzJHv4+oJOoLLh098PhAEuEXvToCY5oJcMP8TvQwYnSwHIB
+	sbk70fIBU8wthsMNT1Sbha7wVsjdK4ZT9yJF1tc6T3cbqV0w9j/L69GQLdr90ToK+Vb6Z3zLgDb
+	JG2ynW6gmw1Dvcp9XfZ2VLoeCCXfYPlMXm4jCsgBO6gBDwHv1yt+S+RdGmbARQYHe9u2FhKGUO0
+	PYVCj21Y7Z7g9OpwqOOvExVKaryAwaSw3sxuKxI499w4A+07SfQuWS2Ha4zboHMVXXqoNt82OZw
+	5zBRMu0JHMqKaPE31qOXQzXW+SmHQ==
+X-Received: by 2002:a05:622a:1a92:b0:50f:b9a6:82b5 with SMTP id d75a77b69052e-5102ab43134mr61205791cf.1.1777577534967;
+        Thu, 30 Apr 2026 12:32:14 -0700 (PDT)
 Received: from Cumhall.redhat.com ([216.209.112.32])
-        by smtp.gmail.com with ESMTPSA id d75a77b69052e-5103d1c6957sm4270391cf.2.2026.04.30.12.32.12
+        by smtp.gmail.com with ESMTPSA id d75a77b69052e-5103d1c6957sm4270391cf.2.2026.04.30.12.32.13
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Thu, 30 Apr 2026 12:32:12 -0700 (PDT)
+        Thu, 30 Apr 2026 12:32:14 -0700 (PDT)
 Sender: John Kacur <jkacur@gmail.com>
 From: John Kacur <jkacur@redhat.com>
 To: linux-rt-users <linux-rt-users@vger.kernel.org>
 Cc: Clark Williams <williams@redhat.com>,
 	Tomas Glozar <tglozar@redhat.com>
-Subject: [PATCH 5/7] rteval: Add local/ directory to .gitignore for development files
-Date: Thu, 30 Apr 2026 15:31:42 -0400
-Message-ID: <20260430193144.354599-6-jkacur@redhat.com>
+Subject: [PATCH 6/7] rteval: Update cpuset documentation to reflect simplified implementation
+Date: Thu, 30 Apr 2026 15:31:43 -0400
+Message-ID: <20260430193144.354599-7-jkacur@redhat.com>
 X-Mailer: git-send-email 2.54.0
 In-Reply-To: <20260430193144.354599-1-jkacur@redhat.com>
 References: <20260430193144.354599-1-jkacur@redhat.com>
@@ -77,24 +77,54 @@ List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 
-Add local/ directory to hold development scripts, notes, and other
-files that should not be tracked in git.
+Update help text and docstrings to clarify that the simplified cpuset
+implementation creates cpusets only for measurements and housekeeping,
+not for loads. Loads use taskset for CPU affinity instead.
+
+Changes:
+- rteval-cmd: Update --cpusets help text to accurately describe that
+  only measurement and housekeeping workloads get cpusets
+- rteval/cpusetmanager.py: Update module docstring to clarify that
+  loads use taskset rather than cpusets
+
+This aligns the documentation with the simplified implementation
+approach that mirrors isolcpus philosophy: measurements get isolation,
+loads use affinity constraints.
 
 Assisted-by: Claude Sonnet 4.5 <noreply@anthropic.com>
 Signed-off-by: John Kacur <jkacur@redhat.com>
 ---
- .gitignore | 1 +
- 1 file changed, 1 insertion(+)
+ rteval-cmd              | 2 +-
+ rteval/cpusetmanager.py | 3 ++-
+ 2 files changed, 3 insertions(+), 2 deletions(-)
 
-diff --git a/.gitignore b/.gitignore
-index a6e940186be7..ee5621e3fa3d 100644
---- a/.gitignore
-+++ b/.gitignore
-@@ -28,3 +28,4 @@ MANIFEST
- stamp-h1
- autom4te.cache/
- rteval-[0-9]*
-+local/
+diff --git a/rteval-cmd b/rteval-cmd
+index 29254a8f1a7c..37db9e5e2ce2 100755
+--- a/rteval-cmd
++++ b/rteval-cmd
+@@ -118,7 +118,7 @@ def parse_options(cfg, parser, cmdargs):
+     # CPU Configuration Options
+     parser.add_argument("--cpusets", dest="rteval___cpusets",
+                       action="store_true", default=False,
+-                      help="use cgroup v2 cpusets to isolate measurement, load, and housekeeping workloads")
++                      help="use cgroup v2 cpusets to isolate measurement and housekeeping workloads")
+     parser.add_argument("--housekeeping", dest="rteval___housekeeping",
+                       type=str, default="", metavar="CPULIST",
+                       help="isolated CPUs reserved for system tasks (not used by rteval)")
+diff --git a/rteval/cpusetmanager.py b/rteval/cpusetmanager.py
+index c1aa04431f3a..2fe931cc4574 100644
+--- a/rteval/cpusetmanager.py
++++ b/rteval/cpusetmanager.py
+@@ -5,7 +5,8 @@
+ Manager for rteval cpusets with automatic cleanup
+ 
+ This module provides the CpusetManager class which orchestrates cpuset creation
+-and process migration for rteval workloads (housekeeping, measurement, and loads).
++and process migration for rteval workloads (housekeeping and measurement).
++Loads use taskset for CPU affinity rather than cpusets.
+ """
+ 
+ import time
 -- 
 2.54.0
 
