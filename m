@@ -1,67 +1,38 @@
-Received: from mail-wm1-f41.google.com (mail-wm1-f41.google.com [209.85.128.41])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
-	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 1BDC92E040D
-	for <linux-rt-users@vger.kernel.org>; Mon,  4 May 2026 07:53:48 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.128.41
+Received: from smtpfb2-g21.free.fr (smtpfb2-g21.free.fr [212.27.42.10])
+	by smtp.subspace.kernel.org (Postfix) with ESMTP id 8B1AF3D410E
+	for <linux-rt-users@vger.kernel.org>; Mon,  4 May 2026 23:24:26 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=212.27.42.10
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1777881229; cv=none; b=K24900WxpUDWD3wxrr5zd2AEMbiJYo5yTePCp4F9SN0hM7xTbXA81ZeGYpv9TLCdGlVZrUq59ZPz6YK+eepbDuPxK1DzFcYR+jDuaAv2GNkbt5GdKy2A5Y30CFhWp8pDHn1FHO8HRuEY5r5sDY1bMViJNnwy30Ao/LwcC/U7A7M=
+	t=1777937073; cv=none; b=ac2FB7e2IK0KKJT64RSYaz4DpXOhvUdpf8hRMKcre/BdXvB9snLoVZCeiQ3RPi1fF8C8POovnTRzd9DS6nzIgqV1VjYXsgRuk4aNJZn9iUkN2hU0THcWGFmYFFENE+968uFvbKAbLs0FqLrGdaxR9CPZ62wy2L9rItnxz3WrHjs=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1777881229; c=relaxed/simple;
-	bh=x+qSfoaIcbbTFqTu9cNIfmDT9uN1phNh4CCE5qSQRSg=;
-	h=Message-ID:Date:MIME-Version:Subject:To:References:From:
-	 In-Reply-To:Content-Type; b=XTdiYLjeHxTEKuTYVwmlpea4KNz1B70gSimoWxpFKmrHoqZmncePgPhuyCvd5N8NAtDwcQL5vkgLQtXyKKGFis+SN7FZ7gUYLO/t4LetbCbDwHhnTo2MwBOpW/K4Xq3vPmRzsFvA72lt7Xla83wsbmrGD3jUolOX8YpMEEkioYo=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=aRnrdFek; arc=none smtp.client-ip=209.85.128.41
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
+	s=arc-20240116; t=1777937073; c=relaxed/simple;
+	bh=Odqk194lYUuc3gGN2c/Sw3ZUL/Al3AYb8k+3tgEZdtM=;
+	h=Message-ID:Date:MIME-Version:Subject:From:To:Cc:References:
+	 In-Reply-To:Content-Type; b=DdBItuqfPAi8ySbe7zSwNbBNLyLTUmqCfTa1U90z8nL77z8CGw3ulA/CDiA7zHyxyvWLRSnzGaUgP9PO1WTeFj9unjWkob5lzmNzbQLUPGBNfY7qgjwTv8eZyer6xe0obIeBgg//0SJd3VX0MtGsKok+kVUXiAly+dlP55HwIT4=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=free.fr; spf=pass smtp.mailfrom=free.fr; dkim=pass (2048-bit key) header.d=free.fr header.i=@free.fr header.b=aPcKasXL; arc=none smtp.client-ip=212.27.42.10
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=free.fr
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=free.fr
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="aRnrdFek"
-Received: by mail-wm1-f41.google.com with SMTP id 5b1f17b1804b1-483708b697cso4896715e9.3
-        for <linux-rt-users@vger.kernel.org>; Mon, 04 May 2026 00:53:47 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20251104; t=1777881226; x=1778486026; darn=vger.kernel.org;
-        h=content-transfer-encoding:in-reply-to:from:content-language
-         :references:to:subject:user-agent:mime-version:date:message-id:from
-         :to:cc:subject:date:message-id:reply-to;
-        bh=DOVg3InKVTPB7x5MSdkMPQvwKgtck5mbGQevkLbGQDE=;
-        b=aRnrdFekNzaCGGBleTE592xBiqHo2TH+7H5Doj7mMJ4FhUMHrZygCrQ5tu/UmVND9p
-         9/cEhJjstqpHXueGZK6BVRhM7tCBkH8vjiZwo7t49FexPWc5PjLIPBzmxH3TQiQz21wc
-         JmUBbIb7qD7LeU5oTxCP93f9uUMKlTeAnpRfue9Mz3yLJP29vOG2cs4ZoruGApcq+hMH
-         211ukGBS5GgF1nOYG85bRxY2ZxrvmUhDKBhpO+f9ZHhRusjDIiSdOjS/HdeMOsFIh9xC
-         4+W8YndaWuHEH69HXVm4OVwPOm0uV7D54qDwQE4he89Hfq9lEOWXQEpmte4SjkL9i3B7
-         ctBQ==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20251104; t=1777881226; x=1778486026;
-        h=content-transfer-encoding:in-reply-to:from:content-language
-         :references:to:subject:user-agent:mime-version:date:message-id
-         :x-gm-gg:x-gm-message-state:from:to:cc:subject:date:message-id
-         :reply-to;
-        bh=DOVg3InKVTPB7x5MSdkMPQvwKgtck5mbGQevkLbGQDE=;
-        b=iLmBPS/7Ck2yTJBSc3NeLdlngpW/Zbdrik/1hZRqjk51NScenNN4G9rBq+JRyFSanO
-         R394+mDJ/LigFJHwn6JJz9WSJBjO4tJ7sgWhrhz8BvhX30mGxDTkG7VAYVkyp+b3cbr8
-         x6MeV5Jzx6RWMhksnXJgkh4O3Vz1YiJLDywUfPwbCArntPpqrA0GbGv0pkkRe9OBXZlt
-         NxmV0J/xjZgTJyICtdNnnBvLbwUPte/CDp0lK5yf72HZRMq+rSFYHrHrAuzyZg9BbKm/
-         sNt/9z8kpffIn3zKb3PLRL/Ns9T6H6PKGFRpqgZuS3qsvmiiPrWOHe269yhpqZZHlc78
-         12TQ==
-X-Forwarded-Encrypted: i=1; AFNElJ9qVWV5/96xNJxBwTYF8mvSneZex9pIh1rDU2EFzf2KE/MoeTwQMexIfOv9pcFaCUYfAtg5jqiKq1Ph9SDqvw==@vger.kernel.org
-X-Gm-Message-State: AOJu0Yz7QKPdx9z667xGehqYdizLo3Stln0109cJ5UOCiv7vHEFJJeff
-	6WW33DLk9adQBz4Ke4D1jTpG0fWykutApveZ/VZGM5ykkFZofgPhTZY5
-X-Gm-Gg: AeBDies+qflMyTHWpx+6nyBxAMFgDHmAOxDk5ieZRK60Uq6FJeAu7afLUI3ixikbQDp
-	jM4Qp7IeB0T+tHIe/rXTOf5jULzKWU6AfvXSmQWwPSSWL/OR6+HIAdpiUgDvbcPqhBxiYo4VOJv
-	HwVjoOs0GNiAibdpS5ZMrm+grFiYGEIHONbGCswOgtBl32jgPyFs/NdnGEl1OOit97m5PY6JZqh
-	a8eFmbzLp9LFNy1ADBk/9qcir6FqNQuld+jlja1qNL147Js1nAXMrAqvbb2aFhQiQXDRr4zwMWp
-	iofuUH16WsV0qRgdAMMyNCUm+yUP/OK8CvtlQ5JpuslzSzds4Eltgo0rHsgMQ2BcvR7yWThTHPP
-	zxtEX2D/wTIR3CnxpfNy2bSoOxbnXGR94l9SxvRg9uP7wUZcva+eP41R8dS2U6klZsY5gqNUk/0
-	CxKyJrCN67cFj3dGotpady/y6rzQPWTuTOau60bv/TqcLkqCR7ubTGKewPlxDExrFDWirz0xEjb
-	/vdGCSTIujkTOsLKXCVfxFUzcrIbg==
-X-Received: by 2002:a05:600c:4f0b:b0:487:1fbb:5a28 with SMTP id 5b1f17b1804b1-48a9852e356mr64156235e9.1.1777881226278;
-        Mon, 04 May 2026 00:53:46 -0700 (PDT)
-Received: from [192.168.0.110] (dslb-088-068-075-055.088.068.pools.vodafone-ip.de. [88.68.75.55])
-        by smtp.gmail.com with ESMTPSA id ffacd0b85a97d-44a8f424032sm23506486f8f.15.2026.05.04.00.53.45
-        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
-        Mon, 04 May 2026 00:53:45 -0700 (PDT)
-Message-ID: <08b8969f-d79d-4c9b-8499-f3180fdd832f@gmail.com>
-Date: Mon, 4 May 2026 09:53:44 +0200
+	dkim=pass (2048-bit key) header.d=free.fr header.i=@free.fr header.b="aPcKasXL"
+Received: from smtp1-g21.free.fr (smtp1-g21.free.fr [212.27.42.1])
+	by smtpfb2-g21.free.fr (Postfix) with ESMTP id 0F37F4C3FA
+	for <linux-rt-users@vger.kernel.org>; Tue,  5 May 2026 01:17:43 +0200 (CEST)
+Received: from [IPV6:2a01:e34:ec24:52e0:284:73fc:f242:ca64] (unknown [IPv6:2a01:e34:ec24:52e0:284:73fc:f242:ca64])
+	(Authenticated sender: marc.w.gonzalez@free.fr)
+	by smtp1-g21.free.fr (Postfix) with ESMTPSA id 75CE7B0053D;
+	Tue,  5 May 2026 01:17:15 +0200 (CEST)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=free.fr;
+	s=smtp-20201208; t=1777936655;
+	bh=Odqk194lYUuc3gGN2c/Sw3ZUL/Al3AYb8k+3tgEZdtM=;
+	h=Date:Subject:From:To:Cc:References:In-Reply-To:From;
+	b=aPcKasXLSz7Murab+9Yu5XJap3FWoAMtM9659fkdde2AFcHvO4Mw0DK9Jnbi6jAAl
+	 GttaFC8VODeGaaSc7wQLYC7rU+X1lOZbnTjml33QkGS+qjD+hRfvOGuiCwsUGiNraj
+	 PCqTZfi0uvdMkw1zSmGO7LAFSV62teV8NrILjunJRJwrzPWtY8MN3yOyGf7B9XJNpm
+	 LE4fyQjmyGfqZs3VkD9SNpwD3VrtmwdhVGY4SttxTQBgv7tCd1GilyL+wzwNNUU3Ke
+	 0HnSrV6HYNk9kDjxt1AshWGDIrVuBfTNK4jEJ6XTZdOK/kofAGeCOwNHVvIrgMiCZ6
+	 Xg2ChDy0W/v6Q==
+Message-ID: <79f4cf81-9fc4-4c22-945c-1eaa68137305@free.fr>
+Date: Tue, 5 May 2026 01:17:15 +0200
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
@@ -69,218 +40,122 @@ List-Subscribe: <mailto:linux-rt-users+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
 User-Agent: Mozilla Thunderbird
-Subject: Re: Question about SCHED_DEADLINE and cgroupv2/cpuset interaction
-To: Gabriele Monaco <gmonaco@redhat.com>, linux-rt-users@vger.kernel.org
-References: <ceba9f1b-0694-44ec-bdc9-a443d2127102@gmail.com>
- <d93c4b5e7dfb1ea784d8f0f7851f37f7bee2cacf.camel@redhat.com>
+Subject: Re: Unexplained variance in run-time of simple program (part 2)
+From: Marc Gonzalez <marc.w.gonzalez@free.fr>
+To: "John D. McCalpin" <john@mccalpin.com>
+Cc: linux-rt-users@vger.kernel.org, Daniel Wagner <dwagner@suse.de>,
+ Leon Woestenberg <leon@sidebranch.com>,
+ John Ogness <john.ogness@linutronix.de>, Steven Rostedt
+ <rostedt@goodmis.org>, Thomas Gleixner <tglx@linutronix.de>,
+ Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+ Clark Williams <williams@redhat.com>, Pavel Machek <pavel@denx.de>,
+ Luis Goncalves <lgoncalv@redhat.com>,
+ Frederic Weisbecker <fweisbec@gmail.com>, Ingo Molnar <mingo@kernel.org>,
+ Masami Hiramatsu <mhiramat@kernel.org>,
+ "Ahmed S. Darwish" <darwi@linutronix.de>, Agner Fog <agner@agner.org>,
+ Dirk Beyer <dirk.beyer@lmu.de>, Philipp Wendler <philipp.wendler@lmu.de>,
+ Matt Godbolt <matt@godbolt.org>
+References: <199905cb-04b3-4d3e-aeb3-da2b2d6428eb@free.fr>
+ <5397d0cd-9266-44ae-97f2-75164d89bf48@free.fr>
+ <b1630867-0e0c-47fd-8de2-ffca2f517da3@free.fr>
+ <17537284-FA52-40E5-A70F-1120FCEB8BC6@mccalpin.com>
+ <b73d91c0-2fc8-45fc-959e-5fc2b484e0fe@free.fr>
+ <7FA25B6F-71A1-4B2B-9488-46D91445DAF3@mccalpin.com>
+ <1137e806-eddc-409d-8694-4465e2123764@free.fr>
 Content-Language: en-US
-From: Tobias Jakobi <tobias.jakobi.lr@gmail.com>
-In-Reply-To: <d93c4b5e7dfb1ea784d8f0f7851f37f7bee2cacf.camel@redhat.com>
-Content-Type: text/plain; charset=UTF-8; format=flowed
-Content-Transfer-Encoding: 8bit
+In-Reply-To: <1137e806-eddc-409d-8694-4465e2123764@free.fr>
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
 
-Hello Gabriele,
+Hello John,
 
-thanks for your feedback!
+On 10/04/2026 19:16, Marc Gonzalez wrote: [snip]
 
-On 4/29/26 16:47, Gabriele Monaco wrote:
-> Hi Tobias,
->
-> giving my 2 cents here.
->
-> On Tue, 2026-04-28 at 15:52 +0200, Tobias Jakobi wrote:
->> For the RT work we have these slices.
->>
->> root@cm4-fat:/etc/systemd/system# cat workload.slice
->> [Slice]
->> AllowedCPUs=2-3
->>
->> root@cm4-fat:/etc/systemd/system# cat workload-core2.slice
->> [Slice]
->> AllowedCPUs=2
->>
-> Applying the configuration above, I get both slices as member
-> partitions (not root):
->
-> head /sys/fs/cgroup/workload.slice/{,*/}cpuset.cpus.partition
-> ==> /sys/fs/cgroup/workload.slice/cpuset.cpus.partition <==
-> member
->
-> ==> /sys/fs/cgroup/workload.slice/workload-core2.slice/cpuset.cpus.partition <==
-> member
->
-> Running your example in either slice doesn't work in my case.
-> That's because in the admission control we "Don't allow tasks with an
-> affinity mask smaller than the entire root_domain to become
-> SCHED_DEADLINE" [1].
+I have come to the conclusion that it seems IMPOSSIBLE to get reproducible run-times,
+even for simple programs, on "modern" systems (in quotes because Haswell, so 2013).
 
-Actually I saw this comment during my investigation. But I disregarded 
-it quickly, reasons see below.
+SETUP:
+- System is idle, booted in single-user mode, with CPU3 isolated for benchmarks.
+- CPU frequency is pinned at 2.8 GHz (nominal 3.3 GHz) to avoid thermal throttling & turbo boost.
+- Benchmark is run as SCHED_FIFO 99, pinned to CPU3.
+Linux version 6.8.0-110-generic
+nohz_full=3 rcu_nocbs=3 isolcpus=nohz,domain,managed_irq,3 irqaffinity=0-2 nosmt mitigations=off nosoftlockup tsc=reliable log_buf_len=16M single
 
-Anyway, I saw this term "root_domain" being mentioned a few times in the 
-documentation 
-(https://www.kernel.org/doc/Documentation/scheduler/sched-deadline.rst). 
-But only there. It is not mentioned at all in the rest of the docs. Nor 
-have I found a definition for it. Might as well ask this here, what 
-exactly is this root_domain supposed to be? Yes, there is this comment 
-for struct root_domain in sched/sched.h, but honestly, without heavy 
-knowledge about the scheduler codebase this tells me almost nothing... :-(
 
-> In short that's to make the admission control able to give guarantees.
->
-> Setting the partition as root:
->
-> echo root > /sys/fs/cgroup/workload.slice/cpuset.cpus.partition
-> echo root > /sys/fs/cgroup/workload.slice/workload-core2.slice/cpuset.cpus.partition
->
-> Fixes the issue in my case.
-> I don't really know how to specify that in systemd and I'm assuming
-> your version/configuration of systemd was somehow setting workload-
-> slice as root automatically, that's likely why it was working.
->
-> Could you try this on your side?
+If I benchmark an absolutely trivial program (no memory access, 1 predictable loop)
+then the run-time is extremely reproducible:
 
-Sure, as I said above I disregarded the comment in syscalls.c after 
-fiddling with this.
+spin:
+	xor eax, eax
+	mov ecx, 1000
+loop:
+	times 60 inc eax ; 120 bytes
+	dec ecx
+	jnz loop ; 8-bit offset
+	ret
 
-So, first of all, when doing nothing on top of what systemd does, then 
-both cpuset.cpus.partition are member. What I did not mention in the 
-initial mail was that I tried to change the partition type. 
-Unsuccessfully however.
+This code is expected to run in 60,000 cycles
+So the TSC pulsing at 3.3 GHz would count 70715 cycles + a few cycles for rdtscp & call overhead.
 
-root@cm4-fat:/sys/fs/cgroup/workload.slice# echo root > 
-cpuset.cpus.partition
-root@cm4-fat:/sys/fs/cgroup/workload.slice# echo root > 
-workload-core2.slice/cpuset.cpus.partition
-root@cm4-fat:/sys/fs/cgroup/workload.slice# cat cpuset.cpus.partition
-root invalid (partition config conflicts with housekeeping setup)
-root@cm4-fat:/sys/fs/cgroup/workload.slice# cat 
-workload-core2.slice/cpuset.cpus.partition
-root invalid (Invalid cpu list in cpuset.cpus.exclusive)
-root@cm4-fat:/sys/fs/cgroup/workload.slice# grep . cpuset.*
-cpuset.cpus:2-3
-cpuset.cpus.effective:2-3
-cpuset.cpus.partition:root invalid (partition config conflicts with 
-housekeeping setup)
-cpuset.mems.effective:0
-root@cm4-fat:/sys/fs/cgroup/workload.slice# cd workload-core2.slice/
-root@cm4-fat:/sys/fs/cgroup/workload.slice/workload-core2.slice# grep . 
-cpuset.*
-cpuset.cpus:2
-cpuset.cpus.effective:2
-cpuset.cpus.partition:root invalid (Invalid cpu list in 
-cpuset.cpus.exclusive)
-cpuset.mems.effective:0
+After measuring 12M calls to spin(), the run-time distribution is:
 
-I then remembered reading something in the systemd documentation about 
-cgroup delegation and that changing anything cgroup related right under 
-systemd's nose was asking for trouble. I guess this is what "partition 
-config conflicts with housekeeping setup" is supposed to tell me here?
+70725: 31
+70730: 6235014
+70735: 5142415
+70740: 622531
+70750: 1
+70905: 3
+70910: 4
+103965: 1
 
-After I wasn't getting anywhere here I focused on the bandwidth check. 
-And since the whole thing worked after disabling the check, I 
-disregarded the root_domain/partition idea.
+(Not sure what's up with that 103965 outlier)
 
-But I guess the real cause is the root_domain then?
+So the run-time is within 70730-70745 with 0,999996 certainty (11999960/12M)
+A 15-cycle spread is 212 ppm. All is well & as expected for the trivial case.
 
-With best wishes,
-Tobias
 
->
-> Cheers,
-> Gabriele
->
-> [1] -
-> https://elixir.bootlin.com/linux/v7.0.1/source/kernel/sched/syscalls.c#L627
->
->> Note that core2 is a child of workload, i.e. on the cgroup level it
->> looks like this.
->>
->> root@cm4-fat:~# find /sys/fs/cgroup/ -name workload\*.slice
->> /sys/fs/cgroup/workload.slice
->> /sys/fs/cgroup/workload.slice/workload-core2.slice
->>
->> So what's exactly this problem I'm seeing? It's this here.
->>
->> root@cm4-fat:~# systemd-run --slice=workload-core2.slice --pty chrt
->> --sched-runtime 100000 --sched-period 200000 --deadline 0 echo this
->> works
->> Running as unit: run-p676-i976.service; invocation ID:
->> d59dc443f66f46a6ba2dfd125e04f830
->> Press ^] three times within 1s to disconnect TTY.
->> chrt: failed to set pid 0's policy: Operation not permitted
->>
->> What works however is this here.
->>
->> root@cm4-fat:~# systemd-run --slice=workload.slice --pty chrt
->> --sched-runtime 100000 --sched-period 200000 --deadline 0 echo this
->> works
->> Running as unit: run-p670-i970.service
->> Press ^] three times within 1s to disconnect TTY.
->> this works
->>
->> I double checked the slice settings, and they apply.
->>
->> root@cm4-fat:~# systemd-run --slice=workload.slice --pty bash -c
->> 'grep
->> Cpus_allowed_list /proc/$BASHPID/status'
->> Running as unit: run-p727-i1027.service
->> Press ^] three times within 1s to disconnect TTY.
->> Cpus_allowed_list:      2-3
->>
->> Once again for the core2 slice.
->>
->> root@cm4-fat:~# systemd-run --slice=workload-core2.slice --pty bash -
->> c
->> 'grep Cpus_allowed_list /proc/$BASHPID/status'
->> Running as unit: run-p732-i1032.service
->> Press ^] three times within 1s to disconnect TTY.
->> Cpus_allowed_list:      2
->>
->> This really puzzled here. Why would this work for AllowedCPUs=2-3,
->> but
->> not for AllowedCPUs=2?
->>
->> I then dove in the documentation and the code, trying to understand
->> where the -EPERM was coming from. I finally decided to disable the
->> bandwidth check that the kernel performs.
->>
->> root@cm4-fat:~# echo -1 > /proc/sys/kernel/sched_rt_runtime_us
->> root@cm4-fat:~# systemd-run --slice=workload-core2.slice --pty chrt
->> --sched-runtime 100000 --sched-period 200000 --deadline 0 echo this
->> works
->> Running as unit: run-p760-i1060.service
->> Press ^] three times within 1s to disconnect TTY.
->> this works
->>
->> And voila, suddenly everything works. I fail to understand though why
->> the bandwidth check fails here. I mean, 100000 / 200000, that's fifty
->> percent, so the check should pass.
->>
->> And apparantly the ratio itself doesn't seem to have any effect. I
->> enabled the check again and reduced the runtime so that the ratio is
->> just 5%. Still the same.
->>
->> root@cm4-fat:~# echo 950000 > /proc/sys/kernel/sched_rt_runtime_us
->> root@cm4-fat:~# systemd-run --slice=workload-core2.slice --pty chrt
->> --sched-runtime 1000 --sched-period 200000 --deadline 0 echo this
->> works
->> Running as unit: run-p838-i1138.service
->> Press ^] three times within 1s to disconnect TTY.
->> chrt: failed to set pid 0's policy: Operation not permitted
->>
->> I looked around some more, made sure that CONFIG_RT_GROUP_SCHED=n,
->> but
->> the more I think about, the more I get the impression that I totally
->> misunderstand how the bandwidth check works.
->>
->> To be explicit, by bandwidth check I mean the line that is found in
->> section 4.1. here:
->> https://www.kernel.org/doc/Documentation/scheduler/sched-deadline.rst
->>
->> Would be nice if someone could shed some light on this. Thanks in
->> advance!
->>
->> With best wishes,
->> Tobias Jakobi
->>
+Everything breaks down when I measure my actual (simple) program.
+By simple, I mean:
+- no system calls, no library calls, no I/O, just bit twiddling
+- tiny code, small(ish) dataset
+
+Here, I ran the code 15 MILLION TIMES, and took the MINIMUM run-time measured.
+And I repeated this 20 times, expecting the various MINIMUMS to be quite similar:
+
+66413
+65707
+66214
+66277
+67345
+66640
+66029
+66693
+67551
+66771
+66376
+66536
+66871
+66177
+65674
+65435
+66136
+66223
+66145
+66305
+
+The minimums of 15 MILLION runs fell somewhere between 65435 and 67551 :(
+That's a spread of (67551-65435) / ((65435+67551) / 2) = 3.18% = 31823 ppm
+150 times larger than for the trivial case.
+
+Do I need to run the code 50M times? 100M times? to get consistent run-times? :(
+
+Running out of ideas.
+
+Maybe the memory traffic is generating a lot of "volatility" / non-determinism?
+(But I don't think I'm even using all of L1$)
+Maybe I need to disable the memory pre-fetchers?
+
+I'm stumped...
+
+Regards
+
