@@ -1,79 +1,101 @@
-Received: from 011.lax.mailroute.net (011.lax.mailroute.net [199.89.1.14])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 22877313550;
-	Tue,  5 May 2026 15:42:16 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=199.89.1.14
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 45C9639B974
+	for <linux-rt-users@vger.kernel.org>; Tue,  5 May 2026 17:40:22 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1777995737; cv=none; b=qiZZ1lHn4VHyBYZcJTYzTt/cjA0ra9TMkBNOk3BkH088RYkUExC/DsDJ1iiRSFKd6gTjIAV4YPZrTit9sJqX0y9s2KTvLOh48waw8KqiZAvJ7f/Y8B1R5xHr+IXt9NiVz7zeUyVhNzt4zq3Bjj7ftT26LgmurI/1eW7B3JCiI5c=
+	t=1778002823; cv=none; b=eN5NZXPa9BBFph/Vp+/hsHa3PYVhLxVR72kktwmtEB1qG8dcREg6MIO+yYGbvH3CVg7eJu3SzHk+90sxDkiZZEz/Th0tWlS/CJcPe2LtvUeCwuZes8S3VgCwMMdtCdd0K4bynQi1IQRIAOsmf81GNhLHRMvrNoS3Std4lY66EdA=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1777995737; c=relaxed/simple;
-	bh=BzcEHEyglD+WwAtGnnN4RinbaNx/5QoNqm9JCn3CYno=;
-	h=Message-ID:Date:MIME-Version:Subject:To:Cc:References:From:
-	 In-Reply-To:Content-Type; b=EHDOEJVuDiHoBTq4eL9q235kmj/GRilT1s9e+K9XgDG+kOD85wpqMkpeRT9+kL7/3blcx7/2ECymGOhuDytw5BaWNEzgAc76ZmLQd5yUoN/ph50ACKfknIYhfOIJwbIhRpKHXJ8oQ8y220Ex1xLt7rVpFpJ92aq9QvstSeP8IFA=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=acm.org; spf=pass smtp.mailfrom=acm.org; dkim=pass (2048-bit key) header.d=acm.org header.i=@acm.org header.b=vwVl88ik; arc=none smtp.client-ip=199.89.1.14
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=acm.org
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=acm.org
+	s=arc-20240116; t=1778002823; c=relaxed/simple;
+	bh=m8D9DqI4YmeYPx25nYgcYGuCvfaZ7/3R1TNCUp255pE=;
+	h=Date:From:To:Subject:Message-ID:MIME-Version:Content-Type:
+	 Content-Disposition; b=FS/kOCnCe1yB+4TqRmKJOQeLKSKzzl6OdGlQVSuhZ+sQ1zV5fNVlbVrnGPZQ39GVJeYvDfqj2eN2paqEGEL+ZR14mExJcusIIDwe5fQJWapOmzYzum3eH0pDqdjGUzSEWtKW+rimg40U+rYa/d+JZZ6wfhmJYximoFfJRbkjIyM=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=cXecGdIQ; arc=none smtp.client-ip=170.10.129.124
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=acm.org header.i=@acm.org header.b="vwVl88ik"
-Received: from localhost (localhost [127.0.0.1])
-	by 011.lax.mailroute.net (Postfix) with ESMTP id 4g92ng3wkkz1XM6JP;
-	Tue,  5 May 2026 15:42:15 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=acm.org; h=
-	content-transfer-encoding:content-type:content-type:in-reply-to
-	:from:from:content-language:references:subject:subject
-	:user-agent:mime-version:date:date:message-id:received:received;
-	 s=mr01; t=1777995728; x=1780587729; bh=q1qNYl6x7rCJ4Lu/FnvPoVV1
-	JRQuZdv0mQEcO93DffE=; b=vwVl88ik6UpR9sfpl1/c13zyBCBGhV8CY1Qgh7Gu
-	y6af7E02G90xWkV5OOuNILuDXUrRP7mKyKf9u4Lp5efJs4vtsqPTm/u406JSZYM6
-	4XVVK+6n0BbHYEsyh/fyKWiaEjcyB3lQsMxKEwue4+NKKm+HPp1zY/kozAY6iuMn
-	8iBw54sX5qH26mHFiLNBBNbB2NA3g5HQCEV9dxfzw1M1s2eh8Mn9D1O33O40OPgt
-	axxIhHWapQxweSDFnaQLROIoDO58YZ4UdxaTZt86CcvzIsTcH9ep94NSc09p+vcP
-	PsGtoIGxCXnSBXFFP0KDoGNSn3y/O+6JDEnSIrODi4G84A==
-X-Virus-Scanned: by MailRoute
-Received: from 011.lax.mailroute.net ([127.0.0.1])
- by localhost (011.lax [127.0.0.1]) (mroute_mailscanner, port 10029) with LMTP
- id EX2hhIESClJK; Tue,  5 May 2026 15:42:08 +0000 (UTC)
-Received: from [10.211.9.52] (unknown [213.147.98.98])
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="cXecGdIQ"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1778002821;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:mime-version:mime-version:content-type:content-type;
+	bh=Y+2/bgg3acAP6Tef1uDEaFzFjB+7X1GJU0EeFmhllx8=;
+	b=cXecGdIQqX90nhRbS08zIUT8NEaZoGECpomUsYHtMMEP5ug3qaHTA5vXVljsc6ww+u/XCZ
+	5t94hVsvaXJEaUn6xUL0HwgtBLdSNe9YVGnyGYQrLoaq273x8GQOowDealm0f3JtBwf/o5
+	FO7t4Ho2lH9Gq3PVrH0B7gSHhpJUVCM=
+Received: from mx-prod-mc-08.mail-002.prod.us-west-2.aws.redhat.com
+ (ec2-35-165-154-97.us-west-2.compute.amazonaws.com [35.165.154.97]) by
+ relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-7-ETXN-bQMM020RrtOgojavQ-1; Tue,
+ 05 May 2026 13:40:18 -0400
+X-MC-Unique: ETXN-bQMM020RrtOgojavQ-1
+X-Mimecast-MFC-AGG-ID: ETXN-bQMM020RrtOgojavQ_1778002816
+Received: from mx-prod-int-03.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-03.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.12])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
 	(No client certificate requested)
-	(Authenticated sender: bvanassche@acm.org)
-	by 011.lax.mailroute.net (Postfix) with ESMTPSA id 4g92nM4f6Jz1XM5kD;
-	Tue,  5 May 2026 15:41:58 +0000 (UTC)
-Message-ID: <7c811a44-6d7e-499c-8203-90a256984912@acm.org>
-Date: Tue, 5 May 2026 17:41:55 +0200
+	by mx-prod-mc-08.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 401751800345;
+	Tue,  5 May 2026 17:40:16 +0000 (UTC)
+Received: from localhost (unknown [10.22.80.183])
+	by mx-prod-int-03.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTP id 6FE8219560A6;
+	Tue,  5 May 2026 17:40:15 +0000 (UTC)
+Date: Tue, 5 May 2026 14:40:14 -0300
+From: "Luis Claudio R. Goncalves" <lgoncalv@redhat.com>
+To: LKML <linux-kernel@vger.kernel.org>,
+	linux-rt-users <linux-rt-users@vger.kernel.org>,
+	stable-rt <stable-rt@vger.kernel.org>,
+	Steven Rostedt <rostedt@goodmis.org>,
+	Thomas Gleixner <tglx@linutronix.de>,
+	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+	Daniel Wagner <daniel.wagner@suse.com>,
+	Clark Williams <williams@redhat.com>, Pavel Machek <pavel@denx.de>,
+	Jeff Brady <jeffreyjbrady@gmail.com>,
+	Jan Kiszka <jan.kiszka@siemens.com>,
+	Luis Goncalves <lgoncalv@redhat.com>
+Subject: [ANNOUNCE] 5.10.254-rt150
+Message-ID: <aforfpN2Y_oYr8e8@redhat.com>
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
 List-Subscribe: <mailto:linux-rt-users+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-User-Agent: Mozilla Thunderbird
-Subject: Re: [PATCH v5 1/1] block/blk-mq: use atomic_t for quiesce_depth to
- avoid lock contention on RT
-To: "Ionut Nechita (Wind River)" <ionut.nechita@windriver.com>,
- linux-block@vger.kernel.org, axboe@kernel.dk
-Cc: bigeasy@linutronix.de, clrkwllms@kernel.org, rostedt@goodmis.org,
- ming.lei@redhat.com, muchun.song@linux.dev, mkhalfella@purestorage.com,
- chris.friesen@windriver.com, linux-kernel@vger.kernel.org,
- linux-rt-devel@lists.linux.dev, linux-rt-users@vger.kernel.org,
- stable@vger.kernel.org, ionut_n2001@yahoo.com, sunlightlinux@gmail.com
-References: <20260303073744.20585-1-ionut.nechita@windriver.com>
- <20260303073744.20585-2-ionut.nechita@windriver.com>
-Content-Language: en-US
-From: Bart Van Assche <bvanassche@acm.org>
-In-Reply-To: <20260303073744.20585-2-ionut.nechita@windriver.com>
-Content-Type: text/plain; charset=UTF-8; format=flowed
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+X-Scanned-By: MIMEDefang 3.0 on 10.30.177.12
 
-On 3/3/26 8:37 AM, Ionut Nechita (Wind River) wrote:
-> +	/*
-> +	 * Ensure the store to quiesce_depth is visible before any
-> +	 * subsequent loads in blk_mq_run_hw_queue().
-> +	 */
-This comment does not make sense to me. How could there be a dependency
-of blk_mq_run_hw_queue() on *loads* that happen in 
-blk_mq_quiesce_queue_nowait() after atomic_inc(&q->quiesce_depth)?
+Hello RT-list!
 
-Bart.
+I'm pleased to announce the 5.10.254-rt150 stable release.
+
+This release is just an update to the new stable version, 5.10.254,
+and no RT-specific changes have been made.
+
+You can get this release via the git tree at:
+
+  git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
+
+  branch: v5.10-rt
+  Head SHA1: a8821e9aac9b10589a170665e857ffd233281225
+
+Or to build 5.10.254-rt150 directly, the following patches should be applied:
+
+  https://www.kernel.org/pub/linux/kernel/v5.x/linux-5.10.tar.xz
+
+  https://www.kernel.org/pub/linux/kernel/v5.x/patch-5.10.254.xz
+
+  https://www.kernel.org/pub/linux/kernel/projects/rt/5.10/older/patch-5.10.254-rt150.patch.xz
+
+Signing key fingerprint:
+
+  9354 0649 9972 8D31 D464  D140 F394 A423 F8E6 7C26
+
+All keys used for the above files and repositories can be found on the
+following git repository:
+
+   git://git.kernel.org/pub/scm/docs/kernel/pgpkeys.git
+
+Enjoy!
+Luis
+
