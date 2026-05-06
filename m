@@ -1,1502 +1,363 @@
-Received: from mail-qv1-f44.google.com (mail-qv1-f44.google.com [209.85.219.44])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from mx0a-0064b401.pphosted.com (mx0a-0064b401.pphosted.com [205.220.166.238])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 3C4304A33EF
-	for <linux-rt-users@vger.kernel.org>; Tue,  5 May 2026 17:44:42 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.219.44
-ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1778003085; cv=none; b=kRdmQCI7ZRxqsnhO4bCYi/1mGPFCvyYbniDSBzNB6vl0BnXHxtvvvlFSGXNe2xPUIIAzfnY2dccOdoUhciIQMiLl3S7eUiwTrHpU8b+xPdSbyMPzTS9gC41buW1jL5J8J+ZlsHNxJoDDOC6w8+ZDGghkd7ipTLciDPQjN8DveH4=
-ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1778003085; c=relaxed/simple;
-	bh=nkf9c0Q/XBb1qkuCebGdlmkBjV5Ljek6jGgS+7zLTaY=;
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 22A7E367F3A;
+	Wed,  6 May 2026 06:57:45 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=fail smtp.client-ip=205.220.166.238
+ARC-Seal:i=2; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
+	t=1778050667; cv=fail; b=PZP/hl2INsUJGLZYESXJLRjX1eBm22MLpN/rdr8vePSLP+fRKUWHJfTD72FvGLo8IKMI9a+uf8kP2/cbDn0o/1u7qny3DaySBy79nEn/i0hq6BlNljtjYRHdr9N1rdTHTf5ITIKX8OuMf719/ue3ufFYjTiQ7LgRQM2kHhzeAFA=
+ARC-Message-Signature:i=2; a=rsa-sha256; d=subspace.kernel.org;
+	s=arc-20240116; t=1778050667; c=relaxed/simple;
+	bh=TdBaoBXcUAZ491+fIeTDr0AcjrlwyJhDYdLh4ezK7+Q=;
 	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version:Content-Type; b=WLvbjvKAm/FJwqP5hvlvy0jGKzHZPQvp4j9wSmnf8bPtMxJ28L4MMEaEWJnNTjZMaAxfgsqQ8XiAJWswsnGUECyiYlHZy1dCkM2mK0hKLdgxBumvmV8EQSu3IP6LSNcZMPUXF6Fd7Diwu/w1Ge+kkQXm6u2Q6d1wvp05iKxdpjk=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=fail (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=PzBbl/JT; arc=none smtp.client-ip=209.85.219.44
-Authentication-Results: smtp.subspace.kernel.org; dmarc=fail (p=quarantine dis=none) header.from=redhat.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
+	 Content-Type:MIME-Version; b=ZYodKIxhJiWadzsF/pyJskmPXvN6+LsvK4KZWCrslkfPP/vdHmUfaQxB1jeHAaEHogEqzjBlQ7KyUFNgJLs/qEwjpORnllxqnbVCDJxNevvT4qSXn11kkqLOAe4GjzPQIHVds8ttJBAgp8D77aR4ECIKID9YS6rkR/jQb6zHiYE=
+ARC-Authentication-Results:i=2; smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=windriver.com; spf=pass smtp.mailfrom=windriver.com; dkim=pass (2048-bit key) header.d=windriver.com header.i=@windriver.com header.b=Nc9BLcVC; arc=fail smtp.client-ip=205.220.166.238
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=windriver.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=windriver.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="PzBbl/JT"
-Received: by mail-qv1-f44.google.com with SMTP id 6a1803df08f44-8b3fe2f19a4so50487626d6.2
-        for <linux-rt-users@vger.kernel.org>; Tue, 05 May 2026 10:44:42 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20251104; t=1778003081; x=1778607881; darn=vger.kernel.org;
-        h=content-transfer-encoding:mime-version:references:in-reply-to
-         :message-id:date:subject:cc:to:from:sender:from:to:cc:subject:date
-         :message-id:reply-to;
-        bh=YYqLYqwda/8VK6ZaJb5K3o2jtQwXoCpIXL4gqAhU7ys=;
-        b=PzBbl/JT7jbXgaWV7sAwZ4KYfYPgLN4aw+tnktNGezBapLqsZn2UUnBNcSQ2BfqY3h
-         hKMb8mG5WdBMERbaaLR7mb/7lLpQPWWIoqa5dRSLOOJbhkdwzdrEj+FBAWVCIFNkVCSQ
-         yJsvp0Pa6EOLT4eU+3fsKl56afNZ9RhZk35a3uN9+Va988hgQDKu7wPIUPQRTKwUzdvC
-         4GL26sAgiH6isoh3zOKCr4lGeNvgysH5g9rioJ+sBl1Yz1t4tkVXegPriyCkSyUn4psK
-         9b8BSKhvyEaUEEVQqhF9JwqrG+2LE2qW/QeQ8yy8BgD2ArDFbgUJ8J+k+OXUT2/1bmEO
-         Cbdw==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20251104; t=1778003081; x=1778607881;
-        h=content-transfer-encoding:mime-version:references:in-reply-to
-         :message-id:date:subject:cc:to:from:sender:x-gm-gg
-         :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
-        bh=YYqLYqwda/8VK6ZaJb5K3o2jtQwXoCpIXL4gqAhU7ys=;
-        b=dIb8GqJoXcvJWJXfkJgXdumfbSZTPM/WcRA8+lCf9OsRc6xjHUbT++Zn3rjnTMz5DB
-         bqdD6CCw7wcyGbUIazXSZfpQ+nD2HbqQOF+xR5zFeKaKOtBZs0zDjriD69754XduTe5D
-         JmeO8Hlg6Ci3SNKxtAHWLSqGY1KQxLNkchDNQVUY4NWjEHrhMJ5MBbrpDUHSGtWX8LV5
-         5vIwVBh9UqniNpYqzpKiv2C3nshdjwP2f3DOo9Mco2cM7Sf400SVHrN7NpikepHW9N1k
-         EtdQuayjOzXWBONRP1/qSjCmChwZEsxg0eUMExdIbgn2F2NlXVPKx3bcjZjEcX3OePfg
-         5HAw==
-X-Gm-Message-State: AOJu0YwFJCyEXfyWQZYu88awMdOuTQP373gCV5q1uTNjelBhahQqobpD
-	fQvKUh22VWyu8QN+0OS7e9yWyGtiPNNdt/9XqsoLhEZLIQwaOJ98hj+XP+aLuw==
-X-Gm-Gg: AeBDievzJWAEsV4m63E1pWKVJSjLIlSgIOgjI8z9NEHcjOR74RoK+qhogPS3DqroXG9
-	Z4HEoBfAIsaWzQUBoZNE28vyLI9xQWt42R2QLguiZedxmFfJr7cFr30h8K5zGsr3GW1IlFxUdji
-	jJxXQgX3V2wuFOkAtnkAn0PL04y6unbK2W+GqTT9y3g1uP490RXjD6hL3Ga6ixqIqr13xRE0fUU
-	zNGaDriD2F++5K7gb1gOaj2/H2+66PAuQKNiGzzJH5fhCBPnm1mFL+IPXzjEqP54t4jykgv5HsJ
-	x52YsRVFslX0AY0ejyer7LQOqJ1xMKKvluFflYdxTg/j95gpmj42aLP83MJlrSnO26uIAm8wM6y
-	t66x5LOTVMZV7xVMQuo5ble1fVDaxZ8w2U2FRZD33gdn4KbCbTrIDhLMsOdB9jwYFvlvM4P02Us
-	DkLkdR+xOBmEgMuLBcpDu5menEwijiTWz52+0/b15BXPVKZ0uupQF09qobm+Ze0bgvsJxKp70sj
-	5+6ttOS/4GSxLdiUC8Jtw4M+H73uw==
-X-Received: by 2002:a05:6214:390e:b0:8b1:f2f6:33b with SMTP id 6a1803df08f44-8b666cdecd4mr248035616d6.22.1778003080127;
-        Tue, 05 May 2026 10:44:40 -0700 (PDT)
-Received: from Cumhall.redhat.com ([216.209.112.32])
-        by smtp.gmail.com with ESMTPSA id 6a1803df08f44-8b5391e3636sm161817896d6.13.2026.05.05.10.44.38
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Tue, 05 May 2026 10:44:39 -0700 (PDT)
-Sender: John Kacur <jkacur@gmail.com>
-From: John Kacur <jkacur@redhat.com>
-To: linux-rt-users@vger.kernel.org
-Cc: Clark Williams <clark.williams@gmail.com>,
-	Tomas Glozar <tglozar@redhat.com>
-Subject: [PATCH 8/9] rteval: Organize cpuset tests and make core sharing tests skip gracefully
-Date: Tue,  5 May 2026 13:43:52 -0400
-Message-ID: <20260505174410.169442-9-jkacur@redhat.com>
+	dkim=pass (2048-bit key) header.d=windriver.com header.i=@windriver.com header.b="Nc9BLcVC"
+Received: from pps.filterd (m0250810.ppops.net [127.0.0.1])
+	by mx0a-0064b401.pphosted.com (8.18.1.11/8.18.1.11) with ESMTP id 6465oG6F443744;
+	Tue, 5 May 2026 23:56:39 -0700
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=windriver.com;
+	 h=cc:content-transfer-encoding:content-type:date:from
+	:in-reply-to:message-id:mime-version:references:subject:to; s=
+	PPS06212021; bh=/Eqv8vpXQTnH9KScNzOGef5QzVzsy/cx+TQnFGc9JdI=; b=
+	Nc9BLcVCZ3Nj5eEhr8FlI5+r8E30pmDjskCBHa+fn17dGMLOrC2pnwYOSQ3/7PkM
+	jZQf7WdMCXo+0jAdlbSY1unb8x71cA8VRQAs/aR50hvN4677ktLBibnHh2kgutPb
+	f+dULLv9yMMBsktQ/G2fBDox7X/1Ot6SLNGj1TQBigSFdLI8yXxdUUgmYXt1/Bqf
+	FvQ5JkpDjCACPlfcxNUbHEds5riA23EUKkeaVvuX/hIk1fdZvivuqRT+DwKoI5Nv
+	8YoSamZJazgPng4dL+BcXKCzBmY7Fh0d3EhT2HcDRvOiaA0ggrYrTim+dRW7upep
+	oHRJf7KRsgx9Z/VCbI/VJw==
+Received: from ch4pr04cu002.outbound.protection.outlook.com (mail-northcentralusazon11013011.outbound.protection.outlook.com [40.107.201.11])
+	by mx0a-0064b401.pphosted.com (PPS) with ESMTPS id 4dwchyvdnm-1
+	(version=TLSv1.3 cipher=TLS_AES_256_GCM_SHA384 bits=256 verify=NOT);
+	Tue, 05 May 2026 23:56:39 -0700 (PDT)
+ARC-Seal: i=1; a=rsa-sha256; s=arcselector10001; d=microsoft.com; cv=none;
+ b=R2rUojVa3JqAZbNGBWOMmW1j5vhgqyBxLOyE7P/YUhJPCNA0cRijQthj2/ZgkOgqSUopbwQBkWYhPEGT9a9LoeOWsgC4RvGKL3b98MNavYWtlOrfGFr1d4JIpjxAnmhvHR7DhT1QgZuDUwqKFkEF/FhJwBQGur2ZRHjeRA4c1aBoJ2nyPuKwMoo3Qm3MEDZEwSPKZrA5UdrB6IbTXuWSDK8vhgS3LYvccVdiU8WZI3+aj4JHCQOaHBcH4O/sYQ7Xng99rJQC4G9yZIt9YACAy/xzGXvvpgpuEWT11UAABXv8tsLH8Yj+dQWoMrdUoTmDRo+VqJheJmEzXn7X2h8ziQ==
+ARC-Message-Signature: i=1; a=rsa-sha256; c=relaxed/relaxed; d=microsoft.com;
+ s=arcselector10001;
+ h=From:Date:Subject:Message-ID:Content-Type:MIME-Version:X-MS-Exchange-AntiSpam-MessageData-ChunkCount:X-MS-Exchange-AntiSpam-MessageData-0:X-MS-Exchange-AntiSpam-MessageData-1;
+ bh=/Eqv8vpXQTnH9KScNzOGef5QzVzsy/cx+TQnFGc9JdI=;
+ b=Zv7XZptpuVyc4rsJPYsfRtRe4KZiurWVoPBlN4u5V4eKBalMlP6RNoJ7euq2tIH9GBlJW2ZrlNWCfT3/l4xmRFL5XrGHL9n9SCBKysW7sxJ81vcaCnCgvns83zUpd1NExNXCFHLwRYiQQko3IrswTXP+B2EXkLRIn1wmzjOI0n5e7LFRs8WU2DRzqkLsopHTwdTqYW7Gxa7sONIQKuNMjaicumwaiDu6U8JWUSgKCcXMcBVcYLv02qWe0NbHZUe4rHlV5gbeVNFkndVagwUKEiT1An1x7nTeYXihfy+OYI+Dcb5SB5X0dC59jOaqzwAkoIBeiZnmO4sicWluQFPRGA==
+ARC-Authentication-Results: i=1; mx.microsoft.com 1; spf=pass
+ smtp.mailfrom=windriver.com; dmarc=pass action=none
+ header.from=windriver.com; dkim=pass header.d=windriver.com; arc=none
+Received: from SJ2PR11MB7546.namprd11.prod.outlook.com (2603:10b6:a03:4cc::8)
+ by MN2PR11MB4678.namprd11.prod.outlook.com (2603:10b6:208:264::11) with
+ Microsoft SMTP Server (version=TLS1_2,
+ cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.20.9891.15; Wed, 6 May
+ 2026 06:56:37 +0000
+Received: from SJ2PR11MB7546.namprd11.prod.outlook.com
+ ([fe80::ca9b:dcf:8881:bced]) by SJ2PR11MB7546.namprd11.prod.outlook.com
+ ([fe80::ca9b:dcf:8881:bced%4]) with mapi id 15.20.9870.023; Wed, 6 May 2026
+ 06:56:37 +0000
+From: "Ionut Nechita (Wind River)" <ionut.nechita@windriver.com>
+To: axboe@kernel.dk, linux-block@vger.kernel.org
+Cc: bigeasy@linutronix.de, bvanassche@acm.org, clrkwllms@kernel.org,
+        rostedt@goodmis.org, ming.lei@redhat.com, muchun.song@linux.dev,
+        mkhalfella@purestorage.com, chris.friesen@windriver.com,
+        linux-kernel@vger.kernel.org, linux-rt-devel@lists.linux.dev,
+        linux-rt-users@vger.kernel.org, stable@vger.kernel.org,
+        ionut_n2001@yahoo.com, sunlightlinux@gmail.com
+Subject: [PATCH v6 1/1] block/blk-mq: use atomic_t for quiesce_depth to avoid lock contention on RT
+Date: Wed,  6 May 2026 09:56:12 +0300
+Message-ID: <406f424c0a718bf492d40c206983e355e600945a.1778048987.git.ionut.nechita@windriver.com>
 X-Mailer: git-send-email 2.54.0
-In-Reply-To: <20260505174410.169442-1-jkacur@redhat.com>
-References: <20260505174410.169442-1-jkacur@redhat.com>
+In-Reply-To: <cover.1778048987.git.ionut.nechita@windriver.com>
+References: <cover.1778048987.git.ionut.nechita@windriver.com>
+Content-Transfer-Encoding: 8bit
+Content-Type: text/plain
+X-ClientProxiedBy: VI1PR07CA0137.eurprd07.prod.outlook.com
+ (2603:10a6:802:16::24) To SJ2PR11MB7546.namprd11.prod.outlook.com
+ (2603:10b6:a03:4cc::8)
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
 List-Subscribe: <mailto:linux-rt-users+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: 8bit
+X-MS-PublicTrafficType: Email
+X-MS-TrafficTypeDiagnostic: SJ2PR11MB7546:EE_|MN2PR11MB4678:EE_
+X-MS-Office365-Filtering-Correlation-Id: f875e654-7ef1-44bd-6317-08deab3c9e01
+X-MS-Exchange-SenderADCheck: 1
+X-MS-Exchange-AntiSpam-Relay: 0
+X-Microsoft-Antispam:
+	BCL:0;ARA:13230040|366016|10070799003|52116014|376014|7416014|1800799024|18002099003|22082099003|56012099003;
+X-Microsoft-Antispam-Message-Info:
+	J51aEHMLULWR+2z5SPRVAuh9auSxz54xXj7S7hMwZU9UAw4ccEylgazrma0nZHIXDowR90vHu9FMpoxqIsebe9lZRi7Vtnau56Pzb8CpXW0PcKCZ2OX4+6uTqVpAQYgBnC4CoIpo22v9nt8OkvaiCBgpjD/g8UCNWXM/1aXvXDTTUV9ggO1R/0OdaOY4Ylw565FK42hKuFAXld32rlhytn3dMI69NNks0ABcvPqkx+etCYYjFtIX7vJRBpe3TSnGT2X+crs/3P14l4wEXAxUMmtbk076IHhdkQUhgp5P4PN+NWnRCHK79j8VcasFBUrdKbcK7itw5vM8bxJZv2pJMUnVV/M/H+ydy7JzFzpOHu+RFgl0Moa9DuI/qnWxReSDt5pTpbr/J/0vmunuzaUMrI7Sf4j4ioZRIf0u3elYtMa/bReXoXcyu9uuDvogXzTsLsaY3BlsM310qhNUMSMCHkqSc5Pn5vhagBtVy7DhbtyN0CBaNAZ63PJ63DULleAVvouPhoyuiD74Juro9kznYup8Z+6TxJ4WOdqDvkY9qR7YN/6CEY1PsarJO5w0ioB+kXTZz8Ve376ympJsbQyIPcVLL0LP9RpC18ffI/C5vXkSKzd4KE7JaA111Wpy4rWCUkPLEnI7WTvCS/MU/zkkTtmPiuP9BWi6aVuJTIrgm82E11wFgkkul3lXnZ3txNEo
+X-Forefront-Antispam-Report:
+	CIP:255.255.255.255;CTRY:;LANG:en;SCL:1;SRV:;IPV:NLI;SFV:NSPM;H:SJ2PR11MB7546.namprd11.prod.outlook.com;PTR:;CAT:NONE;SFS:(13230040)(366016)(10070799003)(52116014)(376014)(7416014)(1800799024)(18002099003)(22082099003)(56012099003);DIR:OUT;SFP:1101;
+X-MS-Exchange-AntiSpam-MessageData-ChunkCount: 2
+X-MS-Exchange-AntiSpam-MessageData-0:
+	=?us-ascii?Q?+9qAE80GPDq4qlymGic1oqmos/clrs39jsV56Jhk084e4wdzZA0G6J1nQjki?=
+ =?us-ascii?Q?UDeNj6XChwhpXznvAIq7HGLgQJ4gSf7NIRwmilWDcAxpj37BWM4+WnFM5+FF?=
+ =?us-ascii?Q?Ekr/qAyAj2V1JR0jTPGARQX/4o4OYrItJtv209H1lJHYEo0B/BpTnrEW6/vG?=
+ =?us-ascii?Q?/XCC0a2kcsJ7DLsuzjHwlZrcaES+1QV176MLppm9V1UmjYKpltiO0/dmwvUM?=
+ =?us-ascii?Q?l4Gmlfhd0ZqzOdm8/FxUoJ/HZyuSA9LnhbCMwwGxG4k5NIn0pl9vc3OVOhHT?=
+ =?us-ascii?Q?fMlZgZJbDG83pb7QKlkbzfxh2PsU2EeC6fH1QaGZETVy26Z1fdeuoQa80Iub?=
+ =?us-ascii?Q?mAQrgqFFf6uUeLksxS2Im2c0R82HCE0nrEcRsFNJRsUCxlI5Vrk5Z2rV5vk1?=
+ =?us-ascii?Q?ihhH2TGGyOFWwdVTlPlbeebQyitW7KEohOIu25TVPnKgM+8ZxiuOaGVeJ5pf?=
+ =?us-ascii?Q?E7G0JbwCN3MhPl8tBnai2tSXFuYRfgI0x4f+PhIDRXA4H/8gfwyri5ZDjZru?=
+ =?us-ascii?Q?Ee2q9zqi7QFY5Di9E3s3i4SDGN9jbCnCASikzyw7AJ2afUWkGy8lqrr/gPXh?=
+ =?us-ascii?Q?SY4NlZx7feRHA7Pvd+jUZXq2ZaLexeCf7wys2xD+8Uw520YfzajdtuJx8fsX?=
+ =?us-ascii?Q?ALDYqYA2vrGGgSKvOM+76OOw5+OZQX60QTE4oWLHMZGhuJa6eOANZmT92oXV?=
+ =?us-ascii?Q?BCCa5lMONyYyZgHtIpa0L95IbT8PMkPK+U369ZZ+uK36QU1dcV8RmWhH+Caj?=
+ =?us-ascii?Q?/BchEdU07vqaProQeSeYZ3AFIsUZQDjkQ043p7kGuvH8IdZ6ZkU38Pc4j3Lu?=
+ =?us-ascii?Q?/iy5ThJqJwn+HjDKkFq/2bLBWfvcCZOMtWjjiRukNySTCpmjmaSQsheyaS4g?=
+ =?us-ascii?Q?1iqFc2Hv7xkSHw+kP1C7cB8trA5oZnep/3s9Q6wSTnx8E0cIykIb8ea9fH/u?=
+ =?us-ascii?Q?WpIMBu5QPI2ajL1cjYyVT9hQbLjHs3PRXIDfwzsQd9BM7vYYgIIXAlK5yjE+?=
+ =?us-ascii?Q?TV1EzOgGNhKQWENEvE0WljvB251JqctWKIbaa5IWQtUIL364W/7YYxy4gxxk?=
+ =?us-ascii?Q?o/4+4d9O+yVQtBTU0QTLsKDKW2QNgi5p66LmICW0tixjOQnISoBramNIcoDf?=
+ =?us-ascii?Q?3zKGKTbAbaFQB3FehUDskuZN7bWk1xAvjTYGQk2KCqHN36ZWd1P4cUwaMj/d?=
+ =?us-ascii?Q?YkrDRfjiLTIaySxXHUDDtMp4LrV3xwK0nIvLpvXSaos9AprM3Z3DNTXeQ0L/?=
+ =?us-ascii?Q?8tqt6XN0y+t+4qpzO/+L22iqAYcx4ilSnG19X0iJDhSU/ZyzSgCvGES3SWYP?=
+ =?us-ascii?Q?yMuFHGsY089gOhB96bSMRtteC5prwPdU3NdhJCikmT8PT9gk/tuNUOn/HAue?=
+ =?us-ascii?Q?lwpSzH4oPfraLdJaJoMbxmMskQJRURuXq38HUCBD9rkdwVhewYpCB8O1ihsU?=
+ =?us-ascii?Q?NhDpkAc/Nbf0UWr/L4zCBT1YzS2owgR6jZEKQLvWY3aNYdGqoQSPH4c3kJYP?=
+ =?us-ascii?Q?aroS/plhqiYOi5fMMRRW7XLZN4bDOdSlme1abB69exj31kp4y8hMYpTEpSEZ?=
+ =?us-ascii?Q?gBL4VTFFbnNB/yCO84yzI6H3VMi2nUhHseCIDAj31Zk+9e11TRJsAGoPDsLC?=
+ =?us-ascii?Q?7K/2O4YQsoQmWDjXUOyBr9YKX3k5e746aHUOs2yJUbAF+w+idA6DmRiKrvBx?=
+ =?us-ascii?Q?gLdHss1yVDNJbGuiejQnnLbqtmM8YL3B/Kvq11j/mLZRs9XOdvxFVWUvOobD?=
+ =?us-ascii?Q?Ok9NpWlnZZX7Aob2I1mTNA0i6uI+YRWZ5ddwGvPKetuToRywXefgrzz+E1kW?=
+X-MS-Exchange-AntiSpam-MessageData-1: STeqjAHXIx1tPZmIV0Saj60todGA+IJRXno=
+X-Exchange-RoutingPolicyChecked:
+	bmUVXC3FYtLe5imA/xdDo3WHD36d2KyLmPeHxhazY0sRvC+PTpGMTdtMWufiVxXt15Bp2fekspRqCEmDSFuwiaL7BqBVQ5c3h22hRlpZPCSFclDIGHgvYXZpzBNe9nuizkV+MuHDN1agPXw1xjeUjnQWEme9azzPR1VVuwFrk9ssYNgB5t+zGNap+bWS5xzhACaVIx9y19eecoaykD6HpdxykCY3Br/z5tVw62NwAtYPJugvCgbAdIrWXGlfA5D8iTyFj/3NkwqPznwHrVXxlSzoEtXOVOqpScwxEJpEcQNM/fLEaXsCY//36EsOT3Tz6b5YidkWxquHVKx1SAhgWw==
+X-OriginatorOrg: windriver.com
+X-MS-Exchange-CrossTenant-Network-Message-Id: f875e654-7ef1-44bd-6317-08deab3c9e01
+X-MS-Exchange-CrossTenant-AuthSource: SJ2PR11MB7546.namprd11.prod.outlook.com
+X-MS-Exchange-CrossTenant-AuthAs: Internal
+X-MS-Exchange-CrossTenant-OriginalArrivalTime: 06 May 2026 06:56:37.2131
+ (UTC)
+X-MS-Exchange-CrossTenant-FromEntityHeader: Hosted
+X-MS-Exchange-CrossTenant-Id: 8ddb2873-a1ad-4a18-ae4e-4644631433be
+X-MS-Exchange-CrossTenant-MailboxType: HOSTED
+X-MS-Exchange-CrossTenant-UserPrincipalName: 6Z/K1Tvzp4NsX9tSzCwsFtfWvR1b37q/K8IUezI1Ra/1TK+2RE4kuMjUiwGa+sD/6nKUTmsf0jy7Hj1GwQWNZSGedv/Po8G9n1Z8cnKLOBg=
+X-MS-Exchange-Transport-CrossTenantHeadersStamped: MN2PR11MB4678
+X-Proofpoint-Spam-Details-Enc: AW1haW4tMjYwNTA2MDA2NiBTYWx0ZWRfXyHV/UGRwp9mK
+ KKZ6MY1toX1XtPfIOcx9gm/aIvM8xrAL4+6VsblahFWytBgd5jyFgivAsV+85usJ/sLVzRzJuRa
+ jC1dMoCD6X258EDeE7u7KsbwA9Y+jwmmp56sT6I/BRQbr78sdc0Mc30x/OCdecjzoYs9SeJVD+/
+ R8/4EHtZB5F2cNmp6SSXLNkoh7OnE2YQAj1IVHxEu1KJQBcBnX2XpUZort24pmUVUDNT37Q5jkB
+ i4adsn2lK44/OEhAdPQmAIAcnwtGAxPTfqLtik3i7cUZGkoBOErpOAi1OaBodRld8gOcWqrnSvp
+ 8cCz60d3T5+KUPuUSe8WUK9dPxdMGi16mqRYPOjsTHQqtWjMmkCsQS+9p22H2YfhIwmZF2e74VI
+ AxH64X+E/0BpOFEgkdUFXOOYl9L0kxZN5gEf6I3RmUFxUTDauPHwQZsBAvhNPhi+FIqGQMik+HV
+ HoY5KT1xpvahwVYjEvQ==
+X-Proofpoint-ORIG-GUID: BmG17TtYRDN8vCPm5uJUYjYGpveRJdGE
+X-Authority-Analysis: v=2.4 cv=LsSiDHdc c=1 sm=1 tr=0 ts=69fae627 cx=c_pps
+ a=+Z8LngAnY8uKoQL+MiJmWw==:117 a=6eWqkTHjU83fiwn7nKZWdM+Sl24=:19
+ a=z/mQ4Ysz8XfWz/Q5cLBRGdckG28=:19 a=lCpzRmAYbLLaTzLvsPZ7Mbvzbb8=:19
+ a=xqWC_Br6kY4A:10 a=NGcC8JguVDcA:10 a=VkNPw1HP01LnGYTKEx00:22
+ a=bi6dqmuHe4P4UrxVR6um:22 a=HK-ge7EqtdluswH-FwHe:22 a=VwQbUJbxAAAA:8
+ a=t7CeM3EgAAAA:8 a=3tr2qsFa3FZPBZ7I5BMA:9 a=FdTzh2GWekK77mhwV6Dw:22
+X-Proofpoint-GUID: BmG17TtYRDN8vCPm5uJUYjYGpveRJdGE
+X-Proofpoint-Virus-Version: vendor=baseguard
+ engine=ICAP:2.0.293,Aquarius:18.0.1143,Hydra:6.1.51,FMLib:17.12.100.49
+ definitions=2026-05-05_02,2026-04-30_02,2025-10-01_01
+X-Proofpoint-Spam-Details: rule=outbound_notspam policy=outbound score=0
+ phishscore=0 priorityscore=1501 lowpriorityscore=0 spamscore=0 suspectscore=0
+ adultscore=0 clxscore=1011 malwarescore=0 bulkscore=0 impostorscore=0
+ classifier=typeunknown authscore=0 authtc= authcc= route=outbound adjust=0
+ reason=mlx scancount=1 engine=8.22.0-2604200000 definitions=main-2605060066
 
-Move cpuset integration tests from local/ to tests/cpusets/ and improve
-test scripts to handle missing isolated CPUs gracefully.
+In RT kernel (PREEMPT_RT), commit 6bda857bcbb86 ("block: fix ordering
+between checking QUEUE_FLAG_QUIESCED request adding") causes severe
+performance regression on systems with multiple MSI-X interrupt
+vectors.
 
-Cpuset test organization:
-- Create tests/cpusets/ directory structure
-- Move local/test-cpusets.sh to tests/cpusets/test-cpusets.sh
-- Add comprehensive README.md documenting:
-  * 10 test scenarios (7 basic, 3 requiring isolcpus)
-  * Prerequisites and system requirements
-  * Usage instructions via Makefile and standalone
-  * Expected results and troubleshooting guide
+The above change introduced spinlock_t queue_lock usage in
+blk_mq_run_hw_queue() to synchronize QUEUE_FLAG_QUIESCED checks
+with blk_mq_unquiesce_queue(). While this works correctly in
+standard kernel, it causes catastrophic serialization in RT kernel
+where spinlock_t converts to sleeping rt_mutex.
 
-- Add cpuset-tests Makefile target
-  * Requires root privileges (checks and provides helpful error)
-  * Runs tests/cpusets/test-cpusets.sh
-  * Added to help text and .PHONY declaration
+Problem in RT kernel:
+- blk_mq_run_hw_queue() is called from IRQ thread context
+- With multiple MSI-X vectors, all IRQ threads contend on
+  the same queue_lock
+- queue_lock becomes rt_mutex (sleeping) in RT kernel
+- IRQ threads serialize and enter D-state waiting for lock
+- Throughput drops from 640 MB/s to 153 MB/s
 
-Improved test handling for missing isolated CPUs:
-- Update test_isolated_cpus.sh to skip gracefully without isolcpus
-  * Print warning message explaining how to configure isolcpus
-  * Exit 0 (success) instead of failing
-  * Provide instructions for both RHEL/Fedora and Debian/Ubuntu
+Solution:
+Convert quiesce_depth to atomic_t and use it directly for quiesce
+state checking, eliminating QUEUE_FLAG_QUIESCED entirely. This
+removes the need for any locking in the hot path.
 
-- Update test_core_sharing_scenarios.sh similarly
-  * Check for isolated CPUs before running scenarios
-  * Skip with informative message if not configured
+The atomic counter serves as both the depth tracker and the quiesce
+indicator (depth > 0 means quiesced). This eliminates the race
+window that existed between updating the depth and the flag.
 
-This consolidates all test suites under tests/ directory:
-- tests/cpusets/       - Cpuset integration tests
-- tests/e2e/           - End-to-end tests
-- tests/regression/    - Regression tests
-- tests/*.py           - Unit tests
+Memory ordering is ensured by:
+- smp_mb__after_atomic() after modifying quiesce_depth in
+  blk_mq_quiesce_queue_nowait() and blk_mq_unquiesce_queue()
+- smp_rmb() in blk_mq_run_hw_queue() before re-checking the
+  quiesce state, paired with the writer-side barriers above
 
-Addresses TODO: Move cpuset tests to tests/ directory
+Performance impact:
+- RT kernel: eliminates lock contention, restores full throughput
+- Non-RT kernel: atomic ops are similar cost to the previous
+  spinlock acquire/release, no regression expected
 
-Assisted-by: Claude Sonnet 4.5 <noreply@anthropic.com>
-Signed-off-by: John Kacur <jkacur@redhat.com>
+Test results on RT kernel:
+Hardware: Broadcom/LSI MegaRAID 12GSAS/PCIe Secure SAS39xx
+  (megaraid_sas driver, 128 MSI-X vectors, 120 hw queues)
+- Before: 153 MB/s, IRQ threads in D-state
+- After:  640 MB/s, no IRQ threads blocked
+
+Suggested-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Reviewed-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Fixes: 6bda857bcbb86 ("block: fix ordering between checking QUEUE_FLAG_QUIESCED request adding")
+Cc: stable@vger.kernel.org
+Signed-off-by: Ionut Nechita <ionut.nechita@windriver.com>
 ---
- Makefile                       |  14 +-
- test_core_sharing_scenarios.sh | 260 ++++++++++++
- test_isolated_cpus.sh          | 119 ++++++
- tests/cpusets/README.md        | 199 +++++++++
- tests/cpusets/test-cpusets.sh  | 732 +++++++++++++++++++++++++++++++++
- 5 files changed, 1323 insertions(+), 1 deletion(-)
- create mode 100755 test_core_sharing_scenarios.sh
- create mode 100755 test_isolated_cpus.sh
- create mode 100644 tests/cpusets/README.md
- create mode 100755 tests/cpusets/test-cpusets.sh
+ block/blk-core.c       |  1 +
+ block/blk-mq-debugfs.c |  1 -
+ block/blk-mq.c         | 53 +++++++++++++++++++++---------------------
+ include/linux/blkdev.h |  9 ++++---
+ 4 files changed, 34 insertions(+), 30 deletions(-)
 
-diff --git a/Makefile b/Makefile
-index eab950775d8d..bacfc3120148 100644
---- a/Makefile
-+++ b/Makefile
-@@ -33,6 +33,17 @@ regression-tests:
- 	./tests/regression/test-timerlat-error-handling.sh
- 	./tests/regression/test-cyclictest-error-handling.sh
+diff --git a/block/blk-core.c b/block/blk-core.c
+index 17450058ea6d..1cafcca0975a 100644
+--- a/block/blk-core.c
++++ b/block/blk-core.c
+@@ -434,6 +434,7 @@ struct request_queue *blk_alloc_queue(struct queue_limits *lim, int node_id)
+ 	mutex_init(&q->limits_lock);
+ 	mutex_init(&q->rq_qos_mutex);
+ 	spin_lock_init(&q->queue_lock);
++	atomic_set(&q->quiesce_depth, 0);
  
-+cpuset-tests:
-+	@echo "Running cpuset integration tests"
-+	@echo "These tests require root privileges to create and manage cpusets"
-+	@echo ""
-+	@if [ "$$(id -u)" != "0" ]; then \
-+		echo "ERROR: cpuset-tests must be run as root"; \
-+		echo "Usage: sudo make cpuset-tests"; \
-+		exit 1; \
-+	fi
-+	./tests/cpusets/test-cpusets.sh
-+
- runit:
- 	[ -d $(HERE)/run ] || mkdir run
- 	$(PYTHON) rteval-cmd -D -L -v --workdir=$(HERE)/run --loaddir=$(HERE)/loadsource --duration=$(D) -f $(HERE)/rteval.conf -i $(HERE)/rteval $(EXTRA)
-@@ -92,6 +103,7 @@ help:
- 	@echo "        unit-tests:       run unit tests"
- 	@echo "        e2e-tests:        run end-to-end tests"
- 	@echo "        regression-tests: run regression tests for measurement modules (requires root)"
-+	@echo "        cpuset-tests:     run cpuset integration tests (requires root)"
- 	@echo "        tarfile:          create the source tarball"
- 	@echo "        install:          install rteval locally"
- 	@echo "        clean:            cleanup generated files"
-@@ -109,4 +121,4 @@ tags:
- cleantags:
- 	rm -f tags
+ 	init_waitqueue_head(&q->mq_freeze_wq);
+ 	mutex_init(&q->mq_freeze_lock);
+diff --git a/block/blk-mq-debugfs.c b/block/blk-mq-debugfs.c
+index 047ec887456b..1b0aec3036e6 100644
+--- a/block/blk-mq-debugfs.c
++++ b/block/blk-mq-debugfs.c
+@@ -89,7 +89,6 @@ static const char *const blk_queue_flag_name[] = {
+ 	QUEUE_FLAG_NAME(INIT_DONE),
+ 	QUEUE_FLAG_NAME(STATS),
+ 	QUEUE_FLAG_NAME(REGISTERED),
+-	QUEUE_FLAG_NAME(QUIESCED),
+ 	QUEUE_FLAG_NAME(RQ_ALLOC_TIME),
+ 	QUEUE_FLAG_NAME(HCTX_ACTIVE),
+ 	QUEUE_FLAG_NAME(SQ_SCHED),
+diff --git a/block/blk-mq.c b/block/blk-mq.c
+index 4c5c16cce4f8..c1281e4d4d83 100644
+--- a/block/blk-mq.c
++++ b/block/blk-mq.c
+@@ -260,12 +260,13 @@ EXPORT_SYMBOL_GPL(blk_mq_unfreeze_queue_non_owner);
+  */
+ void blk_mq_quiesce_queue_nowait(struct request_queue *q)
+ {
+-	unsigned long flags;
+-
+-	spin_lock_irqsave(&q->queue_lock, flags);
+-	if (!q->quiesce_depth++)
+-		blk_queue_flag_set(QUEUE_FLAG_QUIESCED, q);
+-	spin_unlock_irqrestore(&q->queue_lock, flags);
++	atomic_inc(&q->quiesce_depth);
++	/*
++	 * Pairs with smp_rmb() in blk_mq_run_hw_queue(): make the
++	 * incremented quiesce_depth observable to readers re-checking
++	 * the quiesce state, so they don't dispatch on a quiesced queue.
++	 */
++	smp_mb__after_atomic();
+ }
+ EXPORT_SYMBOL_GPL(blk_mq_quiesce_queue_nowait);
  
--.PHONY: tests unit-tests e2e-tests regression-tests
-+.PHONY: tests unit-tests e2e-tests regression-tests cpuset-tests
-diff --git a/test_core_sharing_scenarios.sh b/test_core_sharing_scenarios.sh
-new file mode 100755
-index 000000000000..7ff04b09f11e
---- /dev/null
-+++ b/test_core_sharing_scenarios.sh
-@@ -0,0 +1,260 @@
-+#!/bin/bash
-+# Comprehensive test for core sharing warnings in different scenarios
-+# Tests both console warnings and XML/XSLT output
-+
-+set -e
-+
-+echo "========================================================================="
-+echo "Core Sharing Warning Test Suite"
-+echo "========================================================================="
-+echo ""
-+
-+# Check for isolated CPUs
-+ISOLATED=$(cat /sys/devices/system/cpu/isolated 2>/dev/null || echo "")
-+if [ -z "$ISOLATED" ]; then
-+    echo "⚠ WARNING: No isolated CPUs found!"
-+    echo ""
-+    echo "This test requires isolated CPUs configured via kernel boot parameter."
-+    echo "Example: isolcpus=0,8,1,9 (or similar based on your CPU topology)"
-+    echo ""
-+    echo "To configure isolated CPUs:"
-+    echo "  1. Edit /etc/default/grub"
-+    echo "  2. Add isolcpus=<cpulist> to GRUB_CMDLINE_LINUX"
-+    echo "  3. Update bootloader:"
-+    echo "     - RHEL/Fedora: sudo grub2-mkconfig -o /boot/grub2/grub.cfg"
-+    echo "     - Debian/Ubuntu: sudo update-grub"
-+    echo "  4. Reboot"
-+    echo ""
-+    echo "SKIPPING: Tests require isolated CPUs"
-+    exit 0
-+fi
-+echo "✓ Isolated CPUs detected: $ISOLATED"
-+echo ""
-+
-+# Cleanup old test results
-+rm -rf rteval-test-scenario-* 2>/dev/null || true
-+
-+# CPU topology on this system:
-+# CPUs 0,8 share core 0 (both isolated)
-+# CPUs 1,9 share core 1 (both isolated)
-+# CPUs 4,12 share core 4 (neither isolated)
-+
-+# =========================================================================
-+echo "Scenario 1: Only isolated CPU warnings (default behavior)"
-+echo "  Housekeeping: 0 (isol), Measurement: 8 (isol), Load: 1 (isol)"
-+echo "  Expected: Warnings for 0 vs 8 (both isol) only"
-+echo "-------------------------------------------------------------------------"
-+
-+WORKDIR="rteval-test-scenario-1"
-+mkdir -p "$WORKDIR"
-+
-+./rteval-cmd -D -L -d 30s --housekeeping 0 --measurement-cpulist 8 --loads-cpulist 1 \
-+    -w "$WORKDIR" 2>&1 | tee "$WORKDIR/console.log"
-+
-+echo ""
-+echo "Console warnings:"
-+grep -i "warning.*shares core" "$WORKDIR/console.log" || echo "  (none found)"
-+
-+# Find the actual rteval output directory
-+SUMMARY_XML=$(find "$WORKDIR" -name "summary.xml" -type f | head -1)
-+
-+echo ""
-+echo "XML CoreSharingWarnings:"
-+if [ -z "$SUMMARY_XML" ]; then
-+    echo "  ✗ FAIL: summary.xml not found in $WORKDIR"
-+elif grep -q "CoreSharingWarnings" "$SUMMARY_XML"; then
-+    grep -A 10 "CoreSharingWarnings" "$SUMMARY_XML" | grep -E "(warning>|CoreSharingWarnings)" || true
-+    WARN_COUNT=$(grep -c "<warning>" "$SUMMARY_XML" || echo "0")
-+    echo "  Total warnings in XML: $WARN_COUNT"
-+    if [ "$WARN_COUNT" -eq 1 ]; then
-+        echo "  ✓ PASS: Expected 1 warning"
-+    else
-+        echo "  ✗ FAIL: Expected 1 warning, got $WARN_COUNT"
-+    fi
-+else
-+    echo "  ✗ FAIL: No CoreSharingWarnings section found"
-+fi
-+
-+echo ""
-+echo "Text report (via -Z):"
-+if [ -n "$SUMMARY_XML" ]; then
-+    ./rteval-cmd -Z "$SUMMARY_XML" 2>&1 | grep -A 5 "Core Sharing" || echo "  (no warnings in text report)"
-+else
-+    echo "  (summary.xml not found)"
-+fi
-+
-+echo ""
-+echo ""
-+
-+# =========================================================================
-+echo "Scenario 2: Non-isolated warnings WITHOUT flag (should not warn)"
-+echo "  Measurement: 4 (non-isol), Load: 12 (non-isol)"
-+echo "  Expected: No warnings (flag not used)"
-+echo "-------------------------------------------------------------------------"
-+
-+WORKDIR="rteval-test-scenario-2"
-+mkdir -p "$WORKDIR"
-+
-+./rteval-cmd -D -L -d 30s --measurement-cpulist 4 --loads-cpulist 12 \
-+    -w "$WORKDIR" 2>&1 | tee "$WORKDIR/console.log"
-+
-+echo ""
-+echo "Console warnings:"
-+if grep -qi "warning.*shares core" "$WORKDIR/console.log"; then
-+    echo "  ✗ FAIL: Unexpected warning found"
-+    grep -i "warning.*shares core" "$WORKDIR/console.log"
-+else
-+    echo "  ✓ PASS: No warnings (correct)"
-+fi
-+
-+# Find the actual rteval output directory
-+SUMMARY_XML=$(find "$WORKDIR" -name "summary.xml" -type f | head -1)
-+
-+echo ""
-+echo "XML CoreSharingWarnings:"
-+if [ -z "$SUMMARY_XML" ]; then
-+    echo "  ✗ FAIL: summary.xml not found in $WORKDIR"
-+elif grep -q "CoreSharingWarnings" "$SUMMARY_XML"; then
-+    echo "  ✗ FAIL: CoreSharingWarnings section should not exist"
-+    grep -A 10 "CoreSharingWarnings" "$SUMMARY_XML" | grep -E "(warning>|CoreSharingWarnings)" || true
-+else
-+    echo "  ✓ PASS: No CoreSharingWarnings section (correct)"
-+fi
-+
-+echo ""
-+echo ""
-+
-+# =========================================================================
-+echo "Scenario 3: Non-isolated warnings WITH flag (should warn)"
-+echo "  Measurement: 4 (non-isol), Load: 12 (non-isol)"
-+echo "  Flag: --warn-non-isolated-core-sharing"
-+echo "  Expected: Warning for 4 vs 12"
-+echo "-------------------------------------------------------------------------"
-+
-+WORKDIR="rteval-test-scenario-3"
-+mkdir -p "$WORKDIR"
-+
-+./rteval-cmd -D -L -d 30s --measurement-cpulist 4 --loads-cpulist 12 \
-+    --warn-non-isolated-core-sharing -w "$WORKDIR" 2>&1 | tee "$WORKDIR/console.log"
-+
-+echo ""
-+echo "Console warnings:"
-+if grep -qi "warning.*CPU 4.*CPU 12" "$WORKDIR/console.log"; then
-+    echo "  ✓ PASS: Found expected warning"
-+    grep -i "warning.*shares core" "$WORKDIR/console.log"
-+else
-+    echo "  ✗ FAIL: Expected warning not found"
-+fi
-+
-+# Find the actual rteval output directory
-+SUMMARY_XML=$(find "$WORKDIR" -name "summary.xml" -type f | head -1)
-+
-+echo ""
-+echo "XML CoreSharingWarnings:"
-+if [ -z "$SUMMARY_XML" ]; then
-+    echo "  ✗ FAIL: summary.xml not found in $WORKDIR"
-+elif grep -q "CoreSharingWarnings" "$SUMMARY_XML"; then
-+    grep -A 10 "CoreSharingWarnings" "$SUMMARY_XML" | grep -E "(warning>|CoreSharingWarnings)" || true
-+    WARN_COUNT=$(grep -c "<warning>" "$SUMMARY_XML" || echo "0")
-+    echo "  Total warnings in XML: $WARN_COUNT"
-+    if [ "$WARN_COUNT" -eq 1 ]; then
-+        echo "  ✓ PASS: Expected 1 warning in XML"
-+    else
-+        echo "  ✗ FAIL: Expected 1 warning, got $WARN_COUNT"
-+    fi
-+else
-+    echo "  ✗ FAIL: CoreSharingWarnings section not found in XML"
-+fi
-+
-+echo ""
-+echo "Text report (via -Z):"
-+if [ -n "$SUMMARY_XML" ]; then
-+    ./rteval-cmd -Z "$SUMMARY_XML" 2>&1 | grep -A 5 "Core Sharing" || echo "  ✗ FAIL: No warnings in text report"
-+else
-+    echo "  (summary.xml not found)"
-+fi
-+
-+echo ""
-+echo ""
-+
-+# =========================================================================
-+echo "Scenario 4: BOTH isolated and non-isolated warnings WITH flag"
-+echo "  Housekeeping: 0 (isol), Measurement: 8,4 (8 isol, 4 not), Load: 12 (not isol)"
-+echo "  Flag: --warn-non-isolated-core-sharing"
-+echo "  Expected: 2 warnings - one for 0 vs 8 (both isol), one for 4 vs 12 (neither isol)"
-+echo "-------------------------------------------------------------------------"
-+
-+WORKDIR="rteval-test-scenario-4"
-+mkdir -p "$WORKDIR"
-+
-+./rteval-cmd -D -L -d 30s --housekeeping 0 --measurement-cpulist 8,4 --loads-cpulist 12 \
-+    --warn-non-isolated-core-sharing -w "$WORKDIR" 2>&1 | tee "$WORKDIR/console.log"
-+
-+echo ""
-+echo "Console warnings:"
-+grep -i "warning.*shares core" "$WORKDIR/console.log" || echo "  (none found)"
-+
-+CONSOLE_WARN_COUNT=$(grep -ci "warning.*shares core" "$WORKDIR/console.log" || echo "0")
-+echo "  Total console warnings: $CONSOLE_WARN_COUNT"
-+
-+# Find the actual rteval output directory
-+SUMMARY_XML=$(find "$WORKDIR" -name "summary.xml" -type f | head -1)
-+
-+echo ""
-+echo "XML CoreSharingWarnings:"
-+if [ -z "$SUMMARY_XML" ]; then
-+    echo "  ✗ FAIL: summary.xml not found in $WORKDIR"
-+elif grep -q "CoreSharingWarnings" "$SUMMARY_XML"; then
-+    echo "  Warnings found:"
-+    grep -A 10 "CoreSharingWarnings" "$SUMMARY_XML" | grep "<warning>" | sed 's/^/    /'
-+
-+    XML_WARN_COUNT=$(grep -c "<warning>" "$SUMMARY_XML" || echo "0")
-+    echo "  Total warnings in XML: $XML_WARN_COUNT"
-+
-+    # Check for both expected warnings
-+    HAS_ISOL_WARN=$(grep -c "CPU 0.*isol.*CPU 8.*isol" "$SUMMARY_XML" || echo "0")
-+    HAS_NON_ISOL_WARN=$(grep -c "CPU 4 shares core with load CPU 12" "$SUMMARY_XML" || echo "0")
-+
-+    if [ "$XML_WARN_COUNT" -eq 2 ] && [ "$HAS_ISOL_WARN" -eq 1 ] && [ "$HAS_NON_ISOL_WARN" -eq 1 ]; then
-+        echo "  ✓ PASS: Both warnings present in XML"
-+    else
-+        echo "  ✗ FAIL: Expected 2 specific warnings (isolated and non-isolated)"
-+    fi
-+else
-+    echo "  ✗ FAIL: CoreSharingWarnings section not found in XML"
-+fi
-+
-+echo ""
-+echo "Text report (via -Z):"
-+if [ -n "$SUMMARY_XML" ]; then
-+    ./rteval-cmd -Z "$SUMMARY_XML" 2>&1 | grep -A 10 "Core Sharing" || echo "  ✗ FAIL: No warnings in text report"
-+else
-+    echo "  (summary.xml not found)"
-+fi
-+
-+echo ""
-+echo ""
-+
-+# =========================================================================
-+echo "========================================================================="
-+echo "Test Summary"
-+echo "========================================================================="
-+echo ""
-+echo "All test results are saved in rteval-test-scenario-* directories"
-+echo "You can review:"
-+echo "  - Console output: rteval-test-scenario-*/console.log"
-+echo "  - XML reports: rteval-test-scenario-*/rteval-*/summary.xml"
-+echo "  - Text reports: ./rteval-cmd -Z rteval-test-scenario-*/rteval-*/summary.xml"
-+echo ""
-+echo "Quick check of all XML files:"
-+for dir in rteval-test-scenario-*/rteval-*/summary.xml; do
-+    if [ -f "$dir" ]; then
-+        echo "  $dir"
-+        if grep -q "CoreSharingWarnings" "$dir"; then
-+            echo "    - Has CoreSharingWarnings section"
-+        else
-+            echo "    - No CoreSharingWarnings section"
-+        fi
-+    fi
-+done
-+echo ""
-diff --git a/test_isolated_cpus.sh b/test_isolated_cpus.sh
-new file mode 100755
-index 000000000000..8b9aa3b7e5b6
---- /dev/null
-+++ b/test_isolated_cpus.sh
-@@ -0,0 +1,119 @@
-+#!/bin/bash
-+# Test script for core sharing validation with real isolated CPUs
-+# Run as root after rebooting with isolcpus=0,8,1,9,2,10,3,11
-+
-+set -e
-+
-+echo "========================================================================"
-+echo "Testing Core Sharing Validation with Isolated CPUs"
-+echo "========================================================================"
-+echo
-+
-+# Check if running as root
-+if [ "$EUID" -ne 0 ]; then
-+   echo "ERROR: This script must be run as root"
-+   exit 1
-+fi
-+
-+# Verify isolated CPUs are configured
-+echo "Step 1: Verifying isolated CPUs setup"
-+echo "----------------------------------------"
-+ISOLATED=$(cat /sys/devices/system/cpu/isolated 2>/dev/null || echo "")
-+if [ -z "$ISOLATED" ]; then
-+    echo "⚠ WARNING: No isolated CPUs found!"
-+    echo ""
-+    echo "This test requires isolated CPUs configured via kernel boot parameter."
-+    echo "Example: isolcpus=0-3,8-11"
-+    echo ""
-+    echo "To configure isolated CPUs:"
-+    echo "  1. Edit /etc/default/grub"
-+    echo "  2. Add isolcpus=<cpulist> to GRUB_CMDLINE_LINUX"
-+    echo "  3. Update bootloader:"
-+    echo "     - RHEL/Fedora: sudo grub2-mkconfig -o /boot/grub2/grub.cfg"
-+    echo "     - Debian/Ubuntu: sudo update-grub"
-+    echo "  4. Reboot"
-+    echo ""
-+    echo "SKIPPING: All tests require isolated CPUs"
-+    exit 0
-+fi
-+echo "✓ Isolated CPUs: $ISOLATED"
-+echo
-+
-+# Verify isolcpus in kernel command line
-+echo "Kernel command line:"
-+grep -o 'isolcpus=[^ ]*' /proc/cmdline || echo "WARNING: isolcpus not found in cmdline"
-+echo
-+
-+# Show core topology
-+echo "Step 2: Core topology"
-+echo "----------------------------------------"
-+python3 rteval/sysinfo/coresiblings.py | head -12
-+echo
-+
-+# Test 1: Trigger warning - split siblings across workloads
-+echo "========================================================================"
-+echo "TEST 1: Trigger Warning (siblings split across workloads)"
-+echo "========================================================================"
-+echo "Configuration:"
-+echo "  --housekeeping 0"
-+echo "  --measurement-cpulist 8"
-+echo "  --loads-cpulist 2"
-+echo
-+echo "Expected: Warning that CPUs 0 and 8 share a core"
-+echo "----------------------------------------"
-+
-+./rteval-cmd -D -L -d30s --housekeeping 0 --measurement-cpulist 8 --loads-cpulist 2 2>&1 | \
-+    grep -E "(Warning:|shares core)" || echo "No warnings found"
-+
-+# Check the XML report
-+REPORT=$(ls -t /tmp/rteval-* 2>/dev/null | head -1)
-+if [ -n "$REPORT" ]; then
-+    echo
-+    echo "Checking XML report: $REPORT"
-+    if grep -q "CoreSharingWarnings" "$REPORT"/*.xml 2>/dev/null; then
-+        echo "✓ XML contains CoreSharingWarnings section:"
-+        grep -A 5 "CoreSharingWarnings" "$REPORT"/*.xml | head -10
-+    else
-+        echo "✗ No CoreSharingWarnings in XML"
-+    fi
-+fi
-+
-+echo
-+echo "========================================================================"
-+echo "TEST 2: No Warning (proper separation)"
-+echo "========================================================================"
-+echo "Configuration:"
-+echo "  --housekeeping 0,8"
-+echo "  --measurement-cpulist 1,9,2,10"
-+echo "  --loads-cpulist 3,11"
-+echo
-+echo "Expected: No warnings (each workload on separate cores)"
-+echo "----------------------------------------"
-+
-+./rteval-cmd -D -L -d30s --housekeeping 0,8 --measurement-cpulist 1,9,2,10 --loads-cpulist 3,11 2>&1 | \
-+    grep -E "(Warning:|shares core)" && echo "✗ Unexpected warning!" || echo "✓ No warnings (correct!)"
-+
-+echo
-+echo "========================================================================"
-+echo "TEST 3: Multiple conflicts"
-+echo "========================================================================"
-+echo "Configuration:"
-+echo "  --housekeeping 0"
-+echo "  --measurement-cpulist 8,1"
-+echo "  --loads-cpulist 9"
-+echo
-+echo "Expected: Warnings about 0 vs 8, and 1 vs 9"
-+echo "----------------------------------------"
-+
-+./rteval-cmd -D -L -d30s --housekeeping 0 --measurement-cpulist 8,1 --loads-cpulist 9 2>&1 | \
-+    grep -E "(Warning:|shares core)" || echo "No warnings found"
-+
-+echo
-+echo "========================================================================"
-+echo "All tests complete!"
-+echo "========================================================================"
-+echo
-+echo "Summary:"
-+echo "  Test 1: Should show warning about CPUs 0 and 8"
-+echo "  Test 2: Should show NO warnings"
-+echo "  Test 3: Should show warnings about 0 vs 8, and 1 vs 9"
-diff --git a/tests/cpusets/README.md b/tests/cpusets/README.md
-new file mode 100644
-index 000000000000..0e5c507a9639
---- /dev/null
-+++ b/tests/cpusets/README.md
-@@ -0,0 +1,199 @@
-+# Cpuset Integration Tests
-+
-+Integration tests for rteval's cpuset functionality, which allows fine-grained CPU isolation for measurement and load workloads using cgroup v2 cpusets.
-+
-+## Purpose
-+
-+These tests verify that rteval's cpuset integration works correctly across various scenarios, including:
-+- Creating and cleaning up cpusets
-+- CPU assignment and partition configuration
-+- Housekeeping cpuset functionality
-+- Interaction with kernel isolcpus boot parameter
-+- Proper cleanup on interruption
-+
-+## Test Files
-+
-+- **test-cpusets.sh** - Comprehensive cpuset integration test suite with 10 test scenarios
-+
-+## Prerequisites
-+
-+**System Requirements:**
-+- Root privileges (cpuset operations require root)
-+- cgroup v2 mounted
-+- cpuset controller available
-+- Minimum 4 CPUs recommended for meaningful tests
-+
-+**Optional:**
-+- Kernel boot parameter `isolcpus=<cpulist>` for testing isolcpus-specific scenarios
-+  - Without isolcpus: Tests that don't require it will run; isolcpus-specific tests will be skipped
-+  - With isolcpus: All 10 tests will run
-+
-+## Running the Tests
-+
-+### Via Makefile (Recommended)
-+
-+```bash
-+sudo make cpuset-tests
-+```
-+
-+This runs the complete cpuset test suite and generates a timestamped log file.
-+
-+### Standalone Script
-+
-+```bash
-+sudo ./tests/cpusets/test-cpusets.sh
-+```
-+
-+## Test Scenarios
-+
-+The test suite includes 10 comprehensive scenarios:
-+
-+### Basic Scenarios (No isolcpus required)
-+
-+1. **Prerequisites Check**
-+   - Verifies root privileges, cgroup v2, cpuset controller
-+   - Displays system CPU configuration
-+
-+2. **Same CPUs - No Housekeeping**
-+   - Measurement and loads use same CPUs
-+   - Only measurement cpuset created (loads use taskset)
-+   - Partition type: `member`
-+
-+3. **Different CPUs - No Housekeeping**
-+   - Measurement and loads use different CPUs
-+   - Only measurement cpuset created
-+   - Loads still use taskset (not isolated from system)
-+
-+4. **With Housekeeping - Different CPUs**
-+   - Tests dual cpuset scenario
-+   - Creates both housekeeping and measurement cpusets
-+   - System tasks migrated to housekeeping cpuset
-+   - Loads use taskset on separate CPUs
-+
-+5. **Housekeeping Without isolcpus**
-+   - Demonstrates new capability: housekeeping works with --cpusets flag
-+   - Does not require isolcpus boot parameter
-+   - Validates cpuset-based isolation vs. kernel isolcpus
-+
-+6. **Backward Compatibility**
-+   - Runs rteval WITHOUT --cpusets flag
-+   - Verifies no cpusets are created
-+   - Ensures traditional behavior preserved
-+
-+7. **Cleanup on Interrupt**
-+   - Tests signal handling (SIGINT/Ctrl+C)
-+   - Verifies cpusets are properly cleaned up on interruption
-+   - Critical for preventing leaked cpusets
-+
-+### Advanced Scenarios (Require isolcpus boot parameter)
-+
-+8. **Measurement Run on isolcpus**
-+   - Tests --measurement-run-on-isolcpus flag
-+   - Automatically uses isolated CPUs for measurement
-+   - Skipped if no isolcpus configured
-+
-+9. **Housekeeping Requires isolcpus Without --cpusets**
-+   - Tests backward-compatible validation
-+   - Housekeeping CPUs must be in isolcpus WITHOUT --cpusets flag
-+   - Verifies proper error message
-+   - Skipped if no isolcpus configured
-+
-+10. **Combining isolcpus and --cpusets**
-+    - Tests double-layer isolation strategy
-+    - Kernel-level (isolcpus) + userspace (cpusets) isolation
-+    - Measurement runs on isolated CPUs within cpuset
-+    - Skipped if no isolcpus configured
-+
-+## Test Duration
-+
-+Tests use a short duration (`10s`) for quick validation. Each test scenario includes:
-+- Pre-test cleanup
-+- cpuset creation verification during execution
-+- Post-test cleanup verification
-+
-+Total test suite runtime: ~2-3 minutes without isolcpus, ~5-6 minutes with isolcpus.
-+
-+## Expected Results
-+
-+All tests should pass with proper cpuset creation, CPU assignment, and cleanup:
-+
-+```
-+Total tests run: 10
-+Passed: 10
-+Failed: 0
-+✅ ALL TESTS PASSED
-+```
-+
-+On systems without isolcpus, tests 8-10 will be skipped:
-+```
-+Total tests run: 10
-+Passed: 10 (3 skipped)
-+Failed: 0
-+```
-+
-+## Log Files
-+
-+Each test run creates a timestamped log file:
-+```
-+test-cpusets-YYYYMMDD-HHMMSS.log
-+```
-+
-+The log contains full rteval output for debugging test failures.
-+
-+## Troubleshooting
-+
-+### Common Issues
-+
-+**"ERROR: This script must be run as root"**
-+- Solution: Run with `sudo`
-+
-+**"ERROR: cgroup v2 not mounted"**
-+- Check: `mount | grep cgroup2`
-+- Solution: Ensure cgroup v2 is enabled in kernel config
-+
-+**"ERROR: cpuset controller not available"**
-+- Check: `cat /sys/fs/cgroup/cgroup.controllers`
-+- Solution: Ensure cpuset controller is enabled
-+
-+**"Cpusets not cleaned up"**
-+- Indicates rteval cleanup code issue
-+- Manual cleanup: See test script's `cleanup_cpusets()` function
-+- Or use: `rteval-cmd --cleanup-cpusets`
-+
-+### Verifying Cpusets During Test Execution
-+
-+While a test is running, you can inspect cpusets with:
-+
-+```bash
-+# Show all rteval cpusets (if show-cpusets is in your PATH)
-+show-cpusets
-+
-+# Or manually inspect:
-+ls -la /sys/fs/cgroup/rteval_*/
-+cat /sys/fs/cgroup/rteval_measurement/cpuset.cpus
-+cat /sys/fs/cgroup/rteval_housekeeping/cpuset.cpus
-+```
-+
-+## Implementation Details
-+
-+The cpuset implementation follows the "isolcpus philosophy":
-+- Cpusets provide **additional** isolation capability
-+- With `--cpusets` flag: housekeeping works without requiring isolcpus
-+- Without `--cpusets` flag: traditional behavior (housekeeping requires isolcpus)
-+- Measurement cpuset uses `member` partition type
-+- Housekeeping cpuset moves all system tasks out of measurement CPUs
-+- Loads always use taskset (not in cpuset) to avoid interfering with cgroup memory controller
-+
-+## Related Documentation
-+
-+- Main rteval documentation: `doc/rteval.8`
-+- Cpuset implementation: `rteval/cpuset.py`
-+- Local development notes: `local/README-CPUSETS.md` (if exists)
-+
-+## When to Run These Tests
-+
-+- **Before releases** - Verify cpuset functionality across scenarios
-+- **After modifying cpuset code** - Ensure changes don't break existing behavior
-+- **After kernel updates** - Verify cgroup v2 and cpuset controller compatibility
-+- **When investigating cpuset issues** - Reproduce specific scenarios
-+- **On new hardware** - Validate cpuset behavior on different CPU topologies
-diff --git a/tests/cpusets/test-cpusets.sh b/tests/cpusets/test-cpusets.sh
-new file mode 100755
-index 000000000000..e81030344250
---- /dev/null
-+++ b/tests/cpusets/test-cpusets.sh
-@@ -0,0 +1,732 @@
-+#!/bin/bash
-+# test-cpusets.sh - Automated testing for rteval cpuset integration
-+
-+set -e
-+
-+# Detect rteval-cmd location (works from root dir or local/ dir)
-+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-+if [ -x "$SCRIPT_DIR/rteval-cmd" ]; then
-+    RTEVAL_CMD="$SCRIPT_DIR/rteval-cmd"
-+elif [ -x "$SCRIPT_DIR/../rteval-cmd" ]; then
-+    RTEVAL_CMD="$SCRIPT_DIR/../rteval-cmd"
-+else
-+    echo "ERROR: Cannot find rteval-cmd"
-+    exit 1
-+fi
-+
-+# Colors for output
-+RED='\033[0;31m'
-+GREEN='\033[0;32m'
-+YELLOW='\033[1;33m'
-+BLUE='\033[0;34m'
-+NC='\033[0m' # No Color
-+
-+# Test counters
-+TESTS_RUN=0
-+TESTS_PASSED=0
-+TESTS_FAILED=0
-+
-+# Test duration (short for quick testing)
-+TEST_DURATION="10s"
-+
-+# Log file
-+LOG_FILE="test-cpusets-$(date +%Y%m%d-%H%M%S).log"
-+
-+# Helper functions
-+print_header() {
-+    echo -e "\n${BLUE}========================================${NC}"
-+    echo -e "${BLUE}$1${NC}"
-+    echo -e "${BLUE}========================================${NC}\n"
+@@ -314,21 +315,23 @@ EXPORT_SYMBOL_GPL(blk_mq_quiesce_queue);
+  */
+ void blk_mq_unquiesce_queue(struct request_queue *q)
+ {
+-	unsigned long flags;
+-	bool run_queue = false;
++	int depth;
+ 
+-	spin_lock_irqsave(&q->queue_lock, flags);
+-	if (WARN_ON_ONCE(q->quiesce_depth <= 0)) {
+-		;
+-	} else if (!--q->quiesce_depth) {
+-		blk_queue_flag_clear(QUEUE_FLAG_QUIESCED, q);
+-		run_queue = true;
+-	}
+-	spin_unlock_irqrestore(&q->queue_lock, flags);
++	depth = atomic_dec_if_positive(&q->quiesce_depth);
++	if (WARN_ON_ONCE(depth < 0))
++		return;
+ 
+-	/* dispatch requests which are inserted during quiescing */
+-	if (run_queue)
++	if (depth == 0) {
++		/*
++		 * Pairs with smp_rmb() in blk_mq_run_hw_queue(): make the
++		 * decrement of quiesce_depth observable before we kick the
++		 * hw queues, so a concurrent blk_mq_run_hw_queue() that
++		 * re-checks the state sees the queue as no longer quiesced.
++		 */
++		smp_mb__after_atomic();
++		/* dispatch requests which are inserted during quiescing */
+ 		blk_mq_run_hw_queues(q, true);
++	}
+ }
+ EXPORT_SYMBOL_GPL(blk_mq_unquiesce_queue);
+ 
+@@ -2362,17 +2365,15 @@ void blk_mq_run_hw_queue(struct blk_mq_hw_ctx *hctx, bool async)
+ 
+ 	need_run = blk_mq_hw_queue_need_run(hctx);
+ 	if (!need_run) {
+-		unsigned long flags;
+-
+ 		/*
+-		 * Synchronize with blk_mq_unquiesce_queue(), because we check
+-		 * if hw queue is quiesced locklessly above, we need the use
+-		 * ->queue_lock to make sure we see the up-to-date status to
+-		 * not miss rerunning the hw queue.
++		 * Re-check the quiesce state after a read barrier. Pairs with
++		 * smp_mb__after_atomic() in blk_mq_quiesce_queue_nowait() and
++		 * blk_mq_unquiesce_queue() so we don't miss rerunning the hw
++		 * queue when a concurrent unquiesce has just dropped the
++		 * quiesce_depth to zero.
+ 		 */
+-		spin_lock_irqsave(&hctx->queue->queue_lock, flags);
++		smp_rmb();
+ 		need_run = blk_mq_hw_queue_need_run(hctx);
+-		spin_unlock_irqrestore(&hctx->queue->queue_lock, flags);
+ 
+ 		if (!need_run)
+ 			return;
+diff --git a/include/linux/blkdev.h b/include/linux/blkdev.h
+index 890128cdea1c..5d582c70fb8a 100644
+--- a/include/linux/blkdev.h
++++ b/include/linux/blkdev.h
+@@ -521,7 +521,8 @@ struct request_queue {
+ 
+ 	spinlock_t		queue_lock;
+ 
+-	int			quiesce_depth;
++	/* Atomic quiesce depth - also serves as quiesced indicator (depth > 0) */
++	atomic_t		quiesce_depth;
+ 
+ 	struct gendisk		*disk;
+ 
+@@ -666,7 +667,6 @@ enum {
+ 	QUEUE_FLAG_INIT_DONE,		/* queue is initialized */
+ 	QUEUE_FLAG_STATS,		/* track IO start and completion times */
+ 	QUEUE_FLAG_REGISTERED,		/* queue has been registered to a disk */
+-	QUEUE_FLAG_QUIESCED,		/* queue has been quiesced */
+ 	QUEUE_FLAG_RQ_ALLOC_TIME,	/* record rq->alloc_time_ns */
+ 	QUEUE_FLAG_HCTX_ACTIVE,		/* at least one blk-mq hctx is active */
+ 	QUEUE_FLAG_SQ_SCHED,		/* single queue style io dispatch */
+@@ -704,7 +704,10 @@ void blk_queue_flag_clear(unsigned int flag, struct request_queue *q);
+ #define blk_noretry_request(rq) \
+ 	((rq)->cmd_flags & (REQ_FAILFAST_DEV|REQ_FAILFAST_TRANSPORT| \
+ 			     REQ_FAILFAST_DRIVER))
+-#define blk_queue_quiesced(q)	test_bit(QUEUE_FLAG_QUIESCED, &(q)->queue_flags)
++static inline bool blk_queue_quiesced(struct request_queue *q)
++{
++	return atomic_read(&q->quiesce_depth) > 0;
 +}
-+
-+print_test() {
-+    echo -e "${YELLOW}Test $TESTS_RUN: $1${NC}"
-+}
-+
-+print_pass() {
-+    echo -e "${GREEN}✅ PASS${NC}: $1"
-+    ((TESTS_PASSED++)) || true
-+}
-+
-+print_fail() {
-+    echo -e "${RED}❌ FAIL${NC}: $1"
-+    ((TESTS_FAILED++)) || true
-+}
-+
-+print_info() {
-+    echo -e "${BLUE}ℹ${NC}  $1"
-+}
-+
-+check_root() {
-+    if [ "$EUID" -ne 0 ]; then
-+        echo -e "${RED}ERROR: This script must be run as root${NC}"
-+        exit 1
-+    fi
-+}
-+
-+check_cgroup_v2() {
-+    if ! grep -q cgroup2 /proc/mounts; then
-+        echo -e "${RED}ERROR: cgroup v2 not mounted${NC}"
-+        exit 1
-+    fi
-+}
-+
-+check_cpuset_controller() {
-+    if ! grep -q cpuset /sys/fs/cgroup/cgroup.controllers; then
-+        echo -e "${RED}ERROR: cpuset controller not available${NC}"
-+        exit 1
-+    fi
-+}
-+
-+cleanup_cpusets() {
-+    # Force cleanup any leftover cpusets
-+    for d in /sys/fs/cgroup/rteval_*/; do
-+        if [ -d "$d" ]; then
-+            # Move processes to root
-+            while read pid; do
-+                echo "$pid" > /sys/fs/cgroup/cgroup.procs 2>/dev/null || true
-+            done < "${d}cgroup.procs"
-+            # Remove directory
-+            rmdir "$d" 2>/dev/null || true
-+        fi
-+    done
-+}
-+
-+check_no_cpusets() {
-+    if ls /sys/fs/cgroup/rteval_* &>/dev/null; then
-+        return 1
-+    fi
-+    return 0
-+}
-+
-+check_cpuset_exists() {
-+    local name=$1
-+    [ -d "/sys/fs/cgroup/$name" ]
-+}
-+
-+check_cpuset_cpus() {
-+    local name=$1
-+    local expected=$2
-+    local actual=$(cat "/sys/fs/cgroup/$name/cpuset.cpus" 2>/dev/null)
-+    [ "$actual" = "$expected" ]
-+}
-+
-+check_cpuset_partition() {
-+    local name=$1
-+    local expected=$2
-+    local actual=$(cat "/sys/fs/cgroup/$name/cpuset.cpus.partition" 2>/dev/null)
-+    [ "$actual" = "$expected" ]
-+}
-+
-+check_cpuset_has_procs() {
-+    local name=$1
-+    local count=$(cat "/sys/fs/cgroup/$name/cgroup.procs" 2>/dev/null | wc -l)
-+    [ "$count" -gt 0 ]
-+}
-+
-+get_test_cpus() {
-+    # Get available CPUs for testing
-+    # Returns: "0-3 4-7 8-11" for housekeeping, measurement, loads
-+    local online=$(cat /sys/devices/system/cpu/online)
-+
-+    # Parse online CPUs (e.g., "0-15" or "0-3,8-11")
-+    # For simplicity, just use first 12 CPUs if available
-+    # Otherwise adapt based on what's available
-+
-+    local total=$(nproc)
-+
-+    if [ "$total" -ge 12 ]; then
-+        echo "0-3 4-7 8-11"
-+    elif [ "$total" -ge 8 ]; then
-+        echo "0-1 2-4 5-7"
-+    elif [ "$total" -ge 4 ]; then
-+        echo "0 1-2 3"
-+    else
-+        echo "0 0 0"  # Not ideal but at least won't crash
-+    fi
-+}
-+
-+# Test functions
-+test_prerequisites() {
-+    ((TESTS_RUN++)) || true
-+    print_test "Prerequisites Check"
-+
-+    local all_good=true
-+
-+    # Check root
-+    if [ "$EUID" -eq 0 ]; then
-+        print_info "Running as root: OK"
-+    else
-+        print_fail "Not running as root"
-+        all_good=false
-+    fi
-+
-+    # Check cgroup v2
-+    if grep -q cgroup2 /proc/mounts; then
-+        print_info "cgroup v2 mounted: OK"
-+    else
-+        print_fail "cgroup v2 not mounted"
-+        all_good=false
-+    fi
-+
-+    # Check cpuset controller
-+    if grep -q cpuset /sys/fs/cgroup/cgroup.controllers; then
-+        print_info "cpuset controller available: OK"
-+    else
-+        print_fail "cpuset controller not available"
-+        all_good=false
-+    fi
-+
-+    # Check CPU count
-+    local cpus=$(nproc)
-+    print_info "Available CPUs: $cpus"
-+    if [ "$cpus" -lt 4 ]; then
-+        print_info "WARNING: Less than 4 CPUs, some tests may not be meaningful"
-+    fi
-+
-+    if [ "$all_good" = true ]; then
-+        print_pass "All prerequisites met"
-+    else
-+        print_fail "Prerequisites not met"
-+        exit 1
-+    fi
-+}
-+
-+test_same_cpus_no_housekeeping() {
-+    ((TESTS_RUN++)) || true
-+    print_test "Same CPUs - No Housekeeping (Measurement Cpuset Only)"
-+
-+    cleanup_cpusets
-+
-+    local cpus=$(get_test_cpus)
-+    local msr_cpus=$(echo $cpus | awk '{print $2}')
-+
-+    print_info "Running: $RTEVAL_CMD --cpusets --measurement-cpulist $msr_cpus --loads-cpulist $msr_cpus -d $TEST_DURATION"
-+
-+    # Run rteval in background
-+    timeout 60s $RTEVAL_CMD --cpusets --measurement-cpulist "$msr_cpus" --loads-cpulist "$msr_cpus" -d "$TEST_DURATION" >> "$LOG_FILE" 2>&1 &
-+    local rteval_pid=$!
-+
-+    # Wait for cpusets to be created
-+    sleep 2
-+
-+    # Check during execution
-+    local all_good=true
-+
-+    if check_cpuset_exists "rteval_measurement"; then
-+        print_info "rteval_measurement cpuset created: OK"
-+    else
-+        print_fail "rteval_measurement cpuset not created"
-+        all_good=false
-+    fi
-+
-+    if ! check_cpuset_exists "rteval_loads"; then
-+        print_info "No rteval_loads cpuset (loads use taskset): OK"
-+    else
-+        print_fail "Unexpected rteval_loads cpuset found"
-+        all_good=false
-+    fi
-+
-+    if check_cpuset_cpus "rteval_measurement" "$msr_cpus"; then
-+        print_info "Measurement CPU assignment correct: OK"
-+    else
-+        print_fail "Measurement CPU assignment incorrect"
-+        all_good=false
-+    fi
-+
-+    if check_cpuset_partition "rteval_measurement" "member"; then
-+        print_info "Partition type is 'member': OK"
-+    else
-+        print_fail "Partition type is not 'member'"
-+        all_good=false
-+    fi
-+
-+    # Wait for rteval to finish
-+    wait $rteval_pid
-+
-+    # Check cleanup
-+    sleep 1
-+    if check_no_cpusets; then
-+        print_info "Cleanup successful: OK"
-+    else
-+        print_fail "Cpusets not cleaned up"
-+        all_good=false
-+        cleanup_cpusets
-+    fi
-+
-+    if [ "$all_good" = true ]; then
-+        print_pass "Measurement cpuset test"
-+    else
-+        print_fail "Measurement cpuset test"
-+    fi
-+}
-+
-+test_different_cpus_no_housekeeping() {
-+    ((TESTS_RUN++)) || true
-+    print_test "Different CPUs - No Housekeeping (Measurement Cpuset Only)"
-+
-+    cleanup_cpusets
-+
-+    local cpus=$(get_test_cpus)
-+    local msr_cpus=$(echo $cpus | awk '{print $2}')
-+    local load_cpus=$(echo $cpus | awk '{print $3}')
-+
-+    print_info "Running: $RTEVAL_CMD --cpusets --measurement-cpulist $msr_cpus --loads-cpulist $load_cpus -d $TEST_DURATION"
-+
-+    timeout 60s $RTEVAL_CMD --cpusets --measurement-cpulist "$msr_cpus" --loads-cpulist "$load_cpus" -d "$TEST_DURATION" >> "$LOG_FILE" 2>&1 &
-+    local rteval_pid=$!
-+
-+    sleep 2
-+
-+    local all_good=true
-+
-+    if check_cpuset_exists "rteval_measurement"; then
-+        print_info "rteval_measurement cpuset created: OK"
-+    else
-+        print_fail "rteval_measurement cpuset not created"
-+        all_good=false
-+    fi
-+
-+    if ! check_cpuset_exists "rteval_loads"; then
-+        print_info "No rteval_loads cpuset (loads use taskset): OK"
-+    else
-+        print_fail "Unexpected rteval_loads cpuset found"
-+        all_good=false
-+    fi
-+
-+    if check_cpuset_cpus "rteval_measurement" "$msr_cpus"; then
-+        print_info "Measurement CPU assignment correct: OK"
-+    else
-+        print_fail "Measurement CPU assignment incorrect"
-+        all_good=false
-+    fi
-+
-+    if check_cpuset_partition "rteval_measurement" "member"; then
-+        print_info "Partition type is 'member': OK"
-+    else
-+        print_fail "Partition type is not 'member'"
-+        all_good=false
-+    fi
-+
-+    wait $rteval_pid
-+    sleep 1
-+
-+    if check_no_cpusets; then
-+        print_info "Cleanup successful: OK"
-+    else
-+        print_fail "Cpusets not cleaned up"
-+        all_good=false
-+        cleanup_cpusets
-+    fi
-+
-+    if [ "$all_good" = true ]; then
-+        print_pass "Measurement cpuset test (different CPUs)"
-+    else
-+        print_fail "Measurement cpuset test (different CPUs)"
-+    fi
-+}
-+
-+test_with_housekeeping() {
-+    ((TESTS_RUN++)) || true
-+    print_test "With Housekeeping - Different CPUs (Two Cpusets)"
-+
-+    cleanup_cpusets
-+
-+    local cpus=$(get_test_cpus)
-+    local hk_cpus=$(echo $cpus | awk '{print $1}')
-+    local msr_cpus=$(echo $cpus | awk '{print $2}')
-+    local load_cpus=$(echo $cpus | awk '{print $3}')
-+
-+    print_info "Running: $RTEVAL_CMD --cpusets --housekeeping $hk_cpus --measurement-cpulist $msr_cpus --loads-cpulist $load_cpus -d $TEST_DURATION"
-+
-+    timeout 60s $RTEVAL_CMD --cpusets --housekeeping "$hk_cpus" --measurement-cpulist "$msr_cpus" --loads-cpulist "$load_cpus" -d "$TEST_DURATION" >> "$LOG_FILE" 2>&1 &
-+    local rteval_pid=$!
-+
-+    sleep 2
-+
-+    local all_good=true
-+
-+    if check_cpuset_exists "rteval_housekeeping"; then
-+        print_info "rteval_housekeeping cpuset created: OK"
-+    else
-+        print_fail "rteval_housekeeping cpuset not created"
-+        all_good=false
-+    fi
-+
-+    if check_cpuset_exists "rteval_measurement"; then
-+        print_info "rteval_measurement cpuset created: OK"
-+    else
-+        print_fail "rteval_measurement cpuset not created"
-+        all_good=false
-+    fi
-+
-+    if ! check_cpuset_exists "rteval_loads"; then
-+        print_info "No rteval_loads cpuset (loads use taskset): OK"
-+    else
-+        print_fail "Unexpected rteval_loads cpuset found"
-+        all_good=false
-+    fi
-+
-+    if check_cpuset_has_procs "rteval_housekeeping"; then
-+        print_info "System tasks migrated to housekeeping: OK"
-+    else
-+        print_fail "No tasks in housekeeping cpuset"
-+        all_good=false
-+    fi
-+
-+    if check_cpuset_cpus "rteval_housekeeping" "$hk_cpus"; then
-+        print_info "Housekeeping CPU assignment correct: OK"
-+    else
-+        print_fail "Housekeeping CPU assignment incorrect"
-+        all_good=false
-+    fi
-+
-+    if check_cpuset_cpus "rteval_measurement" "$msr_cpus"; then
-+        print_info "Measurement CPU assignment correct: OK"
-+    else
-+        print_fail "Measurement CPU assignment incorrect"
-+        all_good=false
-+    fi
-+
-+    wait $rteval_pid
-+    sleep 1
-+
-+    if check_no_cpusets; then
-+        print_info "Cleanup successful: OK"
-+    else
-+        print_fail "Cpusets not cleaned up"
-+        all_good=false
-+        cleanup_cpusets
-+    fi
-+
-+    if [ "$all_good" = true ]; then
-+        print_pass "Housekeeping and measurement cpusets test"
-+    else
-+        print_fail "Housekeeping and measurement cpusets test"
-+    fi
-+}
-+
-+test_housekeeping_without_isolcpus() {
-+    ((TESTS_RUN++)) || true
-+    print_test "Housekeeping Without isolcpus (New Capability)"
-+
-+    cleanup_cpusets
-+
-+    # Check if system has isolcpus
-+    local isolated=$(cat /sys/devices/system/cpu/isolated 2>/dev/null || echo "")
-+    print_info "System isolated CPUs: ${isolated:-none}"
-+
-+    local cpus=$(get_test_cpus)
-+    local hk_cpus=$(echo $cpus | awk '{print $1}')
-+
-+    print_info "Running: $RTEVAL_CMD --cpusets --housekeeping $hk_cpus -d $TEST_DURATION"
-+
-+    # This should succeed even if housekeeping CPUs are not in isolcpus
-+    if timeout 60s $RTEVAL_CMD --cpusets --housekeeping "$hk_cpus" -d "$TEST_DURATION" >> "$LOG_FILE" 2>&1; then
-+        print_info "rteval succeeded with housekeeping without isolcpus requirement: OK"
-+        sleep 1
-+
-+        if check_no_cpusets; then
-+            print_info "Cleanup successful: OK"
-+            print_pass "Housekeeping without isolcpus test"
-+        else
-+            print_fail "Cpusets not cleaned up"
-+            cleanup_cpusets
-+        fi
-+    else
-+        print_fail "rteval failed with housekeeping (should work with cpusets)"
-+    fi
-+}
-+
-+test_backward_compatibility() {
-+    ((TESTS_RUN++)) || true
-+    print_test "Backward Compatibility (WITHOUT --cpusets)"
-+
-+    cleanup_cpusets
-+
-+    print_info "Running: $RTEVAL_CMD -d $TEST_DURATION (no --cpusets flag)"
-+
-+    timeout 60s $RTEVAL_CMD -d "$TEST_DURATION" >> "$LOG_FILE" 2>&1 &
-+    local rteval_pid=$!
-+
-+    sleep 2
-+
-+    local all_good=true
-+
-+    if check_no_cpusets; then
-+        print_info "No cpusets created: OK"
-+    else
-+        print_fail "Cpusets created when they shouldn't be"
-+        all_good=false
-+        cleanup_cpusets
-+    fi
-+
-+    wait $rteval_pid
-+
-+    if [ "$all_good" = true ]; then
-+        print_pass "Backward compatibility test"
-+    else
-+        print_fail "Backward compatibility test"
-+    fi
-+}
-+
-+test_cleanup_on_interrupt() {
-+    ((TESTS_RUN++)) || true
-+    print_test "Cleanup on Ctrl+C (Interrupt Handling)"
-+
-+    cleanup_cpusets
-+
-+    local cpus=$(get_test_cpus)
-+    local msr_cpus=$(echo $cpus | awk '{print $2}')
-+    local load_cpus=$(echo $cpus | awk '{print $3}')
-+
-+    print_info "Running: $RTEVAL_CMD --cpusets --measurement-cpulist $msr_cpus --loads-cpulist $load_cpus -d 60s"
-+    print_info "Will send SIGINT after 3 seconds..."
-+
-+    $RTEVAL_CMD --cpusets --measurement-cpulist "$msr_cpus" --loads-cpulist "$load_cpus" -d 60s >> "$LOG_FILE" 2>&1 &
-+    local rteval_pid=$!
-+
-+    sleep 3
-+
-+    # Send SIGINT (Ctrl+C)
-+    kill -INT $rteval_pid
-+
-+    # Wait for cleanup
-+    wait $rteval_pid 2>/dev/null || true
-+    sleep 2
-+
-+    if check_no_cpusets; then
-+        print_info "Cleanup after interrupt successful: OK"
-+        print_pass "Interrupt handling test"
-+    else
-+        print_fail "Cpusets not cleaned up after interrupt"
-+        cleanup_cpusets
-+    fi
-+}
-+
-+test_measurement_run_on_isolcpus() {
-+    ((TESTS_RUN++)) || true
-+    print_test "Measurement Run on isolcpus Flag"
-+
-+    cleanup_cpusets
-+
-+    # Check if system has isolcpus
-+    local isolated=$(cat /sys/devices/system/cpu/isolated 2>/dev/null || echo "")
-+    if [ -z "$isolated" ]; then
-+        print_info "SKIPPED: No isolcpus configured (requires boot parameter)"
-+        ((TESTS_PASSED++)) || true
-+        return 0
-+    fi
-+
-+    print_info "System isolated CPUs: $isolated"
-+
-+    # Run with --measurement-run-on-isolcpus and --cpusets
-+    print_info "Running: $RTEVAL_CMD --cpusets --measurement-run-on-isolcpus -d $TEST_DURATION"
-+
-+    timeout 60s $RTEVAL_CMD --cpusets --measurement-run-on-isolcpus -d "$TEST_DURATION" >> "$LOG_FILE" 2>&1 &
-+    local rteval_pid=$!
-+
-+    sleep 2
-+
-+    local all_good=true
-+
-+    # Should create measurement cpuset
-+    if check_cpuset_exists "rteval_measurement"; then
-+        print_info "rteval_measurement cpuset created: OK"
-+
-+        # Check that cpuset includes isolated CPUs
-+        local cpuset_cpus=$(cat /sys/fs/cgroup/rteval_measurement/cpuset.cpus 2>/dev/null)
-+        print_info "Measurement cpuset CPUs: $cpuset_cpus"
-+
-+        # Verify isolated CPUs are included (would need complex parsing, just verify cpuset exists)
-+        print_info "Measurement cpuset includes access to isolated CPUs: OK"
-+    else
-+        print_fail "rteval_measurement cpuset not created"
-+        all_good=false
-+    fi
-+
-+    wait $rteval_pid
-+    sleep 1
-+
-+    if check_no_cpusets; then
-+        print_info "Cleanup successful: OK"
-+    else
-+        print_fail "Cpusets not cleaned up"
-+        all_good=false
-+        cleanup_cpusets
-+    fi
-+
-+    if [ "$all_good" = true ]; then
-+        print_pass "Measurement run-on-isolcpus test"
-+    else
-+        print_fail "Measurement run-on-isolcpus test"
-+    fi
-+}
-+
-+test_housekeeping_without_cpusets_requires_isolcpus() {
-+    ((TESTS_RUN++)) || true
-+    print_test "Housekeeping Requires isolcpus Without --cpusets"
-+
-+    cleanup_cpusets
-+
-+    # Check if system has isolcpus
-+    local isolated=$(cat /sys/devices/system/cpu/isolated 2>/dev/null || echo "")
-+    if [ -z "$isolated" ]; then
-+        print_info "SKIPPED: No isolcpus configured (requires boot parameter)"
-+        ((TESTS_PASSED++)) || true
-+        return 0
-+    fi
-+
-+    print_info "System isolated CPUs: $isolated"
-+
-+    local cpus=$(get_test_cpus)
-+    local hk_cpus=$(echo $cpus | awk '{print $1}')
-+
-+    # Try to run with housekeeping on non-isolated CPUs WITHOUT --cpusets
-+    # This should FAIL
-+    print_info "Running: $RTEVAL_CMD --housekeeping $hk_cpus -d $TEST_DURATION"
-+    print_info "Expected: Should fail because housekeeping CPUs not in isolcpus"
-+
-+    if timeout 60s $RTEVAL_CMD --housekeeping "$hk_cpus" -d "$TEST_DURATION" >> "$LOG_FILE" 2>&1; then
-+        # If it succeeded, that's unexpected
-+        print_fail "rteval succeeded when it should have failed (housekeeping CPUs not in isolcpus)"
-+    else
-+        # Expected to fail
-+        print_info "rteval failed as expected (housekeeping requires isolcpus without --cpusets): OK"
-+
-+        # Check the error message
-+        if grep -q "not in isolated CPUs" "$LOG_FILE" 2>/dev/null; then
-+            print_info "Correct error message about isolcpus: OK"
-+            print_pass "Housekeeping validation test"
-+        else
-+            print_fail "Failed but with unexpected error message"
-+        fi
-+    fi
-+
-+    cleanup_cpusets
-+}
-+
-+test_combining_isolcpus_and_cpusets() {
-+    ((TESTS_RUN++)) || true
-+    print_test "Combining isolcpus and --cpusets (Double Isolation)"
-+
-+    cleanup_cpusets
-+
-+    # Check if system has isolcpus
-+    local isolated=$(cat /sys/devices/system/cpu/isolated 2>/dev/null || echo "")
-+    if [ -z "$isolated" ]; then
-+        print_info "SKIPPED: No isolcpus configured (requires boot parameter)"
-+        ((TESTS_PASSED++)) || true
-+        return 0
-+    fi
-+
-+    print_info "System isolated CPUs: $isolated"
-+
-+    local cpus=$(get_test_cpus)
-+    local hk_cpus=$(echo $cpus | awk '{print $1}')
-+    local msr_cpus="$isolated"  # Use actual isolated CPUs
-+    local load_cpus=$(echo $cpus | awk '{print $2}')  # Non-isolated
-+
-+    print_info "Running: $RTEVAL_CMD --cpusets --housekeeping $hk_cpus --measurement-cpulist $msr_cpus --loads-cpulist $load_cpus -d $TEST_DURATION"
-+    print_info "Testing double-layer isolation: isolcpus + cpusets"
-+
-+    timeout 60s $RTEVAL_CMD --cpusets --housekeeping "$hk_cpus" --measurement-cpulist "$msr_cpus" --loads-cpulist "$load_cpus" -d "$TEST_DURATION" >> "$LOG_FILE" 2>&1 &
-+    local rteval_pid=$!
-+
-+    sleep 2
-+
-+    local all_good=true
-+
-+    if check_cpuset_exists "rteval_housekeeping"; then
-+        print_info "rteval_housekeeping cpuset created: OK"
-+    else
-+        print_fail "rteval_housekeeping cpuset not created"
-+        all_good=false
-+    fi
-+
-+    if check_cpuset_exists "rteval_measurement"; then
-+        print_info "rteval_measurement cpuset created: OK"
-+
-+        local cpuset_cpus=$(cat /sys/fs/cgroup/rteval_measurement/cpuset.cpus 2>/dev/null)
-+        print_info "Measurement cpuset CPUs: $cpuset_cpus (should be isolated CPUs)"
-+    else
-+        print_fail "rteval_measurement cpuset not created"
-+        all_good=false
-+    fi
-+
-+    if ! check_cpuset_exists "rteval_loads"; then
-+        print_info "No rteval_loads cpuset (loads use taskset): OK"
-+    else
-+        print_fail "Unexpected rteval_loads cpuset found"
-+        all_good=false
-+    fi
-+
-+    wait $rteval_pid
-+    sleep 1
-+
-+    if check_no_cpusets; then
-+        print_info "Cleanup successful: OK"
-+    else
-+        print_fail "Cpusets not cleaned up"
-+        all_good=false
-+        cleanup_cpusets
-+    fi
-+
-+    if [ "$all_good" = true ]; then
-+        print_pass "Double isolation (isolcpus + cpusets) test"
-+    else
-+        print_fail "Double isolation (isolcpus + cpusets) test"
-+    fi
-+}
-+
-+# Main execution
-+main() {
-+    # Cleanup on exit/interrupt
-+    trap cleanup_cpusets EXIT INT TERM
-+
-+    # Check prerequisites first (need root for cleanup)
-+    check_root
-+    check_cgroup_v2
-+    check_cpuset_controller
-+
-+    # Clean up any leftover cpusets from previous runs
-+    cleanup_cpusets
-+
-+    print_header "RTEVAL CPUSET INTEGRATION TEST SUITE"
-+
-+    echo "Log file: $LOG_FILE"
-+    echo ""
-+
-+    # Run tests
-+    test_prerequisites
-+    test_same_cpus_no_housekeeping
-+    test_different_cpus_no_housekeeping
-+    test_with_housekeeping
-+    test_housekeeping_without_isolcpus
-+    test_backward_compatibility
-+    test_cleanup_on_interrupt
-+
-+    # Tests that require isolcpus (will skip if not available)
-+    test_measurement_run_on_isolcpus
-+    test_housekeeping_without_cpusets_requires_isolcpus
-+    test_combining_isolcpus_and_cpusets
-+
-+    # Summary
-+    print_header "TEST SUMMARY"
-+    echo "Total tests run: $TESTS_RUN"
-+    echo -e "${GREEN}Passed: $TESTS_PASSED${NC}"
-+    echo -e "${RED}Failed: $TESTS_FAILED${NC}"
-+    echo ""
-+    echo "Log file: $LOG_FILE"
-+
-+    if [ $TESTS_FAILED -eq 0 ]; then
-+        echo -e "${GREEN}✅ ALL TESTS PASSED${NC}"
-+        exit 0
-+    else
-+        echo -e "${RED}❌ SOME TESTS FAILED${NC}"
-+        exit 1
-+    fi
-+}
-+
-+# Run main
-+main "$@"
+ #define blk_queue_pm_only(q)	atomic_read(&(q)->pm_only)
+ #define blk_queue_registered(q)	test_bit(QUEUE_FLAG_REGISTERED, &(q)->queue_flags)
+ #define blk_queue_sq_sched(q)	test_bit(QUEUE_FLAG_SQ_SCHED, &(q)->queue_flags)
 -- 
 2.54.0
 
