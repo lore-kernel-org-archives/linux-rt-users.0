@@ -1,118 +1,109 @@
-Received: from 011.lax.mailroute.net (011.lax.mailroute.net [199.89.1.14])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+Received: from mail-qt1-f177.google.com (mail-qt1-f177.google.com [209.85.160.177])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 7BFFC3E6DFA;
-	Thu,  7 May 2026 10:42:05 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=199.89.1.14
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 6512647DD64
+	for <linux-rt-users@vger.kernel.org>; Thu,  7 May 2026 19:29:16 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.160.177
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1778150526; cv=none; b=Fn8C6N9o2lRI76BdZQg/ldnlO5yR5nBtEa7EnYL2sFAm8uLJFpgseusqmkGtI3rGkKCKzWkfmuqnxuhvUgft8fcPB1UV8DNC4bHnXQjQI5qdn6d8SRDM0qlItmdzETgYRyB/hJOx2bWfCq36N+dUsYNln0s16FtVJAwD5cZGsdI=
+	t=1778182157; cv=none; b=d6UE6hUWWQ2VlNQqFOpoMKJaS7sU91kE8x/Jy6Xmx+7bhvpxlL9S/7SArd/gCVTqQTApVyVYnPYl3XLfqGZnG6ZXsA/uDppNYfGSJMvEVYn+gcVVn6So+UKQOJnxsjPGFdUzm+ZGt7wM+KHxblVuXjFq9wI8idROr+0Wkaqxzgo=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1778150526; c=relaxed/simple;
-	bh=LUMEAJ3VR0Zf6O2vnqS6y0SiY8nPZA1ghjHwZEQlhU0=;
-	h=Message-ID:Date:MIME-Version:Subject:To:Cc:References:From:
-	 In-Reply-To:Content-Type; b=jGyPPZwBsIaPE7A6fGvXEbIKc4dEaX0rWdyNjuwNwWIo9E6itZNqeJx5kY4I+E/4gGfWFK5WD8ebeFgCIL8GFjDFZ8p7J3iSUuJ2//B/GXWjStQ0cnBC8O+HQJilPu0GM3n8NJBSIOEaL0PHaJpDV3sPnF+2PmrfZq/3hiXqgr4=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=acm.org; spf=pass smtp.mailfrom=acm.org; dkim=pass (2048-bit key) header.d=acm.org header.i=@acm.org header.b=IzIP4+kv; arc=none smtp.client-ip=199.89.1.14
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=acm.org
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=acm.org
+	s=arc-20240116; t=1778182157; c=relaxed/simple;
+	bh=oetw0fOPBAfbNATV3DcgqSaafpc6i2Z9e+d6wrRe5AE=;
+	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=fagf33LkjzYqznMez8re/SvP1d/yUXunUwRPRkZZ/4TDbHaXVsujF3vjTJmGbpFp5m2m6TQoS4+Wm3TXBh/FHMFO+hgoMK27EzDuzlkCcLzOrsRnFZLr7+MJjLklIWA1nCSBH+QN4USuVwP3bpv5zN81penBBKzsJVRyoV2v2nA=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=fail (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=iu0UCMG1; arc=none smtp.client-ip=209.85.160.177
+Authentication-Results: smtp.subspace.kernel.org; dmarc=fail (p=quarantine dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=acm.org header.i=@acm.org header.b="IzIP4+kv"
-Received: from localhost (localhost [127.0.0.1])
-	by 011.lax.mailroute.net (Postfix) with ESMTP id 4gB82G6xCjz1XM6J6;
-	Thu,  7 May 2026 10:41:58 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=acm.org; h=
-	content-transfer-encoding:content-type:content-type:in-reply-to
-	:from:from:content-language:references:subject:subject
-	:user-agent:mime-version:date:date:message-id:received:received;
-	 s=mr01; t=1778150509; x=1780742510; bh=xWpn++S5e4f4RtwpISkvTC6M
-	f7JtyR3gfj0F5b4gwio=; b=IzIP4+kv6qkYBVYTuaKJKfVmR7pTzkm+EraCN0ba
-	aO98+al1SVhHx1keqwCDetjXxfCMKVRVh0NLMZnRo0steSmVHz2+rvYhyt397bX6
-	oj2+If4MhUmZ+tBv8jJmY+H5buvkqFR29q7sReBBUExsQ/4zxatjKZ/KHfNctq+h
-	rWWuTXuQ0mXOCzzOWbVQDwSEuMbvNO7uDZfAJUh9HnE72nmgNNsAHO98p6neXbMw
-	qiF9qCFGyNXrIlZFLskKFsfdkA9m3gC6BxxNM2Bk/oyJ4TXRpgSCyATYotIhCPAb
-	yBLcZ0u+4/QKkrrJ1FOJznBCSVwKWOpQViorANdId1tmvA==
-X-Virus-Scanned: by MailRoute
-Received: from 011.lax.mailroute.net ([127.0.0.1])
- by localhost (011.lax [127.0.0.1]) (mroute_mailscanner, port 10029) with LMTP
- id wHuYM0-9RYZ6; Thu,  7 May 2026 10:41:49 +0000 (UTC)
-Received: from [10.231.136.254] (46-253-189-47.dynamic.monzoon.net [46.253.189.47])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
-	(No client certificate requested)
-	(Authenticated sender: bvanassche@acm.org)
-	by 011.lax.mailroute.net (Postfix) with ESMTPSA id 4gB81x5GcBz1XM5jn;
-	Thu,  7 May 2026 10:41:41 +0000 (UTC)
-Message-ID: <c189c126-163a-41a7-b872-96568b33c1a8@acm.org>
-Date: Thu, 7 May 2026 12:41:39 +0200
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="iu0UCMG1"
+Received: by mail-qt1-f177.google.com with SMTP id d75a77b69052e-50fc496c8baso10203231cf.3
+        for <linux-rt-users@vger.kernel.org>; Thu, 07 May 2026 12:29:16 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20251104; t=1778182155; x=1778786955; darn=vger.kernel.org;
+        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+         :to:from:sender:from:to:cc:subject:date:message-id:reply-to;
+        bh=uho0T/tSXrvJ8W7UDsZA0IRMzmaFS4LEWaugIxQxNqc=;
+        b=iu0UCMG1H/BNMlIeiXzpQlWox169hvd8P+qx1Z1zZPxndjzFgFJV0OtfAsYKizxUqK
+         lY+9Wqni5Sl5NRmv40ZRMITrldOX88uYq2nHtwUzj9zEwlklqoutID87KdoKiG0pcIc4
+         XLwb2kUY7cyde7XCfbMCOKfpCoyqfTngBdKX2qV6j3PHHFVNsYhc2OMavw+/QX476lNQ
+         kxTRcpvSOt2F+ExCCa7LXIVmh9BBXrUasOl1T7XZnP2Ckb6FQzvzs0y0cTKLQorhpSUH
+         xjbnmdpA8jQvrNI/EKtFz20iP1kZJP0ezSOAoRToVNkZNh5Ey90J265p/O/l8M4ckPgd
+         fgTg==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20251104; t=1778182155; x=1778786955;
+        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+         :to:from:sender:x-gm-gg:x-gm-message-state:from:to:cc:subject:date
+         :message-id:reply-to;
+        bh=uho0T/tSXrvJ8W7UDsZA0IRMzmaFS4LEWaugIxQxNqc=;
+        b=Mr6USOIuX1LtC2C9Z36Agd00yCCPNHFQRMPLpGTw6MEQi9WEuPfLtJrMMYWxr3RMs2
+         kpJJ8sqbuFuAO7+QECgeV6vwDBE9Vu1ZRbd76ECYolEePtNAZOK7K0LM9J9lLJ+1iurG
+         xAS2LQbHIg8YQT7Uj/4SKdL1U+uXgugs49fDpGgsxLgMRlq2S6s7FCjr3fZBGdTxeeUF
+         gcd2ZiqUxEW3J9ziyXtvYhi7c+sG3Q47IyetV7s6bN5gCPyNAarc/kGiRxUz5mzm8AU/
+         HzdpbjpWRGMhmodz4Qoq/7+LGQ5Oc9lp2WbtpTlgVQV6VLhTT2Uxyc0RqsqnsSDbomp7
+         THHQ==
+X-Gm-Message-State: AOJu0YyJaC4dHk5QKpLvgy8AzX0SlmpwpWvjFRIQtkIYDlWFX/UZHxAY
+	ojmr/n+ugDZBzqNxC4uiebIKBC9lZCHdo6quhidF4pQUHEhs9MJmR5neaEpmOg==
+X-Gm-Gg: AeBDiesJOHfEVhVf2PaRW3pHccyB9k6x67kAZGJMZukez+A2MV3y+VljwbhB1vYOVkv
+	IWPc1I3cJHIlu4yTLqLS7FgkE6yRYJo1HNKyrzER73d8VefiJR35ESBaoiqXRXEosE/kdNNujup
+	QBVct1gZr4KtoehPdJzPjze4I1j7DkgNm2auq8bfQ7bIoBE3WUtlXNkhvdviLuTGvmXVq877Vxh
+	ThjT2MMF8Q++KUYwprE99fDK1m7X3JSfTiceE4Tr9Gb2Vb5c44EAwHzBcyIj+p8UEkbjlZxifuL
+	9V4rByocul9MExddkyHm/A1eIw+9wZa9BSa4sEaq/uuYyrg8OYIL1XrtjjlZplDNKS2exPArC+5
+	10E9FDMs4BDItuWjaghWGpB7j3Vw6aSZPoGVpFkeSGZ82b7QXsZYUYuULdXn2PekLUXC5NFO2Ml
+	2uOUXYdvtzSxd51aipFzJLV5f7Na9Ojw6oarhxw/o2D9FUYy2IHbW1ilhUmzBUnDnkyZ2hQpU2w
+	NfppMVHpfltjGb4Iv6a8UKUMqKkpA==
+X-Received: by 2002:a05:622a:18a9:b0:50e:6302:340b with SMTP id d75a77b69052e-514621ff185mr140482681cf.53.1778182154616;
+        Thu, 07 May 2026 12:29:14 -0700 (PDT)
+Received: from Cumhall.redhat.com ([216.209.112.32])
+        by smtp.gmail.com with ESMTPSA id d75a77b69052e-51487d1de9esm3102711cf.27.2026.05.07.12.29.13
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Thu, 07 May 2026 12:29:14 -0700 (PDT)
+Sender: John Kacur <jkacur@gmail.com>
+From: John Kacur <jkacur@redhat.com>
+To: linux-rt-users@vger.kernel.org
+Cc: Clark Williams <williams@redhat.com>
+Subject: [PATCH 1/2] tuna: Print warning if setting affinity results in EPERM and continue
+Date: Thu,  7 May 2026 15:28:57 -0400
+Message-ID: <20260507192858.186090-1-jkacur@redhat.com>
+X-Mailer: git-send-email 2.54.0
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
 List-Subscribe: <mailto:linux-rt-users+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-User-Agent: Mozilla Thunderbird
-Subject: Re: [PATCH v6 1/1] block/blk-mq: use atomic_t for quiesce_depth to
- avoid lock contention on RT
-To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Cc: "Ionut Nechita (Wind River)" <ionut.nechita@windriver.com>,
- axboe@kernel.dk, linux-block@vger.kernel.org, clrkwllms@kernel.org,
- rostedt@goodmis.org, ming.lei@redhat.com, muchun.song@linux.dev,
- mkhalfella@purestorage.com, chris.friesen@windriver.com,
- linux-kernel@vger.kernel.org, linux-rt-devel@lists.linux.dev,
- linux-rt-users@vger.kernel.org, stable@vger.kernel.org,
- ionut_n2001@yahoo.com, sunlightlinux@gmail.com
-References: <cover.1778048987.git.ionut.nechita@windriver.com>
- <406f424c0a718bf492d40c206983e355e600945a.1778048987.git.ionut.nechita@windriver.com>
- <50187fa5-03a9-4ca3-bcaf-a36ed75bda2c@acm.org>
- <20260506074758.8zEg1ZBh@linutronix.de>
- <713ba2ae-e322-4e56-b0b8-89766f7f65c1@acm.org>
- <20260507074502.cFMtH9BB@linutronix.de>
-Content-Language: en-US
-From: Bart Van Assche <bvanassche@acm.org>
-In-Reply-To: <20260507074502.cFMtH9BB@linutronix.de>
-Content-Type: text/plain; charset=UTF-8; format=flowed
-Content-Transfer-Encoding: 7bit
+Content-Transfer-Encoding: 8bit
 
-On 5/7/26 9:45 AM, Sebastian Andrzej Siewior wrote:
-> On 2026-05-06 11:43:32 [+0200], Bart Van Assche wrote:
->> On 5/6/26 9:47 AM, Sebastian Andrzej Siewior wrote:
->>> On 2026-05-06 09:14:33 [+0200], Bart Van Assche wrote:
->>>> If the atomic_inc() in blk_mq_quiesce_queue_nowait() is protected by
->>>> hctx->queue->queue_lock then the above code doesn't have to be modified.
->>>
->>> But wouldn't the atomic_inc + barrier avoid the need to have the lock?
->>> Isn't this a normal pattern? If the lock is kept, we could use
->>> non-atomic ops here then. But this avoids having the lock.
->>
->> I strongly prefer a spinlock + non-atomic variables rather than using an
->> atomic variable and barriers because algorithms that use a spinlock are
->> easier to verify.
-> 
-> Hmmm. If we keep the lock, then there is no need for the atomic and we
-> keep int counter. Then we are where we are right now with the lock
-> synchronizing everything.
-> Isn't this also improving the performance for the !RT case or is it
-> simply not that visible here?
+When trying to isolate a CPU, if setting the affinity on a process fails
+with EPERM (Operation not permitted), this can occur due to security
+restrictions, namespace isolation, or lack of capabilities.
 
-Agreed that not obtaining the queue_lock from blk_mq_run_hw_queue() is 
-an interesting improvement. But I'm not sure the new 
-smp_mb__after_atomic() and smp_rmb() calls are needed. Block layer calls
-of blk_mq_quiesce_queue_nowait() are followed by a 
-blk_mq_wait_quiesce_done() call. The latter calls either 
-synchronize_srcu() or synchronize_rcu(). Either is sufficient to 
-guarantee global visibility of the change of the queue state to "quiesced".
+This is commonly seen with PID 1 (systemd/init) even when running as root,
+particularly when using 'su -c' which may not grant full capabilities, or
+when SELinux/AppArmor policies restrict the operation.
 
-This patch removes a spin_lock() call from
-blk_mq_quiesce_queue_nowait(). That spin_lock() call guarantees that
-other CPUs will observe the "quiesced" state after the store operations
-that precede the blk_mq_quiesce_queue_nowait() call. I don't think that
-any block layer code depends on this but I noticed that this change has
-not been mentioned in the patch description. A similar comment applies
-to the blk_mq_unquiesce_queue() changes: the ordering guarantees
-provided by the removed spin_lock() call have not been preserved. There
-is probably code in the block layer that depends on the "unquiesced"
-state only being observed after prior stores performed by the same CPU
-core.
+tuna should print a warning that this pid could not be moved, and continue
+processing other processes, similar to how EBUSY errors are handled.
 
-Thanks,
+Assisted-by: Claude Sonnet 4.5 <noreply@anthropic.com>
+Signed-off-by: John Kacur <jkacur@redhat.com>
+---
+ tuna/tuna.py | 4 ++++
+ 1 file changed, 4 insertions(+)
 
-Bart.
+diff --git a/tuna/tuna.py b/tuna/tuna.py
+index ef60c033362d..8e57cddd0c13 100755
+--- a/tuna/tuna.py
++++ b/tuna/tuna.py
+@@ -370,6 +370,10 @@ def isolate_cpus(cpus, nr_cpus):
+                     comm = ps[pid].stat["comm"]
+                     print(f'Warning: Unable to isolate pid {pid} [{comm}]')
+                     continue
++                if err.args[0] == errno.EPERM:
++                    comm = ps[pid].stat["comm"]
++                    print(f'Warning: Unable to isolate pid {pid} [{comm}]')
++                    continue
+                 raise err
+ 
+         if "threads" not in ps[pid]:
+-- 
+2.54.0
+
