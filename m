@@ -1,85 +1,106 @@
-Received: from mail-qv1-f43.google.com (mail-qv1-f43.google.com [209.85.219.43])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id C4E74410D0F
-	for <linux-rt-users@vger.kernel.org>; Fri,  8 May 2026 17:34:18 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.219.43
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id EBC523254B8
+	for <linux-rt-users@vger.kernel.org>; Fri,  8 May 2026 19:10:13 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1778261660; cv=none; b=Q2S43ZTc0/fguerIqHcVlmIGGGJjm3mtS6l6pCfb21kNV1fCayPmz7WsvKOlb+I/BqZiCH5PhrHWUuHoZ6XQs5jm8ytIFqVSndQmlLiRn4cJ2cVPdPvy5KPzbxiT4+ig/H+CRuafqJDCa/XUaA27+4AloEn2foobnmfTZGWhOlU=
+	t=1778267417; cv=none; b=FlV+M0yre9tvdpBWH0eGZacPe4LVDHRR02pj87+fBnrw5yzt5o6lkhAcl4kPxO+tw+dRBJMZtu3A4MVXgYgRM0RLXirXwD5qOPqHmOcQeT52usaKeKRXZgfhbDizvLG+O2QcB6uzBw3vRUN8/pDP81L0Z5qD0R/2TqUDsVxDJuQ=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1778261660; c=relaxed/simple;
-	bh=4VuR2NimOy8C/orc69ZIkLF0F0th7/6/AVvOZF3uihQ=;
-	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version:Content-Type; b=YyFOZg9gL8wLHwkN+Gc/+SFvasmE4UUDdZIaeDl0Q0bONLaDFMVq91SsiEZAAHVQNUZBmF7xsjqryWOPgj0DaeO2+HridBEGTk9SW/swKAlVAP4TuRHWHLneZMzTLryVvSAqyn6fJ7nljuidrkyuI5C9c5Dk5Fu7MzOZ99WwO64=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=fail (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=i++Azq4P; arc=none smtp.client-ip=209.85.219.43
-Authentication-Results: smtp.subspace.kernel.org; dmarc=fail (p=quarantine dis=none) header.from=redhat.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
+	s=arc-20240116; t=1778267417; c=relaxed/simple;
+	bh=389mBnQQTYshozEoD4S9evNTtFTLy6JDKqlaMHtGKT0=;
+	h=Date:From:To:Subject:Message-ID:MIME-Version:Content-Type:
+	 Content-Disposition; b=Uveu9x+NEQ9JU0DuFpd0Uoae93UMsFIC3SVf0sgnQXf91EulvhNFpWKvrv4FqTtoaHDeKgPrjPGqlQIPGFt0ErKRbH+ayopvtXuwxZaiM04U/VTQgr0nsVE/OJKEAGv9MH9ho8OpboUGGqvLfA74hLOkGGW9LC/LZaKYm5uJHQs=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=isPD4D84; arc=none smtp.client-ip=170.10.129.124
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="i++Azq4P"
-Received: by mail-qv1-f43.google.com with SMTP id 6a1803df08f44-899a9f445cbso20599326d6.0
-        for <linux-rt-users@vger.kernel.org>; Fri, 08 May 2026 10:34:18 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20251104; t=1778261658; x=1778866458; darn=vger.kernel.org;
-        h=content-transfer-encoding:mime-version:references:in-reply-to
-         :message-id:date:subject:cc:to:from:sender:from:to:cc:subject:date
-         :message-id:reply-to;
-        bh=4VuR2NimOy8C/orc69ZIkLF0F0th7/6/AVvOZF3uihQ=;
-        b=i++Azq4PI2cAwESI26x+2sYOPPhkJTj6DZydKZtbICS9mua7o8kDn37w/m7zkom8aW
-         owNm310+W5egicVp2XVMoAYu+WUyV29BPGLVspK1WAlT1Td7mCHWbuQx680iuLFT3HUl
-         fwPZAJgTOj8dGesqNVrUJO02zqOw27cjhXOEEvhWKJhkG8Pn/tViO7hbuLVmPC5JYQMi
-         FxkE2a/JIVKtkCBKY2h/Er8P/KdW+xkn3Aj1PdOBDvH78u4nkd3CW7+Es7S7cSBSFnxh
-         DwrpKhXpiX5IGFV+HC/n0sFPb/sK7yaWVOK7Fn0rpfk9fipLPiXrlRin2ge/opaVLvOR
-         xnnQ==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20251104; t=1778261658; x=1778866458;
-        h=content-transfer-encoding:mime-version:references:in-reply-to
-         :message-id:date:subject:cc:to:from:sender:x-gm-gg
-         :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
-        bh=4VuR2NimOy8C/orc69ZIkLF0F0th7/6/AVvOZF3uihQ=;
-        b=IXCIyNenTJeRivkytr3SKxSNyBBlWkvGEqsVcdpkTo9LUsBSiz2aoPgzHCbU9h1ijM
-         MgRc2dwVsmv7OVHAZ+RuId7EIJGeoZCiFEC9CuzMbScOIDb0TMDgPSOREgnuCfagGQ63
-         XGeiLD/TIUOKbwCvneaJ0NnvzkrQb2ndC/0VNnTsP5/3F5doSctSdYdL8GE12YvWjM2Z
-         6zuLvt3QomymSKdTFIm03xN4IJbq4IXWQ4g6m3QKUDFy1sHj6kYZ3o1TPPD7AlsBlM/t
-         VGWPSBQ4+oc585RIsRhP4qf+mMxRnY5MSC83TlMFTTfkJvRMhmKMCKAwlpcLxvRasgjX
-         EcUQ==
-X-Gm-Message-State: AOJu0YyWCiDEDxhC9mlmSnuBRqXt9YpWSZl2GAKLFTHTvEjaywYw8Tkj
-	cK5iG9b+mEWp9DzGl4Yywke3nW2xEQJxV+a3jSVkGIRE/q8W+WgHmjs5
-X-Gm-Gg: Acq92OG0yXeP83krkjnCo2XnhFx4DeVch9b05vMHZuEmMgEjKvCkSYMUBiWtqDj1DGk
-	9Gpd0M4/8TQKNOjVaKCrnPvwg0zIFzv122xdj0eDpagwE7kvDOm291p74jcCO8tecbWeMnw80rj
-	4OcFre+qhTZTpEh5K69n6OF9nj1oOeEof4/7Jr6OrAaIIKXywF7Ef9Sg7t4FfbucWbPrdsI5G0h
-	0gXBZnS0+1QL0F3zpBVN1pnwV9S3gdUgToef7dBQdabSZLo3D9ImY6UWY/kJ9Ku6dV3O4q1Eqqd
-	vQWFxM+Dd9ym8biYBefGoAMI8KeEZ+TqtNgW5IPnRTPpRvUiaFGgPvIakRn3ZJ45qCn+Fyhw2rY
-	kjQBfHqaczOUxANYPu4we5ppnnO/gEg/4EhhQz7aHYNdMo5wvsTqCNy+V2BOUzq9gp9H4m1hW3M
-	K7r0GdwZ0tI1c2c8IlC6n4FL/++/vDh2GQyb5q7HphOa6xPdq1ylTVNvbMsENsV/6nauZgP4Mf3
-	vweejXZrsV73q65ypU=
-X-Received: by 2002:a05:6214:dce:b0:8bb:2e70:7a2b with SMTP id 6a1803df08f44-8bf419c6fcemr50994196d6.15.1778261657451;
-        Fri, 08 May 2026 10:34:17 -0700 (PDT)
-Received: from Cumhall.redhat.com ([216.209.112.32])
-        by smtp.gmail.com with ESMTPSA id 6a1803df08f44-8bf3addb3aasm23920926d6.10.2026.05.08.10.34.16
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Fri, 08 May 2026 10:34:16 -0700 (PDT)
-Sender: John Kacur <jkacur@gmail.com>
-From: John Kacur <jkacur@redhat.com>
-To: Costa Shulyupin <costa.shul@redhat.com>
-Cc: linux-rt-users@vger.kernel.org
-Subject: Re: [PATCH v2] rt-tests: hwlatdetect: Add --time-format argument
-Date: Fri,  8 May 2026 13:34:00 -0400
-Message-ID: <20260508173400.109690-1-jkacur@redhat.com>
-X-Mailer: git-send-email 2.54.0
-In-Reply-To: <20260426140115.3111177-1-costa.shul@redhat.com>
-References: 
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="isPD4D84"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1778267412;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:mime-version:mime-version:content-type:content-type;
+	bh=g0pz8N71Yoiooi3EaKqYLi2wLyGLkdc5C8VlWghPvkI=;
+	b=isPD4D84fm0ScOaN3gnUnYMeYAkufNQeSK7yDZJOoQKq5rw/dIlEE0pT6FnNVED1Xla68K
+	3Dm08nNYhJj8S71lXJ8zucO8G7sB7QPeXSUNml30q0wW+SipQ2Wy6vJTnNIJN1xqtsc9UG
+	H+GXg5HpB18D9M4r+lA1sdQRpEbr7bU=
+Received: from mx-prod-mc-01.mail-002.prod.us-west-2.aws.redhat.com
+ (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
+ relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-311-LunyrnAiPM2MTrtGnFg8NQ-1; Fri,
+ 08 May 2026 15:10:09 -0400
+X-MC-Unique: LunyrnAiPM2MTrtGnFg8NQ-1
+X-Mimecast-MFC-AGG-ID: LunyrnAiPM2MTrtGnFg8NQ_1778267407
+Received: from mx-prod-int-06.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-06.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.93])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
+	(No client certificate requested)
+	by mx-prod-mc-01.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 45EA119560A2;
+	Fri,  8 May 2026 19:10:07 +0000 (UTC)
+Received: from localhost (unknown [10.22.88.92])
+	by mx-prod-int-06.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTP id 8908F18004A3;
+	Fri,  8 May 2026 19:10:06 +0000 (UTC)
+Date: Fri, 8 May 2026 16:10:05 -0300
+From: "Luis Claudio R. Goncalves" <lgoncalv@redhat.com>
+To: LKML <linux-kernel@vger.kernel.org>,
+	linux-rt-users <linux-rt-users@vger.kernel.org>,
+	stable-rt <stable-rt@vger.kernel.org>,
+	Steven Rostedt <rostedt@goodmis.org>,
+	Thomas Gleixner <tglx@linutronix.de>,
+	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+	Daniel Wagner <daniel.wagner@suse.com>,
+	Clark Williams <williams@redhat.com>,
+	Mark Gross <markgross@kernel.org>, Pavel Machek <pavel@denx.de>,
+	Jeff Brady <jeffreyjbrady@gmail.com>,
+	Jan Kiszka <jan.kiszka@siemens.com>,
+	Luis Goncalves <lgoncalv@redhat.com>
+Subject: [ANNOUNCE] 5.10.255-rt151
+Message-ID: <af41Df5xTu_LtIyo@redhat.com>
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
 List-Subscribe: <mailto:linux-rt-users+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: 8bit
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+X-Scanned-By: MIMEDefang 3.4.1 on 10.30.177.93
 
-On Sun, 26 Apr 2026 at 17:01:15 +0300, Costa Shulyupin wrote:
-> rt-tests: hwlatdetect: Add --time-format argument
+Hello RT-list!
 
-Applied, thanks!
+I'm pleased to announce the 5.10.255-rt151 stable release.
 
-Signed-off-by: John Kacur <jkacur@redhat.com>
+This release is just an update to the new stable 5.10.255 version
+and no RT-specific changes have been made.
+
+KernelCI test results for v5.10.255-rt151-rc1 can be found here:
+
+  https://dashboard.kernelci.org/tree/stable-rt/v5.10-rt-next/5fbc557d2372ab6bc1378057fe91379fc1133785
+
+You can get this release via the git tree at:
+
+  git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
+
+  branch: v5.10-rt
+  Head SHA1: f890d3d2d43123238f1102e6c8ea96d75103cac9
+
+Or to build 5.10.255-rt151 directly, the following patches should be applied:
+
+  https://www.kernel.org/pub/linux/kernel/v5.x/linux-5.10.tar.xz
+
+  https://www.kernel.org/pub/linux/kernel/v5.x/patch-5.10.255.xz
+
+  https://www.kernel.org/pub/linux/kernel/projects/rt/5.10/older/patch-5.10.255-rt151.patch.xz
+
+Signing key fingerprint:
+
+  9354 0649 9972 8D31 D464  D140 F394 A423 F8E6 7C26
+
+All keys used for the above files and repositories can be found on the
+following git repository:
+
+   git://git.kernel.org/pub/scm/docs/kernel/pgpkeys.git
+
+Enjoy!
+Luis
+
