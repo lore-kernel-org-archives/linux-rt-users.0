@@ -1,75 +1,73 @@
-Received: from 013.lax.mailroute.net (013.lax.mailroute.net [199.89.1.16])
+Received: from galois.linutronix.de (Galois.linutronix.de [193.142.43.55])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 606223D45CB;
-	Tue, 12 May 2026 17:37:51 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=199.89.1.16
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 17C7F31B837
+	for <linux-rt-users@vger.kernel.org>; Wed, 13 May 2026 20:48:17 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=193.142.43.55
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1778607472; cv=none; b=KI1kKPu66qOym1kySLuMmrB8Cmm7vs4tMY+SiUMz9aJmqf0jrR8BBLYyGDwg4O3qYVdKHdWFlm1jCjn1o2esIK81hazt1az638ngT1aYNsdu4K94pvpPhFHBHrd1F3/0Hk60cSB20XiedrQwTEHa0tleUg94NBR0aW5vTUCQYZ8=
+	t=1778705299; cv=none; b=nlljXRYKdubTl1pugNFkOsOJVipE17VZT895iwH147nRYl2rxDMo7sowdz64pY+DRK+NcMaIpxb3+pw7LhQrq1uVpUEmq+N4b7su3kKtrROZM1auLhPgeMwj8imJ0ggACv7hzhgUAqiImrIV+ZT6OWh7QSZtnON/43CmENsrjIk=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1778607472; c=relaxed/simple;
-	bh=SfLW2oIpUw03aTO5iZJdt8SAZdCGgrQt7e5x0azW2GY=;
-	h=Message-ID:Date:MIME-Version:Subject:To:Cc:References:From:
-	 In-Reply-To:Content-Type; b=H1nu9NZyg57pEYG79HnhZg4trIgI1zXHqTthEQ3I309d0vl3qL3hwyXwMZmoUxWmko9RAn6y1RpmKflemDqroJPU6yovlcJnlKvMB3AEueG2ZcGjJ1SD21lN+uF2JrqYrPQSZOFVCM7HhvmW9OTR1KOUraaSTholWuYI5odxQRU=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=acm.org; spf=pass smtp.mailfrom=acm.org; dkim=pass (2048-bit key) header.d=acm.org header.i=@acm.org header.b=std5bWuR; arc=none smtp.client-ip=199.89.1.16
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=acm.org
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=acm.org
+	s=arc-20240116; t=1778705299; c=relaxed/simple;
+	bh=H6aCfuyELuLhcdHxGmDr1OTdRsXKjx00qHoNGAGAn30=;
+	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
+	 Content-Type:Content-Disposition:In-Reply-To; b=Y0Mqb0x3wUoI8DAx6+fx2Et1+RDmTHMbm2X/WUMym4ROjq1gBPoVhbQbo4UAbQS0zPMGPVTVdsELBszxOVUKRf/gV4ENv5gIuO5p/SfPawA3ccVB5TPBIbCaIod+/eU+WB4ltWGHOPqtan6Ts3xSh6hCMm2Hmqq7ixka1+BXCtg=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linutronix.de; spf=pass smtp.mailfrom=linutronix.de; dkim=pass (2048-bit key) header.d=linutronix.de header.i=@linutronix.de header.b=L0jo0aTR; dkim=permerror (0-bit key) header.d=linutronix.de header.i=@linutronix.de header.b=b8c5zDnG; arc=none smtp.client-ip=193.142.43.55
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linutronix.de
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=linutronix.de
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=acm.org header.i=@acm.org header.b="std5bWuR"
-Received: from localhost (localhost [127.0.0.1])
-	by 013.lax.mailroute.net (Postfix) with ESMTP id 4gFP1j3RfkzlgqsJ;
-	Tue, 12 May 2026 17:37:45 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=acm.org; h=
-	content-transfer-encoding:content-type:content-type:in-reply-to
-	:from:from:content-language:references:subject:subject
-	:user-agent:mime-version:date:date:message-id:received:received;
-	 s=mr01; t=1778607459; x=1781199460; bh=NrqhSJnT4qTcj1WPsQDcAvv5
-	PX774py0G/DOjV2QwJo=; b=std5bWuRcsIzL6nLYUKvBxFQM0DNAk9KjXXwHz+s
-	5sgnzVwzagMjm0g4eulfHOdA2vhgz1NOxWQX8+Ah7gMSKcz3dEYMGiq4jFD18CEt
-	HhrC03OADWb2SBRDvaxbfx0NWWpfPacbIhvOzj7NG1F412bY+oFR2Nqi8rp20bKD
-	L7qML2T4exGGb60X9xN3kBoAj/FFlnCAxvPGb99RsTuJkBApm0L6A6w/QJpkLKp4
-	V6ywsIbdwV0wXgXn3m5fR/ehG4/tfCB9iK6+Vem8Ie8j6acIgEDxPJKh4G17RrVM
-	tIXQZ87f8nyvX278Rw9gQAjSzOk/m4eOVWM5tW8HSe3D1A==
-X-Virus-Scanned: by MailRoute
-Received: from 013.lax.mailroute.net ([127.0.0.1])
- by localhost (013.lax [127.0.0.1]) (mroute_mailscanner, port 10029) with LMTP
- id 7S3oCHixwdtk; Tue, 12 May 2026 17:37:39 +0000 (UTC)
-Received: from [100.119.48.131] (unknown [104.135.180.219])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
-	(No client certificate requested)
-	(Authenticated sender: bvanassche@acm.org)
-	by 013.lax.mailroute.net (Postfix) with ESMTPSA id 4gFP1T5v68zlfwHM;
-	Tue, 12 May 2026 17:37:33 +0000 (UTC)
-Message-ID: <bdb6a81e-2ef9-4425-949e-11ad4b6f452f@acm.org>
-Date: Tue, 12 May 2026 10:37:32 -0700
+	dkim=pass (2048-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="L0jo0aTR";
+	dkim=permerror (0-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="b8c5zDnG"
+Date: Wed, 13 May 2026 22:48:14 +0200
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
+	s=2020; t=1778705296;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 in-reply-to:in-reply-to:references:references;
+	bh=H6aCfuyELuLhcdHxGmDr1OTdRsXKjx00qHoNGAGAn30=;
+	b=L0jo0aTRiFBP3ycSvEWe9wheb5tPap7GTFMpOz44sT/yAD/CUG7LrP25Iz9K1zoX5GtWiA
+	5T41tZYCsk+FC2bdre4pph5McB+Z+J7IRlUjtcU9+ZrsYNW3R/3LAeseWlVpnmTv3Uu9Wm
+	ueiyC+u1xxoaTcM5uBHC2n+27QTk9ruNBzv2EHWLHKT/0AZSlADQj4IkvpexUzWC9cp7AT
+	6GLVqveZEZCrdhKGcTOxRNHYD30dCqFaoSvTDVGgzARNtZxwz0nPoFnR9lIy5PV6ekp0h3
+	HsIwIcvJmF+iIHUtv0Q+ECj0nn7htUCsRd8mEVhKF+wxAD6nVgr3uxwebuN3zA==
+DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
+	s=2020e; t=1778705296;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 in-reply-to:in-reply-to:references:references;
+	bh=H6aCfuyELuLhcdHxGmDr1OTdRsXKjx00qHoNGAGAn30=;
+	b=b8c5zDnGJ5DeaqdubqyXkxgEZE8/5igzrddQDC91VAGKglBMdZuzSbg4UvznN92P3pWABp
+	Ra/daqSnRL16XQBA==
+From: "Ahmed S. Darwish" <darwi@linutronix.de>
+To: John Kacur <jkacur@redhat.com>
+Cc: Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+	Clark Williams <williams@redhat.com>,
+	linux-rt-users@vger.kernel.org
+Subject: Re: [PATCH v1 00/28] rt-tests: Rework cyclictest manpage
+Message-ID: <agTjjlIOpp9u9Prp@lx-t490>
+References: <20250704132721.13325-1-darwi@linutronix.de>
+ <20250714130104.29nUrEeQ@linutronix.de>
+ <da95e7b6-a1f0-c2b5-0b9d-3c2a5878c96b@redhat.com>
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
 List-Subscribe: <mailto:linux-rt-users+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-User-Agent: Mozilla Thunderbird
-Subject: Re: [PATCH v7 1/1] block/blk-mq: use atomic_t for quiesce_depth to
- avoid lock contention on RT
-To: "Ionut Nechita (Wind River)" <ionut.nechita@windriver.com>,
- axboe@kernel.dk, linux-block@vger.kernel.org
-Cc: bigeasy@linutronix.de, clrkwllms@kernel.org, rostedt@goodmis.org,
- ming.lei@redhat.com, muchun.song@linux.dev, mkhalfella@purestorage.com,
- chris.friesen@windriver.com, linux-kernel@vger.kernel.org,
- linux-rt-devel@lists.linux.dev, linux-rt-users@vger.kernel.org,
- stable@vger.kernel.org, ionut_n2001@yahoo.com, sunlightlinux@gmail.com
-References: <20260512062815.10815-1-ionut.nechita@windriver.com>
- <20260512062815.10815-2-ionut.nechita@windriver.com>
-Content-Language: en-US
-From: Bart Van Assche <bvanassche@acm.org>
-In-Reply-To: <20260512062815.10815-2-ionut.nechita@windriver.com>
-Content-Type: text/plain; charset=UTF-8; format=flowed
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+In-Reply-To: <da95e7b6-a1f0-c2b5-0b9d-3c2a5878c96b@redhat.com>
 
-On 5/11/26 11:28 PM, Ionut Nechita (Wind River) wrote:
-> Performance on the RT kernel and the hardware above:
->   - Before: 153 MB/s, IRQ threads in D-state on q->queue_lock
->   - After:  640 MB/s, no IRQ threads blocked
+Hi,
 
-Reviewed-by: Bart Van Assche <bvanassche@acm.org>
+On Mon, 14 Jul 2025, John Kacur wrote:
+>
+> We can still accept the patches that Ahmed sent fist, after I review them.
+>
+
+By chance I've just discovered that the manpage branch is not yet merged
+into master, even though it has all the necessary Reviewed-by tags.
+
+Is there any way we can start merging it?
+
+Thanks,
+Ahmed
