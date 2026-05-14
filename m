@@ -1,84 +1,149 @@
-Received: from mail-qk1-f175.google.com (mail-qk1-f175.google.com [209.85.222.175])
+Received: from mail-wm1-f47.google.com (mail-wm1-f47.google.com [209.85.128.47])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 2B1F23CDBD3
-	for <linux-rt-users@vger.kernel.org>; Wed, 13 May 2026 23:45:09 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.222.175
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id BEA353F4127
+	for <linux-rt-users@vger.kernel.org>; Thu, 14 May 2026 09:02:15 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.128.47
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1778715912; cv=none; b=s3y6npjaCLe6GnpdtZMl8uL8QeXRgqjS8EIaOz2o6Duba/MRy9g1iqZdZwkGu5cW28sy1MaUr1af6sOJTFYbDFHWm+LRClOYa2IWYta4lHPp5R2rP+HKQb9b52JVuCrOfcXX9vywPSdfMapmtWTAJ9e6QqH1ERl0N9PIjnYZFVk=
+	t=1778749337; cv=none; b=Ea5zpMe+CinKsE+GRKJ5yIOkjDR6kj/+Xg+fgqazwzEbibi/U4gkOFNnNPt7TbgGQ2ZJsmaQkhU6WCK0KHnm+bj5WWtOQPawgUuBCdIVXSSwJOLBzLLKg4ccdlhub0aYteL0iEDNWs7fLhYdf97lPHequHMgxcYsPhj89tcCksc=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1778715912; c=relaxed/simple;
-	bh=BDpqYGrFsVU2gU04rgxe7so9XNw/uFZzYgK9wvGH8hU=;
-	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version:Content-Type; b=eTR6LiO/zYJef4/EGnQbSWQY/GT/crLO4VP35VkQ1o4nFFFBl3Ob0JGzxI+Sch3BfYvqVTKn1Wrh9ZpFE7bQ6S7UV6Kk4Ps2j7fKzrsmjTXNB89OLjCxCt5ShCjZmeI9NsB4Vybz0NX99UqZm8ZQ3+vDGPXyAFonaHC3z+OZEqo=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=fail (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=ZWtJ9Rab; arc=none smtp.client-ip=209.85.222.175
-Authentication-Results: smtp.subspace.kernel.org; dmarc=fail (p=quarantine dis=none) header.from=redhat.com
+	s=arc-20240116; t=1778749337; c=relaxed/simple;
+	bh=AKHkI7lvIXAw4tdBY7IMvBTBDqMVAbldLotTGcjg2SY=;
+	h=Message-ID:Date:MIME-Version:To:From:Subject:Content-Type; b=udPEdhqoRm5BSJ4n2eEdueV89mWA3jDgqr+0jlWgjtBvSbU8YgDvyISdqRn+Z8YHLNnzbJx2QJyxnNAEuzvLzzmGOH3Vqcd2a51C8iSe7fMPEFPW0tobw5nLpIcIL7uZcODz0fEihkw7KvuRa7axDBjjVGxIDvofE1UUj2/FnIQ=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=Pq9bks1a; arc=none smtp.client-ip=209.85.128.47
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="ZWtJ9Rab"
-Received: by mail-qk1-f175.google.com with SMTP id af79cd13be357-90b2fcf90a0so488414385a.1
-        for <linux-rt-users@vger.kernel.org>; Wed, 13 May 2026 16:45:09 -0700 (PDT)
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="Pq9bks1a"
+Received: by mail-wm1-f47.google.com with SMTP id 5b1f17b1804b1-4891b0786beso49402155e9.1
+        for <linux-rt-users@vger.kernel.org>; Thu, 14 May 2026 02:02:15 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20251104; t=1778715908; x=1779320708; darn=vger.kernel.org;
-        h=content-transfer-encoding:mime-version:references:in-reply-to
-         :message-id:date:subject:cc:to:from:sender:from:to:cc:subject:date
+        d=gmail.com; s=20251104; t=1778749334; x=1779354134; darn=vger.kernel.org;
+        h=content-transfer-encoding:subject:from:to:content-language
+         :user-agent:mime-version:date:message-id:from:to:cc:subject:date
          :message-id:reply-to;
-        bh=BDpqYGrFsVU2gU04rgxe7so9XNw/uFZzYgK9wvGH8hU=;
-        b=ZWtJ9RabrF1FdXaYMZWZJkKYgsFWkIZFHBvYWPvSGwhy+Fkify+7+b81pQq+oymqsq
-         uWpBnCYvPlLGHpIQKam44aA0fkDyJjBm5tVWqzKypvKzyhhR2r+TLWY3KPSNHJic8Zys
-         3oflfHqUZqSeNo/681JY4H4uIi0wXk5MRNubVlSU7aaZq049AaLFNPR7p6Kn9gzLvpYM
-         dSzLJFz9mnYTfCBMoIB2ZP4NdxyD+WCb7qCVrNNNG6jAgydUU2u8Z1Ud8ynUZEcq72hH
-         Vryouy083y37nvSm7npxVAtiy4pXCFjSBJ9q4vTWbQAWQM1W1YD5Gza0AZdXJmnHTu0Y
-         MrTg==
+        bh=jYRLkpnnItYDtdC6ybp8/1SRvJWhxj9cPjjMAg1izOg=;
+        b=Pq9bks1auh7YntglYVfy2bZbgmXnDrFikS0vs2Ud5j+4vfiVGheRjIM0fPE7V8On8o
+         53/g+JeKsc7Rm1yyLzTrItVfwu/h+jgP/1Ic5iyq6970AjGmWyt+4aID8MLgB6lvOAMG
+         UDi55V8lpXidiLMAdLDhdoYrtlMtDRBUDVWVByDljJvbZWxJkm/VqfpCexmLdeJTvDI4
+         TGoeGJxfKJ6v4xVfL20mMuLaZhx/hFKqjLKH3auZZw2vHwipb2J3YMHQODuIqEByM6sg
+         bakdrujwOlRPAFsz5lDzNuWu56GvjKIMxuAS/GWwr+O1UWk/K30ZVf+qv+uzIRUogff6
+         wKcw==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20251104; t=1778715908; x=1779320708;
-        h=content-transfer-encoding:mime-version:references:in-reply-to
-         :message-id:date:subject:cc:to:from:sender:x-gm-gg
-         :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
-        bh=BDpqYGrFsVU2gU04rgxe7so9XNw/uFZzYgK9wvGH8hU=;
-        b=a4Fk5bNZiBI/StfQjHSzO2w6JYTUQDyyuwxBOCbw+QO+2WS883SscYWpoGs3neNkiz
-         cbcTJflz0N7ZK9g41JFVL9yy6TLq+39FwUNniYs5il1+7iUt5QhGJjAjROytQS9QSPyz
-         mafvsy9BhZYNhKKOo6Tqj7nRIgnkqS+A/AZiQAJyKEJqkIjp3ekb/Z5/fiPBrqZ/GK3P
-         ZDx2xcoKfJ1chr6ykq6wsZ/zC2hWoDOlE2Z1wYXFncKa5LHpFHA/kDunWjUV+99LF1En
-         G/+A4OOcFI/H5dUAjDHjW6zmEHb6WYtAoJMWvwaz1NMBe30jxpDn7UMhJZyqpROQGb3Q
-         hzHA==
-X-Gm-Message-State: AOJu0YwLjQhtvT5BYcyi450KwZDhg1zOTeIj39EPedYX/ERX3u3dsvb+
-	7c4HD9737STCDI7IP0VGKS6qSRnA3Na94wX35ueUJdKHMTQ4QRxsspv6znuyMQ==
-X-Gm-Gg: Acq92OEUlIEja1ZH+ektRRaYI1hVWstv3NL3WfhAsvMCmQ6y1P4aH1SrVffTewfTOkZ
-	b8Ymwy5M/OuhUxnTITHw0in17GYJppowRgnXua1fmV0htzwaP6TU3nWxTV6w6pKgtryUnuF+xcK
-	aORdXF3vrWyJO7JyaXEoBg2H21rMv2LJr3dLJGXf3x+EPtizurSOINQb6tyEArB36INx2fer4Gx
-	cTrJdwEwCQaVTaenIiPycBgOS1YmDXDkI/bbA8lzk3zr37XZmEj99dl1p/tAj5SceglffZpJ+RJ
-	YO9k5fRsnf+BZ8XPDqcS4vVxVAsUqixm6cD9wSZNqzWk2CDZyvjSm2YJmzoleih4Ypb4gs0F7FU
-	gqd3E+xc36SyyaitvAbiBRnoWcUUu+97pvHutt0HIErPALlZg+l2H+RD7RkgKMBQNQ6i2R93+HR
-	9XxB5bn9yx3hQnoveH5dye0efZPlKwE+tM4I3gqcQxnKEfVpGVeiuvdSSTSrfiAfylrmTuE41XY
-	yWHSPTuU8dRXhud5D8=
-X-Received: by 2002:a05:620a:711a:b0:8cf:dd93:aca5 with SMTP id af79cd13be357-910b0f0ef01mr232809485a.34.1778715908563;
-        Wed, 13 May 2026 16:45:08 -0700 (PDT)
-Received: from Cumhall.redhat.com ([216.209.112.32])
-        by smtp.gmail.com with ESMTPSA id af79cd13be357-910c0ec392bsm84176185a.41.2026.05.13.16.45.06
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Wed, 13 May 2026 16:45:08 -0700 (PDT)
-Sender: John Kacur <jkacur@gmail.com>
-From: John Kacur <jkacur@redhat.com>
-To: "Ahmed S . Darwish" <darwi@linutronix.de>
-Cc: linux-rt-users@vger.kernel.org
-Subject: Re: [PATCH v1 00/28] rt-tests: Rework cyclictest manpage
-Date: Wed, 13 May 2026 19:44:49 -0400
-Message-ID: <20260513234449.253529-1-jkacur@redhat.com>
-X-Mailer: git-send-email 2.54.0
-In-Reply-To: <Z0n7HfDaK5iHOX3m@linutronix.de>
-References: 
+        d=1e100.net; s=20251104; t=1778749334; x=1779354134;
+        h=content-transfer-encoding:subject:from:to:content-language
+         :user-agent:mime-version:date:message-id:x-gm-gg:x-gm-message-state
+         :from:to:cc:subject:date:message-id:reply-to;
+        bh=jYRLkpnnItYDtdC6ybp8/1SRvJWhxj9cPjjMAg1izOg=;
+        b=kPOUWvKGs85ZOPx/1zkXKwAMTZAc6QJ+vmE+WSwdmpsTZDciLZ2vVln4LtCzp+5jZe
+         4Jy/PdsOOUnZF4qCuROr55XwIGLW8xCDR3lMSHjOSWoN89SscMES0Kwtx9TPk3JVtSBc
+         GYSi6xaKumtia2hiimaLrTK03GHl9Xrsz2HHLsrMz7ZCwO5KKjSjVUX7MClbSQYW+Rit
+         yuYusIQQYgxp995Bss2WqW3wDtPIrnuEC0tu0M7tq6XnedSvAKdcvH3/46/vshYqOzhk
+         my9prW+BGbRXRZe185xQN3QV20p3aj4qnPmlAIG1OzuPwBdAHAvwQhY3tmimfsblcVMy
+         WFfA==
+X-Gm-Message-State: AOJu0Yz/3zBseFbmmTfmju9fhv+we5L8CM48l7SvyhpVfgN7DOHnHLAk
+	BH0+Qt5h60crYpSBl9HMaMLchj3Y+GHyvjyJft4zC2NZYJrzU3kmn9dntwwabNu5
+X-Gm-Gg: Acq92OHQIr02Kdz2iL5tdvw4TTV8kTr7ykmKm57c+VrUDSqoglV8KbiQdvZYK7rbqg9
+	fyYRD4ITpCLvRuigmQ3NVy1JpObBJfWb98Mmj62fvSWwoOEwg8ggpdaCWNZfNp8PC3RbXGB6kFh
+	kNvalv2fIfK3kG+kRCHk+amtZa6yAIeUV2xuKxmjwB9oM7ZfKv+2RsyJeUa4gYmSfQWh/q5t0hr
+	plgucTeDkQSujlU5kmdtzOkTS1AC/B+cBBiBJQJXO0L8RKNUEZ7FnEKs1Y2QzDqu/hW/X+kdz2S
+	pTvCemN06BSlPYrtSSsvJeMf6iPmkjN2J+RHpwoEpHE7zB4LMCiWVWFqrwL56auWzMfeB1vspR5
+	ZsrQvg9mq/HiEtCQuo3tsvG5qBUzjyQRKCFF7tBgbtE0tTVeJcKGxJ+qdqzSfmcvvuDLOGkacSd
+	FUALwRvu6oAyQU58Oz6TJtjvRR6MRGSRI=
+X-Received: by 2002:a05:600c:4ed0:b0:485:3b9e:caa7 with SMTP id 5b1f17b1804b1-48fcea12514mr106574675e9.23.1778749333786;
+        Thu, 14 May 2026 02:02:13 -0700 (PDT)
+Received: from [192.168.1.114] ([31.223.9.67])
+        by smtp.gmail.com with ESMTPSA id 5b1f17b1804b1-48fd630b2b8sm21599545e9.3.2026.05.14.02.02.13
+        for <linux-rt-users@vger.kernel.org>
+        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
+        Thu, 14 May 2026 02:02:13 -0700 (PDT)
+Message-ID: <77cb843a-d5fc-4a35-b0d7-2b0c7f2f24d3@gmail.com>
+Date: Thu, 14 May 2026 12:02:08 +0300
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
 List-Subscribe: <mailto:linux-rt-users+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
+User-Agent: Mozilla Thunderbird
+Content-Language: en-US
+To: linux-rt-users@vger.kernel.org
+From: =?UTF-8?Q?Ahmet_Cevdet_=C3=87elik?= <ahmetcevdet006@gmail.com>
+Subject: VIS, a small Linux/x86_64 tool for CPU jitter, SMI evidence, and
+ runtime placement reports
+Content-Type: text/plain; charset=UTF-8; format=flowed
 Content-Transfer-Encoding: 8bit
 
-Hi Ahmed,
+   Hi,
 
-Thanks for the reminder. Done.
+   My name is Ahmet Cevdet Celik. I am developing a small open-source
+   Linux/x86_64 project called VIS:
 
-John
+   https://github.com/AhmetCevdetCelik/V-S
+
+   VIS is an experimental deterministic performance evidence layer. It is
+   not intended to replace existing Linux RT tools such as cyclictest,
+   hwlatdetect, rtla, ftrace, or perf. My current goal is to build a small
+   toolchain that measures what it can, reports what it cannot measure, and
+   produces machine-readable evidence around CPU noise and runtime 
+placement.
+
+   Current components:
+
+   - vis-jitter:
+     RDTSCP-based CPU jitter measurement, with IA32_SMI_COUNT based
+     rejection of SMI-contaminated measurement windows.
+
+   - vis-doctor:
+     System diagnosis and advisory reports. It inspects CPU topology,
+     SMT, governor, isolation, HugePages, environment mode
+     (bare metal / VM / container), MSR availability, RDTSCP support,
+     and reports evidence quality.
+
+   - vis-run:
+     Reads a Doctor runtime policy, temporarily runs a workload under the
+     selected CPU affinity profile, and emits a post-run attestation.
+
+   - vis-compare:
+     Runs the same workload under different runtime profiles and can
+     capture user-defined workload metrics for comparison.
+
+   The main idea is:
+
+       critical workloads should not run on hardware blindly;
+       the system should collect evidence about CPU noise, firmware-level
+       interruptions, scheduler/runtime effects, and placement decisions.
+
+   At this stage VIS is Linux/x86_64 only and very much experimental. It
+   depends on Linux interfaces such as /proc, /sys, sched_setaffinity, and
+   on x86 timing/MSR mechanisms for some measurements. I am aware that this
+   limits the scope and that SMI/MSR evidence is not always available,
+   especially in virtualized or restricted environments.
+
+   I would appreciate technical feedback from the Linux RT community,
+   especially on these questions:
+
+   1. Is this kind of evidence/reporting layer useful next to existing
+      tools such as cyclictest, hwlatdetect, rtla, ftrace, and perf?
+
+   2. Is the current SMI-contaminated-window rejection approach technically
+      reasonable, or is it too strict / misleading for noisy systems?
+
+   3. Should VIS try to import or align with rtla/hwlat/perf data rather
+      than implementing more sensors itself?
+
+   4. What would be the most useful next step for making this relevant to
+      real-time Linux users? For example:
+      - better integration with rtla/hwlat,
+      - cgroups/cpuset based runtime containment,
+      - perf counter evidence,
+      - or clearer report/schema design.
+
+   I am not looking to make exaggerated claims. The project is early, and
+   I would rather get criticism now than build in the wrong direction.
+
+   Thanks for your time.
+
+   Best regards,
+   Ahmet Cevdet Celik
+
