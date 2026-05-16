@@ -1,109 +1,101 @@
-Received: from mout-p-201.mailbox.org (mout-p-201.mailbox.org [80.241.56.171])
+Received: from mout-p-101.mailbox.org (mout-p-101.mailbox.org [80.241.56.151])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id D965E31E85E;
-	Sat, 16 May 2026 18:21:59 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=80.241.56.171
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 699BC33FE0F;
+	Sat, 16 May 2026 19:51:03 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=80.241.56.151
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1778955722; cv=none; b=s970axRUdDU5PtbWwJe9WQMXumdAngR3ntyAkqrUcBLXhrwYOD5gYd3qsTdM74LykVGN2ouGN88pWl2DT67VfvxnNPPcWSmaLClbHYM2OrNGmYlEDiJgBO5oQNpnsvE/vPhczaWUdJnIj5hwY0wVI0REUzlFdJWB1qw92nGtTtI=
+	t=1778961064; cv=none; b=AnHSt4HPxfcYlLLyKU4lDbScXII3yM+I/qSAUocUR5jaIVuXJduEcHiujD4clPKYYv8WRFC1QEc5PXwc9cn+7d1EqudQ7IvYQCiilI7XcT2uDODzPvFG8BBcNGDvgH0FnPWy5uBOmTuwOOa2a8s0buUPhycnVrRz4tR8Z3/mZp8=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1778955722; c=relaxed/simple;
-	bh=fzXfV5gAmhJGdfewVZxSYNo7REcm5ceNH1Bddomxt20=;
-	h=Message-ID:Date:MIME-Version:Subject:To:References:From:
-	 In-Reply-To:Content-Type; b=D4SdasfsyzGzco0U5zLCE3Yz6ykl0Fz1s/2Kp5T8Y59xc/VyLIQbF4hwU9sccoL46aXqF5jDkx8Xx3Y6yhW5h7xgD22Vl2I6PON9ZjpLZTJCn/ixAGlFuZsmQHabEljUqOcYwIm6dLSPuN2vqfU2f8lzfAcjmfn9qI4sm4kEK5M=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=mailbox.org; spf=pass smtp.mailfrom=mailbox.org; dkim=pass (2048-bit key) header.d=mailbox.org header.i=@mailbox.org header.b=s8hpa9L9; arc=none smtp.client-ip=80.241.56.171
+	s=arc-20240116; t=1778961064; c=relaxed/simple;
+	bh=NW0z9IhbkDKRr/tOGwzpWxbUSWH+j2j5riXF3KwYMck=;
+	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
+	 Content-Type:Content-Disposition:In-Reply-To; b=OOBMwgwszdpXCboOKE5i+Ky3Dh+HSgnXGibYvBjz53sa4xwY28JluyzHm2y2u0Ff0hufV0WJ+UlsLy0mZLi9jihwG28LKecO6BtDNBjd4vCwCL5WC3/TIRgCXnhiL8f0VZXQGotlVgayAHGqPdj/HJt5sQoDiknrdvRfHMPQoUE=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=mailbox.org; spf=pass smtp.mailfrom=mailbox.org; dkim=pass (2048-bit key) header.d=mailbox.org header.i=@mailbox.org header.b=oobwcGwG; arc=none smtp.client-ip=80.241.56.151
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=mailbox.org
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=mailbox.org
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=mailbox.org header.i=@mailbox.org header.b="s8hpa9L9"
-Received: from smtp202.mailbox.org (smtp202.mailbox.org [IPv6:2001:67c:2050:b231:465::202])
+	dkim=pass (2048-bit key) header.d=mailbox.org header.i=@mailbox.org header.b="oobwcGwG"
+Received: from smtp2.mailbox.org (smtp2.mailbox.org [10.196.197.2])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature RSA-PSS (4096 bits) server-digest SHA256)
 	(No client certificate requested)
-	by mout-p-201.mailbox.org (Postfix) with ESMTPS id 4gHspj6Rt6z9vMQ;
-	Sat, 16 May 2026 20:21:49 +0200 (CEST)
+	by mout-p-101.mailbox.org (Postfix) with ESMTPS id 4gHvnV0nB3z9vTk;
+	Sat, 16 May 2026 21:50:54 +0200 (CEST)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=mailbox.org; s=mail20150812;
-	t=1778955710;
+	t=1778961054;
 	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:mime-version:mime-version:content-type:content-type:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references;
-	bh=5xdH9ckA5rh24zalIKYm+XMbPAk0c034nqRbaGEbD7M=;
-	b=s8hpa9L9qoSqz5//0oyCMRNlNueouBFM7hVw/qo+TBdk1EDqGL4fDyrPi3cRBTYGkeQBFe
-	+Vsjm05tiVfpVao1ctPQGtrWVlPO0Qhxqeb4OKhmoPoHetudbL9QD8xnkmkVARvJGpKPcm
-	V1rwujohM/9oekn3JbhHXLSh7Op29Fs3pae7ffSBQAOOq0v0QhhxxtDw2j/ZWEyzpiifQW
-	e+NJEYljE4CnOA/yHVqQ+V0rgkZpoGRzhm2Db7RDi9z91HAW/PZzWKnKXjTJuhRsy+hB5+
-	S5RORKt0HkFfxNgQr5X3Y7hWn8AaE+hIBpNSwxMVKb1qZzBn6bzYmiiDWFos8w==
-Message-ID: <69c53493-aed5-4f50-9777-10e06c403edd@mailbox.org>
-Date: Sat, 16 May 2026 20:21:43 +0200
+	bh=PEhqOpaWWSv+ARlx/Z4JVeUPUWXupWXmKcbzc9qwsMQ=;
+	b=oobwcGwGRpXJsREMPj/Iy6rIrhK7lVVvBuV5ePQvEdIrZKXUYD5sm9hnuPFE64gB812uXz
+	sFRqZg4JiGBZfKeAzYRh0pm2nlSlhl2BPkJz8CHk/UUw7y7W9BmIKuL0LfAnB9JP71ffQj
+	AnLi9iejwE9jKjv4MugjdDekKYMywgqL1H0kO7m3NRMecLeXfDhFH0oPXrKrTA0VkhN6Wj
+	o7MvlvWERKqQDCY2fLO+IDxCnGuL13ulvz9ZOpQa/AdnyLA0K124Df9M7Aluucfl0z9rjR
+	1aJuYSQKcMsMJZ3AMJJ1BzMEYSS1brrMXzQ64DUSgNvMrrpAu+t/Qxa8qoRHUA==
+Date: Sat, 16 May 2026 21:50:49 +0200
+From: Lukas Beckmann <lbckmnn@mailbox.org>
+To: Sasha Levin <sashal@kernel.org>, Peter Zijlstra <peterz@infradead.org>,
+	Juri Lelli <juri.lelli@redhat.com>
+Cc: regressions@lists.linux.dev, stable@vger.kernel.org,
+	linux-rt-users@vger.kernel.org, Mike Galbraith <efault@gmx.de>
+Subject: Re: [REGRESSION] 6.12.y: d66792919d4f (sched/deadline: Use revised
+ wakeup rule for dl_server) causes latencies up to 50ms with PREEMPT_RT
+Message-ID: <agjKmWqi_6qR0TJO@lukas-yuanda-arch.localdomain>
+References: <04657838-46d1-432d-95e1-eb73b930b032@mailbox.org>
+ <20260511141441.stable-reply-0001@kernel.org>
+ <4e31e3b5-fa69-4c4c-a5e9-dea7a8452ee7@mailbox.org>
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
 List-Subscribe: <mailto:linux-rt-users+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-Subject: Re: [ANNOUNCE] v6.12.89-rt18
-To: Daniel Wagner <wagi@monom.org>, LKML <linux-kernel@vger.kernel.org>,
- linux-rt-users@vger.kernel.org, stable-rt@vger.kernel.org,
- Steven Rostedt <rostedt@goodmis.org>, Thomas Gleixner <tglx@linutronix.de>,
- Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
- Clark Williams <williams@redhat.com>
-References: <fe181873-9a38-4b4b-aa9a-3a45b28dd769@nitrogen.local>
-Content-Language: en-US
-From: Lukas Beckmann <lbckmnn@mailbox.org>
-In-Reply-To: <fe181873-9a38-4b4b-aa9a-3a45b28dd769@nitrogen.local>
-Content-Type: text/plain; charset=UTF-8; format=flowed
+Content-Type: text/plain; charset=iso-8859-1
+Content-Disposition: inline
 Content-Transfer-Encoding: 8bit
-X-MBO-RS-META: td8u4hkne8siukxand1wcc17nadsbrfc
-X-MBO-RS-ID: e233e0cc2197140a8aa
+In-Reply-To: <4e31e3b5-fa69-4c4c-a5e9-dea7a8452ee7@mailbox.org>
+X-MBO-RS-META: ddgoobbgpdgr8n4i1chaj6m6o4dbo4wm
+X-MBO-RS-ID: 76f75684ade3cfac31e
 
+On Tue, May 12, 2026 at 12:08:49AM +0200, Lukas Beckmann wrote:
+> 
+> On 5/11/26 16:21, Sasha Levin wrote:
+> > Thanks for the detailed report. Before I revert d66792919d4f from 6.12.y,
+> > I'd like to confirm whether the underlying issue is the missing dl_server
+> > rework chain on 6.12.y rather than the revised wakeup rule itself.
+> >
+> > Mike's reply notes that his local 6.12-rt tree carrying the following
+> > three commits in cannot reproduce, while the same tree without them
+> > reproduces quickly:
+> >
+> >� �cccb45d7c429 ("sched/deadline: Less agressive dl_server handling")
+> >� �4ae8d9aa9f9d ("sched/deadline: Fix dl_server getting stuck")
+> >� �a3a70caf7906 ("sched/deadline: Fix dl_server behaviour")
+> >
+> > d66792919d4f's upstream commit message explicitly says it relies on the
+> > state established by a3a70caf7906, and none of the three are in 6.12.y.
+> >
+> > Could you give those three commits a spin on top of 6.12.y (keeping
+> > d66792919d4f in place) and see whether the latency goes away?
+> 
+> If I apply the three commits on 6.12.y, the latencies indeed go away.
+> This is running for a few hours now, and the latencies showed up after 30
+> minutes tops, with plain 6.12.y before.
+> I will leave this running.
+> 
+> Note:
+> I also tried applying only cccb45d7c429 ("sched/deadline: Less agressive
+> dl_server handling") before, and that also seems to fix the issue.
+> 
+> Thanks
+> Lukas
 
-On 5/16/26 18:58, Daniel Wagner wrote:
- > Hello RT-list!
- >
- > I'm pleased to announce the 6.12.89-rt18 stable release. This is just an
- > update to the latest stable release. No RT specific changes.
- >
- > During my testing, I saw some spikes on my x86 box, but so far I haven't
- > been able to identify the issue. I recently updated the entire lab, so
- > it could simply be a misconfiguration or something similar. Since there
- > were a number of high-profile CVE fixes in the stable release, I didn't
- > want to hold off this release, especially since there are no RT changes
- > at all that could cause a regression.
- >
- > You can get this release via the git tree at:
- >
- >  git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
- >
- >   branch: v6.12-rt-patches
- >   Head SHA1: da81d744fde93759451b625bdcaf1c4eb7a3b18f
- >
- > Or to build 6.12.89-rt18 directly, the following patches should be 
-applied:
- >
- >  https://www.kernel.org/pub/linux/kernel/v6.x/linux-6.12.tar.xz
- >
- >   https://www.kernel.org/pub/linux/kernel/v6.x/patch-6.12.89.xz
- >
- > 
-  https://www.kernel.org/pub/linux/kernel/projects/rt/6.12/older/patch-6.12.89-rt18.patch.xz
- >
- > Signing key fingerprint:
- >
- >   5BF6 7BC5 0826 72CA BB45  ACAE 587C 5ECA 5D0A 306C
- >
- > All keys used for the above files and repositories can be found on the
- > following git repository:
- >
- >    git://git.kernel.org/pub/scm/docs/kernel/pgpkeys.git
- >
- > Enjoy!
- > Daniel
- >
+Hey Sasha,
 
-Hello,
-The spikes that you see are probably related to this regression:
+Cyclictest is still running and looking good (latency-wise).
+How should we proceed?
 
-https://lore.kernel.org/regressions/4e31e3b5-fa69-4c4c-a5e9-dea7a8452ee7@mailbox.org/
-
+Thanks
 Lukas
