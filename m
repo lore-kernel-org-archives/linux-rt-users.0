@@ -1,47 +1,47 @@
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 871B23E6DD2
-	for <linux-rt-users@vger.kernel.org>; Wed, 20 May 2026 14:02:34 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 6A5993E6385
+	for <linux-rt-users@vger.kernel.org>; Wed, 20 May 2026 14:02:36 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1779285756; cv=none; b=DpXiWLCX6CKV0TC9wYpShbMHQZebYoAy5SXKgbXQFOzw3NRdq835VQjxA199X/SyCpp1c2VKAXMJRns+B1F9+wiez67Odo+Pz4He+SiTb+st3kDX29ZhTVYQD1/oikGVoC0g8xoGgrkgVtCZYi68DOHTgKNNadydV/EayEkMq/Y=
+	t=1779285757; cv=none; b=ATSmL6Kfntb14Z3HFIj6R55ow/fpHlzkHofm8quRpNq8a2CmvetXCB0JjXXAiHkTekDufZGaiib++t0tVVsopl5Ei/RC51YBmp6155X+hP0Ag6U5dmzy9OemHjWoKWwOeRb30yPt4G2Uas+nyRqEYt1cWx7LZCJIzVp85vvDrVc=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1779285756; c=relaxed/simple;
-	bh=Va+G0dF+wvpH+Ld3c8sk86uvjdXRKE6cSUbzES5Mru8=;
+	s=arc-20240116; t=1779285757; c=relaxed/simple;
+	bh=n4LysnzqRi+fLjtGVmaWOjHR3fdEbX5YORDksHCgp2w=;
 	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=jnvas+2P/cOPth6mfTzJ/VDmRetNezna2WJcdbxcX4AU8CsbM4UBh9NTPaA+be9ivELsFFOJ6JAtV7xX0+o3qe0PO/t1CiGCJGa/P7//ejUqS2dXw20KdY8I6oEt4o0EUyKJZa9Oc1sBLE43/6wTJuTz2R5l+hifPQRjF62xTNw=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=iDvRTplK; arc=none smtp.client-ip=170.10.133.124
+	 MIME-Version; b=awIuW5eUYp8wh3BbNCsKhYmprrpq5g5/gcUu076+vhcc7IT6RBt/ockqe6IYLsIt5pWQv683iZzUvgVa6QDK8YZnTvK5wxkjRSTtpVI5rzJ7bEb3dIiLKBSJfqdM/PmfYuuJRUrd0lGVEqHfhx/qeFtH4KGjJ8BMJmnFSrIGSAc=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=bzILdn15; arc=none smtp.client-ip=170.10.133.124
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="iDvRTplK"
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="bzILdn15"
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1779285753;
+	s=mimecast20190719; t=1779285755;
 	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
 	 to:to:cc:cc:mime-version:mime-version:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references;
-	bh=wr4BZuQ7q0yyEZY4QfDU8AaY+3QdUNw6CbSHNZeW8yg=;
-	b=iDvRTplKcMwP34B/aM/rH64sxQ0q9L3Mr+Y6hiSJpJqReNk36gUAP4ciZh/OoeohpCFSVt
-	05pRcAJkK3lNlfatFKNDKiZ+PIvWvlb35Xjd8wFa14syrmnnGbhBfSV3FtgeTpMIMv8L6Q
-	DH2cDzQ5ixZ2gIAYOuzuiK934BnaKoU=
-Received: from mx-prod-mc-01.mail-002.prod.us-west-2.aws.redhat.com
- (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
+	bh=Ld4WASugwo/Ddenlo2Qu+ZJzDlxrD5Fcw143L0N0gQw=;
+	b=bzILdn15E3mj2bKryWw4+PoIVFNSMEu6RqInV7zgZwUeUKJOhE8xR9PrATJ8AMJnBDMUN2
+	ENULpdbUl5MUHPma4w0wRh50/AOoZ/4J2PAiPGza5l9Zje4depU9+vKF2D8XbUgjTVOVaA
+	vJjRImZaBD7giqap/haWUaJvogH2hJc=
+Received: from mx-prod-mc-08.mail-002.prod.us-west-2.aws.redhat.com
+ (ec2-35-165-154-97.us-west-2.compute.amazonaws.com [35.165.154.97]) by
  relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-244-yVytIIXDP12u7uGVJzuWLA-1; Wed,
- 20 May 2026 10:02:30 -0400
-X-MC-Unique: yVytIIXDP12u7uGVJzuWLA-1
-X-Mimecast-MFC-AGG-ID: yVytIIXDP12u7uGVJzuWLA_1779285747
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-596-a8OrRnvsNzG_rqB9bPFH5A-1; Wed,
+ 20 May 2026 10:02:33 -0400
+X-MC-Unique: a8OrRnvsNzG_rqB9bPFH5A-1
+X-Mimecast-MFC-AGG-ID: a8OrRnvsNzG_rqB9bPFH5A_1779285752
 Received: from mx-prod-int-08.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-08.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.111])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
 	(No client certificate requested)
-	by mx-prod-mc-01.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 1470E1956056;
-	Wed, 20 May 2026 14:02:27 +0000 (UTC)
+	by mx-prod-mc-08.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 09CDF18002CF;
+	Wed, 20 May 2026 14:02:32 +0000 (UTC)
 Received: from wcosta-defaultstring.rmtbr.csb (unknown [10.22.88.108])
-	by mx-prod-int-08.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTP id E77B91801A63;
-	Wed, 20 May 2026 14:02:24 +0000 (UTC)
+	by mx-prod-int-08.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTP id F04641800465;
+	Wed, 20 May 2026 14:02:29 +0000 (UTC)
 From: Wander Lairson Costa <wander@redhat.com>
 To: Clark Williams <williams@redhat.com>,
 	John Kacur <jkacur@redhat.com>,
@@ -50,9 +50,9 @@ Cc: Juri Lelli <juri.lelli@redhat.com>,
 	luffyluo@tencent.com,
 	davidlt@rivosinc.com,
 	Wander Lairson Costa <wander@redhat.com>
-Subject: [[PATCH stalld] 27/33] tests: Reduce starvation_gen durations
-Date: Wed, 20 May 2026 11:00:54 -0300
-Message-ID: <20260520140104.112142-28-wander@redhat.com>
+Subject: [[PATCH stalld] 29/33] tests: Drop redundant sleeps in test_pidfile
+Date: Wed, 20 May 2026 11:00:56 -0300
+Message-ID: <20260520140104.112142-30-wander@redhat.com>
 In-Reply-To: <20260520140104.112142-1-wander@redhat.com>
 References: <20260520140104.112142-1-wander@redhat.com>
 Precedence: bulk
@@ -64,212 +64,63 @@ MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 X-Scanned-By: MIMEDefang 3.4.1 on 10.30.177.111
 
-Reduce starvation_gen durations across eight functional test files to
-eliminate unnecessary wait times. The generator runs for its full
-duration regardless of whether test assertions have already completed,
-meaning the previous literal values of 20 and 15 seconds wasted up to
-10 seconds per test section. Across the full suite, this accumulated
-into significant idle time.
-
-With a typical threshold of 5 seconds, the generator only needs to run
-long enough for detection plus a safety margin. Applying a formula of
-threshold plus boost duration plus a 4-second margin yields an optimal
-12 seconds for standard tests. For detection-only tests lacking a
-boost, a 10-second duration provides ample margin.
-
-Update seven instances of 20-second durations to 12 seconds and nine
-instances of 15-second durations to 10 seconds, along with two
-corresponding log messages. Values already optimized at 12 or 3
-seconds, as well as variable-based durations computed directly from
-thresholds, remain unchanged since they already scale proportionally.
+Remove redundant sleep calls following start_stalld in the pidfile
+tests. The start_stalld helper already polls for readiness internally
+before returning. It waits for the pidfile to appear when --pidfile
+is passed, and uses pgrep retries otherwise. The additional sleeps
+were dead wait time and unnecessarily slowed down test execution.
 
 Signed-off-by: Wander Lairson Costa <wander@redhat.com>
 ---
- tests/functional/test_boost_duration.sh           | 4 ++--
- tests/functional/test_boost_restoration.sh        | 4 ++--
- tests/functional/test_deadline_boosting.sh        | 8 ++++----
- tests/functional/test_fifo_boosting.sh            | 4 ++--
- tests/functional/test_fifo_priority_starvation.sh | 4 ++--
- tests/functional/test_log_only.sh                 | 4 ++--
- tests/functional/test_starvation_detection.sh     | 2 +-
- tests/functional/test_task_merging.sh             | 6 +++---
- 8 files changed, 18 insertions(+), 18 deletions(-)
+ tests/functional/test_pidfile.sh | 7 -------
+ 1 file changed, 7 deletions(-)
 
-diff --git a/tests/functional/test_boost_duration.sh b/tests/functional/test_boost_duration.sh
-index 821dffe..d754977 100755
---- a/tests/functional/test_boost_duration.sh
-+++ b/tests/functional/test_boost_duration.sh
-@@ -92,8 +92,8 @@ log "Starting stalld with ${threshold}s threshold and ${duration}s boost duratio
- start_stalld_with_log "${STALLD_LOG}" -f -v -c "${TEST_CPU}" -a ${STALLD_CPU} -t ${threshold} -d ${duration}
+diff --git a/tests/functional/test_pidfile.sh b/tests/functional/test_pidfile.sh
+index a2e5eb0..b5e1159 100755
+--- a/tests/functional/test_pidfile.sh
++++ b/tests/functional/test_pidfile.sh
+@@ -22,9 +22,6 @@ test_section "Test 1: Default behavior (no -P specified)"
  
- # Create starvation with a specific task we can track
--log "Creating starvation on CPU ${TEST_CPU} for 15s"
--start_starvation_gen -c "${TEST_CPU}" -p 80 -n 1 -d 15
-+log "Creating starvation on CPU ${TEST_CPU} for 10s"
-+start_starvation_gen -c "${TEST_CPU}" -p 80 -n 1 -d 10
+ start_stalld -l -t 5
  
- # Wait for actual boosting
- assert_boost_detected "${STALLD_LOG}" "Boost with ${duration}s boost duration"
-diff --git a/tests/functional/test_boost_restoration.sh b/tests/functional/test_boost_restoration.sh
-index 62c37b0..6a71644 100755
---- a/tests/functional/test_boost_restoration.sh
-+++ b/tests/functional/test_boost_restoration.sh
-@@ -33,7 +33,7 @@ start_stalld_with_log "${STALLD_LOG}" -f -v -t $threshold -c ${TEST_CPU} -a ${ST
+-# Give stalld time to create pidfile
+-sleep 2
+-
+ # Check common default pidfile locations
+ default_found=0
+ for pidfile in /var/run/stalld.pid /run/stalld.pid; do
+@@ -58,7 +55,6 @@ rm -f "${custom_pidfile}"
  
- # Create starvation (starvation_gen creates SCHED_FIFO blocker prio 80, blockee prio 1)
- log "Creating starvation with SCHED_FIFO tasks (blocker prio 80, blockee prio 1)"
--start_starvation_gen -c ${TEST_CPU} -p 80 -b 1 -n 1 -d 20
-+start_starvation_gen -c ${TEST_CPU} -p 80 -b 1 -n 1 -d 12
+ log "Starting stalld with custom pidfile: ${custom_pidfile}"
+ start_stalld -l -t 5 --pidfile "${custom_pidfile}"
+-sleep 2
  
- # Find the starved task
- tracked_pid=$(find_starved_child "${STARVE_PID}")
-@@ -120,7 +120,7 @@ start_stalld_with_log "${STALLD_LOG}" -f -v -t $threshold -c ${TEST_CPU} -a ${ST
+ assert_file_exists "${custom_pidfile}" "Custom pidfile created at ${custom_pidfile}"
  
- # Use -o flag to create SCHED_OTHER blockees
- log "Creating SCHED_OTHER starvation (RT blocker prio 80, SCHED_OTHER blockee)"
--start_starvation_gen -c ${TEST_CPU} -p 80 -o -n 1 -d 20
-+start_starvation_gen -c ${TEST_CPU} -p 80 -o -n 1 -d 12
+@@ -87,7 +83,6 @@ rm -f "${tmp_pidfile}"
  
- # Find the starved SCHED_OTHER task
- tracked_pid=$(find_starved_child "${STARVE_PID}")
-diff --git a/tests/functional/test_deadline_boosting.sh b/tests/functional/test_deadline_boosting.sh
-index 094c146..305c641 100755
---- a/tests/functional/test_deadline_boosting.sh
-+++ b/tests/functional/test_deadline_boosting.sh
-@@ -64,7 +64,7 @@ start_stalld_with_log "${STALLD_LOG}" -f -v -g 1 -t $threshold -c ${TEST_CPU} -a
+ log "Starting stalld with /tmp pidfile: ${tmp_pidfile}"
+ start_stalld -l -t 5 --pidfile "${tmp_pidfile}"
+-sleep 2
  
- # Create starvation
- log "Creating starvation on CPU ${TEST_CPU}"
--start_starvation_gen -c ${TEST_CPU} -p 80 -n 1 -d 15
-+start_starvation_gen -c ${TEST_CPU} -p 80 -n 1 -d 10
+ assert_file_exists "${tmp_pidfile}" "Pidfile created in /tmp directory"
  
- # Try to find the boosted task PID before it gets boosted
- tracked_pid=$(find_starved_child "${STARVE_PID}")
-@@ -106,7 +106,7 @@ start_stalld_with_log "${STALLD_LOG}" -f -v -g 1 -t $threshold -c ${TEST_CPU} -a
+@@ -107,7 +102,6 @@ rm -f "${fg_pidfile}"
  
- # Create starvation
- log "Creating starvation on CPU ${TEST_CPU}"
--start_starvation_gen -c ${TEST_CPU} -p 80 -n 1 -d 20
-+start_starvation_gen -c ${TEST_CPU} -p 80 -n 1 -d 12
+ log "Starting stalld in foreground mode with pidfile: ${fg_pidfile}"
+ start_stalld -f -v -l -t 5 --pidfile "${fg_pidfile}"
+-sleep 2
  
- # Find a starved task before it gets boosted
- tracked_pid=$(find_starved_child "${STARVE_PID}")
-@@ -165,12 +165,12 @@ else
+ if [ -f "${fg_pidfile}" ]; then
+     pass "Pidfile created in foreground mode"
+@@ -139,7 +133,6 @@ rm -f "${readable_pidfile}"
  
-     # Create starvation on CPU0
-     log "Creating starvation on CPU ${CPU0}"
--    start_starvation_gen -c ${CPU0} -p 80 -n 1 -d 15
-+    start_starvation_gen -c ${CPU0} -p 80 -n 1 -d 10
-     STARVE_PID0=${STARVE_PID}
+ log "Starting stalld with readable pidfile: ${readable_pidfile}"
+ start_stalld -l -t 5 --pidfile "${readable_pidfile}"
+-sleep 2
  
-     # Create starvation on CPU1
-     log "Creating starvation on CPU ${CPU1}"
--    start_starvation_gen -c ${CPU1} -p 80 -n 1 -d 15
-+    start_starvation_gen -c ${CPU1} -p 80 -n 1 -d 10
-     STARVE_PID1=${STARVE_PID}
- 
-     # Wait for boosting on both CPUs
-diff --git a/tests/functional/test_fifo_boosting.sh b/tests/functional/test_fifo_boosting.sh
-index cabc740..57c473d 100755
---- a/tests/functional/test_fifo_boosting.sh
-+++ b/tests/functional/test_fifo_boosting.sh
-@@ -50,7 +50,7 @@ rm -f "${STALLD_LOG}"
- 
- # Create starvation FIRST
- log "Creating starvation on CPU ${TEST_CPU}"
--start_starvation_gen -c ${TEST_CPU} -p 80 -n 1 -d 15
-+start_starvation_gen -c ${TEST_CPU} -p 80 -n 1 -d 10
- tracked_pid=$(find_starved_child "${STARVE_PID}")
- 
- log "Starting stalld with -F flag (FIFO boosting)"
-@@ -103,7 +103,7 @@ rm -f "${STALLD_LOG}"
- 
- # Create starvation FIRST
- log "Creating starvation on CPU ${TEST_CPU}"
--start_starvation_gen -c ${TEST_CPU} -p 80 -n 1 -d 20
-+start_starvation_gen -c ${TEST_CPU} -p 80 -n 1 -d 12
- 
- start_stalld_with_log "${STALLD_LOG}" -f -v -g 1 -N -F -A -t $threshold -c ${TEST_CPU} -a ${STALLD_CPU} \
-     -d ${boost_duration} -p ${boost_period} -r ${boost_runtime}
-diff --git a/tests/functional/test_fifo_priority_starvation.sh b/tests/functional/test_fifo_priority_starvation.sh
-index 072c951..66075d4 100755
---- a/tests/functional/test_fifo_priority_starvation.sh
-+++ b/tests/functional/test_fifo_priority_starvation.sh
-@@ -58,7 +58,7 @@ threshold=5
- boost_duration=3
- 
- log "Creating FIFO-on-FIFO starvation on CPU ${TEST_CPU}"
--start_starvation_gen -c ${TEST_CPU} -p 10 -b 5 -n 1 -d 20
-+start_starvation_gen -c ${TEST_CPU} -p 10 -b 5 -n 1 -d 12
- 
- # Find the starved task (blockee) PID
- blockee_pid=$(find_starved_child "${STARVE_PID}")
-@@ -180,7 +180,7 @@ rm -f "${STALLD_LOG}"
- threshold=5
- 
- log "Creating FIFO-on-FIFO starvation"
--start_starvation_gen -c ${TEST_CPU} -p 10 -b 5 -n 2 -d 20 -v
-+start_starvation_gen -c ${TEST_CPU} -p 10 -b 5 -n 2 -d 12 -v
- 
- # Extract blocker and blockee PIDs from starvation_gen output
- # The output shows "Blocker TID: <pid>" and "Blockee N TID: <pid>"
-diff --git a/tests/functional/test_log_only.sh b/tests/functional/test_log_only.sh
-index 824ef7a..b38db70 100755
---- a/tests/functional/test_log_only.sh
-+++ b/tests/functional/test_log_only.sh
-@@ -44,10 +44,10 @@ echo "Stalld will run on CPU ${STALLD_CPU}"
- LOG_FILE="/tmp/stalld_test_log_only_$$.log"
- CLEANUP_FILES+=("${LOG_FILE}")
- 
--echo "Creating starvation on CPU ${TEST_CPU} (will run for 15 seconds)"
-+echo "Creating starvation on CPU ${TEST_CPU} (will run for 10 seconds)"
- 
- # Start starvation generator BEFORE stalld to ensure CPU is busy from the start
--start_starvation_gen -c ${TEST_CPU} -p 10 -n 1 -d 15
-+start_starvation_gen -c ${TEST_CPU} -p 10 -n 1 -d 10
- STARVGEN_PID=${STARVE_PID}
- 
- # Start stalld in log-only mode with verbose output to capture logs
-diff --git a/tests/functional/test_starvation_detection.sh b/tests/functional/test_starvation_detection.sh
-index 9362899..33bbfed 100755
---- a/tests/functional/test_starvation_detection.sh
-+++ b/tests/functional/test_starvation_detection.sh
-@@ -52,7 +52,7 @@ threshold=5
- 
- # Create starvation
- log "Creating starvation on CPU ${TEST_CPU}"
--start_starvation_gen -c ${TEST_CPU} -p 80 -n 1 -d 15
-+start_starvation_gen -c ${TEST_CPU} -p 80 -n 1 -d 10
- 
- log "Starting stalld with ${threshold}s threshold (log-only mode)"
- start_stalld_with_log "${STALLD_LOG}" -f -v -N -l -t $threshold -c ${TEST_CPU} -a ${STALLD_CPU}
-diff --git a/tests/functional/test_task_merging.sh b/tests/functional/test_task_merging.sh
-index 5e03622..082f07d 100755
---- a/tests/functional/test_task_merging.sh
-+++ b/tests/functional/test_task_merging.sh
-@@ -101,7 +101,7 @@ start_stalld_with_log "${STALLD_LOG}" -f -v -g 1 -l -t $threshold -c ${TEST_CPU}
- 
- # Create starvation
- log "Creating starvation"
--start_starvation_gen -c ${TEST_CPU} -p 80 -n 1 -d 20
-+start_starvation_gen -c ${TEST_CPU} -p 80 -n 1 -d 12
- 
- # Wait for starvation detection
- wait_for_starvation_detected "${STALLD_LOG}"
-@@ -174,11 +174,11 @@ else
- 
-     # Create starvation on both CPUs
-     log "Creating starvation on CPU ${CPU0}"
--    start_starvation_gen -c ${CPU0} -p 80 -n 1 -d 15
-+    start_starvation_gen -c ${CPU0} -p 80 -n 1 -d 10
-     STARVE_PID0=${STARVE_PID}
- 
-     log "Creating starvation on CPU ${CPU1}"
--    start_starvation_gen -c ${CPU1} -p 80 -n 1 -d 15
-+    start_starvation_gen -c ${CPU1} -p 80 -n 1 -d 10
-     STARVE_PID1=${STARVE_PID}
- 
-     # Wait for starvation detection on both CPUs
+ assert_file_exists "${readable_pidfile}" "Pidfile created"
+ assert_success "Pidfile is readable" cat "${readable_pidfile}"
 -- 
 2.54.0
 
