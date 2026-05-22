@@ -1,194 +1,113 @@
-Received: from mout.kundenserver.de (mout.kundenserver.de [212.227.17.24])
+Received: from mout-p-102.mailbox.org (mout-p-102.mailbox.org [80.241.56.152])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 817AE333727;
-	Fri, 22 May 2026 15:56:53 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=212.227.17.24
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 1269B386424;
+	Fri, 22 May 2026 21:35:48 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=80.241.56.152
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1779465415; cv=none; b=W0t7JH/W/2W1aOygvo19WYgGmnQIwptg2CT3gnj0917T776WEiugO3C+5o/KnWMeCmyH9acAKszU6h/d9FzZqbwwJcEy+I3W+ttP79TAEBxuUX24zUhjj10W29mT7p1nt0CInBZ6PBa9aVa/jvMWPWbkL1STFObFuOpNXIhvm78=
+	t=1779485750; cv=none; b=VEna0FbU80Sgkl4bgNxt2H48C79zI1CWeVPtnETkjsK02iBbgIBov4kYULjxToaZb0rmB+acmWu70B0DDDoHyc82TiDHn4EycmzRtmDDZmsTZSITmBRLWzpe0nUahFNVsLKMrFl6/8FmJAQKmI0uu3vnFWZFUrlv+k/lxtBa4lY=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1779465415; c=relaxed/simple;
-	bh=s+Ja4aK6H61CD8dZAyuEvSXkEu9X/Iclo35YVyLmqFk=;
-	h=Content-Type:Mime-Version:Subject:From:In-Reply-To:Date:Cc:
-	 Message-Id:References:To; b=cl9MR4Cf59Djf3CbY6BOWW+9enol4jhkGu+cKFQQ5EvsI/KadyGGIr6wm1ZwlIuI2lyK+OIC8TLBDfj/dqewKnNe/CQC+n+Q36uFfjqLXeLnljVUtvpC15OSeaVmmpdN8/Tv/2LMnlAnBuySRCsEGelnP9EhHa0Jpi1lXRDgmyE=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=by-online.de; spf=pass smtp.mailfrom=by-online.de; dkim=pass (2048-bit key) header.d=by-online.de header.i=by@by-online.de header.b=XyTmc4yU; arc=none smtp.client-ip=212.227.17.24
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=by-online.de
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=by-online.de
+	s=arc-20240116; t=1779485750; c=relaxed/simple;
+	bh=6mqs19zcjW9MPMkLIEWnJ6K3J4xE3leiRLzVL6gy9Uw=;
+	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
+	 Content-Type:Content-Disposition:In-Reply-To; b=rQGF7uYz3PTAFoY9LNB/5yA3+Ouw79r9GWCtTR8vCsQBCWRng+qBdPNgu/4c9ETiC7OS714Fa7MNVM91RmtoC6muVSor52UBzZGOsgm2d/FvVZBR8teXPu2V+72rK4jCw2DDCzXeTFpPUikjzzWQEuZ+GhmuRcxcxJLUeklgPGY=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=mailbox.org; spf=pass smtp.mailfrom=mailbox.org; dkim=pass (2048-bit key) header.d=mailbox.org header.i=@mailbox.org header.b=QpcEkhP/; arc=none smtp.client-ip=80.241.56.152
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=mailbox.org
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=mailbox.org
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=by-online.de header.i=by@by-online.de header.b="XyTmc4yU"
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=by-online.de;
-	s=s1-ionos; t=1779465404; x=1780070204; i=by@by-online.de;
-	bh=5L/bv1OhZaIerLkDqg6r16M6kPTwFthPmhTU4v8xdt8=;
-	h=X-UI-Sender-Class:Content-Type:Mime-Version:Subject:From:
-	 In-Reply-To:Date:Cc:Content-Transfer-Encoding:Message-Id:
-	 References:To:cc:content-transfer-encoding:content-type:date:from:
-	 message-id:mime-version:reply-to:subject:to;
-	b=XyTmc4yUiV99TH8vjg4p3pnFaz8oJpf8uOR6oiQfvBDWeZ2SL0JwTvFITJVnFyuY
-	 02SR2ytigP9eD37pcDyWsybfwM7R9D6u5rS+mBWRVomewmZySiQ3Eu0TciQ3YAk90
-	 hCTOjdhSMMFjIv/USwQbFn40sXkstbrZPezBMf/tK71kLOgsJ49laf5UWIzgQm1L1
-	 vDr/3JgRvDiVBWFFHMgCRM8kxOyzjejf44aXSjWtGE/QakjB5GKG5gSRSEEdpWMbO
-	 FxsKHT70fMKyzNEWZQSb0GBZmuiaB+O4iVaNwNe+mWE7vZLnT5NkQuMs6wcwlyBtS
-	 PTxiruopuaBJBqzXYA==
-X-UI-Sender-Class: 55c96926-9e95-11ee-ae09-1f7a4046a0f6
-Received: from client.hidden.invalid by mrelayeu.kundenserver.de (mreue108
- [212.227.15.183]) with ESMTPSA (Nemesis) id 1MpUMc-1x7QLg0mKa-00m48u; Fri, 22
- May 2026 17:56:44 +0200
-Content-Type: text/plain;
-	charset=utf-8
+	dkim=pass (2048-bit key) header.d=mailbox.org header.i=@mailbox.org header.b="QpcEkhP/"
+Received: from smtp102.mailbox.org (smtp102.mailbox.org [IPv6:2001:67c:2050:b231:465::102])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (4096 bits) server-digest SHA256)
+	(No client certificate requested)
+	by mout-p-102.mailbox.org (Postfix) with ESMTPS id 4gMdqj22g7z9vGS;
+	Fri, 22 May 2026 23:35:45 +0200 (CEST)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=mailbox.org; s=mail20150812;
+	t=1779485745;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references;
+	bh=0cb50XGJqdLe/0Jbg6NNuje/yLxMm8hagq02OE3Rdbc=;
+	b=QpcEkhP/AxRarMUUWElJHqIgwT4lpnGmNAnJhySUZjjy5tBibgkuL1ksmYlCy62K877bxI
+	WEPgVVmEOl3Q4juRR7JV/XBiXy1LyiSv/6PA7nkGx5l0lTBgbnq7VkrknLHwWhttUh6Ne8
+	fOvAbN4GoFYAhjC5e66AATpLOGTjrPI1M+LmjrEJROxs47OXLIovqW+1XBz4cHQr84BlUT
+	HlHE6IK6W7QyEI9eIyRURFptIhfKVBWsnOq6irfl2MJFH8lIZOo5dRFW6OLGj8ovft8Oza
+	50/1j10nxgJZvS1Z5lWEPxGZvaUNTOsq/ucMvl1aFtDaUk1LHeTeG46sJ8llWA==
+Date: Fri, 22 May 2026 23:35:35 +0200
+From: Lukas Beckmann <lbckmnn@mailbox.org>
+To: Sasha Levin <sashal@kernel.org>
+Cc: Thorsten Leemhuis <regressions@leemhuis.info>,
+	regressions@lists.linux.dev, Juri Lelli <juri.lelli@redhat.com>,
+	Peter Zijlstra <peterz@infradead.org>, stable@vger.kernel.org,
+	linux-rt-users@vger.kernel.org, Mike Galbraith <efault@gmx.de>
+Subject: Re: [REGRESSION] 6.12.y: d66792919d4f (sched/deadline: Use revised
+ wakeup rule for dl_server) causes latencies up to 50ms with PREEMPT_RT
+Message-ID: <ahDMJzEIPUKIQ0cQ@lukas-arch>
+References: <04657838-46d1-432d-95e1-eb73b930b032@mailbox.org>
+ <20260511141441.stable-reply-0001@kernel.org>
+ <4e31e3b5-fa69-4c4c-a5e9-dea7a8452ee7@mailbox.org>
+ <agjKmWqi_6qR0TJO@lukas-yuanda-arch.localdomain>
+ <36acb7e8-1fae-4c6d-8145-a29685007a76@leemhuis.info>
+ <ag83sNErxAAZorCG@laps>
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
 List-Subscribe: <mailto:linux-rt-users+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
-Mime-Version: 1.0 (Mac OS X Mail 16.0 \(3826.700.81.1.8\))
-Subject: Re: [PATCH v5 0/3] pps: improve PREEMPT_RT performance
-From: Michael Byczkowski <by@by-online.de>
-In-Reply-To: <agyNd1SsQlmaL3mh@mozart.vkv.me>
-Date: Fri, 22 May 2026 17:56:33 +0200
-Cc: Rodolfo Giometti <giometti@enneenne.com>,
- Andrew Morton <akpm@linux-foundation.org>,
- linux-kernel@vger.kernel.org,
- linux-rt-users@vger.kernel.org,
- bigeasy@linutronix.de
-Content-Transfer-Encoding: quoted-printable
-Message-Id: <A3184A2D-5222-4B7F-9CC0-6788087CA76F@by-online.de>
-References: <719A31CE-CA58-45C3-A013-1BFE81F724C5@by-online.de>
- <5FDC46CF-4F8F-4E85-9E59-B796C5BF1194@by-online.de>
- <agyNd1SsQlmaL3mh@mozart.vkv.me>
-To: Calvin Owens <calvin@wbinvd.org>
-X-Mailer: Apple Mail (2.3826.700.81.1.8)
-X-Provags-ID: V03:K1:DAlDLZ07S4m8Yu5VPaDyAeWxVH3KPToZBSAu+lTXiMfVfIaqafv
- 20vB/qW5tgIJH82HbmVDGODFFV+8CGCmNMLcixJmZ+hfbYVeXptR7q5EwD/LZ+x3ilzDwBU
- DfcwhquvCQQMUnqH6H+cicgK2vyHj+mvJgNddqPtD0WtSMY5QYVRDfhxebcQM7iJeyo3vN8
- uknKbQuwLa1l3hYnnSCAg==
-X-Spam-Flag: NO
-UI-OutboundReport: notjunk:1;M01:P0:fWRGPTq3fxI=;9xIs+7exgfTcsy+4JSq2Sh05R+H
- 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
- Zui621HKI9Sm0h5AZUy3fi3iH5u/I=
+MIME-Version: 1.0
+Content-Type: text/plain; charset=iso-8859-1
+Content-Disposition: inline
+Content-Transfer-Encoding: 8bit
+In-Reply-To: <ag83sNErxAAZorCG@laps>
+X-MBO-RS-META: yp6io1r5ek3qkuj7awrr571p6w9jzziz
+X-MBO-RS-ID: a03349e21277d638757
 
-Dear Calvin,
+On Thu, May 21, 2026 at 12:49:52PM -0400, Sasha Levin wrote:
+> On Thu, May 21, 2026 at 09:32:32AM +0200, Thorsten Leemhuis wrote:
+> > On 5/16/26 21:50, Lukas Beckmann wrote:
+> > > On Tue, May 12, 2026 at 12:08:49AM +0200, Lukas Beckmann wrote:
+> > > > On 5/11/26 16:21, Sasha Levin wrote:
+> > > > > Thanks for the detailed report. Before I revert d66792919d4f from 6.12.y,
+> > > > > I'd like to confirm whether the underlying issue is the missing dl_server
+> > > > > rework chain on 6.12.y rather than the revised wakeup rule itself.
+> > > > > 
+> > > > > Mike's reply notes that his local 6.12-rt tree carrying the following
+> > > > > three commits in cannot reproduce, while the same tree without them
+> > > > > reproduces quickly:
+> > > > > 
+> > > > >    cccb45d7c429 ("sched/deadline: Less agressive dl_server handling")
+> > > > >    4ae8d9aa9f9d ("sched/deadline: Fix dl_server getting stuck")
+> > > > >    a3a70caf7906 ("sched/deadline: Fix dl_server behaviour")
+> > > > > 
+> > > > > d66792919d4f's upstream commit message explicitly says it relies on the
+> > > > > state established by a3a70caf7906, and none of the three are in 6.12.y.
+> > > > > 
+> > > > > Could you give those three commits a spin on top of 6.12.y (keeping
+> > > > > d66792919d4f in place) and see whether the latency goes away?
+> > > > 
+> > > > If I apply the three commits on 6.12.y, the latencies indeed go away.
+> > > > This is running for a few hours now, and the latencies showed up after 30
+> > > > minutes tops, with plain 6.12.y before.
+> > > > I will leave this running.
+> > > 
+> > > Cyclictest is still running and looking good (latency-wise).
+> > > How should we proceed?
+> > 
+> > Sasha, just wondering: is this still in your queue? It sounds like a
+> > clear case to pick those three up for 6.12.y (everybody: please correct
+> > me if I'm wrong). Or are you busy and should we ask Greg to pick them up?
+> 
+> Nope, sorry, I got sidetracked by a large series of commits from the merge window.
+> 
+> I'll plan to queue this up for the next release. It'll be even better if
+> someone can send us a more "official" backport request, ideally with a
+> tested-by too :)
+Done in 
+https://lore.kernel.org/stable/20260522213120.1205100-1-lbckmnn@mailbox.org/
+> -- 
+> Thanks,
+> Sasha
 
-Thanks for picking this up, and yes, I=E2=80=99m actually a bit =
-overwhelmed, so your help is much appreciated! And my apologies for the =
-delay, I was traveling.
-
-The clean v5 series is at:
-https://github.com/by/linux-PPS/tree/pps-rt-v5-clean
-
-Three commits on top of torvalds 0d9363a764d9 (around v7.0-rc6):
-pps: pps-gpio: split IRQ handler into hardirq timestamper + threaded =
-handler pps: convert pps_device.lock to raw_spinlock_t pps: kc: convert =
-pps_kc_hardpps_lock to raw_spinlock_t
-
-Your suspicion about Apple Mail was correct: I diffed the GitHub branch =
-against the lore mbox and the sent version has quoted-printable damage =
-which would explain why nobody could git am it cleanly. The GitHub =
-branch is the ground truth.
-
-Let me know how you'd like to proceed.
-Lore thread for context: =
-https://lore.kernel.org/lkml/719A31CE-CA58-45C3-A013-1BFE81F724C5@by-onlin=
-e.de/
-
-Thanks and best regards,
-	Michael
-
-
-> On 19. May 2026, at 18:19, Calvin Owens <calvin@wbinvd.org> wrote:
->=20
-> On Saturday 05/16 at 13:32 +0200, Michael Byczkowski wrote:
->>> On 25. Apr 2026, at 19:18, Michael Byczkowski <by@by-online.de> =
-wrote:
->>>=20
->>> I found three issues in the PPS subsystem that cause unnecessary =
-jitter
->>> under PREEMPT_RT, while being fully backward-compatible with non-RT
->>> kernels:
->>>=20
->>> 1. pps-gpio: The IRQ handler is force-threaded on PREEMPT_RT, so the
->>> PPS timestamp is captured after scheduling delay rather than at
->>> interrupt entry. Fix: split into a hardirq primary handler (captures
->>> timestamp only) and a threaded handler (processes the event).
->>>=20
->>> 2. pps_device.lock: spinlock_t becomes a sleeping mutex on =
-PREEMPT_RT,
->>> allowing pps_event() to be preempted mid-update. Fix: convert to
->>> raw_spinlock_t and move sleeping calls out of the critical section.
->>>=20
->>> 3. pps_kc_hardpps_lock: Same issue as (2), in the kernel consumer =
-path
->>> that calls hardpps(). Fix: convert to DEFINE_RAW_SPINLOCK.
->>>=20
->>> All three patches are tested on a Raspberry Pi 5 running a 7.0.0-rc6
->>> PREEMPT_RT kernel. On non-RT kernels there is zero behavioral =
-change.
->>>=20
->>> Signed-off-by: Michael Byczkowski <by@by-online.de>
->>> Acked-by: Rodolfo Giometti <giometti@enneenne.com>
->>> Tested-by: Michael Byczkowski <by@by-online.de>
->>>=20
->>> by (3):
->>> pps: pps-gpio: split IRQ handler into hardirq and threaded parts
->>> pps: convert pps_device lock to raw_spinlock for PREEMPT_RT
->>> pps: convert pps_kc_hardpps_lock to raw_spinlock for PREEMPT_RT
->>>=20
->>> drivers/pps/clients/pps-gpio.c | 37 =
-+++++++++++++++++++++++-----------
->>> drivers/pps/kapi.c             | 18 ++++++++++-------
->>> drivers/pps/kc.c               | 22 ++++++++++----------
->>> drivers/pps/pps.c              | 16 +++++++--------
->>> include/linux/pps_kernel.h     |  2 +-
->>> 5 files changed, 56 insertions(+), 39 deletions(-)
->>>=20
->>> --=20
->>> 2.47.3
->>=20
->> Gentle ping on this series. v4 patches 1/3 and 3/3 carried Rodolfo's
->> Acked-by; v5 addressed the remaining feedback on 2/3. Happy to rework
->> anything or split the series if that helps it move forward.
->=20
-> Unfortunately apple mail is corrupting your patches :/
->=20
-> Greg KH usually applies patches for drivers/pps/, but I didn't add him
-> here yet because the patches don't apply.
->=20
-> If you can point me at a git branch for v5, I'd be happy to re-send =
-the
-> patches myself with your authorship. This is all useful for me and I'd
-> like to help :)
->=20
-> If you do it yourself, just make sure to add Greg to the Cc: list.
->=20
-> Cheers,
-> Calvin
->=20
->> Adding linux-rt-users@ and Sebastian on Cc in case there's interest =
-from the
->> PREEMPT_RT side.
-
+Thanks,
+Lukas
