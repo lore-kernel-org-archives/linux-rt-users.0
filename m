@@ -1,69 +1,73 @@
-Received: from mail-qk1-f180.google.com (mail-qk1-f180.google.com [209.85.222.180])
+Received: from mail-qk1-f171.google.com (mail-qk1-f171.google.com [209.85.222.171])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id A4DD0388862
-	for <linux-rt-users@vger.kernel.org>; Tue,  2 Jun 2026 20:47:18 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.222.180
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 8BBC8388890
+	for <linux-rt-users@vger.kernel.org>; Tue,  2 Jun 2026 20:47:19 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.222.171
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1780433240; cv=none; b=hyDrfLZvWgCc0NzUE2eD43RPu72kb+3G2Mg7jE961xt9hvnI6Y/SdMJG/Gi+I9c0vpcSOKf2qNCOT3hzjxBgVwSBeLBkAT7HQPE6ez/JAGptmJt5Zh0D3jVIfiRnMSfH7MI2a0LzdoPTiX47pOc8klJmckYF1mhdFj8v+kOXLyw=
+	t=1780433240; cv=none; b=pYDAYpYLYoBc5MoNi9eqdfYAG+faUbhOGDdyI4Vtt5raUJIUD0hroLEGU2q14PrGTJNfrWBPufe4Dve9TpbLNex9kuheR0EYH/1p6txddFLrMjAA1sHdYhUYDNoFUNvrL4fWv4ZQ4IvbmLwSlRh8CPh3l4iAByLChjM9qLMHekg=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
 	s=arc-20240116; t=1780433240; c=relaxed/simple;
-	bh=czqch0D9snQEM+75IyCJiiN7YIJFphMEdQ2NubgAkRs=;
-	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=F7Q614LbGb2SKZfomyaJjDSq6YViTcG5y00pMua3YjDwvqh/wzNaOSAvy8n0gaWNQL/UnLx+M9W4513dWfXgORxMKsZq3jaRh8VrW3zAA3fMoN5n0vwsFLhHz2B8NXArrWUpHCgYJzJnVhEfN+6Z5Y2QIjXN/fWHGaTRKULkygY=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=fail (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=C4FZ0ns+; arc=none smtp.client-ip=209.85.222.180
+	bh=093pRUykfL9qjPh2BpnjSo06KLemJqufsH+ggsaGut8=;
+	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
+	 MIME-Version; b=FSDElwq+UgcG4831ldssuDk5qu94SiASU+U+mobI9PvaQgtpC1ZkX//1sOMo4XUj7yDBy9n4ST3uM6YD2x6ZhF5s0WkMtbzYM3L3hCthWND75xFzrNgvejP+qiHF9UGRREbPEy6XudqUeQDWPDYg/pKL2ZuksI1aRTOIy7g1ABg=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=fail (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=GgFKnreF; arc=none smtp.client-ip=209.85.222.171
 Authentication-Results: smtp.subspace.kernel.org; dmarc=fail (p=quarantine dis=none) header.from=redhat.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="C4FZ0ns+"
-Received: by mail-qk1-f180.google.com with SMTP id af79cd13be357-9157b94a07aso138482085a.0
-        for <linux-rt-users@vger.kernel.org>; Tue, 02 Jun 2026 13:47:18 -0700 (PDT)
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="GgFKnreF"
+Received: by mail-qk1-f171.google.com with SMTP id af79cd13be357-9153e2708aeso419936385a.0
+        for <linux-rt-users@vger.kernel.org>; Tue, 02 Jun 2026 13:47:19 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20251104; t=1780433238; x=1781038038; darn=vger.kernel.org;
-        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
-         :to:from:sender:from:to:cc:subject:date:message-id:reply-to;
-        bh=Xcu6tj5yE6jHQhycsqoDtGTQEqMWHty6STpyfILO0es=;
-        b=C4FZ0ns+x9O8JEHTxkJqODKUSU9o7JanKE8f//aQsU3oBJjfNhK1FYEWUlVwTTIl/s
-         iOw4b44NcrEAYpesBhCxjxmlqivdq1r4ONchPt+gY0vyHk80WSHW/tDybDtUc3M3m14p
-         BkYA28psKmqTeu8GqftGSZdgnu+RDevx8DdvSfOlLNSOCT2stIleSVGLI6ZdDL+454LH
-         UG6Qt8iuH63VmBwz4Dchjo4N8sT0QlTegAPoYwfbDI7utpoGyTWgw/PusAtuu92zte7y
-         ONu0+/0z9sbm6ZqeMeVH2YFUEwgOwiRqDwDoBBD1QCohAEPoEbrxK4uCHbLd26LKCWld
-         gACQ==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20251104; t=1780433238; x=1781038038;
-        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
-         :to:from:sender:x-gm-gg:x-gm-message-state:from:to:cc:subject:date
+        d=gmail.com; s=20251104; t=1780433239; x=1781038039; darn=vger.kernel.org;
+        h=content-transfer-encoding:mime-version:references:in-reply-to
+         :message-id:date:subject:cc:to:from:sender:from:to:cc:subject:date
          :message-id:reply-to;
-        bh=Xcu6tj5yE6jHQhycsqoDtGTQEqMWHty6STpyfILO0es=;
-        b=tGKbpMY/zJ7t42IsIVnI1qvxGYbk1jFRIHGiCPNfF9Koj7ezB+6htPkSlqbelWpjp3
-         oDZ6Zj/TVrDsWkcYgPkfUkrdFUpdobB5ar/nYtIBx/K8xJscAM62CmTn2L8uvebP9Pg4
-         JlytPdaCjkfhepjhWH8/uTvro6SbAaWsuQKF4TCyNlgRuSEag/89ymBrjdKHMLhC3Sn7
-         9e8f81FHAnXTmcYr0tJhaOTWevLLoh86aj+vVXC2Whyy87hbIMkjCqaRcZYr8xp2CNud
-         7Onpygg6f2++MyjOgYMPllyi0p8pGullMm7lpm9SW5bU4ujGtD2FI19x62aov5mmHeCK
-         nB5g==
-X-Gm-Message-State: AOJu0YwfNM6aX/n5flLPvXV9TMClj5qny7YBUJfOH8hnp6CrZAkGJeBW
-	nNxDayJooDOsQDKymRXn/wlMlrLkre1q59PRyyI9n3dgB9Tkrr/FTcbpD4+Ozg==
-X-Gm-Gg: Acq92OEGB3w4LaFqI0qvIKRq0iSe4ewqdzCk8lHlv3oCjh8QR8M7I5m7D4ce+yhrx3J
-	KBskieZn/xEd1XiIcl7t14zmC1nEKFkUVjh4fqohfyNePgMjZyG+bXzkUJk3y2h6r8Wt8L0o33X
-	+IUNZPnVaP04YW6w8jhWAVflczBd1BK+AMkAr72cgrAJjv5XGxQ29ZOKEAfKIfwTp7n71PtzSPL
-	JAAxwxp/tLDNJ5SC8YKrmkcZ98YJXLnHaqFHk/SC5KXf9m1H4p+Qlm+iEOkHJUPv46+RIsX+5/G
-	X7inU6pY/6IfqHqjtO9chbRqd4jQ9c2TW/UdMM8pNdYevBjYpBtAeoN4DSw7xmRhrZ6kROWZ2uY
-	N2NIzmbCnpTyCqwAHiepOiBB9RVOu2y4SJ0WRoxHKpfkz5ALGhcKEr+nIkjvp9r+Iq4U/PeFS81
-	Dbrd9e+q0darmXtNsy6h34Oxej1P+Mc2oGh6Z9ZUSxHHvM90Ahrxla7wt0Xuabh4QB3OIXleyiL
-	JYIeNQ1QORD8Tr0YGEjzIUzKAMEmcddBf4pSRid
-X-Received: by 2002:a05:620a:4cb:b0:915:6d33:5207 with SMTP id af79cd13be357-9158a7aa817mr85468485a.30.1780433237609;
-        Tue, 02 Jun 2026 13:47:17 -0700 (PDT)
+        bh=yw2/4LJlP4GPrICnvnzFIIMcdWbKAvEzd1P/feNmxVc=;
+        b=GgFKnreFnXiUK94NH6TuhbSDCAD94ag32bPT6tZ2HtapubzwubAL0X34IPaG+bwu/U
+         Zoaq74HL8Jm07l8fV1mqjvnRZiYVPZ5P7pPONNwWsN0EgbYfipojWuNctkqTu1ANhVPk
+         dR7uKFL+F4BpTZ4ZdWt8F0CMlq17pqCFYUsPqM7W8Nj9m0Yf1eGB0kF74lUEbga5fYaU
+         3iYl4b4gD68CtmGwI6MVahU2YKVe6YndPyLWq730YJEmngCnf1N18LCY7BioOVVVHF1q
+         FHaad42ppdAEYpJ4OXYmQMxGagTmgEP7gVc0HUzxEMmphiWFdkRbysN9bursWzDGtj9i
+         uAyA==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20251104; t=1780433239; x=1781038039;
+        h=content-transfer-encoding:mime-version:references:in-reply-to
+         :message-id:date:subject:cc:to:from:sender:x-gm-gg
+         :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
+        bh=yw2/4LJlP4GPrICnvnzFIIMcdWbKAvEzd1P/feNmxVc=;
+        b=NENyoxYpREP42OHNRfx0iqYmCs3iCRsfjCc1DB/D6b7qRetJAvPYyDAHKgUmG+0HsN
+         5hkGle67OrCaQEntSjnBYJqjtOy2qFDU6BVoS4KjtcHVb4uHOCYp85e466tcxxJHB2+T
+         SJdEVlfLTusgfxTsAEaT8oqE1EUHU/NYBVPBSuHqR2Fk7R2ciTCnx9pEHAW63h2C1rmQ
+         cqRmspHym5pJtsGWrVyv2ZKx2fTUWyfSaRBI8dxBIxbyhKs0GptXStTVuH1j1qtTkSpS
+         il3cyztworIzm3vdf0PgbgG5BuIZZbqRZ8qUaRRv73imc9r7nzkRvTtibx2un8iYLOrw
+         GHuA==
+X-Gm-Message-State: AOJu0YzDylQQvy+MzHMLATvLoE06Kwy7xx/nBEkAWy0wdCm2mOdgukk9
+	RCVqALCP+OY5oQwW9WfpSrDx0di7RHv71ShYUAOCi5tusElxLmEuUG/cf21Mlg==
+X-Gm-Gg: Acq92OFMlIanTae4y+yycMXwofLwKoycMCAuXuNgrfemWspKxPO0Fy2sMBm8VnKIayJ
+	JBDAzrQI/ddgMj2olI0JTtv4ZstwsVY0TCgJll6ZIdvJerT39PtcL3DyJJkbvfftafB6WxXIq3t
+	TLDp05p5YERfyjXIf+D7UITHWUhcaRrgo1is+mtuswRB6MZMumNvCnd9a+atydyZdoA0YVku+WL
+	7HBap5QXQ5e8+z2q5vn1uEXTxN1hn2IUm65ek3juH+Z8nLkVzEemBt7Spu/Trm7M7DzUhg+FJ/8
+	x+KdOO6IanUnjFWoWAtGS/sOIcX7W+cZDMQfhc1Ys4qehNUlxDLyQ0czV1JUIfRUcmIJpn+6pU8
+	vGOa0EVuaALkTiFiuBpw6pmLD/clLUbd08RU1Im5lpkE88ODGC6HoRoEkXcAbrmolriILNh1CQE
+	mRQjuczxyeHkka/ZNzQdCFDeJ0AhR/3kR0KrFXLmJccyPO6VLAQ10UJ6A9uilL45Pg7tmHlzghE
+	fW1UDyqiWOdp9Exw8l1r0pYciaxvH/wRPBKyVxD
+X-Received: by 2002:a05:620a:1a08:b0:913:dcd2:f132 with SMTP id af79cd13be357-9158a7d26d8mr116565285a.40.1780433238486;
+        Tue, 02 Jun 2026 13:47:18 -0700 (PDT)
 Received: from Cumhall.redhat.com ([216.209.112.32])
-        by smtp.gmail.com with ESMTPSA id af79cd13be357-9158a21f871sm50291385a.12.2026.06.02.13.47.16
+        by smtp.gmail.com with ESMTPSA id af79cd13be357-9158a21f871sm50291385a.12.2026.06.02.13.47.17
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Tue, 02 Jun 2026 13:47:17 -0700 (PDT)
+        Tue, 02 Jun 2026 13:47:18 -0700 (PDT)
 Sender: John Kacur <jkacur@gmail.com>
 From: John Kacur <jkacur@redhat.com>
 To: linux-rt-users@vger.kernel.org
 Cc: Clark Williams <williams@redhat.com>
-Subject: [PATCH 1/2] rteval: Add -L/--logging support to timerlat measurement module
-Date: Tue,  2 Jun 2026 16:47:01 -0400
-Message-ID: <20260602204702.227969-1-jkacur@redhat.com>
+Subject: [PATCH 2/2] rteval: Add -L/--logging support to cyclictest measurement module
+Date: Tue,  2 Jun 2026 16:47:02 -0400
+Message-ID: <20260602204702.227969-2-jkacur@redhat.com>
 X-Mailer: git-send-email 2.54.0
+In-Reply-To: <20260602204702.227969-1-jkacur@redhat.com>
+References: <20260602204702.227969-1-jkacur@redhat.com>
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
@@ -72,18 +76,17 @@ List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 
-This implements file logging for the timerlat measurement module, matching
-the functionality available in load modules like hackbench and kcompile.
+This implements file logging for the cyclictest measurement module, matching
+the functionality available in timerlat and load modules.
 
-When rteval is run with the -L/--logging flag, timerlat will now save
-rtla timerlat's stdout and stderr to files in workdir/logs/:
-- timerlat.stdout - raw output from rtla timerlat hist
-- timerlat.stderr - any error messages from rtla
+When rteval is run with the -L/--logging flag, cyclictest will now save
+cyclictest's stdout to a file in workdir/logs/:
+- cyclictest.stdout - raw histogram output from cyclictest
 
 This is useful for:
-- Debugging new rtla versions with different output formats
-- Investigating parsing issues
-- Understanding rtla behavior when things go wrong
+- Debugging cyclictest output parsing issues
+- Investigating unexpected behavior
+- Analyzing historical test data
 
 Changes:
 - Add _logging config flag (default: False)
@@ -97,27 +100,27 @@ Changes:
 Assisted-by: Claude:claude-sonnet-4-5
 Signed-off-by: John Kacur <jkacur@redhat.com>
 ---
- rteval/modules/measurement/timerlat.py | 54 +++++++++++++++++++++-----
- 1 file changed, 45 insertions(+), 9 deletions(-)
+ rteval/modules/measurement/cyclictest.py | 49 +++++++++++++++++++++---
+ 1 file changed, 43 insertions(+), 6 deletions(-)
 
-diff --git a/rteval/modules/measurement/timerlat.py b/rteval/modules/measurement/timerlat.py
-index 2172f6ece520..03faa08639d5 100644
---- a/rteval/modules/measurement/timerlat.py
-+++ b/rteval/modules/measurement/timerlat.py
-@@ -189,6 +189,10 @@ class Timerlat(rtevalModulePrototype):
-         self.__cpus = [str(c) for c in expand_cpulist(self.__cpulist)]
-         self.__numcores = len(self.__cpus)
+diff --git a/rteval/modules/measurement/cyclictest.py b/rteval/modules/measurement/cyclictest.py
+index 8a5123e8af33..a120a552da11 100644
+--- a/rteval/modules/measurement/cyclictest.py
++++ b/rteval/modules/measurement/cyclictest.py
+@@ -212,6 +212,10 @@ class Cyclictest(rtevalModulePrototype):
+                                               logfnc=self._log)
+         self.__cyclicdata['system'].description = (f"({self.__numcores} cores) ") + info['0']['model name']
  
 +        # Logging configuration
 +        self._logging = self.__cfg.setdefault('logging', False)
 +        self.__reportdir = self.__cfg.setdefault('reportdir', os.getcwd())
 +
-         # Has tracing been triggered
-         self.__stoptrace = False
-         # This stores the output from rtla
-@@ -218,6 +222,12 @@ class Timerlat(rtevalModulePrototype):
          self._log(Log.DEBUG, f"system using {self.__numcores} cpu cores")
+         self.__started = False
+         self.__cyclicoutput = None
+@@ -219,6 +223,13 @@ class Cyclictest(rtevalModulePrototype):
          self.set_latency_test()
+ 
  
 +    def __open_logfile(self, name):
 +        """Open a log file in the reportdir/logs directory"""
@@ -125,86 +128,76 @@ index 2172f6ece520..03faa08639d5 100644
 +        if not os.path.exists(logdir):
 +            os.makedirs(logdir)
 +        return os.open(os.path.join(logdir, name), os.O_CREAT|os.O_RDWR|os.O_TRUNC)
- 
-     def _WorkloadSetup(self):
-         self.__timerlat_process = None
-@@ -250,8 +260,14 @@ class Timerlat(rtevalModulePrototype):
-                 self.__cmd.append(f'-t={self.__cfg.trace}')
- 
-         self._log(Log.DEBUG, f'self.__cmd = {self.__cmd}')
--        self.__timerlat_out = tempfile.SpooledTemporaryFile(mode='w+b')
--        self.__timerlat_err = tempfile.SpooledTemporaryFile(mode='w+b')
 +
-+        # Setup output files - use actual log files if logging enabled, otherwise temp files
+     @staticmethod
+     def __get_debugfs_mount():
+         ret = None
+@@ -264,8 +275,11 @@ class Cyclictest(rtevalModulePrototype):
+         elif self.__cfg.threshold:
+             self.__cmd.append(f"-b{int(self.__cfg.threshold)}")
+ 
+-        # Buffer for cyclictest data written to stdout
+-        self.__cyclicoutput = tempfile.SpooledTemporaryFile(mode='w+b')
++        # Setup output file - use actual log file if logging enabled, otherwise temp file
 +        if self._logging:
-+            self.__timerlat_out = self.__open_logfile("timerlat.stdout")
-+            self.__timerlat_err = self.__open_logfile("timerlat.stderr")
++            self.__cyclicoutput = self.__open_logfile("cyclictest.stdout")
 +        else:
-+            self.__timerlat_out = tempfile.SpooledTemporaryFile(mode='w+b')
-+            self.__timerlat_err = tempfile.SpooledTemporaryFile(mode='w+b')
++            self.__cyclicoutput = tempfile.SpooledTemporaryFile(mode='w+b')
  
  
      def _WorkloadTask(self):
-@@ -260,8 +276,11 @@ class Timerlat(rtevalModulePrototype):
+@@ -284,7 +298,10 @@ class Cyclictest(rtevalModulePrototype):
+                 fp.write("0")
+                 fp.flush()
  
-         self._log(Log.DEBUG, f'starting with cmd: {" ".join(self.__cmd)}')
- 
--        self.__timerlat_out.seek(0)
--        self.__timerlat_err.seek(0)
+-        self.__cyclicoutput.seek(0)
 +        # Seek to beginning - only needed for temp files, file descriptors start at position 0
 +        if not self._logging:
-+            self.__timerlat_out.seek(0)
-+            self.__timerlat_err.seek(0)
++            self.__cyclicoutput.seek(0)
 +
-         self.__timerlat_process = subprocess.Popen(self.__cmd,
-                                                    stdout=self.__timerlat_out,
-                                                    stderr=self.__timerlat_err,
-@@ -308,14 +327,26 @@ class Timerlat(rtevalModulePrototype):
+         self.__cyclicprocess = subprocess.Popen(self.__cmd,
+                                                 stdout=self.__cyclicoutput,
+                                                 stderr=self.__nullfp,
+@@ -345,9 +362,22 @@ class Cyclictest(rtevalModulePrototype):
          # Parse histogram output - use try/finally to ensure _setFinished() is always called
          # This prevents hangs if parsing fails due to partial output (RHEL-140898)
          try:
--            self.__timerlat_out.seek(0)
+-            self.__cyclicoutput.seek(0)
+-            for line in self.__cyclicoutput:
+-                line = bytes.decode(line)
 +            # Read output - handle both file descriptors and temp files
 +            if self._logging:
 +                # For file descriptors, read the entire file content
-+                os.lseek(self.__timerlat_out, 0, os.SEEK_SET)
-+                output_data = os.read(self.__timerlat_out, 10*1024*1024)  # Read up to 10MB
++                os.lseek(self.__cyclicoutput, 0, os.SEEK_SET)
++                output_data = os.read(self.__cyclicoutput, 10*1024*1024)  # Read up to 10MB
 +                output_lines = output_data.decode('utf-8', errors='replace').splitlines(keepends=True)
 +            else:
 +                # For temp files, use seek and iterate
-+                self.__timerlat_out.seek(0)
-+                output_lines = self.__timerlat_out
- 
-             blocking_thread_detected = False
-             softirq_interference_detected = False
-             irq_interference_detected = False
- 
--            for line in self.__timerlat_out:
--                line = bytes.decode(line)
++                self.__cyclicoutput.seek(0)
++                output_lines = self.__cyclicoutput
++
 +            for line in output_lines:
 +                if isinstance(line, bytes):
 +                    line = bytes.decode(line)
 +                elif not isinstance(line, str):
 +                    line = str(line)
- 
-                 # Skip any blank lines
-                 if not line:
-@@ -474,8 +505,13 @@ class Timerlat(rtevalModulePrototype):
+                 if line.startswith('#'):
+                     # Catch if cyclictest stopped due to a breaktrace
+                     if line.startswith('# Break value: '):
+@@ -395,6 +425,13 @@ class Cyclictest(rtevalModulePrototype):
+             # Always signal completion to avoid hangs
              self._setFinished()
              self.__started = False
- 
--            self.__timerlat_err.close()
--            self.__timerlat_out.close()
-+            # Close output files - method differs for file descriptors vs temp files
++
++            # Close output file - use os.close for file descriptors, .close() for temp files
 +            if self._logging:
-+                os.close(self.__timerlat_out)
-+                os.close(self.__timerlat_err)
++                os.close(self.__cyclicoutput)
 +            else:
-+                self.__timerlat_out.close()
-+                self.__timerlat_err.close()
++                self.__cyclicoutput.close()
++
+             os.close(self.__nullfp)
+             del self.__nullfp
  
-     def MakeReport(self):
-         rep_n = libxml2.newNode('timerlat')
 -- 
 2.54.0
 
