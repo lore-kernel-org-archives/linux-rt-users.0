@@ -1,47 +1,47 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 29DA93E0C51
-	for <linux-rt-users@vger.kernel.org>; Mon,  8 Jun 2026 18:32:52 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 3105F3E0C5F
+	for <linux-rt-users@vger.kernel.org>; Mon,  8 Jun 2026 18:32:57 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1780943573; cv=none; b=DIUoJ0PkoHJT2dWZde0JseJ8ipG1q+D9KYOJ/BP7vEpyUuQWFdmL+WcMFFjQsqFn9psfhgAxa+b/Jxr8sBILswJbb47YKP+Vu5S1iAgsEKPno9wAtNXUSOvdMa7EWQDJbs50vcbjlpmLTluPbNkfrmVRdequKKai5tWJwsNlUxw=
+	t=1780943579; cv=none; b=RCSHkOSHVbTo3tsB1hGgXJCq8QHOudoH1G8VlHDBF2baacq6k//ldoL6kKypO9a0M/nShUo7A5BZ1BBuGyGwZiBBuboIN564hWbRd3/TDwFzapSHwP0rw3c/O/+aQ19/ignCMmjpxJ3J8vQVR3wZNhrbp23Xo2WxvlCoPT760eo=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1780943573; c=relaxed/simple;
-	bh=jqQ7ftprFKi22lgf0xR0xqQMEnDX3Z7ADc5nzE7rEvQ=;
+	s=arc-20240116; t=1780943579; c=relaxed/simple;
+	bh=EAkTI22mtG4a9nKnVMsOLg/a3fO+q42pv/VyScmg8tA=;
 	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=YRa+vY/+hYq2B2VSXGr5cJyF4EeV/TuF6Mi3l3AKFm3xmMYo7meXCpjDW5qKft/FZloXQPuPdhiYZzaPlC3AeYpUGGDYVWNCAPFc8a83Qq8yt+ld5bL9IY7eeY3SxYS6xant973tH3H2IiqpBqUKhxJcamwFYKClnku61eY2xJI=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=afNbVngz; arc=none smtp.client-ip=170.10.133.124
+	 MIME-Version:Content-Type; b=jOXiC5quq+sIWf4VD1UqhaP5JAlyKVpm6ItmLiZmMXt+axxZrUp/m0PKhMUp3aiqQm2wB+6h3x4dYjYv102glxMPOKNKCibGLCcHCKxi6Y0vqEq0eWrN+nZ3VZsOwjrkm/zs2CcASBbgf2qFbSG+jw4V2wcXoYIRhoP9n5j52AU=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=VLC3aN22; arc=none smtp.client-ip=170.10.129.124
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="afNbVngz"
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="VLC3aN22"
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1780943571;
+	s=mimecast20190719; t=1780943577;
 	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references;
-	bh=X58JQoMVTG+7kL3CeHOFqKnXntzj+xKgx4YGtWQWSxU=;
-	b=afNbVngzeuHHO4LyL5k4nSV5rCuDzcn7Dt+GaRDTmgOXfm1NcAQayEHe/gWZBFTbvkczYF
-	5gaSUtPMPFsjrgxZfs/L+kWZwqQYVdM8KGpc1KPHNLyewf5Z4f2haGHV92uKZMx3PBrZqW
-	+OR/i0ziHlQL8X1ANTJwsxbBYV6WVZ8=
-Received: from mx-prod-mc-03.mail-002.prod.us-west-2.aws.redhat.com
- (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
+	bh=0J72Gzt0591UFQD54S+q8gUZCzf34VeW0g4CSjJY51o=;
+	b=VLC3aN22spp2TbagICqFHwUvUXE/bX63NJJhFzwyzYaM3HRtOHr3itJO6Y8HeFa2U4fDPE
+	4UoXidsgV4yIHJ22s0hMfgeMc4FrwXBIpxuCfLOrgvtUFomGdaeRRGmb0cBw7DRl2v3Mfb
+	P3Nw2gooTiowJ+s0de1fO9y4RwXU+WQ=
+Received: from mx-prod-mc-06.mail-002.prod.us-west-2.aws.redhat.com
+ (ec2-35-165-154-97.us-west-2.compute.amazonaws.com [35.165.154.97]) by
  relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-412-ndJAULIRNPOajTmKoJO5Qw-1; Mon,
- 08 Jun 2026 14:32:45 -0400
-X-MC-Unique: ndJAULIRNPOajTmKoJO5Qw-1
-X-Mimecast-MFC-AGG-ID: ndJAULIRNPOajTmKoJO5Qw_1780943564
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-643-GqAG0KB9M1u9RFsgqrfwRA-1; Mon,
+ 08 Jun 2026 14:32:53 -0400
+X-MC-Unique: GqAG0KB9M1u9RFsgqrfwRA-1
+X-Mimecast-MFC-AGG-ID: GqAG0KB9M1u9RFsgqrfwRA_1780943572
 Received: from mx-prod-int-10.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-10.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.95])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
 	(No client certificate requested)
-	by mx-prod-mc-03.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id E08DC1944AAD;
-	Mon,  8 Jun 2026 18:32:43 +0000 (UTC)
+	by mx-prod-mc-06.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 82F72187BE30;
+	Mon,  8 Jun 2026 18:32:52 +0000 (UTC)
 Received: from wcosta-defaultstring.rmtbr.csb (unknown [10.22.88.160])
-	by mx-prod-int-10.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTP id D294B36928;
-	Mon,  8 Jun 2026 18:32:41 +0000 (UTC)
+	by mx-prod-int-10.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTP id 0B64D36927;
+	Mon,  8 Jun 2026 18:32:49 +0000 (UTC)
 From: Wander Lairson Costa <wander@redhat.com>
 To: Clark Williams <williams@redhat.com>,
 	John Kacur <jkacur@redhat.com>,
@@ -50,9 +50,9 @@ Cc: Juri Lelli <juri.lelli@redhat.com>,
 	luffyluo@tencent.com,
 	davidlt@rivosinc.com,
 	Wander Lairson Costa <wander@redhat.com>
-Subject: [PATCH stalld 11/52] tests: Fix repeated log match finding same line
-Date: Mon,  8 Jun 2026 15:31:21 -0300
-Message-ID: <20260608183206.140526-12-wander@redhat.com>
+Subject: [PATCH stalld 13/52] tests: Add assertions to SCHED_OTHER restoration test
+Date: Mon,  8 Jun 2026 15:31:23 -0300
+Message-ID: <20260608183206.140526-14-wander@redhat.com>
 In-Reply-To: <20260608183206.140526-1-wander@redhat.com>
 References: <20260608183206.140526-1-wander@redhat.com>
 Precedence: bulk
@@ -61,89 +61,76 @@ List-Id: <linux-rt-users.vger.kernel.org>
 List-Subscribe: <mailto:linux-rt-users+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit
 X-Scanned-By: MIMEDefang 3.6 on 10.30.177.95
 
-Test 3 in the FIFO priority starvation suite calls
-wait_for_starvation_detected three times on the same log file to
-wait for three detection cycles. However, the underlying
-wait_for_log_message helper uses tail -f -n +1 which reads from
-the beginning of the file on every invocation, so all three calls
-instantly match the same first line.
+Test 3 in the boost restoration suite creates a SCHED_OTHER blockee
+but never verifies that the scheduling policy is actually restored
+after boosting. It waits for starvation_gen to complete and has a
+comment about checking the result, but no pass or fail call exists.
 
-Introduce a wait_for_n_log_matches helper that polls grep -c until
-the match count reaches the requested threshold, and use it to
-replace the repeated calls.
+Add proper verification by tracking the starved child PID, waiting
+for the boost to occur and expire, then checking that the policy
+returns to SCHED_OTHER.
 
 Signed-off-by: Wander Lairson Costa <wander@redhat.com>
 
 Assisted-by: Claude Code:claude-opus-4-6[1m] [PAL]
 Signed-off-by: Wander Lairson Costa <wander@redhat.com>
 ---
- .../test_fifo_priority_starvation.sh          | 10 +++------
- tests/helpers/test_helpers.sh                 | 21 ++++++++++++++++++-
- 2 files changed, 23 insertions(+), 8 deletions(-)
+ tests/functional/test_boost_restoration.sh | 37 +++++++++++++++++++---
+ 1 file changed, 32 insertions(+), 5 deletions(-)
 
-diff --git a/tests/functional/test_fifo_priority_starvation.sh b/tests/functional/test_fifo_priority_starvation.sh
-index 172bc9a..8f78a75 100755
---- a/tests/functional/test_fifo_priority_starvation.sh
-+++ b/tests/functional/test_fifo_priority_starvation.sh
-@@ -139,13 +139,9 @@ start_stalld_with_log "${STALLD_LOG}" -f -v -l -t $threshold -c ${TEST_CPU} -a $
- # Wait for multiple detection cycles
- log "Waiting for first detection cycle..."
- wait_for_starvation_detected "${STALLD_LOG}"
--log "First detection cycle should have occurred"
--log "Waiting for second detection cycle..."
--wait_for_starvation_detected "${STALLD_LOG}"
--log "Second detection cycle should have occurred"
--log "Waiting for third detection cycle..."
--wait_for_starvation_detected "${STALLD_LOG}"
--log "Third detection cycle should have occurred"
-+log "First detection cycle occurred, waiting for additional cycles..."
-+wait_for_n_log_matches "starved on CPU" 3 "${STALLD_LOG}"
-+log "Multiple detection cycles should have occurred"
+diff --git a/tests/functional/test_boost_restoration.sh b/tests/functional/test_boost_restoration.sh
+index 09dbb60..63e2bc3 100755
+--- a/tests/functional/test_boost_restoration.sh
++++ b/tests/functional/test_boost_restoration.sh
+@@ -244,12 +244,39 @@ start_stalld_with_log "${STALLD_LOG}" -f -v -t $threshold -c ${TEST_CPU} -a ${ST
+ log "Creating SCHED_OTHER starvation (RT blocker prio 80, SCHED_OTHER blockee)"
+ start_starvation_gen -c ${TEST_CPU} -p 80 -o -n 1 -d 20
  
- # Check if we see accumulating starvation time in logs
- # Task merging means the timestamp is preserved, so duration increases
-diff --git a/tests/helpers/test_helpers.sh b/tests/helpers/test_helpers.sh
-index 742b15e..757e5e0 100755
---- a/tests/helpers/test_helpers.sh
-+++ b/tests/helpers/test_helpers.sh
-@@ -668,6 +668,25 @@ wait_for_boost_detected() {
- 	wait_for_log_message "boosted pid" "${timeout}" "${log_file}"
- }
+-# Wait for starvation_gen to complete
+-log "Waiting for starvation test to complete..."
+-wait ${STARVE_PID} 2>/dev/null || true
++# Find the starved SCHED_OTHER task
++tracked_pid=$(find_starved_child "${STARVE_PID}")
++
++if [ -n "${tracked_pid}" ]; then
++    initial_policy=$(get_sched_policy ${tracked_pid})
++    log "Tracking task PID ${tracked_pid}, initial policy: ${initial_policy} (expected: 0=SCHED_OTHER)"
++
++    # Wait for boost
++    log "Waiting for starvation detection and boost..."
++    if wait_for_boost_detected "${STALLD_LOG}"; then
++        pass "SCHED_OTHER task boosted"
++
++        # Wait for boost to expire and policy to be restored
++        sleep $((boost_duration + 1))
  
-+# Wait until a log file contains at least N matches of a pattern.
-+#
-+# Usage: wait_for_n_log_matches <pattern> <count> <log_file> [timeout]
-+wait_for_n_log_matches() {
-+	local pattern=$1
-+	local count=$2
-+	local log_file=$3
-+	local timeout=${4:-30}
-+	local end=$((SECONDS + timeout))
+-# Check if blockee completed (proves SCHED_OTHER → boost → SCHED_OTHER restoration worked)
+-# The starvation_gen output will show if blockees completed
++        if [ -f "/proc/${tracked_pid}/sched" ]; then
++            final_policy=$(get_sched_policy ${tracked_pid})
++            log "Policy after boost: ${final_policy}"
 +
-+	while [ $SECONDS -lt $end ]; do
-+		local matches
-+		matches=$(grep -c "${pattern}" "${log_file}" 2>/dev/null || true)
-+		[ "${matches:-0}" -ge "${count}" ] && return 0
-+		sleep 1
-+	done
-+	return 1
-+}
-+
- # Get thread scheduling policy
- get_thread_policy() {
- 	local pid=$1
-@@ -1250,7 +1269,7 @@ export -f pass fail assert_equals assert_contains assert_not_contains
- export -f assert_file_exists assert_file_not_exists
- export -f assert_process_running assert_process_not_running
- export -f start_stalld stop_stalld kill_existing_stalld cleanup
--export -f wait_for_log_message wait_for_stalld_ready wait_for_starvation_detected wait_for_boost_detected
-+export -f wait_for_log_message wait_for_stalld_ready wait_for_starvation_detected wait_for_boost_detected wait_for_n_log_matches
- export -f get_thread_policy get_thread_priority
- export -f create_cpu_load
- export -f detect_default_backend is_backend_available get_available_backends start_stalld_with_backend
++            if [ "$final_policy" = "0" ]; then
++                pass "Policy restored to SCHED_OTHER (0)"
++            else
++                fail "Policy not restored to SCHED_OTHER (got ${final_policy})"
++            fi
++        else
++            log "⚠ INFO: Task exited before restoration check"
++        fi
++    else
++        fail "No boost detected for SCHED_OTHER task"
++    fi
++else
++    log "⚠ WARNING: Could not find starved task to track"
++fi
+ 
+ # Cleanup
+ cleanup_scenario "${STARVE_PID}"
 -- 
 2.54.0
 
