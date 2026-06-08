@@ -1,45 +1,47 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 253C23563D4
-	for <linux-rt-users@vger.kernel.org>; Mon,  8 Jun 2026 18:32:17 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id E1FE63E0096
+	for <linux-rt-users@vger.kernel.org>; Mon,  8 Jun 2026 18:32:22 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1780943539; cv=none; b=GGzIRh1q1o7wSOOSiq92JmRgx8jYQyJuXFNsi8dtLen0UIJMaeAaU8z73hU0C7JZ7GIuB3m3f60xYPxd6Jf6hQqlZ1yampj0PuknTHGACUP9CsZ6JWyPUS9Yqf2tGQnAsGk60ZG4/lItyoKwE9vJAuGOnA9fUm31uOF+V86pcEk=
+	t=1780943544; cv=none; b=Jt2TjAD94YObH5CFw4FFepdkvFAvOmEpPg5RATgoh+amnHaleWVevdwBslszlpf9x1vVhohurBYgDyitzb06YukJ9ocgG7Zqfvxuj95iB9BzXngVrWIplAftCzcS51W/xhvr5GyPxGDpYM3TmDefCGksuAUWmwEiJuMclehSanw=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1780943539; c=relaxed/simple;
-	bh=asQZRhifyWWxzteNIqVbtg+n7lsaWaixpH61thY42d0=;
-	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=D9am94LfM/F5N2yHMzU4w82VA3icmRQcSqjLBGwAcYEwbPAo8IjjseHoX5NzcaEln1Xp7oZq1GQdsQ/Q1bDaGyicLqaBNthue87fzzkVvbId0amZD538S5B9btQOU/ybLHT3HUZWJ6qnT+Cuu8xarmvaahQ/LdqHYT9Ym72ltvM=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=ceWn5/ph; arc=none smtp.client-ip=170.10.129.124
+	s=arc-20240116; t=1780943544; c=relaxed/simple;
+	bh=+ZT969U4XX80CHXMQaRw9WBJZC7nadLxiCTPzR/cAIA=;
+	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
+	 MIME-Version; b=AOrGJ339GQq4kzJbZtWa1j2z8jZVHnmrWoG/akskceRoB2MaC7y9YalDhJIE8PpBv7wvzSFVlD0StNxtfWUw/e4sZu9lDG6tzd+4z4fOAhZ6OaXsGBXoMh44h0kmc/C2b6FdRpcS0XlUkVwW1wXzCc7lDV5HX2Lm4Hk8V32n2C0=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=acos9t4u; arc=none smtp.client-ip=170.10.133.124
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="ceWn5/ph"
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="acos9t4u"
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1780943537;
+	s=mimecast20190719; t=1780943541;
 	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
 	 to:to:cc:cc:mime-version:mime-version:
-	 content-transfer-encoding:content-transfer-encoding;
-	bh=P3USBZBCG/3kTSEav+FAMwCZpUyLW+760FbAQYgmSPk=;
-	b=ceWn5/phHmbFDR2L1ZuyPnLnj1+LRQOohuLom+57npQLNJPN9AuY5ZCMs9AW4e0hmlM7jc
-	6vls3rAqnDi2HBBA2kPVIUkJGL3ou157CK5RvL5GRZ9HhZ64H6ymXtX7kQp0vrTOABQgUv
-	/+YxKTbXA4AIyHQwQXl1CwgRwl5NYWo=
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references;
+	bh=cUgfApUBnK3QWgTOO0hXOVglCH8nrU02BfUL5Apca/s=;
+	b=acos9t4uBrutQU4/gxUf+0ST4CjzzvDk5+lUqHK7dEQHCiSDbLY/+yauwvPIY1vJKzgCGu
+	d4wEF/GvffVsb9R1dPLZ3MbBSFtwQ1RX1kXHd4jwjp81ck4+ogs1w872LN8u8HPaiNHWKm
+	ZFGA1gGwDM/SOWt55Hjvd7QsXe1Gqj4=
 Received: from mx-prod-mc-01.mail-002.prod.us-west-2.aws.redhat.com
  (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
  relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-49-1FFM2YeTPx6IEgadmi9VvQ-1; Mon,
- 08 Jun 2026 14:32:15 -0400
-X-MC-Unique: 1FFM2YeTPx6IEgadmi9VvQ-1
-X-Mimecast-MFC-AGG-ID: 1FFM2YeTPx6IEgadmi9VvQ_1780943534
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-20-Ntc67BZROCutx_mi87J2zg-1; Mon,
+ 08 Jun 2026 14:32:18 -0400
+X-MC-Unique: Ntc67BZROCutx_mi87J2zg-1
+X-Mimecast-MFC-AGG-ID: Ntc67BZROCutx_mi87J2zg_1780943537
 Received: from mx-prod-int-10.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-10.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.95])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
 	(No client certificate requested)
-	by mx-prod-mc-01.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 88C4E195DE69;
-	Mon,  8 Jun 2026 18:32:14 +0000 (UTC)
+	by mx-prod-mc-01.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 10A4D195DE61;
+	Mon,  8 Jun 2026 18:32:17 +0000 (UTC)
 Received: from wcosta-defaultstring.rmtbr.csb (unknown [10.22.88.160])
-	by mx-prod-int-10.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTP id 12A8436929;
-	Mon,  8 Jun 2026 18:32:11 +0000 (UTC)
+	by mx-prod-int-10.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTP id F1B0D36928;
+	Mon,  8 Jun 2026 18:32:14 +0000 (UTC)
 From: Wander Lairson Costa <wander@redhat.com>
 To: Clark Williams <williams@redhat.com>,
 	John Kacur <jkacur@redhat.com>,
@@ -48,9 +50,11 @@ Cc: Juri Lelli <juri.lelli@redhat.com>,
 	luffyluo@tencent.com,
 	davidlt@rivosinc.com,
 	Wander Lairson Costa <wander@redhat.com>
-Subject: [PATCH stalld 00/52] Test suite hardening, correctness fixes, and BPF optimization
-Date: Mon,  8 Jun 2026 15:31:10 -0300
-Message-ID: <20260608183206.140526-1-wander@redhat.com>
+Subject: [PATCH stalld 01/52] stalld: Reject --force_fifo in single-threaded mode
+Date: Mon,  8 Jun 2026 15:31:11 -0300
+Message-ID: <20260608183206.140526-2-wander@redhat.com>
+In-Reply-To: <20260608183206.140526-1-wander@redhat.com>
+References: <20260608183206.140526-1-wander@redhat.com>
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
@@ -60,169 +64,74 @@ MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 X-Scanned-By: MIMEDefang 3.6 on 10.30.177.95
 
-This series improves stalld reliability across three areas: the test
-infrastructure, the BPF backend, and the core daemon code.
+When --force_fifo (-F) was combined with single-threaded mode (-O),
+stalld silently fell back to adaptive mode instead of honoring the
+requested configuration. This violates the principle of least
+surprise since the user explicitly requested single-threaded mode
+but gets a different threading model without warning.
 
-The test suite is overhauled to eliminate false-passing tests and
-reduce runtime. An assertion framework replaces ad-hoc conditional
-checks, sleep-based synchronization gives way to event-driven waits,
-and helpers for common patterns like starvation detection and process
-lifecycle reduce boilerplate. Tests that silently swallowed failures
-in subshells or matched stale log lines are fixed. The cumulative
-effect is a suite that fails fast on real regressions and completes
-in a fraction of the previous wall-clock time.
+Replace the silent fallback with a usage() error that exits
+immediately, consistent with the other argument validation checks
+in parse_args(). Also fix the corresponding test which was missing
+the -O flag and therefore tested adaptive mode instead of
+single-threaded mode.
 
-The BPF queue_track backend replaces its per-CPU linear array with a
-hash map keyed by CPU and PID, turning the O(n) task lookup on every
-sched_wakeup into O(1). This eliminates a 2us latency penalty that
-consumed a significant portion of the 10us real-time budget on Telco
-workloads.
+Signed-off-by: Wander Lairson Costa <wander@redhat.com>
+Assisted-by: Claude Code:claude-opus-4-6[1m] [PAL]
+---
+ src/utils.c                         |  9 ++-------
+ tests/functional/test_force_fifo.sh | 18 ++----------------
+ 2 files changed, 4 insertions(+), 23 deletions(-)
 
-The remaining patches address a range of correctness issues in the
-daemon: data races on shared variables are fixed with C11 atomics,
-buffer underflows and uninitialized buffer uses are guarded, the
-signal handler is made async-signal-safe, starvation timing is
-migrated from wall-clock time to CLOCK_MONOTONIC, format string
-mismatches and NULL pointer dereferences are corrected, pthread_create
-return values are checked, and a signed integer overflow in the
-SCHED_DEADLINE period calculation is resolved.
-
-Wander Lairson Costa (52):
-  stalld: Reject --force_fifo in single-threaded mode
-  tests: Introduce test_section() helper
-  tests: Introduce cleanup_scenario() helper
-  tests: Introduce starvation and boost asserts
-  tests: Introduce find_starved_child() helper
-  tests: Fix task exit timing in test_boost_restoration
-  tests: Consolidate and adopt init_functional_test()
-  tests: Introduce assert_stalld_rejects() helper
-  tests: Fix boost verification in runtime and duration tests
-  tests: Fix subshell swallowing test results
-  tests: Fix repeated log match finding same line
-  chore: Remove legacy test infrastructure and stale docs
-  tests: Add assertions to SCHED_OTHER restoration test
-  tests: Fix CPU selection grep substring matches
-  tests: Add idle CPU skipping assertion
-  tests: Remove redundant pkill from cleanup
-  tests: Introduce and adopt assert_log_contains() helper
-  tests: Remove weak, redundant, and assertion-free test blocks
-  tests: Introduce and adopt assert_success() helper
-  tests: Replace wait conditionals with asserts
-  tests: Remove if-wrappers around assert calls
-  tests: Abort immediately on test failure
-  tests: Remove dead code after making fail() fatal
-  tests: Introduce and adopt process helpers
-  tests: Extract wait_for_process_exit helper
-  tests: Reduce default wait timeouts
-  tests: Reduce starvation_gen durations
-  tests: Replace init sleeps in test_affinity
-  tests: Drop redundant sleeps in test_pidfile
-  tests: Remove redundant sleeps after start_stalld
-  tests: Reduce timing and replace sleeps with event waits
-  tests: Fix async-signal-unsafe handler
-  bpf: Replace linear task scan with hash map
-  stalld: fix data race on thread_running
-  stalld: fix inverted DAEMON_UMASK value
-  stalld: fix uninitialized buffer use in find_debugfs_mount_point
-  stalld: fix buffer underflow in read_proc_stat
-  stalld: fix buffer underflow in sched_debug_get
-  stalld: check pthread_create return in aggressive_main
-  stalld: check pthread_create return in conservative_main
-  stalld: fix signed integer overflow in set_reservation
-  stalld: fix data race on config_buffer_size
-  stalld: remove async-signal-unsafe calls from signal handler
-  stalld: use CLOCK_MONOTONIC for starvation detection
-  stalld: fix format string type mismatch for time_t
-  stalld: fix type mismatches in detect_task_format
-  stalld: remove NULL deref in fill_waiting_task error handler
-  stalld: guard nextline() returns in sched_debug parsing
-  stalld: fix missing null-termination in is_runnable
-  stalld: fix snprintf truncation check in is_runnable
-  stalld: fix error return in queue_track_get_cpu
-  stalld: fix format string type mismatch in set_cpu_affinity
-
- .claude/CLAUDE.md                             |  585 ---------
- .claude/agents/agent-prompt-engineer.md       |  135 --
- .claude/agents/c-expert.md                    |   53 -
- .claude/agents/code-reviewer.md               |  104 --
- .claude/agents/get-agent-hash                 |   99 --
- .claude/agents/git-scm-master.md              | 1154 -----------------
- .claude/agents/kernel-hacker.md               |  231 ----
- .claude/agents/plan-validator.md              |  130 --
- .claude/agents/project-historian.md           |  285 ----
- .claude/agents/project-librarian.md           |  604 ---------
- .claude/agents/project-manager.md             |  388 ------
- .claude/agents/project-scope-guardian.md      |  326 -----
- .claude/agents/python-expert.md               |   57 -
- .claude/agents/test-specialist.md             |  656 ----------
- .claude/agents/update-agent-hashes            |   96 --
- .claude/context-snapshot.json                 |  103 --
- .claude/rules                                 |   42 -
- .gitignore                                    |    5 +-
- bpf/stalld.bpf.c                              |  206 ++-
- src/queue_track.c                             |   99 +-
- src/queue_track.h                             |  107 +-
- src/sched_debug.c                             |   46 +-
- src/stalld.c                                  |   51 +-
- src/stalld.h                                  |   20 +-
- src/utils.c                                   |   33 +-
- tests/BACKEND_USAGE.md                        |  269 ----
- tests/CONTEXT_SNAPSHOT_2025-10-31.md          |  231 ----
- tests/Makefile                                |   29 +-
- tests/README.md                               |   29 +-
- tests/TODO.md                                 |  727 -----------
- tests/functional/test_affinity.sh             |  178 +--
- tests/functional/test_backend_selection.sh    |   24 +-
- tests/functional/test_boost_duration.sh       |  164 +--
- tests/functional/test_boost_period.sh         |  151 +--
- tests/functional/test_boost_restoration.sh    |  310 +----
- tests/functional/test_boost_runtime.sh        |  179 +--
- tests/functional/test_cpu_selection.sh        |   76 +-
- tests/functional/test_deadline_boosting.sh    |  266 +---
- tests/functional/test_fifo_boosting.sh        |  269 +---
- .../test_fifo_priority_starvation.sh          |  197 +--
- tests/functional/test_force_fifo.sh           |  196 +--
- tests/functional/test_foreground.sh           |   65 +-
- tests/functional/test_idle_detection.sh       |  195 +--
- tests/functional/test_log_only.sh             |   30 +-
- tests/functional/test_logging_destinations.sh |   38 +-
- tests/functional/test_pidfile.sh              |  166 +--
- tests/functional/test_runqueue_parsing.sh     |  417 ------
- tests/functional/test_starvation_detection.sh |  281 +---
- tests/functional/test_starvation_threshold.sh |  138 +-
- tests/functional/test_task_merging.sh         |  161 +--
- tests/helpers/starvation_gen.c                |    2 +-
- tests/helpers/test_helpers.sh                 |  356 +++--
- tests/legacy/README.md                        |  169 ---
- tests/legacy/test01.c                         |  506 --------
- tests/legacy/test01_wrapper.sh                |  161 ---
- tests/run_tests.sh                            |  149 +--
- 56 files changed, 964 insertions(+), 10780 deletions(-)
- delete mode 100644 .claude/CLAUDE.md
- delete mode 100644 .claude/agents/agent-prompt-engineer.md
- delete mode 100644 .claude/agents/c-expert.md
- delete mode 100644 .claude/agents/code-reviewer.md
- delete mode 100755 .claude/agents/get-agent-hash
- delete mode 100644 .claude/agents/git-scm-master.md
- delete mode 100644 .claude/agents/kernel-hacker.md
- delete mode 100644 .claude/agents/plan-validator.md
- delete mode 100644 .claude/agents/project-historian.md
- delete mode 100644 .claude/agents/project-librarian.md
- delete mode 100644 .claude/agents/project-manager.md
- delete mode 100644 .claude/agents/project-scope-guardian.md
- delete mode 100644 .claude/agents/python-expert.md
- delete mode 100644 .claude/agents/test-specialist.md
- delete mode 100755 .claude/agents/update-agent-hashes
- delete mode 100644 .claude/context-snapshot.json
- delete mode 100644 .claude/rules
- delete mode 100644 tests/BACKEND_USAGE.md
- delete mode 100644 tests/CONTEXT_SNAPSHOT_2025-10-31.md
- delete mode 100644 tests/TODO.md
- delete mode 100755 tests/functional/test_runqueue_parsing.sh
- delete mode 100644 tests/legacy/README.md
- delete mode 100644 tests/legacy/test01.c
- delete mode 100755 tests/legacy/test01_wrapper.sh
-
+diff --git a/src/utils.c b/src/utils.c
+index 8f1fe92..3dddb0f 100644
+--- a/src/utils.c
++++ b/src/utils.c
+@@ -1182,13 +1182,8 @@ int parse_args(int argc, char **argv)
+ 	if (config_boost_duration > config_starving_threshold)
+ 		usage("the boost duration cannot be longer than the starving threshold ");
+ 
+-	if (config_force_fifo && config_single_threaded) {
+-		log_msg("-F/--force_fifo does not work in single-threaded mode\n");
+-		log_msg("falling back to the adaptive mode\n");
+-		config_adaptive_multi_threaded = 1;
+-		config_single_threaded = 0;
+-		config_aggressive = 0;
+-	}
++	if (config_force_fifo && config_single_threaded)
++		usage("--force_fifo does not work in single-threaded mode");
+ 
+ 	if (config_reservation && (config_aggressive || config_adaptive_multi_threaded))
+ 		usage("-R/--reservation only works in the single-threaded mode");
+diff --git a/tests/functional/test_force_fifo.sh b/tests/functional/test_force_fifo.sh
+index 239bc37..4fdb13b 100755
+--- a/tests/functional/test_force_fifo.sh
++++ b/tests/functional/test_force_fifo.sh
+@@ -207,22 +207,8 @@ log "=========================================="
+ log "Test 5: Single-threaded mode with FIFO (should fail)"
+ log "=========================================="
+ 
+-# Try to run stalld with -F but without -A (single-threaded mode)
+-# According to CLAUDE.md, this should die/exit
+-FIFO_SINGLE_LOG="/tmp/stalld_test_force_fifo_single_$$.log"
+-CLEANUP_FILES+=("${FIFO_SINGLE_LOG}")
+-
+-log "Testing single-threaded mode with -F (should exit)"
+-timeout 5 ${TEST_ROOT}/../stalld -f -v -c "${TEST_CPU}" -t ${threshold} -F > "${FIFO_SINGLE_LOG}" 2>&1
+-ret=$?
+-
+-if [ $ret -ne 0 ] && [ $ret -ne 124 ]; then
+-    pass "single-threaded mode rejected FIFO"
+-elif grep -qiE "single.*thread|falling back|adaptive" "${FIFO_SINGLE_LOG}"; then
+-    pass "stalld detected incompatibility and fell back to adaptive mode"
+-else
+-    fail "stalld silently accepted FIFO in single-threaded mode"
+-fi
++log "Testing single-threaded mode (-O) with -F (should exit)"
++assert_stalld_rejects "Single-threaded mode rejected FIFO" -f -v -c "${TEST_CPU}" -t ${threshold} -F -O
+ 
+ #=============================================================================
+ # Test 6: Compare effectiveness (informational)
 -- 
 2.54.0
 
