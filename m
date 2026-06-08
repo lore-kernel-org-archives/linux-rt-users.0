@@ -1,47 +1,47 @@
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 7D7D13563D4
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id AFCF7368D60
 	for <linux-rt-users@vger.kernel.org>; Mon,  8 Jun 2026 18:33:29 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1780943610; cv=none; b=Rn3mQVqHGqGSDiC83rran8FqweaFcVpC1U9lW27bs2q7YdtV7mzAkrRYSj9UeLxwj+65YTnM1s2aMiWM2AavrCNIiHjE9GGhsvJIL9NqcrAj4/2VwkbDH6hp3TuQ1UmEMI/9prnwwjatcwAAg6dVxmpOaS/qLZPi4WLlU79kD4E=
+	t=1780943611; cv=none; b=INq4FdCVJS/qrEwK77sSHttC/caW+6F8bYgzieMshX6a4yzd97Wq0I2Gpnw5mCCLEzrcXJhhvmo5yY0ejIk3y0dJHiXk6GsL3GJ3RS8ydH+oFf9ceOoYN1cEZFkqrvvy3POcqQS8ds/8OcT7VZQ4xQR3ncpoxm1TNf+JJtabNnQ=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1780943610; c=relaxed/simple;
-	bh=IsUlOPOosk4v3wNal78VB5TD7SpGifbkr0F+1uRkbT8=;
+	s=arc-20240116; t=1780943611; c=relaxed/simple;
+	bh=m+iwD+q3Nolup0VH8V8DhKmQfMxOwR9l8MaTCnyQi7s=;
 	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=evu3vr8rh5DwWOnLjdsZlSsvav36kUeCoWJ5ymYwblfOvHX8R0cJc3ufuLYUnHItE0q0ryE9EsusYE0EHqB0IcOhY3D7FZD3+EKFRHL1+VJKovHHFYQ1CFL9Eih5/41eQby94CYHtB2hwo5Jj4ae408o1alsj4SI1h5L/k3c/1E=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=ddn7DjWu; arc=none smtp.client-ip=170.10.133.124
+	 MIME-Version; b=ubHV+hdHeON0ydLzaOJhhYnivH1HwNwixa7lgjctwGAefRADDfPjjNYKF0YZHN8CYanMRnwz29MnGXpMcrxkCMFwrQvoOfnl5APa5gqsGXoCHUGuWTQkOP9BYadGeA3tg8rOksn/Cl4zgOyu9bfqTYFGn4VTG61PS5BGD1uVt+0=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=fzxUvDHb; arc=none smtp.client-ip=170.10.133.124
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="ddn7DjWu"
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="fzxUvDHb"
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
 	s=mimecast20190719; t=1780943608;
 	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
 	 to:to:cc:cc:mime-version:mime-version:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references;
-	bh=b1S9jdGkTM3uMMm80X287j/Zcuj0BnyHb+juEkQcOLI=;
-	b=ddn7DjWuBHE4XHVro4tVm4I/j4ZRECT/Zfthhzws3MNeyGJ5jcXDMB1SBPgsZwCHc0+olb
-	Rw81dZUNxYAkUP8AqqLDPIABGh5okwZKiIh4srkb9lQP/sHjXX8HgJWf5+GfDn8lcu/cvE
-	nsIPpCsvGcHdE/2awWNBd9A5MyjW9wE=
-Received: from mx-prod-mc-01.mail-002.prod.us-west-2.aws.redhat.com
- (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
+	bh=XeieRf2CizMAxa3MsgTWaf+YVyO285uuynS3l59ss6M=;
+	b=fzxUvDHbOwskj1ZNIIHV7IXGipMTOl5sLk1TpZJzAaUGiwnntH7mlik4NJ4ah7bc69qaUA
+	E6p06hHv2mbZbkW1W1wS65L9GVBiuSnpXRsk59l8qxph5ECqOR8GEPdTswXzGwF5qwa5VB
+	ibxlEYDeRIaNlNcN6SCGHWlU/uYKdvs=
+Received: from mx-prod-mc-08.mail-002.prod.us-west-2.aws.redhat.com
+ (ec2-35-165-154-97.us-west-2.compute.amazonaws.com [35.165.154.97]) by
  relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-198-LbHdmUS5PkafjBOh8_F9Wg-1; Mon,
- 08 Jun 2026 14:33:27 -0400
-X-MC-Unique: LbHdmUS5PkafjBOh8_F9Wg-1
-X-Mimecast-MFC-AGG-ID: LbHdmUS5PkafjBOh8_F9Wg_1780943606
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-222-8yKux_S0N0OiP5RSqwcTgA-1; Mon,
+ 08 Jun 2026 14:33:24 -0400
+X-MC-Unique: 8yKux_S0N0OiP5RSqwcTgA-1
+X-Mimecast-MFC-AGG-ID: 8yKux_S0N0OiP5RSqwcTgA_1780943604
 Received: from mx-prod-int-10.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-10.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.95])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
 	(No client certificate requested)
-	by mx-prod-mc-01.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 648C1195DE57;
-	Mon,  8 Jun 2026 18:33:26 +0000 (UTC)
+	by mx-prod-mc-08.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id E81311833483;
+	Mon,  8 Jun 2026 18:33:23 +0000 (UTC)
 Received: from wcosta-defaultstring.rmtbr.csb (unknown [10.22.88.160])
-	by mx-prod-int-10.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTP id 5C3043692A;
-	Mon,  8 Jun 2026 18:33:24 +0000 (UTC)
+	by mx-prod-int-10.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTP id DBA3336928;
+	Mon,  8 Jun 2026 18:33:21 +0000 (UTC)
 From: Wander Lairson Costa <wander@redhat.com>
 To: Clark Williams <williams@redhat.com>,
 	John Kacur <jkacur@redhat.com>,
@@ -50,9 +50,9 @@ Cc: Juri Lelli <juri.lelli@redhat.com>,
 	luffyluo@tencent.com,
 	davidlt@rivosinc.com,
 	Wander Lairson Costa <wander@redhat.com>
-Subject: [PATCH stalld 26/52] tests: Reduce default wait timeouts
-Date: Mon,  8 Jun 2026 15:31:36 -0300
-Message-ID: <20260608183206.140526-27-wander@redhat.com>
+Subject: [PATCH stalld 25/52] tests: Extract wait_for_process_exit helper
+Date: Mon,  8 Jun 2026 15:31:35 -0300
+Message-ID: <20260608183206.140526-26-wander@redhat.com>
 In-Reply-To: <20260608183206.140526-1-wander@redhat.com>
 References: <20260608183206.140526-1-wander@redhat.com>
 Precedence: bulk
@@ -64,100 +64,151 @@ MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 X-Scanned-By: MIMEDefang 3.6 on 10.30.177.95
 
-Failing tests currently hang for up to thirty seconds before reporting
-a failure. Reduce the default wait timeouts in the stalld test helpers
-to cut this failure reporting time in half. These timeouts only impact
-the failure path since passing tests utilize event-driven waits that
-return immediately upon matching a pattern.
+The SIGTERM-poll-SIGKILL-poll termination sequence is currently
+duplicated in both stop_stalld() and cleanup() with identical inline
+polling loops. This refactors the teardown sequence by extracting the
+polling logic into a new wait_for_process_exit() helper.
 
-Decrease the timeout from thirty to fifteen seconds for the starvation
-and boost detection waits, their assertion wrappers, and the log match
-helper. Reduce the stalld ready wait from fifteen to five seconds. The
-new fifteen second limit provides adequate margin because all callers
-relying on the default use thresholds of three to five seconds, making
-detection take approximately nine seconds.
-
-Override the timeout explicitly to twenty seconds for the third test in
-test_boost_duration.sh. This specific caller uses a threshold of ten,
-which makes the new fifteen second default too tight.
+The new helper polls process_alive() at 0.1 second intervals, returning
+0 on successful exit or 1 upon timeout. Utilizing this helper
+eliminates the duplicated logic, removes a redundant sleep in cleanup(),
+and accelerates test teardown by checking process state more frequently
+than the previous one second intervals, all while maintaining the
+existing five second total timeout. Furthermore, stop_stalld() is
+simplified with an early return guard to reduce nesting. The helper is
+explicitly exported to ensure availability across the test environment.
 
 Signed-off-by: Wander Lairson Costa <wander@redhat.com>
 ---
- tests/functional/test_boost_duration.sh |  2 +-
- tests/helpers/test_helpers.sh           | 12 ++++++------
- 2 files changed, 7 insertions(+), 7 deletions(-)
+ tests/helpers/test_helpers.sh | 85 +++++++++++++++++------------------
+ 1 file changed, 42 insertions(+), 43 deletions(-)
 
-diff --git a/tests/functional/test_boost_duration.sh b/tests/functional/test_boost_duration.sh
-index 3d6a823..821dffe 100755
---- a/tests/functional/test_boost_duration.sh
-+++ b/tests/functional/test_boost_duration.sh
-@@ -74,7 +74,7 @@ log "Creating starvation on CPU ${TEST_CPU} for ${long_starvation}s"
- start_starvation_gen -c "${TEST_CPU}" -p 80 -n 2 -d ${long_starvation}
- 
- # Wait for actual boosting
--assert_boost_detected "${STALLD_LOG}" "Boost with ${long_duration}s duration"
-+assert_boost_detected "${STALLD_LOG}" "Boost with ${long_duration}s duration" 20
- 
- # Cleanup
- cleanup_scenario "${STARVE_PID}"
 diff --git a/tests/helpers/test_helpers.sh b/tests/helpers/test_helpers.sh
-index 5187f0f..af341e0 100755
+index 7159c19..5187f0f 100755
 --- a/tests/helpers/test_helpers.sh
 +++ b/tests/helpers/test_helpers.sh
-@@ -159,7 +159,7 @@ find_starved_child() {
- assert_starvation_detected() {
- 	local log_file=$1
- 	local message=${2:-"Starvation detected"}
--	local timeout=${3:-30}
-+	local timeout=${3:-15}
- 	local cpu=${4:-}
- 
- 	if wait_for_starvation_detected "${log_file}" "${timeout}" "${cpu}"; then
-@@ -176,7 +176,7 @@ assert_starvation_detected() {
- assert_boost_detected() {
- 	local log_file=$1
- 	local message=${2:-"Boost detected"}
--	local timeout=${3:-30}
-+	local timeout=${3:-15}
- 
- 	if wait_for_boost_detected "${log_file}" "${timeout}"; then
- 		pass "${message}"
-@@ -695,7 +695,7 @@ wait_for_log_message() {
- # Usage: wait_for_stalld_ready <log_file> [timeout]
- wait_for_stalld_ready() {
- 	local log_file=$1
--	local timeout=${2:-15}
-+	local timeout=${2:-5}
- 	wait_for_log_message "checking cpu\|waiting tasks\|skipping" "${timeout}" "${log_file}"
+@@ -360,6 +360,28 @@ process_alive() {
+ 	kill -0 "$1" 2>/dev/null
  }
  
-@@ -704,7 +704,7 @@ wait_for_stalld_ready() {
- # Usage: wait_for_starvation_detected <log_file> [timeout] [cpu]
- wait_for_starvation_detected() {
- 	local log_file=$1
--	local timeout=${2:-30}
-+	local timeout=${2:-15}
- 	local cpu=${3:-}
- 	local pattern="starved on CPU"
- 	if [ -n "${cpu}" ]; then
-@@ -718,7 +718,7 @@ wait_for_starvation_detected() {
- # Usage: wait_for_boost_detected <log_file> [timeout]
- wait_for_boost_detected() {
- 	local log_file=$1
--	local timeout=${2:-30}
-+	local timeout=${2:-15}
- 	wait_for_log_message "boosted pid" "${timeout}" "${log_file}"
++# Poll for a process to exit within a timeout.
++# Returns 0 if the process exits, 1 if still alive after timeout.
++#
++# Usage: wait_for_process_exit <pid> <timeout_seconds>
++wait_for_process_exit() {
++	local pid="$1"
++	local timeout="$2"
++	local elapsed=0
++
++	while process_alive "${pid}" && [ ${elapsed} -lt ${timeout} ]; do
++		for i in $(seq 1 10); do
++			sleep 0.1
++			if ! process_alive "${pid}"; then
++				return 0
++			fi
++		done
++		elapsed=$((elapsed + 1))
++	done
++
++	! process_alive "${pid}"
++}
++
+ send_signal() {
+ 	kill -"$1" "$2" 2>/dev/null || true
+ }
+@@ -537,32 +559,23 @@ start_stalld() {
+ # SIGKILL if needed. Guarantees the process is dead before
+ # returning so callers do not need post-stop sleeps.
+ stop_stalld() {
+-	if [ -n "${STALLD_PID}" ]; then
+-		if process_alive ${STALLD_PID}; then
+-			# Try graceful shutdown first (SIGTERM)
+-			send_signal TERM ${STALLD_PID}
+-
+-			# Poll for graceful exit (up to 5 seconds)
+-			local timeout=5
+-			local elapsed=0
+-			while process_alive ${STALLD_PID} && [ ${elapsed} -lt ${timeout} ]; do
+-				sleep 1
+-				elapsed=$((elapsed + 1))
+-			done
++	if [ -z "${STALLD_PID}" ]; then
++		return
++	fi
++
++	if process_alive ${STALLD_PID}; then
++		# Try graceful shutdown first (SIGTERM)
++		send_signal TERM ${STALLD_PID}
+ 
++		# Poll for graceful exit (up to 5 seconds)
++		if ! wait_for_process_exit ${STALLD_PID} 5; then
+ 			# Escalate to SIGKILL if still running
+-			if process_alive ${STALLD_PID}; then
+-				send_signal KILL ${STALLD_PID}
+-				# Poll for forced termination (up to 5 seconds)
+-				elapsed=0
+-				while process_alive ${STALLD_PID} && [ ${elapsed} -lt ${timeout} ]; do
+-					sleep 1
+-					elapsed=$((elapsed + 1))
+-				done
+-			fi
++			send_signal KILL ${STALLD_PID}
++			# Poll for forced termination (up to 5 seconds)
++			wait_for_process_exit ${STALLD_PID} 5
+ 		fi
+-		STALLD_PID=""
+ 	fi
++	STALLD_PID=""
  }
  
-@@ -729,7 +729,7 @@ wait_for_n_log_matches() {
- 	local pattern=$1
- 	local count=$2
- 	local log_file=$3
--	local timeout=${4:-30}
-+	local timeout=${4:-15}
- 	local end=$((SECONDS + timeout))
+ # Kill any existing stalld processes (cleanup from previous runs)
+@@ -607,31 +620,17 @@ cleanup() {
+ 	# Stop stalld
+ 	stop_stalld
  
- 	while [ $SECONDS -lt $end ]; do
+-	# Small delay to let processes terminate
+-	sleep 0.2
+-
+ 	# Kill any tracked processes
+ 	# Use SIGKILL (-9) and ignore EPERM errors (process may have different privileges)
+ 	for pid in "${CLEANUP_PIDS[@]}"; do
+ 		if [ -n "${pid}" ] && [ "${pid}" -gt 0 ] 2>/dev/null; then
+ 			# Check if process exists
+-			if process_alive ${pid}; then
+-				send_signal TERM ${pid}
+-
+-				local timeout=5
+-				local elapsed=0
+-				while process_alive ${pid} && [ ${elapsed} -lt ${timeout} ]; do
+-					sleep 1
+-					elapsed=$((elapsed + 1))
+-				done
+-
+-				if process_alive ${pid}; then
+-					send_signal KILL ${pid}
+-					elapsed=0
+-					while process_alive ${pid} && [ ${elapsed} -lt ${timeout} ]; do
+-						sleep 1
+-						elapsed=$((elapsed + 1))
+-					done
++			if process_alive "${pid}"; then
++				send_signal TERM "${pid}"
++
++				if ! wait_for_process_exit "${pid}" 5; then
++					send_signal KILL "${pid}"
++					wait_for_process_exit "${pid}" 5
+ 				fi
+ 			fi
+ 		fi
+@@ -1323,7 +1322,7 @@ export -f start_test end_test test_section cleanup_scenario find_starved_child
+ export -f assert_starvation_detected assert_boost_detected assert_stalld_rejects assert_log_contains assert_success
+ export -f pass fail assert_equals assert_contains assert_not_contains
+ export -f assert_file_exists assert_file_not_exists
+-export -f process_alive send_signal assert_process_running assert_process_not_running
++export -f process_alive wait_for_process_exit send_signal assert_process_running assert_process_not_running
+ export -f start_stalld stop_stalld kill_existing_stalld cleanup
+ export -f wait_for_log_message wait_for_stalld_ready wait_for_starvation_detected wait_for_boost_detected wait_for_n_log_matches
+ export -f get_thread_policy get_thread_priority
 -- 
 2.54.0
 
