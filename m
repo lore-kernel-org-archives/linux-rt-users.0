@@ -1,47 +1,47 @@
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id BC2483E0C5D
-	for <linux-rt-users@vger.kernel.org>; Mon,  8 Jun 2026 18:33:00 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 3895B368D60
+	for <linux-rt-users@vger.kernel.org>; Mon,  8 Jun 2026 18:33:01 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1780943582; cv=none; b=r8cwWPfKfC18iPGjzxuwUgz6T/Bx+G9zz3NLKwsHenQpCXdi7Va0uJDiZqtvGRRjlwghvIklQ93SXR2hPo7tnQOxzuUtYIjEeA113CKOG+K0qx62BAX/6KBS/PbCjQfvlRhpm08Yzf5JJZ+fmwocyLBWBhE1/T3qvN+chjHozbk=
+	t=1780943582; cv=none; b=SC9fot3NVuIIsZDihI+K3LV6Ssf149iw5LbOCFIO7uue+Doy17mig7DDF6aWSXumizylrbNHG40Rv0fi7AUa+wOz318kbZOkGFvxVWWLaFTDx/V/TcnCMKJMQ6zsUZUb/246aIAVbwXz7ITZTh0iAfIuSUGkHnhsux+RN0kgc+k=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
 	s=arc-20240116; t=1780943582; c=relaxed/simple;
-	bh=7Jikri7muA0/Nil48SbM09bjgTFSTntWcHZj8rHiip0=;
+	bh=VEVHcyEw8UHae4w2jaBPJ2nhPY+l2wdqC+iVwo2WlXs=;
 	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=rGCxXDl/khYYXYO6q8qzfNtSVRjVmqXMnTQ+k1ilN/ZVjb6V4F1C14SS3ALdc4pOoapQ5YxMfDWpIhYEHTFS2SXiHYaUkd9dXBo/JZBSCs/9UnbZMhsH0E0ug2MURjBJN/L1duU9SzTJ8FyWej9gu9M28RlgHVuD1bCX2vsHJfQ=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=QjI7a/+m; arc=none smtp.client-ip=170.10.129.124
+	 MIME-Version:Content-Type; b=hvqAtUngxgihMIIcO0bFkXnstTSBzP8qKMzZBeBDvnV5tIDBS+X8J+/5ER0glOsXTxmsjqCr7aTBYiBAORyn8cpW5d+zHKZie6nlbzEpY/E+mrMfQ0q42145KvqtSwX/rTloKORfCKBgz0VhZ2bVj8L0NvL16JCg2dhgK8vcAsU=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=XWE6Wnpo; arc=none smtp.client-ip=170.10.129.124
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="QjI7a/+m"
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="XWE6Wnpo"
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1780943579;
+	s=mimecast20190719; t=1780943580;
 	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references;
-	bh=Yod295gfJ+vUMXDRM1AL2QPpF6h/jJPGbx8FfghlaVo=;
-	b=QjI7a/+mnzIubTlEulOna5s2D8uefmCBn7WszM537BTuOwI+SGHms8j1PPq7k4jRMCqlvz
-	VeJ6isJVgU1/t0PpEsJx5Nn2x1szLGL6cahdaelRXCAti4EhipeNe1PeILfrYGN7Eu5WwN
-	VHsfpQQJHH/CuWAWFwXrMsV6yavGglI=
-Received: from mx-prod-mc-01.mail-002.prod.us-west-2.aws.redhat.com
- (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
+	bh=JmH1zI4kP5NgOlVrvn9NEFKZ1W7pvG1nH6PAzKZOw0Y=;
+	b=XWE6WnpotxgMWAtEbzq09brTNK7uIP2bRhDeMt3ZijQjW08YMyhFOpr1pOydbcvwW0yM/e
+	bbdFvglUdMF4bHFgRy1+KcP7FtQhHFkUBsGCaXWCJhWuM7b6b22BnOqjo+ZfnXcaAaUgF8
+	ye1RUNE2JhK+dv8wf+C7PtP1iXbsVLE=
+Received: from mx-prod-mc-08.mail-002.prod.us-west-2.aws.redhat.com
+ (ec2-35-165-154-97.us-west-2.compute.amazonaws.com [35.165.154.97]) by
  relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-113--Db7GM7XOBG1o1Cbxqm6Mw-1; Mon,
- 08 Jun 2026 14:32:56 -0400
-X-MC-Unique: -Db7GM7XOBG1o1Cbxqm6Mw-1
-X-Mimecast-MFC-AGG-ID: -Db7GM7XOBG1o1Cbxqm6Mw_1780943575
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-689-1CQIkLeYOMqJWT3TKej5oA-1; Mon,
+ 08 Jun 2026 14:32:59 -0400
+X-MC-Unique: 1CQIkLeYOMqJWT3TKej5oA-1
+X-Mimecast-MFC-AGG-ID: 1CQIkLeYOMqJWT3TKej5oA_1780943578
 Received: from mx-prod-int-10.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-10.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.95])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
 	(No client certificate requested)
-	by mx-prod-mc-01.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 7DABD195DE2B;
-	Mon,  8 Jun 2026 18:32:55 +0000 (UTC)
+	by mx-prod-mc-08.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 0A1F61835E2B;
+	Mon,  8 Jun 2026 18:32:58 +0000 (UTC)
 Received: from wcosta-defaultstring.rmtbr.csb (unknown [10.22.88.160])
-	by mx-prod-int-10.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTP id EC4D536928;
-	Mon,  8 Jun 2026 18:32:52 +0000 (UTC)
+	by mx-prod-int-10.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTP id 022753692C;
+	Mon,  8 Jun 2026 18:32:55 +0000 (UTC)
 From: Wander Lairson Costa <wander@redhat.com>
 To: Clark Williams <williams@redhat.com>,
 	John Kacur <jkacur@redhat.com>,
@@ -50,9 +50,9 @@ Cc: Juri Lelli <juri.lelli@redhat.com>,
 	luffyluo@tencent.com,
 	davidlt@rivosinc.com,
 	Wander Lairson Costa <wander@redhat.com>
-Subject: [PATCH stalld 14/52] tests: Fix CPU selection grep substring matches
-Date: Mon,  8 Jun 2026 15:31:24 -0300
-Message-ID: <20260608183206.140526-15-wander@redhat.com>
+Subject: [PATCH stalld 15/52] tests: Add idle CPU skipping assertion
+Date: Mon,  8 Jun 2026 15:31:25 -0300
+Message-ID: <20260608183206.140526-16-wander@redhat.com>
 In-Reply-To: <20260608183206.140526-1-wander@redhat.com>
 References: <20260608183206.140526-1-wander@redhat.com>
 Precedence: bulk
@@ -61,100 +61,69 @@ List-Id: <linux-rt-users.vger.kernel.org>
 List-Subscribe: <mailto:linux-rt-users+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit
 X-Scanned-By: MIMEDefang 3.6 on 10.30.177.95
 
-The CPU selection test uses grep patterns like "cpu 1" which can
-match "cpu 10" or "cpu 12" on systems with more than 9 CPUs. This
-causes false positives where the test passes even when the wrong
-CPUs are being monitored.
-
-Introduce a local is_cpu_monitored() helper that greps for the
-exact stalld log format "adding cpu N$" with an end-of-line anchor,
-preventing substring matches.
+Test 4 in the idle detection suite was purely informational,
+printing explanatory text about what idle detection does without
+any assertions. Replace it with an actual test that starts stalld
+on an idle CPU and verifies that "skipping" messages appear in the
+log, confirming the idle detection optimization is working.
 
 Signed-off-by: Wander Lairson Costa <wander@redhat.com>
 
 Assisted-by: Claude Code:claude-opus-4-6[1m] [PAL]
 Signed-off-by: Wander Lairson Costa <wander@redhat.com>
 ---
- tests/functional/test_cpu_selection.sh | 22 +++++++++++++---------
- 1 file changed, 13 insertions(+), 9 deletions(-)
+ tests/functional/test_idle_detection.sh | 32 +++++++++++++------------
+ 1 file changed, 17 insertions(+), 15 deletions(-)
 
-diff --git a/tests/functional/test_cpu_selection.sh b/tests/functional/test_cpu_selection.sh
-index 32cbe79..ff5b879 100755
---- a/tests/functional/test_cpu_selection.sh
-+++ b/tests/functional/test_cpu_selection.sh
-@@ -13,6 +13,10 @@ source "${TEST_ROOT}/helpers/test_helpers.sh"
- # Parse command-line options
- parse_test_options "$@" || exit $?
+diff --git a/tests/functional/test_idle_detection.sh b/tests/functional/test_idle_detection.sh
+index 8017675..f238c7e 100755
+--- a/tests/functional/test_idle_detection.sh
++++ b/tests/functional/test_idle_detection.sh
+@@ -140,23 +140,25 @@ fi
+ cleanup_scenario "${STARVE_PID}"
  
-+is_cpu_monitored() {
-+    grep -q "adding cpu ${1}$" "$STALLD_LOG"
-+}
+ #=============================================================================
+-# Test 4: Idle Detection Overhead Reduction
++# Test 4: Idle CPUs Are Skipped
+ #=============================================================================
+-test_section "Test 4: Idle Detection Reduces Overhead"
+-log "Comparing overhead with and without idle detection (informational)"
+-
+-# This is informational - we can't easily measure overhead in tests
+-log "With idle detection (default):"
+-log "  - /proc/stat read before parsing"
+-log "  - Idle CPUs skipped (no sched_debug/BPF parsing)"
+-log "  - Reduces CPU usage when system mostly idle"
+-log ""
+-log "Without idle detection would:"
+-log "  - Always parse all CPUs"
+-log "  - Higher overhead even when CPUs idle"
++test_section "Test 4: Idle CPUs Are Skipped"
 +
- start_test "CPU Selection (-c option)"
++rm -f "${STALLD_LOG}"
++threshold=3
++
++log "Starting stalld with idle detection on an idle CPU"
++start_stalld_with_log "${STALLD_LOG}" -f -v -l -t $threshold -c ${TEST_CPU} -a ${STALLD_CPU}
++
++sleep 3
++
++if grep -q "skipping" "${STALLD_LOG}"; then
++    pass "Idle CPU correctly skipped"
++else
++    fail "No skipping messages for idle CPU"
++fi
  
- # Setup test environment
-@@ -40,7 +44,7 @@ rm -f "${STALLD_LOG}"
- start_stalld_with_log "${STALLD_LOG}" -f -v -c 0 -l -t 5
+-log "ℹ INFO: Idle detection enabled by default for efficiency"
+-log "        Function: cpu_had_idle_time() and get_cpu_busy_list()"
++cleanup_scenario
  
- # Check that stalld mentions CPU 0
--if grep -q "cpu 0" "$STALLD_LOG"; then
-+if is_cpu_monitored 0; then
-     pass "stalld monitoring CPU 0"
- else
-     fail "stalld not monitoring CPU 0"
-@@ -57,10 +61,10 @@ if [ "$num_cpus" -ge 4 ]; then
-     # Check for CPU 0 and CPU 2 in output
-     cpu0_found=0
-     cpu2_found=0
--    if grep -q "cpu 0" "$STALLD_LOG"; then
-+    if is_cpu_monitored 0; then
-         cpu0_found=1
-     fi
--    if grep -q "cpu 2" "$STALLD_LOG"; then
-+    if is_cpu_monitored 2; then
-         cpu2_found=1
-     fi
- 
-@@ -85,13 +89,13 @@ if [ "$num_cpus" -ge 4 ]; then
-     cpu0_found=0
-     cpu1_found=0
-     cpu2_found=0
--    if grep -q "cpu 0" "$STALLD_LOG"; then
-+    if is_cpu_monitored 0; then
-         cpu0_found=1
-     fi
--    if grep -q "cpu 1" "$STALLD_LOG"; then
-+    if is_cpu_monitored 1; then
-         cpu1_found=1
-     fi
--    if grep -q "cpu 2" "$STALLD_LOG"; then
-+    if is_cpu_monitored 2; then
-         cpu2_found=1
-     fi
- 
-@@ -115,7 +119,7 @@ if [ "$num_cpus" -ge 6 ]; then
-     # Should monitor CPUs 0, 2, 3, 4
-     monitored_cpus=0
-     for cpu in 0 2 3 4; do
--        if grep -q "cpu $cpu" "$STALLD_LOG"; then
-+        if is_cpu_monitored ${cpu}; then
-             ((monitored_cpus++))
-         fi
-     done
-@@ -143,8 +147,8 @@ if [ "$num_cpus" -ge 2 ]; then
-     rm -f "${STALLD_LOG}"
-     start_stalld_with_log "${STALLD_LOG}" -f -v -c 0 -l -t 5
- 
--    # Check that CPU 1 is NOT mentioned (or mentioned as "not monitoring")
--    if ! grep -q "cpu 1" "$STALLD_LOG" || grep -q "not monitoring.*cpu 1" "$STALLD_LOG"; then
-+    # Check that CPU 1 is NOT being monitored
-+    if ! is_cpu_monitored 1; then
-         pass "stalld not monitoring non-selected CPU 1"
-     else
-         fail "stalld appears to be monitoring CPU 1 when only CPU 0 selected"
+ #=============================================================================
+ # Test 5: Idle Detection with Multiple CPUs
 -- 
 2.54.0
 
