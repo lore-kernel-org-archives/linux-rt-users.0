@@ -1,47 +1,47 @@
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 1AF803E2AD5
-	for <linux-rt-users@vger.kernel.org>; Mon,  8 Jun 2026 18:34:20 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 49D203E275C
+	for <linux-rt-users@vger.kernel.org>; Mon,  8 Jun 2026 18:34:21 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1780943662; cv=none; b=i8O/6TZpUeLgYyo6nSVkSII306H+sMwILgbkm0P1hFN+Ysxk/AoTwcHlLkem5t55E79tcL9kwIAzpCXNII9JdyuPTfvPHCDD2Cs+96jXCoiMUorCZ9ZmgntpOWsaBJUVCssFLCXVZYcEpQga9aAe2rk/nHvuT6exTcuhogFNqkY=
+	t=1780943662; cv=none; b=RFTdFr7vOKRPLTUzAsmMtW6o+nfFo7KgqYyWnUbtoesh3GeLn5eyKt8DYKym/BDjL5ar7YzgbrGwES73pUl4KWte4zjydb/Mi7ZrkZTpWGp5FSkEsyg5a9oehCdGM5zTM6yrOIRD0QEhrbZRDmCmUcBTzf6n0lIgkF4sDhoUss4=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
 	s=arc-20240116; t=1780943662; c=relaxed/simple;
-	bh=xjEQ29/TKU7TZ28KACW+OUu9BZ//J3oHv6hoNbFSxLM=;
+	bh=BYKB2fJCQXrEsdnujZiEgdqXJMgyvlCGb8ZpZ3xGDv8=;
 	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=LS0zbQRgHrJmrKKWsrAc+UTEbtkPwGp5PBcwUKfeLP/3TbSmwMwtrdJ08twobEom8JFHN2icXrI1OESEWoiPt7rdoKxG7W+e6IyglK1hSGQzqHuaJVm1MrD/NYiLO/PZZJ3e8SL7UlcYr4CtdUesFYv09Di9dUqC3b+0+WtXCao=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=exKli1Qg; arc=none smtp.client-ip=170.10.129.124
+	 MIME-Version; b=DUN15g+/q9JqGVHdOqsj1bdeu8yYMui01DD/al4eS8iQaEykmX51lQfBjNOliJQhnLpnd5j4aNveDv2JZDdBfHZzLs+f+OBrXj0BrnXixRKgaxvvj2J5KOX4ssBcSk4km4X/XwdMDp3mKgoItUagEcWmFWm5nb2JasBcijeIuj4=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=KDg/CoTm; arc=none smtp.client-ip=170.10.129.124
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="exKli1Qg"
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="KDg/CoTm"
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
 	s=mimecast20190719; t=1780943660;
 	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
 	 to:to:cc:cc:mime-version:mime-version:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references;
-	bh=H1UJVGHUsBynuMlW5oSBucSbYzgyALc99WGOrxz1KJc=;
-	b=exKli1QgjwBARx6CM9f9J2cEVLjNajMx42M/ag3bWw5RTw03XfxjY6eOC+gA1/9UA7WWZK
-	90aZAIpUjPdFWR00mPQlHTEU9sIzGB4YSyHyaurKehdZSwTjUz3yTALFJiH2erngnwLNMy
-	ke1bXAuunpyTVZyhrXS6H2GTwVTYIv0=
-Received: from mx-prod-mc-01.mail-002.prod.us-west-2.aws.redhat.com
- (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
+	bh=DO+SdsC6GsOzuuY1zF1gDfjQBcAYgk/v1Gg/L6xH1cM=;
+	b=KDg/CoTmVcSmweXHSlV4tZTV8eqP+kMaRFO4GmMIoJo+W902+XU6fVQr0ekAsxRkOuGzeK
+	rNKmKL9ib94du+x3PxU7ioTI7zuJg1y+mHgQ9Um1SzBMcKUUiMgQruR/TIaVI92vBAjg29
+	XubOiZkh36XxcIzrJhge8ofWuZ5rhE0=
+Received: from mx-prod-mc-08.mail-002.prod.us-west-2.aws.redhat.com
+ (ec2-35-165-154-97.us-west-2.compute.amazonaws.com [35.165.154.97]) by
  relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-349-pd-PxeRSNE-ESasr3oZnJw-1; Mon,
- 08 Jun 2026 14:34:12 -0400
-X-MC-Unique: pd-PxeRSNE-ESasr3oZnJw-1
-X-Mimecast-MFC-AGG-ID: pd-PxeRSNE-ESasr3oZnJw_1780943651
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-175-pFPj8QZyMUm0SJ-Jl5GstQ-1; Mon,
+ 08 Jun 2026 14:34:17 -0400
+X-MC-Unique: pFPj8QZyMUm0SJ-Jl5GstQ-1
+X-Mimecast-MFC-AGG-ID: pFPj8QZyMUm0SJ-Jl5GstQ_1780943656
 Received: from mx-prod-int-10.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-10.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.95])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
 	(No client certificate requested)
-	by mx-prod-mc-01.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 3EA31195DE17;
-	Mon,  8 Jun 2026 18:34:11 +0000 (UTC)
+	by mx-prod-mc-08.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 4EC1D183AB6A;
+	Mon,  8 Jun 2026 18:34:16 +0000 (UTC)
 Received: from wcosta-defaultstring.rmtbr.csb (unknown [10.22.88.160])
-	by mx-prod-int-10.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTP id 0A5DD36927;
-	Mon,  8 Jun 2026 18:34:08 +0000 (UTC)
+	by mx-prod-int-10.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTP id 3CFA036928;
+	Mon,  8 Jun 2026 18:34:14 +0000 (UTC)
 From: Wander Lairson Costa <wander@redhat.com>
 To: Clark Williams <williams@redhat.com>,
 	John Kacur <jkacur@redhat.com>,
@@ -50,9 +50,9 @@ Cc: Juri Lelli <juri.lelli@redhat.com>,
 	luffyluo@tencent.com,
 	davidlt@rivosinc.com,
 	Wander Lairson Costa <wander@redhat.com>
-Subject: [PATCH stalld 43/52] stalld: remove async-signal-unsafe calls from signal handler
-Date: Mon,  8 Jun 2026 15:31:53 -0300
-Message-ID: <20260608183206.140526-44-wander@redhat.com>
+Subject: [PATCH stalld 45/52] stalld: fix format string type mismatch for time_t
+Date: Mon,  8 Jun 2026 15:31:55 -0300
+Message-ID: <20260608183206.140526-46-wander@redhat.com>
 In-Reply-To: <20260608183206.140526-1-wander@redhat.com>
 References: <20260608183206.140526-1-wander@redhat.com>
 Precedence: bulk
@@ -64,80 +64,56 @@ MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 X-Scanned-By: MIMEDefang 3.6 on 10.30.177.95
 
-The inthandler signal handler calls log_msg(), which internally uses
-fprintf, vsnprintf, and syslog. None of these functions are
-async-signal-safe, so if a signal arrives while the main program holds
-a libc internal lock the handler deadlocks trying to acquire the same
-lock.
-
-Remove the log_msg() call and let the handler only set the running
-flag. Change running from int to volatile sig_atomic_t as required by
-POSIX for variables shared between signal handlers and normal program
-flow. Move the shutdown message to main() so it is emitted from a
-safe context after the main loop exits.
+Several log statements print time_t differences using %d or %llu,
+neither of which matches time_t on x86-64 where it is defined as
+long. Use %ld throughout to match the actual type and eliminate
+undefined behavior from format/argument mismatches.
 
 Signed-off-by: Wander Lairson Costa <wander@redhat.com>
 ---
- src/stalld.c | 4 +++-
- src/stalld.h | 3 ++-
- src/utils.c  | 1 -
- 3 files changed, 5 insertions(+), 3 deletions(-)
+ src/stalld.c | 8 ++++----
+ 1 file changed, 4 insertions(+), 4 deletions(-)
 
 diff --git a/src/stalld.c b/src/stalld.c
-index feb0099..a9e98ff 100644
+index 1762033..5fade4f 100644
 --- a/src/stalld.c
 +++ b/src/stalld.c
-@@ -109,7 +109,7 @@ int boost_policy;
- /*
-  * Variable to indicate if stalld is running or shutting down.
-  */
--int running = 1;
-+volatile sig_atomic_t running = 1;
+@@ -649,7 +649,7 @@ int check_starving_tasks(struct cpu_info *cpu)
+ 		if ((get_monotonic_time() - task->since) < config_starving_threshold)
+ 			continue;
  
- /*
-  * Config single threaded: uses less CPU, but has a lower precision.
-@@ -1247,6 +1247,8 @@ int main(int argc, char **argv)
- 	else
- 		single_threaded_main(cpus, config_nr_cpus);
+-		log_msg("%s-%d starved on CPU %d for %d seconds\n",
++		log_msg("%s-%d starved on CPU %d for %ld seconds\n",
+ 			task->comm, task->pid, cpu->id,
+ 			(get_monotonic_time() - task->since));
  
-+	log_msg("stalld shutting down\n");
-+
- 	cleanup_regex(&nr_thread_ignore, &compiled_regex_thread);
- 	cleanup_regex(&nr_process_ignore, &compiled_regex_process);
- 	if (config_log_syslog)
-diff --git a/src/stalld.h b/src/stalld.h
-index 03a4ca1..8b6ab8b 100644
---- a/src/stalld.h
-+++ b/src/stalld.h
-@@ -12,6 +12,7 @@
- #include <regex.h>
- #include <sched.h>
- #include <stdatomic.h>
-+#include <signal.h>
+@@ -695,7 +695,7 @@ int check_might_starve_tasks(struct cpu_info *cpu)
  
- #define BUFFER_PAGES		10
- #define MAX_WAITING_PIDS	30
-@@ -213,7 +214,7 @@ int check_dl_server_dir_exists(void);
- /*
-  * Shared variables.
-  */
--extern int running;
-+extern volatile sig_atomic_t running;
- extern const char *version;
- extern int config_verbose;
- extern int config_write_kmesg;
-diff --git a/src/utils.c b/src/utils.c
-index 738d059..b3b17dd 100644
---- a/src/utils.c
-+++ b/src/utils.c
-@@ -169,7 +169,6 @@ long get_variable_long_value(char *buffer, const char *variable)
-  */
- static void inthandler(int signo, siginfo_t *info, void *extra)
- {
--	log_msg("received signal %d, starting shutdown\n", signo);
- 	running = 0;
- }
+ 		if ((get_monotonic_time() - task->since) >= config_starving_threshold/2) {
  
+-			log_msg("%s-%d might starve on CPU %d (waiting for %d seconds)\n",
++			log_msg("%s-%d might starve on CPU %d (waiting for %ld seconds)\n",
+ 				task->comm, task->pid, cpu->id,
+ 				(get_monotonic_time() - task->since));
+ 
+@@ -944,7 +944,7 @@ int boost_cpu_starving_vector(struct cpu_starving_task_info *vector, int nr_cpus
+ 		cpu = &cpu_starving_vector[i];
+ 
+ 		if (cpu->pid)
+-			log_verbose("\t cpu %d: pid: %d starving for %llu\n",
++			log_verbose("\t cpu %d: pid: %d starving for %ld\n",
+ 				    i, cpu->pid, (now - cpu->since));
+ 
+ 		/* Skip if no task or not starving long enough */
+@@ -953,7 +953,7 @@ int boost_cpu_starving_vector(struct cpu_starving_task_info *vector, int nr_cpus
+ 
+ 		/* Log when task has reached starvation threshold */
+ 		if ((now - cpu->since) >= config_starving_threshold) {
+-			log_msg("%s-%d starved on CPU %d for %d seconds\n",
++			log_msg("%s-%d starved on CPU %d for %ld seconds\n",
+ 				cpu->task.comm, cpu->pid, i,
+ 				(now - cpu->since));
+ 		}
 -- 
 2.54.0
 
