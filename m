@@ -1,47 +1,47 @@
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id AC543369D62
-	for <linux-rt-users@vger.kernel.org>; Mon,  8 Jun 2026 18:32:38 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 333903E1208
+	for <linux-rt-users@vger.kernel.org>; Mon,  8 Jun 2026 18:32:43 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1780943561; cv=none; b=CfZ4K/JBvAjPh8nvOVNm5Fo28rxlwe38aeSxtdxhNkGo1CGgL0m1BLw9+md/nicPnEBSwmi9gpV4t/yRRRecMNvG10XPOA9Nx2aMDveG82OOb0tbVZoVksJEi4n51XybyOoiDHFuEGrYDHyjCpHbzrcXq1V1JnMeKhryRlBbJVs=
+	t=1780943564; cv=none; b=PDBdqauS/SEcyNeT/6Kb0Iar90BnakUZJk1Dwd1ezaCJWzHzF6cRl3KXOmug/MKZAV+nP/mOr/legLnSVDL9XOHuOoVnsIrdTOSCUvo0L8LwlT9a172POcdOWHB+/51ruzjT7ev9UTtVH5rXiMQNqfjuaPQusHWacACEw7jJ/l8=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1780943561; c=relaxed/simple;
-	bh=AM8FYKP+N/LDR3DH6g0WwBQJSVXWr/+Jr31e7lUe118=;
+	s=arc-20240116; t=1780943564; c=relaxed/simple;
+	bh=oqze8KtkxkLFWh0UorL9Co/9r84aYxyHnzIRqGPcU88=;
 	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version:Content-Type; b=aP58b1e51LPqIUfbJ9Pc1Ts/lQs7phK/GNjf9vTm9rkLfVxTjd8E1TR385FQqyFpjsn4VcK7etcZES/zg2nReZoEZHTMN5/87IQmv7MyEoMoWd3GGFBZtZTWK8HreOhxutst6HZSEPrFCKb8fIepxn9iTCBvc/C9pwSLINCskXs=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=KRinIAD8; arc=none smtp.client-ip=170.10.133.124
+	 MIME-Version; b=L389O/ZnR5TV0/nlHIXcqthJLgKvaxRdmraXPr4kGoSeyAPAsHxq4Zk7O0F/x4hFGEcsrnkr0GsRDKHcTwAKTAkNX6EZc67SYfeiYmssg1lNNoLMbrTl8/e1Kpd/8QBbf8N6CSmR15Sq+28GtIPpZZGwSxH+8WgcvZ9Yj/4vMHk=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=Q0ZrIqFC; arc=none smtp.client-ip=170.10.133.124
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="KRinIAD8"
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="Q0ZrIqFC"
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1780943557;
+	s=mimecast20190719; t=1780943562;
 	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 to:to:cc:cc:mime-version:mime-version:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references;
-	bh=m7OnRGzqRGQOq7vaOKJY1eklDdx+lP4DDO3/n1wr9Ig=;
-	b=KRinIAD8U/H+zlmxCs71BOsqyFFTUjuuBlQU0RhPGYMdtDE2VBwdAiZAFxmmd8q/o5DoNZ
-	f5Z4+hzvxJopxJlXR/aKZvUHkEhhh96htHIRMrb1iwWNtp9jqX/jFx7UBCcTC3xlBA+pu8
-	WIuKjAmUGEUjFBcrls3QBntktggVHkE=
-Received: from mx-prod-mc-01.mail-002.prod.us-west-2.aws.redhat.com
- (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
+	bh=Cts4V/Zwxk2k0f+fYkMaQ4n572wDvwsq++38uF9Viso=;
+	b=Q0ZrIqFCmhYRiD302sWKDrL/01NTCvJkfeFOK/3epJx82e8Qf10/MM480IAMNClmr8VZZv
+	bLLVbbFo+MGLeTGj1lq1ppu+QBpydbcf6Bp06LIkYYQV9KoaEnxWhI9T5rAzfLwZmDmLmN
+	llVY0wXtwiRvURqDPYbY/oDgjqH4lZQ=
+Received: from mx-prod-mc-06.mail-002.prod.us-west-2.aws.redhat.com
+ (ec2-35-165-154-97.us-west-2.compute.amazonaws.com [35.165.154.97]) by
  relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-206-NrECZhblNciSDFyu38432g-1; Mon,
- 08 Jun 2026 14:32:34 -0400
-X-MC-Unique: NrECZhblNciSDFyu38432g-1
-X-Mimecast-MFC-AGG-ID: NrECZhblNciSDFyu38432g_1780943553
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-360-foLzlMPJP-6s3y_94sjq4g-1; Mon,
+ 08 Jun 2026 14:32:37 -0400
+X-MC-Unique: foLzlMPJP-6s3y_94sjq4g-1
+X-Mimecast-MFC-AGG-ID: foLzlMPJP-6s3y_94sjq4g_1780943556
 Received: from mx-prod-int-10.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-10.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.95])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
 	(No client certificate requested)
-	by mx-prod-mc-01.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id A3314195DE60;
-	Mon,  8 Jun 2026 18:32:33 +0000 (UTC)
+	by mx-prod-mc-06.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 36F98187BE13;
+	Mon,  8 Jun 2026 18:32:36 +0000 (UTC)
 Received: from wcosta-defaultstring.rmtbr.csb (unknown [10.22.88.160])
-	by mx-prod-int-10.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTP id 9908E36928;
-	Mon,  8 Jun 2026 18:32:31 +0000 (UTC)
+	by mx-prod-int-10.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTP id 17BFA36927;
+	Mon,  8 Jun 2026 18:32:33 +0000 (UTC)
 From: Wander Lairson Costa <wander@redhat.com>
 To: Clark Williams <williams@redhat.com>,
 	John Kacur <jkacur@redhat.com>,
@@ -50,9 +50,9 @@ Cc: Juri Lelli <juri.lelli@redhat.com>,
 	luffyluo@tencent.com,
 	davidlt@rivosinc.com,
 	Wander Lairson Costa <wander@redhat.com>
-Subject: [PATCH stalld 07/52] tests: Consolidate and adopt init_functional_test()
-Date: Mon,  8 Jun 2026 15:31:17 -0300
-Message-ID: <20260608183206.140526-8-wander@redhat.com>
+Subject: [PATCH stalld 08/52] tests: Introduce assert_stalld_rejects() helper
+Date: Mon,  8 Jun 2026 15:31:18 -0300
+Message-ID: <20260608183206.140526-9-wander@redhat.com>
 In-Reply-To: <20260608183206.140526-1-wander@redhat.com>
 References: <20260608183206.140526-1-wander@redhat.com>
 Precedence: bulk
@@ -61,1121 +61,328 @@ List-Id: <linux-rt-users.vger.kernel.org>
 List-Subscribe: <mailto:linux-rt-users+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit
 X-Scanned-By: MIMEDefang 3.6 on 10.30.177.95
 
-Several functional tests use starvation_gen to create controlled
-starvation scenarios but do not verify the binary exists before
-attempting to run it. Add the existence check to
-init_functional_test() so that all tests using the shared
-initialization skip gracefully when the binary is missing and
-migrate standard tests to init_functional_test().
+Tests that verify stalld rejects invalid arguments repeat the same
+pattern of invoking stalld under a timeout, capturing the exit code,
+and comparing it against zero and the timeout exit code. This block
+appears twelve times across seven test files.
 
-Additionally, standardize log file management by removing
-numbered log variable declarations in favor of reusing a single
-STALLD_LOG cleared between test sections. This fixes a broken log
-assertion in test_affinity where a numbered variable masked an
-unpopulated file.
-
-Finally, move the BACKEND_FLAG construction into
-init_functional_test() and export it alongside the other shared
-variables. Five test files previously duplicated this block for
-direct stalld invocations.
+Introduce an assert_stalld_rejects() helper that encapsulates the
+invocation, exit code check, and temporary log cleanup into a single
+function call. The helper automatically includes the backend flag
+set by init_functional_test() so that rejection tests run under the
+correct backend when the test suite is invoked with an explicit
+backend selection.
 
 Signed-off-by: Wander Lairson Costa <wander@redhat.com>
 Assisted-by: Claude Code:claude-opus-4-6[1m] [PAL]
 ---
- tests/functional/test_affinity.sh             | 49 ++-----------
- tests/functional/test_boost_duration.sh       | 67 ++++-------------
- tests/functional/test_boost_period.sh         | 46 +-----------
- tests/functional/test_boost_restoration.sh    | 30 +-------
- tests/functional/test_boost_runtime.sh        | 72 ++++---------------
- tests/functional/test_deadline_boosting.sh    | 30 +-------
- tests/functional/test_fifo_boosting.sh        | 30 +-------
- .../test_fifo_priority_starvation.sh          | 30 +-------
- tests/functional/test_force_fifo.sh           | 28 +-------
- tests/functional/test_idle_detection.sh       | 30 +-------
- tests/functional/test_pidfile.sh              | 39 +---------
- tests/functional/test_starvation_detection.sh | 30 +-------
- tests/functional/test_starvation_threshold.sh | 56 +++------------
- tests/functional/test_task_merging.sh         | 32 +--------
- tests/helpers/test_helpers.sh                 | 13 +++-
- 15 files changed, 64 insertions(+), 518 deletions(-)
+ tests/functional/test_affinity.sh             | 13 +-------
+ tests/functional/test_boost_duration.sh       | 25 ++------------
+ tests/functional/test_boost_period.sh         | 23 ++-----------
+ tests/functional/test_boost_runtime.sh        | 33 ++-----------------
+ tests/functional/test_cpu_selection.sh        | 14 +-------
+ tests/functional/test_pidfile.sh              | 17 ++--------
+ tests/functional/test_starvation_threshold.sh | 25 ++------------
+ tests/helpers/test_helpers.sh                 | 21 +++++++++++-
+ 8 files changed, 33 insertions(+), 138 deletions(-)
 
 diff --git a/tests/functional/test_affinity.sh b/tests/functional/test_affinity.sh
-index d745b08..ec6ff3b 100755
+index ec6ff3b..12b83c9 100755
 --- a/tests/functional/test_affinity.sh
 +++ b/tests/functional/test_affinity.sh
-@@ -35,21 +35,8 @@ check_affinity() {
-     fi
- }
+@@ -200,18 +200,7 @@ fi
+ #=============================================================================
+ test_section "Test 7: Invalid CPU affinity (-a 999)"
  
--start_test "CPU Affinity Option (-a)"
-+init_functional_test "CPU Affinity Option (-a)" "test_affinity"
- 
--# Setup test environment
--setup_test_environment
+-invalid_cpu=999
+-INVALID_LOG="/tmp/stalld_test_affinity_invalid_$$.log"
+-CLEANUP_FILES+=("${INVALID_LOG}")
 -
--# Require root for this test
--require_root
+-timeout 5 ${TEST_ROOT}/../stalld -f -v ${BACKEND_FLAG} -l -t 5 -a ${invalid_cpu} > "${INVALID_LOG}" 2>&1
+-ret=$?
 -
--# Check RT throttling
--if ! check_rt_throttling; then
--    echo -e "${YELLOW}SKIP: RT throttling must be disabled for this test${NC}"
--    exit 77
+-if [ $ret -ne 0 ] && [ $ret -ne 124 ]; then
+-    pass "Invalid CPU affinity rejected with error"
+-else
+-    fail "stalld did not reject invalid CPU affinity"
 -fi
--
--# Get number of CPUs
- num_cpus=$(nproc)
- log "System has $num_cpus CPUs"
++assert_stalld_rejects "Invalid CPU affinity rejected with error" -f -v -l -t 5 -a 999
  
-@@ -58,15 +45,10 @@ if [ "$num_cpus" -lt 2 ]; then
-     exit 77
- fi
- 
--# Check if taskset is available
- if ! command -v taskset > /dev/null 2>&1; then
-     log "⚠ WARNING: taskset not found, will use /proc fallback"
- fi
- 
--# Setup paths
--STALLD_LOG="/tmp/stalld_test_affinity_$$.log"
--CLEANUP_FILES+=("${STALLD_LOG}")
--
  #=============================================================================
- # Test 1: Default behavior (no -a specified)
- #=============================================================================
-@@ -92,9 +74,6 @@ stop_stalld
- #=============================================================================
- test_section "Test 2: Single CPU affinity (-a 0)"
- 
--STALLD_LOG2="/tmp/stalld_test_affinity_test2_$$.log"
--CLEANUP_FILES+=("${STALLD_LOG2}")
--
- start_stalld -f -v -l -t 5 -a 0
- sleep 2
- 
-@@ -114,9 +93,6 @@ stop_stalld
- test_section "Test 3: Multi-CPU affinity (-a 0,2)"
- 
- if [ "$num_cpus" -ge 4 ]; then
--    STALLD_LOG3="/tmp/stalld_test_affinity_test3_$$.log"
--    CLEANUP_FILES+=("${STALLD_LOG3}")
--
-     start_stalld -f -v -l -t 5 -a 0,2
-     sleep 2
- 
-@@ -141,9 +117,6 @@ fi
- test_section "Test 4: CPU range affinity (-a 0-2)"
- 
- if [ "$num_cpus" -ge 4 ]; then
--    STALLD_LOG4="/tmp/stalld_test_affinity_test4_$$.log"
--    CLEANUP_FILES+=("${STALLD_LOG4}")
--
-     start_stalld -f -v -l -t 5 -a 0-2
-     sleep 2
- 
-@@ -168,9 +141,6 @@ test_section "Test 5: Verify stalld threads run on specified CPU"
- 
- if [ "$num_cpus" -ge 2 ]; then
-     test_cpu=1
--    STALLD_LOG5="/tmp/stalld_test_affinity_test5_$$.log"
--    CLEANUP_FILES+=("${STALLD_LOG5}")
--
-     start_stalld -f -v -l -t 5 -a "$test_cpu"
-     sleep 2
- 
-@@ -200,12 +170,10 @@ fi
- test_section "Test 6: Combined affinity and monitoring (-a 0 -c 1)"
- 
- if [ "$num_cpus" -ge 2 ]; then
--    STALLD_LOG6="/tmp/stalld_test_affinity_test6_$$.log"
--    CLEANUP_FILES+=("${STALLD_LOG6}")
-+    rm -f "${STALLD_LOG}"
- 
-     # Run stalld on CPU 0, but monitor CPU 1
--    start_stalld -f -v -l -t 5 -a 0 -c 1
--    sleep 2
-+    start_stalld_with_log "${STALLD_LOG}" -f -v -l -t 5 -a 0 -c 1
- 
-     affinity=$(check_affinity "${STALLD_PID}")
- 
-@@ -216,7 +184,7 @@ if [ "$num_cpus" -ge 2 ]; then
-     fi
- 
-     # Verify it's monitoring CPU 1 by checking logs
--    if grep -q "cpu 1" "${STALLD_LOG6}" || grep -q "monitoring.*1" "${STALLD_LOG6}"; then
-+    if grep -q "cpu 1" "${STALLD_LOG}" || grep -q "monitoring.*1" "${STALLD_LOG}"; then
-         log "ℹ INFO: stalld monitoring CPU 1 as requested"
-     else
-         log "ℹ INFO: CPU 1 monitoring not explicitly confirmed in logs"
-@@ -236,12 +204,6 @@ invalid_cpu=999
- INVALID_LOG="/tmp/stalld_test_affinity_invalid_$$.log"
- CLEANUP_FILES+=("${INVALID_LOG}")
- 
--# Add backend flag for consistency
--BACKEND_FLAG=""
--if [ -n "${STALLD_TEST_BACKEND}" ]; then
--    BACKEND_FLAG="-b ${STALLD_TEST_BACKEND}"
--fi
--
- timeout 5 ${TEST_ROOT}/../stalld -f -v ${BACKEND_FLAG} -l -t 5 -a ${invalid_cpu} > "${INVALID_LOG}" 2>&1
- ret=$?
- 
-@@ -256,9 +218,6 @@ fi
- #=============================================================================
- test_section "Test 8: Verify affinity persists over time"
- 
--STALLD_LOG8="/tmp/stalld_test_affinity_test8_$$.log"
--CLEANUP_FILES+=("${STALLD_LOG8}")
--
- start_stalld -f -v -l -t 5 -a 0
- sleep 2
- 
+ # Test 8: Verify affinity persists
 diff --git a/tests/functional/test_boost_duration.sh b/tests/functional/test_boost_duration.sh
-index d1cdd1e..b0319d2 100755
+index b0319d2..e9a2135 100755
 --- a/tests/functional/test_boost_duration.sh
 +++ b/tests/functional/test_boost_duration.sh
-@@ -13,40 +13,7 @@ source "${TEST_ROOT}/helpers/test_helpers.sh"
- # Parse command-line options
- parse_test_options "$@" || exit $?
- 
--start_test "Boost Duration Option (-d)"
--
--# Setup test environment
--setup_test_environment
--
--# Require root for this test
--require_root
--
--# Check RT throttling
--if ! check_rt_throttling; then
--    echo -e "${YELLOW}SKIP: RT throttling must be disabled for this test${NC}"
--    exit 77
--fi
--
--# Pick a CPU for testing
--TEST_CPU=$(pick_test_cpu)
--log "Using CPU ${TEST_CPU} for testing"
--
--# Pick a different CPU for stalld to run on (avoid interference)
--STALLD_CPU=0
--if [ ${TEST_CPU} -eq 0 ]; then
--    STALLD_CPU=1
--fi
--log "Stalld will run on CPU ${STALLD_CPU}"
--
--# Setup paths
--STARVE_GEN="${TEST_ROOT}/helpers/starvation_gen"
--STALLD_LOG="/tmp/stalld_test_boost_duration_$$.log"
--CLEANUP_FILES+=("${STALLD_LOG}")
--
--if [ ! -x "${STARVE_GEN}" ]; then
--    echo -e "${YELLOW}SKIP: starvation_gen not found or not executable${NC}"
--    exit 77
--fi
-+init_functional_test "Boost Duration Option (-d)" "test_boost_duration"
- 
+@@ -106,32 +106,11 @@ cleanup_scenario "${STARVE_PID}"
  #=============================================================================
- # Test 1: Default duration (should be 3 seconds)
-@@ -74,18 +41,17 @@ cleanup_scenario "${STARVE_PID}"
- test_section "Test 2: Short boost duration of 1 second"
+ test_section "Test 5: Invalid duration values"
  
- short_duration=1
--STALLD_LOG2="/tmp/stalld_test_boost_duration_test2_$$.log"
--CLEANUP_FILES+=("${STALLD_LOG2}")
-+rm -f "${STALLD_LOG}"
+-# Test with zero duration
+ log "Testing with duration = 0"
+-INVALID_LOG="/tmp/stalld_test_boost_duration_invalid_$$.log"
+-CLEANUP_FILES+=("${INVALID_LOG}")
++assert_stalld_rejects "Zero duration rejected with error" -f -v -t ${threshold} -d 0
  
- log "Starting stalld with ${threshold}s threshold and ${short_duration}s boost duration"
--start_stalld_with_log "${STALLD_LOG2}" -f -v -c "${TEST_CPU}" -a ${STALLD_CPU} -t ${threshold} -d ${short_duration} -l
-+start_stalld_with_log "${STALLD_LOG}" -f -v -c "${TEST_CPU}" -a ${STALLD_CPU} -t ${threshold} -d ${short_duration} -l
- 
- # Create starvation
- log "Creating starvation on CPU ${TEST_CPU} for ${starvation_duration}s"
- start_starvation_gen -c "${TEST_CPU}" -p 80 -n 2 -d ${starvation_duration}
- 
- # Wait for starvation detection
--assert_starvation_detected "${STALLD_LOG2}" "Starvation detection with ${short_duration}s duration"
-+assert_starvation_detected "${STALLD_LOG}" "Starvation detection with ${short_duration}s duration"
- 
- # Cleanup
- cleanup_scenario "${STARVE_PID}"
-@@ -98,18 +64,17 @@ test_section "Test 3: Long boost duration of 10 seconds"
- long_duration=10
- long_starvation=20
- threshold=10
--STALLD_LOG3="/tmp/stalld_test_boost_duration_test3_$$.log"
--CLEANUP_FILES+=("${STALLD_LOG3}")
-+rm -f "${STALLD_LOG}"
- 
- log "Starting stalld with ${threshold}s threshold and ${long_duration}s boost duration"
--start_stalld_with_log "${STALLD_LOG3}" -f -v -c "${TEST_CPU}" -a ${STALLD_CPU} -t ${threshold} -d ${long_duration} -l
-+start_stalld_with_log "${STALLD_LOG}" -f -v -c "${TEST_CPU}" -a ${STALLD_CPU} -t ${threshold} -d ${long_duration} -l
- 
- # Create starvation
- log "Creating starvation on CPU ${TEST_CPU} for ${long_starvation}s"
- start_starvation_gen -c "${TEST_CPU}" -p 80 -n 2 -d ${long_starvation}
- 
- # Wait for starvation detection
--assert_starvation_detected "${STALLD_LOG3}" "Starvation detection with ${long_duration}s duration"
-+assert_starvation_detected "${STALLD_LOG}" "Starvation detection with ${long_duration}s duration"
- 
- # Cleanup
- cleanup_scenario "${STARVE_PID}"
-@@ -121,18 +86,17 @@ test_section "Test 4: Verify policy restoration after boost duration"
- 
- threshold=3
- duration=2
--STALLD_LOG4="/tmp/stalld_test_boost_duration_test4_$$.log"
--CLEANUP_FILES+=("${STALLD_LOG4}")
-+rm -f "${STALLD_LOG}"
- 
- log "Starting stalld with ${threshold}s threshold and ${duration}s boost duration"
--start_stalld_with_log "${STALLD_LOG4}" -f -v -c "${TEST_CPU}" -a ${STALLD_CPU} -t ${threshold} -d ${duration} -l
-+start_stalld_with_log "${STALLD_LOG}" -f -v -c "${TEST_CPU}" -a ${STALLD_CPU} -t ${threshold} -d ${duration} -l
- 
- # Create starvation with a specific task we can track
- log "Creating starvation on CPU ${TEST_CPU} for 15s"
- start_starvation_gen -c "${TEST_CPU}" -p 80 -n 1 -d 15
- 
- # Wait for starvation detection
--assert_starvation_detected "${STALLD_LOG4}" "Starvation detection with ${duration}s boost duration"
-+assert_starvation_detected "${STALLD_LOG}" "Starvation detection with ${duration}s boost duration"
- 
- # Cleanup
- cleanup_scenario "${STARVE_PID}"
-@@ -147,12 +111,6 @@ log "Testing with duration = 0"
- INVALID_LOG="/tmp/stalld_test_boost_duration_invalid_$$.log"
- CLEANUP_FILES+=("${INVALID_LOG}")
- 
--# Add backend flag for consistency
--BACKEND_FLAG=""
--if [ -n "${STALLD_TEST_BACKEND}" ]; then
--    BACKEND_FLAG="-b ${STALLD_TEST_BACKEND}"
+-timeout 5 ${TEST_ROOT}/../stalld -f -v ${BACKEND_FLAG} -t ${threshold} -d 0 > "${INVALID_LOG}" 2>&1
+-ret=$?
+-
+-if [ $ret -ne 0 ] && [ $ret -ne 124 ]; then
+-    pass "Zero duration rejected with error"
+-else
+-    fail "stalld did not reject invalid duration value 0"
 -fi
 -
- timeout 5 ${TEST_ROOT}/../stalld -f -v ${BACKEND_FLAG} -t ${threshold} -d 0 > "${INVALID_LOG}" 2>&1
- ret=$?
- 
-@@ -164,10 +122,9 @@ fi
- 
- # Test 6: Negative duration
+-# Test 6: Negative duration
  log "Testing with duration = -5"
--INVALID_LOG2="/tmp/stalld_test_boost_duration_invalid2_$$.log"
--CLEANUP_FILES+=("${INVALID_LOG2}")
-+rm -f "${INVALID_LOG}"
+-rm -f "${INVALID_LOG}"
+-
+-timeout 5 ${TEST_ROOT}/../stalld -f -v ${BACKEND_FLAG} -t ${threshold} -d -5 > "${INVALID_LOG}" 2>&1
+-ret=$?
+-
+-if [ $ret -ne 0 ] && [ $ret -ne 124 ]; then
+-    pass "Negative duration rejected with error"
+-else
+-    fail "stalld did not reject invalid negative duration"
+-fi
++assert_stalld_rejects "Negative duration rejected with error" -f -v -t ${threshold} -d -5
  
--timeout 5 ${TEST_ROOT}/../stalld -f -v ${BACKEND_FLAG} -t ${threshold} -d -5 > "${INVALID_LOG2}" 2>&1
-+timeout 5 ${TEST_ROOT}/../stalld -f -v ${BACKEND_FLAG} -t ${threshold} -d -5 > "${INVALID_LOG}" 2>&1
- ret=$?
- 
- if [ $ret -ne 0 ] && [ $ret -ne 124 ]; then
+ log ""
+ log "All boost duration tests completed"
 diff --git a/tests/functional/test_boost_period.sh b/tests/functional/test_boost_period.sh
-index d7112bb..b4f2339 100755
+index b4f2339..bdbb03a 100755
 --- a/tests/functional/test_boost_period.sh
 +++ b/tests/functional/test_boost_period.sh
-@@ -10,40 +10,7 @@ source "${TEST_ROOT}/helpers/test_helpers.sh"
- # Parse command-line options
- parse_test_options "$@" || exit $?
+@@ -108,33 +108,14 @@ cleanup_scenario "${STARVE_PID}"
+ #=============================================================================
+ test_section "Test 5: Invalid period value (0)"
  
--start_test "Boost Period Option (-p)"
+-INVALID_LOG="/tmp/stalld_test_boost_period_invalid_$$.log"
+-CLEANUP_FILES+=("${INVALID_LOG}")
 -
--# Setup test environment
--setup_test_environment
+-timeout 5 ${TEST_ROOT}/../stalld -f -v ${BACKEND_FLAG} -t $threshold -p 0 > "${INVALID_LOG}" 2>&1
+-ret=$?
 -
--# Require root for this test
--require_root
--
--# Check RT throttling
--if ! check_rt_throttling; then
--    echo -e "${YELLOW}SKIP: RT throttling must be disabled for this test${NC}"
--    exit 77
+-if [ $ret -ne 0 ] && [ $ret -ne 124 ]; then
+-    pass "Zero period rejected with error"
+-else
+-    fail "stalld did not reject invalid period value 0"
 -fi
--
--# Pick a CPU for testing
--TEST_CPU=$(pick_test_cpu)
--log "Using CPU ${TEST_CPU} for testing"
--
--# Pick a different CPU for stalld to run on (avoid interference)
--STALLD_CPU=0
--if [ ${TEST_CPU} -eq 0 ]; then
--    STALLD_CPU=1
--fi
--log "Stalld will run on CPU ${STALLD_CPU}"
--
--# Setup paths
--STARVE_GEN="${TEST_ROOT}/helpers/starvation_gen"
--STALLD_LOG="/tmp/stalld_test_boost_period_$$.log"
--CLEANUP_FILES+=("${STALLD_LOG}")
--
--if [ ! -x "${STARVE_GEN}" ]; then
--    echo -e "${YELLOW}SKIP: starvation_gen not found or not executable${NC}"
--    exit 77
--fi
-+init_functional_test "Boost Period Option (-p)" "test_boost_period"
++assert_stalld_rejects "Zero period rejected with error" -f -v -t $threshold -p 0
  
  #=============================================================================
- # Test 1: Default period (should be 1,000,000,000 ns = 1 second)
-@@ -144,12 +111,6 @@ test_section "Test 5: Invalid period value (0)"
- INVALID_LOG="/tmp/stalld_test_boost_period_invalid_$$.log"
- CLEANUP_FILES+=("${INVALID_LOG}")
- 
--# Add backend flag for consistency
--BACKEND_FLAG=""
--if [ -n "${STALLD_TEST_BACKEND}" ]; then
--    BACKEND_FLAG="-b ${STALLD_TEST_BACKEND}"
--fi
--
- timeout 5 ${TEST_ROOT}/../stalld -f -v ${BACKEND_FLAG} -t $threshold -p 0 > "${INVALID_LOG}" 2>&1
- ret=$?
- 
-@@ -164,10 +125,9 @@ fi
+ # Test 6: Negative period
  #=============================================================================
  test_section "Test 6: Invalid period value (negative)"
  
--INVALID_LOG2="/tmp/stalld_test_boost_period_invalid2_$$.log"
--CLEANUP_FILES+=("${INVALID_LOG2}")
-+rm -f "${INVALID_LOG}"
- 
--timeout 5 ${TEST_ROOT}/../stalld -f -v ${BACKEND_FLAG} -t $threshold -p -1000000 > "${INVALID_LOG2}" 2>&1
-+timeout 5 ${TEST_ROOT}/../stalld -f -v ${BACKEND_FLAG} -t $threshold -p -1000000 > "${INVALID_LOG}" 2>&1
- ret=$?
- 
- if [ $ret -ne 0 ] && [ $ret -ne 124 ]; then
-diff --git a/tests/functional/test_boost_restoration.sh b/tests/functional/test_boost_restoration.sh
-index c2a04f3..09dbb60 100755
---- a/tests/functional/test_boost_restoration.sh
-+++ b/tests/functional/test_boost_restoration.sh
-@@ -17,35 +17,7 @@ source "${TEST_ROOT}/helpers/test_helpers.sh"
- # Parse command-line options
- parse_test_options "$@" || exit $?
- 
--start_test "Policy Restoration After Boosting"
+-rm -f "${INVALID_LOG}"
 -
--# Setup test environment
--setup_test_environment
+-timeout 5 ${TEST_ROOT}/../stalld -f -v ${BACKEND_FLAG} -t $threshold -p -1000000 > "${INVALID_LOG}" 2>&1
+-ret=$?
 -
--# Require root for this test
--require_root
--
--# Check RT throttling
--if ! check_rt_throttling; then
--    echo -e "${YELLOW}SKIP: RT throttling must be disabled for this test${NC}"
--    exit 77
+-if [ $ret -ne 0 ] && [ $ret -ne 124 ]; then
+-    pass "Negative period rejected with error"
+-else
+-    fail "stalld did not reject invalid negative period"
 -fi
--
--# Pick a CPU for testing
--TEST_CPU=$(pick_test_cpu)
--log "Using CPU ${TEST_CPU} for testing"
--
--# Pick a different CPU for stalld to run on (avoid interference)
--STALLD_CPU=0
--if [ ${TEST_CPU} -eq 0 ]; then
--    STALLD_CPU=1
--fi
--log "Stalld will run on CPU ${STALLD_CPU}"
--
--# Setup paths
--STARVE_GEN="${TEST_ROOT}/helpers/starvation_gen"
--STALLD_LOG="/tmp/stalld_test_restoration_$$.log"
--CLEANUP_FILES+=("${STALLD_LOG}")
-+init_functional_test "Policy Restoration After Boosting" "test_restoration"
++assert_stalld_rejects "Negative period rejected with error" -f -v -t $threshold -p -1000000
  
  #=============================================================================
- # Test 1: Restore SCHED_FIFO Policy (starvation_gen creates SCHED_FIFO threads)
+ # Final Summary
 diff --git a/tests/functional/test_boost_runtime.sh b/tests/functional/test_boost_runtime.sh
-index c17ac27..7585e6b 100755
+index 7585e6b..dfecccc 100755
 --- a/tests/functional/test_boost_runtime.sh
 +++ b/tests/functional/test_boost_runtime.sh
-@@ -13,40 +13,7 @@ source "${TEST_ROOT}/helpers/test_helpers.sh"
- # Parse command-line options
- parse_test_options "$@" || exit $?
+@@ -107,52 +107,25 @@ test_section "Test 5: Runtime > period (invalid)"
  
--start_test "Boost Runtime Option (-r)"
+ invalid_runtime=2000000000
+ period=1000000000
+-INVALID_LOG="/tmp/stalld_test_boost_runtime_invalid_$$.log"
+-CLEANUP_FILES+=("${INVALID_LOG}")
+ 
+ log "Testing with runtime ${invalid_runtime}ns > period ${period}ns"
+-timeout 5 ${TEST_ROOT}/../stalld -f -v ${BACKEND_FLAG} -t ${threshold} -r ${invalid_runtime} -p ${period} > "${INVALID_LOG}" 2>&1
+-ret=$?
 -
--# Setup test environment
--setup_test_environment
--
--# Require root for this test
--require_root
--
--# Check RT throttling
--if ! check_rt_throttling; then
--    echo -e "${YELLOW}SKIP: RT throttling must be disabled for this test${NC}"
--    exit 77
+-if [ $ret -ne 0 ] && [ $ret -ne 124 ]; then
+-    pass "Runtime > period rejected with error"
+-else
+-    fail "stalld did not reject invalid runtime > period"
 -fi
--
--# Pick a CPU for testing
--TEST_CPU=$(pick_test_cpu)
--log "Using CPU ${TEST_CPU} for testing"
--
--# Pick a different CPU for stalld to run on (avoid interference)
--STALLD_CPU=0
--if [ ${TEST_CPU} -eq 0 ]; then
--    STALLD_CPU=1
--fi
--log "Stalld will run on CPU ${STALLD_CPU}"
--
--# Setup paths
--STARVE_GEN="${TEST_ROOT}/helpers/starvation_gen"
--STALLD_LOG="/tmp/stalld_test_boost_runtime_$$.log"
--CLEANUP_FILES+=("${STALLD_LOG}")
--
--if [ ! -x "${STARVE_GEN}" ]; then
--    echo -e "${YELLOW}SKIP: starvation_gen not found or not executable${NC}"
--    exit 77
--fi
-+init_functional_test "Boost Runtime Option (-r)" "test_boost_runtime"
++assert_stalld_rejects "Runtime > period rejected with error" -f -v -t ${threshold} -r ${invalid_runtime} -p ${period}
  
  #=============================================================================
- # Test 1: Default runtime (should be 20,000 ns = 20 microseconds)
-@@ -74,18 +41,17 @@ cleanup_scenario "${STARVE_PID}"
- test_section "Test 2: Custom runtime of 10,000 ns (10μs)"
- 
- custom_runtime=10000
--STALLD_LOG2="/tmp/stalld_test_boost_runtime_test2_$$.log"
--CLEANUP_FILES+=("${STALLD_LOG2}")
-+rm -f "${STALLD_LOG}"
- 
- log "Starting stalld with ${threshold}s threshold and ${custom_runtime}ns runtime"
--start_stalld_with_log "${STALLD_LOG2}" -f -v -c "${TEST_CPU}" -a ${STALLD_CPU} -t ${threshold} -r ${custom_runtime} -l
-+start_stalld_with_log "${STALLD_LOG}" -f -v -c "${TEST_CPU}" -a ${STALLD_CPU} -t ${threshold} -r ${custom_runtime} -l
- 
- # Create starvation
- log "Creating starvation on CPU ${TEST_CPU} for ${starvation_duration}s"
- start_starvation_gen -c "${TEST_CPU}" -p 80 -n 2 -d ${starvation_duration}
- 
- # Wait for detection and boosting
--assert_starvation_detected "${STALLD_LOG2}" "Starvation detection with custom runtime ${custom_runtime}ns"
-+assert_starvation_detected "${STALLD_LOG}" "Starvation detection with custom runtime ${custom_runtime}ns"
- 
- # Cleanup
- cleanup_scenario "${STARVE_PID}"
-@@ -96,18 +62,17 @@ cleanup_scenario "${STARVE_PID}"
- test_section "Test 3: Larger runtime of 100,000 ns (100μs)"
- 
- large_runtime=100000
--STALLD_LOG3="/tmp/stalld_test_boost_runtime_test3_$$.log"
--CLEANUP_FILES+=("${STALLD_LOG3}")
-+rm -f "${STALLD_LOG}"
- 
- log "Starting stalld with ${threshold}s threshold and ${large_runtime}ns runtime"
--start_stalld_with_log "${STALLD_LOG3}" -f -v -c "${TEST_CPU}" -a ${STALLD_CPU} -t ${threshold} -r ${large_runtime} -l
-+start_stalld_with_log "${STALLD_LOG}" -f -v -c "${TEST_CPU}" -a ${STALLD_CPU} -t ${threshold} -r ${large_runtime} -l
- 
- # Create starvation
- log "Creating starvation on CPU ${TEST_CPU} for ${starvation_duration}s"
- start_starvation_gen -c "${TEST_CPU}" -p 80 -n 2 -d ${starvation_duration}
- 
- # Wait for detection and boosting
--assert_starvation_detected "${STALLD_LOG3}" "Starvation detection with large runtime ${large_runtime}ns"
-+assert_starvation_detected "${STALLD_LOG}" "Starvation detection with large runtime ${large_runtime}ns"
- 
- # Cleanup
- cleanup_scenario "${STARVE_PID}"
-@@ -120,18 +85,17 @@ test_section "Test 4: Runtime < period (valid)"
- # Default period is 1,000,000,000 ns, so runtime of 500,000 ns should be valid
- valid_runtime=500000
- period=1000000000
--STALLD_LOG4="/tmp/stalld_test_boost_runtime_test4_$$.log"
--CLEANUP_FILES+=("${STALLD_LOG4}")
-+rm -f "${STALLD_LOG}"
- 
- log "Starting stalld with runtime ${valid_runtime}ns < period ${period}ns"
--start_stalld_with_log "${STALLD_LOG4}" -f -v -c "${TEST_CPU}" -a ${STALLD_CPU} -t ${threshold} -r ${valid_runtime} -p ${period} -l
-+start_stalld_with_log "${STALLD_LOG}" -f -v -c "${TEST_CPU}" -a ${STALLD_CPU} -t ${threshold} -r ${valid_runtime} -p ${period} -l
- 
- # Create starvation
- log "Creating starvation on CPU ${TEST_CPU} for ${starvation_duration}s"
- start_starvation_gen -c "${TEST_CPU}" -p 80 -n 2 -d ${starvation_duration}
- 
- # Wait for detection and boosting
--assert_starvation_detected "${STALLD_LOG4}" "Starvation detection with runtime < period"
-+assert_starvation_detected "${STALLD_LOG}" "Starvation detection with runtime < period"
- 
- # Cleanup
- cleanup_scenario "${STARVE_PID}"
-@@ -146,12 +110,6 @@ period=1000000000
- INVALID_LOG="/tmp/stalld_test_boost_runtime_invalid_$$.log"
- CLEANUP_FILES+=("${INVALID_LOG}")
- 
--# Add backend flag for consistency
--BACKEND_FLAG=""
--if [ -n "${STALLD_TEST_BACKEND}" ]; then
--    BACKEND_FLAG="-b ${STALLD_TEST_BACKEND}"
--fi
--
- log "Testing with runtime ${invalid_runtime}ns > period ${period}ns"
- timeout 5 ${TEST_ROOT}/../stalld -f -v ${BACKEND_FLAG} -t ${threshold} -r ${invalid_runtime} -p ${period} > "${INVALID_LOG}" 2>&1
- ret=$?
-@@ -167,11 +125,10 @@ fi
+ # Test 6: Invalid runtime (0)
  #=============================================================================
  test_section "Test 6: Invalid runtime value (0)"
  
--INVALID_LOG2="/tmp/stalld_test_boost_runtime_invalid2_$$.log"
--CLEANUP_FILES+=("${INVALID_LOG2}")
-+rm -f "${INVALID_LOG}"
- 
+-rm -f "${INVALID_LOG}"
+-
  log "Testing with runtime = 0"
--timeout 5 ${TEST_ROOT}/../stalld -f -v ${BACKEND_FLAG} -t ${threshold} -r 0 > "${INVALID_LOG2}" 2>&1
-+timeout 5 ${TEST_ROOT}/../stalld -f -v ${BACKEND_FLAG} -t ${threshold} -r 0 > "${INVALID_LOG}" 2>&1
- ret=$?
+-timeout 5 ${TEST_ROOT}/../stalld -f -v ${BACKEND_FLAG} -t ${threshold} -r 0 > "${INVALID_LOG}" 2>&1
+-ret=$?
+-
+-if [ $ret -ne 0 ] && [ $ret -ne 124 ]; then
+-    pass "Zero runtime rejected with error"
+-else
+-    fail "stalld did not reject invalid runtime value 0"
+-fi
++assert_stalld_rejects "Zero runtime rejected with error" -f -v -t ${threshold} -r 0
  
- if [ $ret -ne 0 ] && [ $ret -ne 124 ]; then
-@@ -185,11 +142,10 @@ fi
+ #=============================================================================
+ # Test 7: Negative runtime
  #=============================================================================
  test_section "Test 7: Invalid runtime value (negative)"
  
--INVALID_LOG3="/tmp/stalld_test_boost_runtime_invalid3_$$.log"
--CLEANUP_FILES+=("${INVALID_LOG3}")
-+rm -f "${INVALID_LOG}"
- 
+-rm -f "${INVALID_LOG}"
+-
  log "Testing with runtime = -5000"
--timeout 5 ${TEST_ROOT}/../stalld -f -v ${BACKEND_FLAG} -t ${threshold} -r -5000 > "${INVALID_LOG3}" 2>&1
-+timeout 5 ${TEST_ROOT}/../stalld -f -v ${BACKEND_FLAG} -t ${threshold} -r -5000 > "${INVALID_LOG}" 2>&1
- ret=$?
- 
- if [ $ret -ne 0 ] && [ $ret -ne 124 ]; then
-diff --git a/tests/functional/test_deadline_boosting.sh b/tests/functional/test_deadline_boosting.sh
-index d05daf2..eacce98 100755
---- a/tests/functional/test_deadline_boosting.sh
-+++ b/tests/functional/test_deadline_boosting.sh
-@@ -14,39 +14,11 @@ source "${TEST_ROOT}/helpers/test_helpers.sh"
- # Parse command-line options
- parse_test_options "$@" || exit $?
- 
--start_test "SCHED_DEADLINE Boosting Mechanism"
+-timeout 5 ${TEST_ROOT}/../stalld -f -v ${BACKEND_FLAG} -t ${threshold} -r -5000 > "${INVALID_LOG}" 2>&1
+-ret=$?
 -
--# Setup test environment
--setup_test_environment
--
--# Require root for this test
--require_root
--
--# Check RT throttling
--if ! check_rt_throttling; then
--    echo -e "${YELLOW}SKIP: RT throttling must be disabled for this test${NC}"
--    exit 77
+-if [ $ret -ne 0 ] && [ $ret -ne 124 ]; then
+-    pass "Negative runtime rejected with error"
+-else
+-    fail "stalld did not reject invalid negative runtime"
 -fi
--
--# Pick a CPU for testing
--TEST_CPU=$(pick_test_cpu)
--log "Using CPU ${TEST_CPU} for testing"
--
--# Pick a different CPU for stalld to run on (avoid interference)
--STALLD_CPU=0
--if [ ${TEST_CPU} -eq 0 ]; then
--    STALLD_CPU=1
--fi
--log "Stalld will run on CPU ${STALLD_CPU}"
-+init_functional_test "SCHED_DEADLINE Boosting Mechanism" "test_deadline_boost"
++assert_stalld_rejects "Negative runtime rejected with error" -f -v -t ${threshold} -r -5000
  
- # Get number of CPUs for multi-CPU tests
- NUM_CPUS=$(get_num_cpus)
- 
--# Setup paths
--STARVE_GEN="${TEST_ROOT}/helpers/starvation_gen"
--STALLD_LOG="/tmp/stalld_test_deadline_boost_$$.log"
--CLEANUP_FILES+=("${STALLD_LOG}")
--
- #=============================================================================
- # Test 1: Basic DEADLINE Boost Detection
- #=============================================================================
-diff --git a/tests/functional/test_fifo_boosting.sh b/tests/functional/test_fifo_boosting.sh
-index a669fe4..3d17e5e 100755
---- a/tests/functional/test_fifo_boosting.sh
-+++ b/tests/functional/test_fifo_boosting.sh
-@@ -14,35 +14,7 @@ source "${TEST_ROOT}/helpers/test_helpers.sh"
- # Parse command-line options
- parse_test_options "$@" || exit $?
- 
--start_test "SCHED_FIFO Boosting Mechanism"
--
--# Setup test environment
--setup_test_environment
--
--# Require root for this test
--require_root
--
--# Check RT throttling
--if ! check_rt_throttling; then
--    echo -e "${YELLOW}SKIP: RT throttling must be disabled for this test${NC}"
--    exit 77
--fi
--
--# Pick a CPU for testing
--TEST_CPU=$(pick_test_cpu)
--log "Using CPU ${TEST_CPU} for testing"
--
--# Pick a different CPU for stalld to run on (avoid interference)
--STALLD_CPU=0
--if [ ${TEST_CPU} -eq 0 ]; then
--    STALLD_CPU=1
--fi
--log "Stalld will run on CPU ${STALLD_CPU}"
--
--# Setup paths
--STARVE_GEN="${TEST_ROOT}/helpers/starvation_gen"
--STALLD_LOG="/tmp/stalld_test_fifo_boost_$$.log"
--CLEANUP_FILES+=("${STALLD_LOG}")
-+init_functional_test "SCHED_FIFO Boosting Mechanism" "test_fifo_boost"
- 
- #=============================================================================
- # Test 1: FIFO Boost with -F Flag
-diff --git a/tests/functional/test_fifo_priority_starvation.sh b/tests/functional/test_fifo_priority_starvation.sh
-index 11bcf33..172bc9a 100755
---- a/tests/functional/test_fifo_priority_starvation.sh
-+++ b/tests/functional/test_fifo_priority_starvation.sh
-@@ -18,35 +18,7 @@ source "${TEST_ROOT}/helpers/test_helpers.sh"
- # Parse command-line options
- parse_test_options "$@" || exit $?
- 
--start_test "FIFO-on-FIFO Priority Starvation Detection"
--
--# Setup test environment
--setup_test_environment
--
--# Require root for this test
--require_root
--
--# Check RT throttling
--if ! check_rt_throttling; then
--    echo -e "${YELLOW}SKIP: RT throttling must be disabled for this test${NC}"
--    exit 77
--fi
--
--# Pick a CPU for testing
--TEST_CPU=$(pick_test_cpu)
--log "Using CPU ${TEST_CPU} for testing"
--
--# Pick a different CPU for stalld to run on (avoid interference)
--STALLD_CPU=0
--if [ ${TEST_CPU} -eq 0 ]; then
--    STALLD_CPU=1
--fi
--log "Stalld will run on CPU ${STALLD_CPU}"
--
--# Setup paths
--STARVE_GEN="${TEST_ROOT}/helpers/starvation_gen"
--STALLD_LOG="/tmp/stalld_test_fifo_prio_$$.log"
--CLEANUP_FILES+=("${STALLD_LOG}")
-+init_functional_test "FIFO-on-FIFO Priority Starvation Detection" "test_fifo_prio"
- 
- #=============================================================================
- # Test 1: Basic FIFO-on-FIFO Starvation Detection
-diff --git a/tests/functional/test_force_fifo.sh b/tests/functional/test_force_fifo.sh
-index 8ee4f82..1e841b8 100755
---- a/tests/functional/test_force_fifo.sh
-+++ b/tests/functional/test_force_fifo.sh
-@@ -13,33 +13,7 @@ source "${TEST_ROOT}/helpers/test_helpers.sh"
- # Parse command-line options
- parse_test_options "$@" || exit $?
- 
--start_test "Force FIFO Option (-F)"
--
--# Setup test environment
--setup_test_environment
--
--# Require root for this test
--require_root
--
--# Check RT throttling
--if ! check_rt_throttling; then
--    echo -e "${YELLOW}SKIP: RT throttling must be disabled for this test${NC}"
--    exit 77
--fi
--
--# Pick a CPU for testing
--TEST_CPU=$(pick_test_cpu)
--log "Using CPU ${TEST_CPU} for testing"
--
--# Setup paths
--STARVE_GEN="${TEST_ROOT}/helpers/starvation_gen"
--STALLD_LOG="/tmp/stalld_test_force_fifo_$$.log"
--CLEANUP_FILES+=("${STALLD_LOG}")
--
--if [ ! -x "${STARVE_GEN}" ]; then
--    echo -e "${YELLOW}SKIP: starvation_gen not found or not executable${NC}"
--    exit 77
--fi
-+init_functional_test "Force FIFO Option (-F)" "test_force_fifo"
- 
- #=============================================================================
- # Test 1: Default behavior (should use SCHED_DEADLINE)
-diff --git a/tests/functional/test_idle_detection.sh b/tests/functional/test_idle_detection.sh
-index a242fca..8017675 100755
---- a/tests/functional/test_idle_detection.sh
-+++ b/tests/functional/test_idle_detection.sh
-@@ -36,35 +36,7 @@ is_cpu_idle() {
-     fi
- }
- 
--start_test "Idle CPU Detection"
--
--# Setup test environment
--setup_test_environment
--
--# Require root for this test
--require_root
--
--# Check RT throttling
--if ! check_rt_throttling; then
--    echo -e "${YELLOW}SKIP: RT throttling must be disabled for this test${NC}"
--    exit 77
--fi
--
--# Pick a CPU for testing
--TEST_CPU=$(pick_test_cpu)
--log "Using CPU ${TEST_CPU} for testing"
--
--# Pick a different CPU for stalld to run on (avoid interference)
--STALLD_CPU=0
--if [ ${TEST_CPU} -eq 0 ]; then
--    STALLD_CPU=1
--fi
--log "Stalld will run on CPU ${STALLD_CPU}"
--
--# Setup paths
--STARVE_GEN="${TEST_ROOT}/helpers/starvation_gen"
--STALLD_LOG="/tmp/stalld_test_idle_$$.log"
--CLEANUP_FILES+=("${STALLD_LOG}")
-+init_functional_test "Idle CPU Detection" "test_idle"
- 
- # Check if idle detection is enabled by default
  log ""
+ log "All boost runtime tests completed"
+diff --git a/tests/functional/test_cpu_selection.sh b/tests/functional/test_cpu_selection.sh
+index 3fa2128..32cbe79 100755
+--- a/tests/functional/test_cpu_selection.sh
++++ b/tests/functional/test_cpu_selection.sh
+@@ -135,19 +135,7 @@ fi
+ test_section "Test 5: Invalid CPU number (-c 999)"
+ invalid_cpu=999
+ 
+-# Create temporary log file for this specific test
+-INVALID_LOG="/tmp/stalld_invalid_cpu_$$.log"
+-CLEANUP_FILES+=("${INVALID_LOG}")
+-
+-# Run stalld with invalid CPU and capture output
+-timeout 5 "${TEST_ROOT}/../stalld" -f -v -c $invalid_cpu -l -t 5 > "${INVALID_LOG}" 2>&1
+-ret=$?
+-
+-if [ $ret -ne 0 ] && [ $ret -ne 124 ]; then
+-    pass "stalld rejected invalid CPU number"
+-else
+-    fail "stalld did not reject invalid CPU"
+-fi
++assert_stalld_rejects "stalld rejected invalid CPU number" -f -v -c $invalid_cpu -l -t 5
+ 
+ # Test 6: Verify non-selected CPUs are NOT monitored
+ if [ "$num_cpus" -ge 2 ]; then
 diff --git a/tests/functional/test_pidfile.sh b/tests/functional/test_pidfile.sh
-index 6b476cd..f24c836 100755
+index f24c836..4509307 100755
 --- a/tests/functional/test_pidfile.sh
 +++ b/tests/functional/test_pidfile.sh
-@@ -13,23 +13,7 @@ source "${TEST_ROOT}/helpers/test_helpers.sh"
- # Parse command-line options
- parse_test_options "$@" || exit $?
- 
--start_test "PID File Option (-P)"
--
--# Setup test environment
--setup_test_environment
--
--# Require root for this test
--require_root
--
--# Check RT throttling
--if ! check_rt_throttling; then
--    echo -e "${YELLOW}SKIP: RT throttling must be disabled for this test${NC}"
--    exit 77
--fi
--
--# Setup paths
--STALLD_LOG="/tmp/stalld_test_pidfile_$$.log"
--CLEANUP_FILES+=("${STALLD_LOG}")
-+init_functional_test "PID File Option (-P)" "test_pidfile"
- 
+@@ -151,21 +151,8 @@ stop_stalld
  #=============================================================================
- # Test 1: Default pidfile location (no -P specified)
-@@ -76,9 +60,6 @@ CLEANUP_FILES+=("${custom_pidfile}")
- # Ensure pidfile doesn't exist before test
- rm -f "${custom_pidfile}"
+ test_section "Test 6: Invalid pidfile path (permission denied)"
  
--STALLD_LOG2="/tmp/stalld_test_pidfile_test2_$$.log"
--CLEANUP_FILES+=("${STALLD_LOG2}")
+-# Use a non-existent parent directory so fopen() fails even as root
+-invalid_pidfile="/nonexistent_${$}/stalld.pid"
 -
- log "Starting stalld with custom pidfile: ${custom_pidfile}"
- start_stalld -l -t 5 --pidfile "${custom_pidfile}"
- sleep 2
-@@ -118,9 +99,6 @@ tmp_pidfile="/tmp/stalld_test_tmp_$$.pid"
- CLEANUP_FILES+=("${tmp_pidfile}")
- rm -f "${tmp_pidfile}"
- 
--STALLD_LOG4="/tmp/stalld_test_pidfile_test4_$$.log"
--CLEANUP_FILES+=("${STALLD_LOG4}")
+-INVALID_LOG="/tmp/stalld_test_pidfile_invalid_$$.log"
+-CLEANUP_FILES+=("${INVALID_LOG}")
 -
- log "Starting stalld with /tmp pidfile: ${tmp_pidfile}"
- start_stalld -l -t 5 --pidfile "${tmp_pidfile}"
- sleep 2
-@@ -149,9 +127,6 @@ fg_pidfile="/tmp/stalld_test_pidfile_foreground_$$.pid"
- CLEANUP_FILES+=("${fg_pidfile}")
- rm -f "${fg_pidfile}"
- 
--STALLD_LOG5="/tmp/stalld_test_pidfile_test5_$$.log"
--CLEANUP_FILES+=("${STALLD_LOG5}")
+-log "Testing invalid pidfile path: ${invalid_pidfile}"
+-timeout 5 ${TEST_ROOT}/../stalld -f -v ${BACKEND_FLAG} -l -t 5 --pidfile "${invalid_pidfile}" > "${INVALID_LOG}" 2>&1
+-ret=$?
 -
- log "Starting stalld in foreground mode with pidfile: ${fg_pidfile}"
- start_stalld -f -v -l -t 5 --pidfile "${fg_pidfile}"
- sleep 2
-@@ -182,12 +157,6 @@ invalid_pidfile="/nonexistent_${$}/stalld.pid"
- INVALID_LOG="/tmp/stalld_test_pidfile_invalid_$$.log"
- CLEANUP_FILES+=("${INVALID_LOG}")
- 
--# Add backend flag for consistency
--BACKEND_FLAG=""
--if [ -n "${STALLD_TEST_BACKEND}" ]; then
--    BACKEND_FLAG="-b ${STALLD_TEST_BACKEND}"
+-if [ $ret -ne 0 ] && [ $ret -ne 124 ]; then
+-    pass "Invalid pidfile path rejected with error"
+-else
+-    fail "stalld did not reject invalid pidfile path"
 -fi
--
- log "Testing invalid pidfile path: ${invalid_pidfile}"
- timeout 5 ${TEST_ROOT}/../stalld -f -v ${BACKEND_FLAG} -l -t 5 --pidfile "${invalid_pidfile}" > "${INVALID_LOG}" 2>&1
- ret=$?
-@@ -198,9 +167,6 @@ else
-     fail "stalld did not reject invalid pidfile path"
- fi
++log "Testing invalid pidfile path"
++assert_stalld_rejects "Invalid pidfile path rejected with error" -f -v -l -t 5 --pidfile "/nonexistent_$$/stalld.pid"
  
--# Cleanup
--chmod 755 "${test_dir}"
--
  #=============================================================================
  # Test 7: Verify pidfile is readable by other processes
- #=============================================================================
-@@ -210,9 +176,6 @@ readable_pidfile="/tmp/stalld_test_pidfile_readable_$$.pid"
- CLEANUP_FILES+=("${readable_pidfile}")
- rm -f "${readable_pidfile}"
- 
--STALLD_LOG7="/tmp/stalld_test_pidfile_test7_$$.log"
--CLEANUP_FILES+=("${STALLD_LOG7}")
--
- log "Starting stalld with readable pidfile: ${readable_pidfile}"
- start_stalld -l -t 5 --pidfile "${readable_pidfile}"
- sleep 2
-diff --git a/tests/functional/test_starvation_detection.sh b/tests/functional/test_starvation_detection.sh
-index 553a7bc..d8f874a 100755
---- a/tests/functional/test_starvation_detection.sh
-+++ b/tests/functional/test_starvation_detection.sh
-@@ -21,39 +21,11 @@ get_starved_pid() {
-     grep "starved on CPU" "$log_file" | tail -1 | sed -E 's/.*\[([0-9]+)\].*/\1/' | head -1
- }
- 
--start_test "Starvation Detection Logic"
--
--# Setup test environment
--setup_test_environment
--
--# Require root for this test
--require_root
--
--# Check RT throttling
--if ! check_rt_throttling; then
--    echo -e "${YELLOW}SKIP: RT throttling must be disabled for this test${NC}"
--    exit 77
--fi
--
--# Pick a CPU for testing
--TEST_CPU=$(pick_test_cpu)
--log "Using CPU ${TEST_CPU} for testing"
--
--# Pick a different CPU for stalld to run on (avoid interference)
--STALLD_CPU=0
--if [ ${TEST_CPU} -eq 0 ]; then
--    STALLD_CPU=1
--fi
--log "Stalld will run on CPU ${STALLD_CPU}"
-+init_functional_test "Starvation Detection Logic" "test_detection"
- 
- # Get number of CPUs for multi-CPU tests
- NUM_CPUS=$(get_num_cpus)
- 
--# Setup paths
--STARVE_GEN="${TEST_ROOT}/helpers/starvation_gen"
--STALLD_LOG="/tmp/stalld_test_detection_$$.log"
--CLEANUP_FILES+=("${STALLD_LOG}")
--
- #=============================================================================
- # Test 1: Basic Starvation Detection
- #=============================================================================
 diff --git a/tests/functional/test_starvation_threshold.sh b/tests/functional/test_starvation_threshold.sh
-index 62f7420..88d4d4c 100755
+index 88d4d4c..79fa17b 100755
 --- a/tests/functional/test_starvation_threshold.sh
 +++ b/tests/functional/test_starvation_threshold.sh
-@@ -17,40 +17,7 @@ source "${TEST_ROOT}/helpers/test_helpers.sh"
- # Parse command-line options
- parse_test_options "$@" || exit $?
- 
--start_test "Starvation Threshold Option (-t)"
--
--# Setup test environment
--setup_test_environment
--
--# Require root for this test
--require_root
--
--# Check RT throttling
--if ! check_rt_throttling; then
--    echo -e "${YELLOW}SKIP: RT throttling must be disabled for this test${NC}"
--    exit 77
--fi
--
--# Pick a CPU for testing
--TEST_CPU=$(pick_test_cpu)
--log "Using CPU ${TEST_CPU} for testing"
--
--# Pick a different CPU for stalld to run on (avoid interference)
--STALLD_CPU=0
--if [ ${TEST_CPU} -eq 0 ]; then
--    STALLD_CPU=1
--fi
--log "Stalld will run on CPU ${STALLD_CPU}"
--
--# Setup paths
--STARVE_GEN="${TEST_ROOT}/helpers/starvation_gen"
--STALLD_LOG="/tmp/stalld_test_threshold_$$.log"
--CLEANUP_FILES+=("${STALLD_LOG}")
--
--if [ ! -x "${STARVE_GEN}" ]; then
--    echo -e "${YELLOW}SKIP: starvation_gen not found or not executable${NC}"
--    exit 77
--fi
-+init_functional_test "Starvation Threshold Option (-t)" "test_threshold"
- 
+@@ -113,32 +113,11 @@ cleanup_scenario "${STARVE_PID}"
  #=============================================================================
- # Test 1: Custom threshold (5 seconds)
-@@ -82,8 +49,7 @@ cleanup_scenario "${STARVE_PID}"
- test_section "Test 2: No detection before threshold"
+ test_section "Test 4: Invalid threshold values"
  
- threshold=10
--STALLD_LOG2="/tmp/stalld_test_threshold_test2_$$.log"
--CLEANUP_FILES+=("${STALLD_LOG2}")
-+rm -f "${STALLD_LOG}"
+-# Test with zero threshold
+ log "Testing with threshold = 0"
+-INVALID_LOG="/tmp/stalld_test_threshold_invalid_$$.log"
+-CLEANUP_FILES+=("${INVALID_LOG}")
++assert_stalld_rejects "Zero threshold rejected with error" -f -v -t 0
  
- # Create starvation BEFORE starting stalld (avoid detecting kworker tasks)
- # Create starvation that will last 6 seconds (less than threshold)
-@@ -92,7 +58,7 @@ log "Creating short starvation (${starvation_duration}s) with threshold of ${thr
- start_starvation_gen -c "${TEST_CPU}" -p 80 -n 2 -d ${starvation_duration}
- 
- log "Starting stalld with ${threshold}s threshold"
--start_stalld_with_log "${STALLD_LOG2}" -f -v -N -M -g 1 -c "${TEST_CPU}" -a "${STALLD_CPU}" -t ${threshold}
-+start_stalld_with_log "${STALLD_LOG}" -f -v -N -M -g 1 -c "${TEST_CPU}" -a "${STALLD_CPU}" -t ${threshold}
- 
- # Wait for starvation duration + small buffer
- sleep 8
-@@ -104,12 +70,12 @@ wait "${STARVE_PID}" 2>/dev/null || true
- sleep 2
- 
- # Check that starvation_gen was NOT detected (duration less than threshold)
--if ! grep -qE "starvation_gen.*starved on CPU ${TEST_CPU}|starved on CPU ${TEST_CPU}.*starvation_gen" "${STALLD_LOG2}"; then
-+if ! grep -qE "starvation_gen.*starved on CPU ${TEST_CPU}|starved on CPU ${TEST_CPU}.*starvation_gen" "${STALLD_LOG}"; then
-     pass "No starvation detected for duration less than threshold"
- else
-     fail "Starvation detected before threshold"
-     log "Found starvation_gen task in logs:"
--    grep -E "starvation_gen.*starved on CPU|starved on CPU.*starvation_gen" "${STALLD_LOG2}"
-+    grep -E "starvation_gen.*starved on CPU|starved on CPU.*starvation_gen" "${STALLD_LOG}"
- fi
- 
- # Cleanup
-@@ -121,8 +87,7 @@ cleanup_scenario "${STARVE_PID}"
- test_section "Test 3: Shorter threshold (3 seconds)"
- 
- threshold=3
--STALLD_LOG3="/tmp/stalld_test_threshold_test3_$$.log"
--CLEANUP_FILES+=("${STALLD_LOG3}")
-+rm -f "${STALLD_LOG}"
- 
- # Create starvation BEFORE starting stalld (avoid detecting kworker tasks)
- # Create starvation for 8 seconds
-@@ -132,13 +97,13 @@ start_starvation_gen -c "${TEST_CPU}" -p 80 -n 2 -d ${starvation_duration}
- 
- log "Starting stalld with ${threshold}s threshold"
- # Use -i to ignore kernel workers that may starve before our test tasks
--start_stalld_with_log "${STALLD_LOG3}" -f -v -N -M -g 1 -i "ksoftirqd,kworker" -c "${TEST_CPU}" -a "${STALLD_CPU}" -t ${threshold}
-+start_stalld_with_log "${STALLD_LOG}" -f -v -N -M -g 1 -i "ksoftirqd,kworker" -c "${TEST_CPU}" -a "${STALLD_CPU}" -t ${threshold}
- 
- # Wait for starvation detection
- log "Waiting for detection (threshold: ${threshold}s)"
- 
- # Check if starvation_gen was detected
--assert_starvation_detected "${STALLD_LOG3}" "Starvation detected with ${threshold}s threshold"
-+assert_starvation_detected "${STALLD_LOG}" "Starvation detected with ${threshold}s threshold"
- 
- # Cleanup
- cleanup_scenario "${STARVE_PID}"
-@@ -164,10 +129,9 @@ fi
- 
- # Test with negative threshold
+-timeout 5 ${TEST_ROOT}/../stalld -f -v -t 0 > "${INVALID_LOG}" 2>&1
+-ret=$?
+-
+-if [ $ret -ne 0 ] && [ $ret -ne 124 ]; then
+-    pass "Zero threshold rejected with error"
+-else
+-    fail "stalld did not reject invalid threshold value 0"
+-fi
+-
+-# Test with negative threshold
  log "Testing with threshold = -5"
--INVALID_LOG2="/tmp/stalld_test_threshold_invalid2_$$.log"
--CLEANUP_FILES+=("${INVALID_LOG2}")
-+rm -f "${INVALID_LOG}"
- 
--timeout 5 ${TEST_ROOT}/../stalld -f -v -t -5 > "${INVALID_LOG2}" 2>&1
-+timeout 5 ${TEST_ROOT}/../stalld -f -v -t -5 > "${INVALID_LOG}" 2>&1
- ret=$?
- 
- if [ $ret -ne 0 ] && [ $ret -ne 124 ]; then
-diff --git a/tests/functional/test_task_merging.sh b/tests/functional/test_task_merging.sh
-index c49499c..72f7c63 100755
---- a/tests/functional/test_task_merging.sh
-+++ b/tests/functional/test_task_merging.sh
-@@ -14,45 +14,15 @@ source "${TEST_ROOT}/helpers/test_helpers.sh"
- # Parse command-line options
- parse_test_options "$@" || exit $?
- 
--start_test "Task Merging Logic"
+-rm -f "${INVALID_LOG}"
 -
--# Setup test environment
--setup_test_environment
+-timeout 5 ${TEST_ROOT}/../stalld -f -v -t -5 > "${INVALID_LOG}" 2>&1
+-ret=$?
 -
--# Require root for this test
--require_root
--
--# Check RT throttling
--if ! check_rt_throttling; then
--    echo -e "${YELLOW}SKIP: RT throttling must be disabled for this test${NC}"
--    exit 77
+-if [ $ret -ne 0 ] && [ $ret -ne 124 ]; then
+-    pass "Negative threshold rejected with error"
+-else
+-    fail "stalld did not reject invalid negative threshold"
 -fi
--
--# Pick a CPU for testing
--TEST_CPU=$(pick_test_cpu)
--log "Using CPU ${TEST_CPU} for testing"
--
--# Pick a different CPU for stalld to run on (avoid interference)
--STALLD_CPU=0
--if [ ${TEST_CPU} -eq 0 ]; then
--    STALLD_CPU=1
--fi
--log "Stalld will run on CPU ${STALLD_CPU}"
-+init_functional_test "Task Merging Logic" "test_merge"
++assert_stalld_rejects "Negative threshold rejected with error" -f -v -t -5
  
- # Check for DL-server (kernel automatic starvation handling)
--# If DL-server is present, the kernel handles starvation automatically,
--# so stalld won't detect starvation and we can't test task merging logic
- if [ -d "/sys/kernel/debug/sched/fair_server" ]; then
-     echo -e "${YELLOW}SKIP: DL-server detected - kernel handles starvation automatically${NC}"
-     echo "      Task merging cannot be tested when DL-server prevents starvation"
-     exit 77
- fi
- 
--# Setup paths
--STARVE_GEN="${TEST_ROOT}/helpers/starvation_gen"
--STALLD_LOG="/tmp/stalld_test_merge_$$.log"
--CLEANUP_FILES+=("${STALLD_LOG}")
--
- #=============================================================================
- # Test 1: Timestamp Preservation for Non-Progressing Tasks
- #=============================================================================
+ log ""
+ log "All starvation threshold tests completed"
 diff --git a/tests/helpers/test_helpers.sh b/tests/helpers/test_helpers.sh
-index ced067c..389310b 100755
+index 389310b..742b15e 100755
 --- a/tests/helpers/test_helpers.sh
 +++ b/tests/helpers/test_helpers.sh
-@@ -1154,8 +1154,19 @@ init_functional_test() {
- 	STALLD_LOG="/tmp/stalld_${log_suffix}_$$.log"
- 	CLEANUP_FILES+=("${STALLD_LOG}")
- 
-+	if [ ! -x "${STARVE_GEN}" ]; then
-+		echo -e "${YELLOW}SKIP: starvation_gen not found or not executable${NC}"
-+		exit 77
-+	fi
-+
-+	# Build backend flag for direct stalld invocations
-+	BACKEND_FLAG=""
-+	if [ -n "${STALLD_TEST_BACKEND}" ]; then
-+		BACKEND_FLAG="-b ${STALLD_TEST_BACKEND}"
-+	fi
-+
- 	# Export variables for use in test
--	export TEST_CPU STALLD_CPU STARVE_GEN STALLD_LOG
-+	export TEST_CPU STALLD_CPU STARVE_GEN STALLD_LOG BACKEND_FLAG
+@@ -191,6 +191,25 @@ assert_boost_detected() {
+ 	fi
  }
  
- # Start starvation_gen in background with readiness detection
++# Assert that stalld rejects invalid arguments and exits non-zero.
++# Usage: assert_stalld_rejects <message> [stalld_args...]
++assert_stalld_rejects() {
++	local message=$1
++	shift
++
++	local log="/tmp/stalld_reject_$$.log"
++	timeout 5 ${TEST_ROOT}/../stalld ${BACKEND_FLAG} "$@" > "${log}" 2>&1
++	local ret=$?
++	if [ $ret -ne 0 ] && [ $ret -ne 124 ]; then
++		pass "${message}"
++	else
++		fail "${message}"
++		log "stalld output:"
++		cat "${log}"
++	fi
++	rm -f "${log}"
++}
++
+ # Record a test pass with a description message.
+ #
+ # Usage: pass "description"
+@@ -1226,7 +1245,7 @@ start_starvation_gen() {
+ }
+ 
+ # Export functions for use in tests
+-export -f start_test end_test test_section cleanup_scenario find_starved_child assert_starvation_detected assert_boost_detected
++export -f start_test end_test test_section cleanup_scenario find_starved_child assert_starvation_detected assert_boost_detected assert_stalld_rejects
+ export -f pass fail assert_equals assert_contains assert_not_contains
+ export -f assert_file_exists assert_file_not_exists
+ export -f assert_process_running assert_process_not_running
 -- 
 2.54.0
 
