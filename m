@@ -1,47 +1,47 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 69B3B3E0241
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id D66FD3E024E
 	for <linux-rt-users@vger.kernel.org>; Mon,  8 Jun 2026 18:32:36 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1780943557; cv=none; b=R86RWHYrrkRbQjCAyq4Qq3OwIdik0FygV61aCvTbbEdjT8lJYrS1FwPYkawYWHvwgoN4t53e0pVbIsvskxGGQfSpp+qheJ2fzhf+RjEQdQkq7pavU3g3dap7VYIzLesxsYD6S0qy9YtFHh5nir07iFya7g74rBYXYlrhYJO7f3M=
+	t=1780943558; cv=none; b=KLhqqf0DZtrSxiB3MKpRDwJw0pPGQSmxzEhmk6id2OE+OyiQq5pWuyjQMPLHH0Zhgiqj32oqPYOwWzuW1BbGgt1+yR+ql1P48nzkzWrOwazPGEZGw74D4qBaJRu89MZIymEcH/g5/YeSBJDpgCAxVJWl4emZ16IacyflCkQQ3bQ=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1780943557; c=relaxed/simple;
-	bh=d9ZJkqh/Za2FdoVE2v6wJ2/uyYJpSvPVX8SUNjuMqEA=;
+	s=arc-20240116; t=1780943558; c=relaxed/simple;
+	bh=EBuWo1bo9XFQkSv6OLan+f9eh8UVPQz9we8OBVkyn+w=;
 	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=s6vdSOK5lONGXxCBB2xF5ENM3ND4OvuM5nBLULNMhhpQEHkuR34azRZM9VQHAnjHcUDI8V7Fir+5UbAtwWBSI+0ERrBnkXYoNVdJqT1qlSErPc1x/Vz02t2m0ByvAk8wtHkDetfVr2w7PoVsKhb2na+7dYRBhHzWWPFFi6+3ciI=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=KkPk1XRL; arc=none smtp.client-ip=170.10.133.124
+	 MIME-Version:Content-Type; b=dsEGJCSVAQCR+0kJwAVDn9XmxCciLdRylmchfzKcXgAVLwejW2F+xBcCGwcqZ8e8uQytmKZEg8Q9hwKoRuqfF70Ti+OHYHpdQECe2hMhADk19fj0PdEqkp14iSVVrjg6KeRZ7Z0+IGx4cE74b/N6XdpJgHYUzRlPXki3BRiVtW8=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=iGjFQWXD; arc=none smtp.client-ip=170.10.129.124
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="KkPk1XRL"
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="iGjFQWXD"
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1780943555;
+	s=mimecast20190719; t=1780943556;
 	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references;
-	bh=E5n8864/3hSR9f4m+W6T6654Gq9kD34teKrWo2J5evs=;
-	b=KkPk1XRLyNw7BvtOG+KIIkNHlJVbLNp/fSLI2rnkCform99HkmxCE+An3opMb59zCXTub+
-	J8YF0loSx5uiFWN/c5XvXfE1ZmLDUGwdZ9k1UPMDZLPeykvYw2hHwjLHSwzuX9uoBddWRz
-	VlYi09+tuw92ASxII7YyJEpvLESRsok=
-Received: from mx-prod-mc-05.mail-002.prod.us-west-2.aws.redhat.com
+	bh=4+9uZ5eac6tshwTu0X0dvm8NyI/psppCOBTbZ+ltmdc=;
+	b=iGjFQWXD34xwcFzDFyRUJRX4WSPfEjS8OOdLdqGIGnAPPsyLvxXy8FxHDNuZf9J+P0IeKk
+	LOB7+ZnBcGJBwUTdEAby/96gHh3rbCYf5tHai2h3KdoFwc1Aa3qHaQyUYx0bLJjBMpYMcN
+	cwXMCs5KHTNWYYUuk9D24IVFEZPA0us=
+Received: from mx-prod-mc-03.mail-002.prod.us-west-2.aws.redhat.com
  (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
  relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-124-EPUtI-FTP9y7o3_rf01hZg-1; Mon,
- 08 Jun 2026 14:32:32 -0400
-X-MC-Unique: EPUtI-FTP9y7o3_rf01hZg-1
-X-Mimecast-MFC-AGG-ID: EPUtI-FTP9y7o3_rf01hZg_1780943551
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-113-vBz4KroANTG1Wzo0zsk35w-1; Mon,
+ 08 Jun 2026 14:32:28 -0400
+X-MC-Unique: vBz4KroANTG1Wzo0zsk35w-1
+X-Mimecast-MFC-AGG-ID: vBz4KroANTG1Wzo0zsk35w_1780943547
 Received: from mx-prod-int-10.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-10.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.95])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
 	(No client certificate requested)
-	by mx-prod-mc-05.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 2F068197702C;
-	Mon,  8 Jun 2026 18:32:31 +0000 (UTC)
-Received: from wcosta-defaultstring.rmtbr.csb (unknown [10.22.88.160])
-	by mx-prod-int-10.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTP id C13B436927;
+	by mx-prod-mc-03.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 594211944A8C;
 	Mon,  8 Jun 2026 18:32:27 +0000 (UTC)
+Received: from wcosta-defaultstring.rmtbr.csb (unknown [10.22.88.160])
+	by mx-prod-int-10.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTP id 43B1A36928;
+	Mon,  8 Jun 2026 18:32:25 +0000 (UTC)
 From: Wander Lairson Costa <wander@redhat.com>
 To: Clark Williams <williams@redhat.com>,
 	John Kacur <jkacur@redhat.com>,
@@ -50,9 +50,9 @@ Cc: Juri Lelli <juri.lelli@redhat.com>,
 	luffyluo@tencent.com,
 	davidlt@rivosinc.com,
 	Wander Lairson Costa <wander@redhat.com>
-Subject: [PATCH stalld 06/52] tests: Fix task exit timing in test_boost_restoration
-Date: Mon,  8 Jun 2026 15:31:16 -0300
-Message-ID: <20260608183206.140526-7-wander@redhat.com>
+Subject: [PATCH stalld 05/52] tests: Introduce find_starved_child() helper
+Date: Mon,  8 Jun 2026 15:31:15 -0300
+Message-ID: <20260608183206.140526-6-wander@redhat.com>
 In-Reply-To: <20260608183206.140526-1-wander@redhat.com>
 References: <20260608183206.140526-1-wander@redhat.com>
 Precedence: bulk
@@ -61,110 +61,387 @@ List-Id: <linux-rt-users.vger.kernel.org>
 List-Subscribe: <mailto:linux-rt-users+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit
 X-Scanned-By: MIMEDefang 3.6 on 10.30.177.95
 
-Test 5 verifies that stalld handles a task exiting during an active
-boost. The starvation duration was set to threshold minus two seconds,
-causing the task to exit before the detection threshold was reached.
-As a result, the task was never boosted and the test silently passed
-without exercising the intended code path.
+Multiple test scripts duplicate a pattern of using pgrep and a loop to
+identify the child process of starvation_gen that is most likely to be
+starving. This duplication clutters the tests and is prone to subtle
+errors. Notably, test_fifo_priority_starvation.sh contained a logic
+gap where it claimed to check for the lower-priority blockee but
+simply grabbed the first child process instead.
 
-Lower the threshold and compute the starvation duration as threshold
-plus three seconds so that the task survives long enough to be
-detected and boosted, then exits mid-boost as originally intended.
+Introduce a centralized find_starved_child() helper in test_helpers.sh
+and export it for use across the test suite. This function reliably
+identifies the starving child by selecting the one with the lowest
+scheduling priority, determined by finding the highest kernel priority
+value exposed in /proc/PID/sched.
+
+Replace twelve instances of the duplicated search pattern across six
+different test files with the new helper. This refactoring resolves
+the logic gap in the FIFO priority starvation test and improves test
+maintainability while reducing the overall line count.
 
 Signed-off-by: Wander Lairson Costa <wander@redhat.com>
 Assisted-by: Claude Code:claude-opus-4-6[1m] [PAL]
 ---
- tests/functional/test_boost_restoration.sh | 10 +++++-----
- tests/functional/test_runqueue_parsing.sh  | 12 ++++++------
- 2 files changed, 11 insertions(+), 11 deletions(-)
+ tests/functional/test_boost_restoration.sh    |  9 +---
+ tests/functional/test_deadline_boosting.sh    | 51 ++++++-------------
+ tests/functional/test_fifo_boosting.sh        | 45 +++++-----------
+ .../test_fifo_priority_starvation.sh          | 11 +---
+ tests/functional/test_starvation_detection.sh | 41 ++++++---------
+ tests/functional/test_task_merging.sh         | 23 ++-------
+ tests/helpers/test_helpers.sh                 | 30 ++++++++++-
+ 7 files changed, 79 insertions(+), 131 deletions(-)
 
 diff --git a/tests/functional/test_boost_restoration.sh b/tests/functional/test_boost_restoration.sh
-index fb886bd..c2a04f3 100755
+index 5dcaeea..fb886bd 100755
 --- a/tests/functional/test_boost_restoration.sh
 +++ b/tests/functional/test_boost_restoration.sh
-@@ -338,16 +338,16 @@ sleep 1
- #=============================================================================
- test_section "Test 5: Graceful Handling of Task Exit During Boost"
+@@ -64,14 +64,7 @@ log "Creating starvation with SCHED_FIFO tasks (blocker prio 80, blockee prio 1)
+ start_starvation_gen -c ${TEST_CPU} -p 80 -b 1 -n 1 -d 20
  
--threshold=10
--boost_duration=5  # Task will exit during boost (after 8s, boost is 5s)
-+threshold=5
-+boost_duration=5
+ # Find the starved task
+-STARVE_CHILDREN=$(pgrep -P ${STARVE_PID} 2>/dev/null)
+-tracked_pid=""
+-for child_pid in ${STARVE_CHILDREN}; do
+-    if [ -f "/proc/${child_pid}/sched" ]; then
+-        tracked_pid=${child_pid}
+-        break
+-    fi
+-done
++tracked_pid=$(find_starved_child "${STARVE_PID}")
  
- log "Starting stalld with ${threshold}s threshold, ${boost_duration}s boost (task will exit during boost)"
- rm -f "${STALLD_LOG}"
- start_stalld_with_log "${STALLD_LOG}" -f -v -t $threshold -c ${TEST_CPU} -a ${STALLD_CPU} -d ${boost_duration} -N -i "kworker"
+ if [ -n "${tracked_pid}" ]; then
+     log "Tracking task PID ${tracked_pid}"
+diff --git a/tests/functional/test_deadline_boosting.sh b/tests/functional/test_deadline_boosting.sh
+index 12bbd3e..d05daf2 100755
+--- a/tests/functional/test_deadline_boosting.sh
++++ b/tests/functional/test_deadline_boosting.sh
+@@ -114,28 +114,22 @@ start_stalld_with_log "${STALLD_LOG}" -f -v -g 1 -t $threshold -c ${TEST_CPU} -a
+ log "Creating starvation on CPU ${TEST_CPU}"
+ start_starvation_gen -c ${TEST_CPU} -p 80 -n 1 -d 15
  
--# Create starvation that exits after threshold - 2s (so 8s)
--# This ensures the task exits DURING the boost period
--short_duration=$((threshold - 2))
-+# Task must survive past the threshold to be detected and boosted,
-+# then exit during the boost window.
-+short_duration=$((threshold + 3))
- log "Creating starvation that will exit after ${short_duration}s"
- start_starvation_gen -c ${TEST_CPU} -p 80 -n 1 -d ${short_duration}
++# Try to find the boosted task PID before it gets boosted
++tracked_pid=$(find_starved_child "${STARVE_PID}")
++
+ # Wait for boosting
+ log "Waiting for boost detection..."
+ wait_for_boost_detected "${STALLD_LOG}"
+-
+-# Try to find the boosted task PID
+-STARVE_CHILDREN=$(pgrep -P ${STARVE_PID} 2>/dev/null)
+-log "Starvation generator children PIDs: ${STARVE_CHILDREN}"
+-
+ boosted_task_found=0
+-for child_pid in ${STARVE_CHILDREN}; do
+-    if [ -f "/proc/${child_pid}/sched" ]; then
+-        policy=$(get_sched_policy ${child_pid})
+-        log "Child PID ${child_pid} policy: ${policy}"
+-
+-        # Policy 6 = SCHED_DEADLINE
+-        if [ "$policy" = "6" ]; then
+-            pass "Task PID ${child_pid} boosted to SCHED_DEADLINE (policy 6)"
+-            boosted_task_found=1
+-            break
+-        fi
++if [ -n "${tracked_pid}" ] && [ -f "/proc/${tracked_pid}/sched" ]; then
++    policy=$(get_sched_policy ${tracked_pid})
++    log "Child PID ${tracked_pid} policy: ${policy}"
++
++    if [ "$policy" = "6" ]; then
++        pass "Task PID ${tracked_pid} boosted to SCHED_DEADLINE (policy 6)"
++        boosted_task_found=1
+     fi
+-done
++fi
  
-diff --git a/tests/functional/test_runqueue_parsing.sh b/tests/functional/test_runqueue_parsing.sh
-index f5c2861..a4dc180 100755
---- a/tests/functional/test_runqueue_parsing.sh
-+++ b/tests/functional/test_runqueue_parsing.sh
-@@ -90,7 +90,7 @@ if [ ${BPF_AVAILABLE} -eq 1 ]; then
-     threshold=5
-     log "Starting stalld with eBPF backend (queue_track)"
-     # Use -g 1 for 1-second granularity
--    start_stalld -f -v -g 1 -l -b queue_track -t $threshold -c ${TEST_CPU} -a ${STALLD_CPU} > "${STALLD_LOG_BPF}" 2>&1
-+    start_stalld -f -v -g 1 -N -l -i "kworker,ksoftirqd" -b queue_track -t $threshold -c ${TEST_CPU} -a ${STALLD_CPU} > "${STALLD_LOG_BPF}" 2>&1
+ if [ ${boosted_task_found} -eq 0 ]; then
+     log "⚠ INFO: Could not verify DEADLINE policy in /proc (timing issue or boost already expired)"
+@@ -166,20 +160,12 @@ start_stalld_with_log "${STALLD_LOG}" -f -v -g 1 -t $threshold -c ${TEST_CPU} -a
+ log "Creating starvation on CPU ${TEST_CPU}"
+ start_starvation_gen -c ${TEST_CPU} -p 80 -n 1 -d 20
  
-     # Create starvation to generate task data
-     starvation_duration=$((threshold + 5))
-@@ -135,7 +135,7 @@ if [ ${SCHED_DEBUG_AVAILABLE} -eq 1 ]; then
++# Find a starved task before it gets boosted
++tracked_pid=$(find_starved_child "${STARVE_PID}")
++
+ # Wait for boosting
+ log "Waiting for boost detection..."
+ wait_for_boost_detected "${STALLD_LOG}"
+-
+-# Find a starved task
+-STARVE_CHILDREN=$(pgrep -P ${STARVE_PID} 2>/dev/null)
+-tracked_pid=""
+-for child_pid in ${STARVE_CHILDREN}; do
+-    if [ -f "/proc/${child_pid}/status" ]; then
+-        tracked_pid=${child_pid}
+-        break
+-    fi
+-done
+-
+ if [ -n "${tracked_pid}" ]; then
+     log "Tracking task PID ${tracked_pid}"
  
-     threshold=5
-     log "Starting stalld with sched_debug backend"
--    start_stalld -f -v -g 1 -l -b sched_debug -t $threshold -c ${TEST_CPU} -a ${STALLD_CPU} > "${STALLD_LOG_SCHED}" 2>&1
-+    start_stalld -f -v -g 1 -N -l -i "kworker,ksoftirqd" -b sched_debug -t $threshold -c ${TEST_CPU} -a ${STALLD_CPU} > "${STALLD_LOG_SCHED}" 2>&1
+@@ -234,14 +220,7 @@ start_starvation_gen -c ${TEST_CPU} -p 80 -n 1 -d 20
  
-     # Create starvation
-     starvation_duration=$((threshold + 5))
-@@ -192,7 +192,7 @@ if [ ${BPF_AVAILABLE} -eq 1 ] && [ ${SCHED_DEBUG_AVAILABLE} -eq 1 ]; then
-     log ""
-     log "Running with eBPF backend..."
-     rm -f "${STALLD_LOG_BPF}"
--    start_stalld -f -v -g 1 -l -b queue_track -t $threshold -c ${TEST_CPU} -a ${STALLD_CPU} > "${STALLD_LOG_BPF}" 2>&1
-+    start_stalld -f -v -g 1 -N -l -i "kworker,ksoftirqd" -b queue_track -t $threshold -c ${TEST_CPU} -a ${STALLD_CPU} > "${STALLD_LOG_BPF}" 2>&1
+ # Find a starved task and verify initial policy
+ sleep 2
+-STARVE_CHILDREN=$(pgrep -P ${STARVE_PID} 2>/dev/null)
+-tracked_pid=""
+-for child_pid in ${STARVE_CHILDREN}; do
+-    if [ -f "/proc/${child_pid}/sched" ]; then
+-        tracked_pid=${child_pid}
+-        break
+-    fi
+-done
++tracked_pid=$(find_starved_child "${STARVE_PID}")
  
-     start_starvation_gen -c ${TEST_CPU} -p 80 -n 2 -d ${starvation_duration}
+ if [ -n "${tracked_pid}" ]; then
+     log "Tracking task PID ${tracked_pid} for policy changes"
+diff --git a/tests/functional/test_fifo_boosting.sh b/tests/functional/test_fifo_boosting.sh
+index ceac769..a669fe4 100755
+--- a/tests/functional/test_fifo_boosting.sh
++++ b/tests/functional/test_fifo_boosting.sh
+@@ -91,8 +91,7 @@ rm -f "${STALLD_LOG}"
+ # Create starvation FIRST
+ log "Creating starvation on CPU ${TEST_CPU}"
+ start_starvation_gen -c ${TEST_CPU} -p 80 -n 1 -d 15
+-STARVE_CHILDREN=$(pgrep -P ${STARVE_PID} 2>/dev/null)
+-log "Starvation generator children PIDs: ${STARVE_CHILDREN}"
++tracked_pid=$(find_starved_child "${STARVE_PID}")
  
-@@ -209,7 +209,7 @@ if [ ${BPF_AVAILABLE} -eq 1 ] && [ ${SCHED_DEBUG_AVAILABLE} -eq 1 ]; then
-     log ""
-     log "Running with sched_debug backend..."
-     rm -f "${STALLD_LOG_SCHED}"
--    start_stalld -f -v -g 1 -l -b sched_debug -t $threshold -c ${TEST_CPU} -a ${STALLD_CPU} > "${STALLD_LOG_SCHED}" 2>&1
-+    start_stalld -f -v -g 1 -N -l -i "kworker,ksoftirqd" -b sched_debug -t $threshold -c ${TEST_CPU} -a ${STALLD_CPU} > "${STALLD_LOG_SCHED}" 2>&1
+ log "Starting stalld with -F flag (FIFO boosting)"
+ start_stalld_with_log "${STALLD_LOG}" -f -v -g 1 -N -F -A -t $threshold -c ${TEST_CPU} -a ${STALLD_CPU}
+@@ -102,21 +101,17 @@ log "Waiting for boost detection..."
+ wait_for_boost_detected "${STALLD_LOG}"
  
-     start_starvation_gen -c ${TEST_CPU} -p 80 -n 2 -d ${starvation_duration}
+ fifo_task_found=0
+-for child_pid in ${STARVE_CHILDREN}; do
+-    if [ -f "/proc/${child_pid}/sched" ]; then
+-        policy=$(get_sched_policy ${child_pid})
+-        log "Child PID ${child_pid} policy: ${policy} (1=SCHED_FIFO)"
+-
+-        # Policy 1 = SCHED_FIFO
+-        if [ "$policy" = "1" ]; then
+-            priority=$(get_sched_priority ${child_pid})
+-            pass "Task PID ${child_pid} boosted to SCHED_FIFO (policy 1)"
+-            log "        Priority: ${priority}"
+-            fifo_task_found=1
+-            break
+-        fi
++if [ -n "${tracked_pid}" ] && [ -f "/proc/${tracked_pid}/sched" ]; then
++    policy=$(get_sched_policy ${tracked_pid})
++    log "Child PID ${tracked_pid} policy: ${policy} (1=SCHED_FIFO)"
++
++    if [ "$policy" = "1" ]; then
++        priority=$(get_sched_priority ${tracked_pid})
++        pass "Task PID ${tracked_pid} boosted to SCHED_FIFO (policy 1)"
++        log "        Priority: ${priority}"
++        fifo_task_found=1
+     fi
+-done
++fi
  
-@@ -264,7 +264,7 @@ if [ -n "$test_backend" ]; then
-     log "Testing task field extraction with ${test_backend} backend"
+ if [ ${fifo_task_found} -eq 0 ]; then
+     log "⚠ INFO: Could not verify FIFO policy in /proc (timing issue or boost already expired)"
+@@ -196,14 +191,7 @@ CLEANUP_FILES+=("${STALLD_LOG_DEADLINE}")
  
-     rm -f "${log_file}"
--    start_stalld -f -v -g 1 -l -b ${test_backend} -t $threshold -c ${TEST_CPU} -a ${STALLD_CPU} > "${log_file}" 2>&1
-+    start_stalld -f -v -g 1 -N -l -i "kworker,ksoftirqd" -b ${test_backend} -t $threshold -c ${TEST_CPU} -a ${STALLD_CPU} > "${log_file}" 2>&1
+ # Create starvation FIRST
+ start_starvation_gen -c ${TEST_CPU} -p 80 -n 2 -d 15
+-STARVE_CHILDREN=$(pgrep -P ${STARVE_PID} 2>/dev/null)
+-deadline_tracked_pid=""
+-for child_pid in ${STARVE_CHILDREN}; do
+-    if [ -f "/proc/${child_pid}/status" ]; then
+-        deadline_tracked_pid=${child_pid}
+-        break
+-    fi
+-done
++deadline_tracked_pid=$(find_starved_child "${STARVE_PID}")
  
-     # Create starvation with known parameters
-     log "Creating starvation with known task name (starvation_gen)"
-@@ -317,7 +317,7 @@ if [ ${SCHED_DEBUG_AVAILABLE} -eq 1 ]; then
+ ctxt_before_deadline=0
+ if [ -n "${deadline_tracked_pid}" ]; then
+@@ -239,14 +227,7 @@ CLEANUP_FILES+=("${STALLD_LOG_FIFO}")
  
-     threshold=5
-     rm -f "${STALLD_LOG_SCHED}"
--    start_stalld -f -v -g 1 -l -b sched_debug -t $threshold -c ${TEST_CPU} -a ${STALLD_CPU} > "${STALLD_LOG_SCHED}" 2>&1
-+    start_stalld -f -v -g 1 -N -l -i "kworker,ksoftirqd" -b sched_debug -t $threshold -c ${TEST_CPU} -a ${STALLD_CPU} > "${STALLD_LOG_SCHED}" 2>&1
+ # Create starvation FIRST
+ start_starvation_gen -c ${TEST_CPU} -p 80 -n 2 -d 15
+-STARVE_CHILDREN=$(pgrep -P ${STARVE_PID} 2>/dev/null)
+-fifo_tracked_pid=""
+-for child_pid in ${STARVE_CHILDREN}; do
+-    if [ -f "/proc/${child_pid}/status" ]; then
+-        fifo_tracked_pid=${child_pid}
+-        break
+-    fi
+-done
++fifo_tracked_pid=$(find_starved_child "${STARVE_PID}")
  
-     # Create brief starvation just to initialize the backend
-     start_starvation_gen -c ${TEST_CPU} -p 80 -n 1 -d 8
+ ctxt_before_fifo=0
+ if [ -n "${fifo_tracked_pid}" ]; then
+diff --git a/tests/functional/test_fifo_priority_starvation.sh b/tests/functional/test_fifo_priority_starvation.sh
+index bf3bfc8..11bcf33 100755
+--- a/tests/functional/test_fifo_priority_starvation.sh
++++ b/tests/functional/test_fifo_priority_starvation.sh
+@@ -107,16 +107,7 @@ log "Creating FIFO-on-FIFO starvation on CPU ${TEST_CPU}"
+ start_starvation_gen -c ${TEST_CPU} -p 10 -b 5 -n 1 -d 20
+ 
+ # Find the starved task (blockee) PID
+-STARVE_CHILDREN=$(pgrep -P ${STARVE_PID} 2>/dev/null)
+-blockee_pid=""
+-for child_pid in ${STARVE_CHILDREN}; do
+-    if [ -f "/proc/${child_pid}/status" ]; then
+-        # Check if it's the lower priority task (blockee)
+-        # The blockee should have lower priority than blocker
+-        blockee_pid=${child_pid}
+-        break
+-    fi
+-done
++blockee_pid=$(find_starved_child "${STARVE_PID}")
+ 
+ ctxt_before=0
+ if [ -n "${blockee_pid}" ]; then
+diff --git a/tests/functional/test_starvation_detection.sh b/tests/functional/test_starvation_detection.sh
+index 3307edb..553a7bc 100755
+--- a/tests/functional/test_starvation_detection.sh
++++ b/tests/functional/test_starvation_detection.sh
+@@ -116,31 +116,22 @@ log "Waiting for starvation detection..."
+ wait_for_starvation_detected "${STALLD_LOG}"
+ 
+ # Try to find the starved task PID from starvation_gen children
+-# The blockee thread is what gets starved
+-STARVE_CHILDREN=$(pgrep -P ${STARVE_PID} 2>/dev/null)
+-if [ -n "${STARVE_CHILDREN}" ]; then
+-    # Get context switch count for one of the starved tasks
+-    for child_pid in ${STARVE_CHILDREN}; do
+-        if [ -f "/proc/${child_pid}/status" ]; then
+-            ctxt_before=$(get_ctxt_switches ${child_pid})
+-            log "Found starved task PID ${child_pid}, context switches: ${ctxt_before}"
+-
+-            # Wait a bit
+-            sleep 2
+-
+-            # Check context switches again - should be same or very low change
+-            ctxt_after=$(get_ctxt_switches ${child_pid})
+-            log "Context switches after 2s: ${ctxt_after}"
+-
+-            ctxt_delta=$((ctxt_after - ctxt_before))
+-            if [ ${ctxt_delta} -lt 5 ]; then
+-                pass "Context switch count remained low (delta: ${ctxt_delta})"
+-            else
+-                fail "Context switches increased significantly (delta: ${ctxt_delta})"
+-            fi
+-            break
+-        fi
+-    done
++tracked_pid=$(find_starved_child "${STARVE_PID}")
++if [ -n "${tracked_pid}" ]; then
++    ctxt_before=$(get_ctxt_switches ${tracked_pid})
++    log "Found starved task PID ${tracked_pid}, context switches: ${ctxt_before}"
++
++    sleep 2
++
++    ctxt_after=$(get_ctxt_switches ${tracked_pid})
++    log "Context switches after 2s: ${ctxt_after}"
++
++    ctxt_delta=$((ctxt_after - ctxt_before))
++    if [ ${ctxt_delta} -lt 5 ]; then
++        pass "Context switch count remained low (delta: ${ctxt_delta})"
++    else
++        fail "Context switches increased significantly (delta: ${ctxt_delta})"
++    fi
+ else
+     log "⚠ WARNING: Could not find starved task PIDs to verify context switches"
+ fi
+diff --git a/tests/functional/test_task_merging.sh b/tests/functional/test_task_merging.sh
+index 366b89b..c49499c 100755
+--- a/tests/functional/test_task_merging.sh
++++ b/tests/functional/test_task_merging.sh
+@@ -144,14 +144,7 @@ start_starvation_gen -c ${TEST_CPU} -p 80 -n 1 -d 20
+ wait_for_starvation_detected "${STALLD_LOG}"
+ 
+ # Find the starved task PID
+-STARVE_CHILDREN=$(pgrep -P ${STARVE_PID} 2>/dev/null)
+-tracked_pid=""
+-for child_pid in ${STARVE_CHILDREN}; do
+-    if [ -f "/proc/${child_pid}/status" ]; then
+-        tracked_pid=${child_pid}
+-        break
+-    fi
+-done
++tracked_pid=$(find_starved_child "${STARVE_PID}")
+ 
+ if [ -n "${tracked_pid}" ]; then
+     log "Tracking starved task PID ${tracked_pid}"
+@@ -208,19 +201,11 @@ start_stalld_with_log "${STALLD_LOG}" -f -v -g 1 -t $threshold -c ${TEST_CPU} -a
+ log "Creating starvation that will be boosted"
+ start_starvation_gen -c ${TEST_CPU} -p 80 -n 1 -d 20
+ 
++# Find tracked task while it's guaranteed to be starving
++tracked_pid=$(find_starved_child "${STARVE_PID}")
++
+ # Wait for starvation detection
+ wait_for_starvation_detected "${STALLD_LOG}"
+-
+-# Find tracked task
+-STARVE_CHILDREN=$(pgrep -P ${STARVE_PID} 2>/dev/null)
+-tracked_pid=""
+-for child_pid in ${STARVE_CHILDREN}; do
+-    if [ -f "/proc/${child_pid}/status" ]; then
+-        tracked_pid=${child_pid}
+-        break
+-    fi
+-done
+-
+ if [ -n "${tracked_pid}" ]; then
+     # Wait for boost to complete and task to starve again
+     sleep 5
+diff --git a/tests/helpers/test_helpers.sh b/tests/helpers/test_helpers.sh
+index fb6c9d1..ced067c 100755
+--- a/tests/helpers/test_helpers.sh
++++ b/tests/helpers/test_helpers.sh
+@@ -126,6 +126,34 @@ cleanup_scenario() {
+ 	stop_stalld
+ }
+ 
++# Find the child of a starvation_gen process most likely to be starving.
++# When multiple children exist, selects the one with the lowest scheduling
++# priority (highest kernel prio value) since that task loses the CPU to
++# higher-priority siblings.
++# Usage: tracked_pid=$(find_starved_child <parent_pid>)
++find_starved_child() {
++	local parent_pid=$1
++	local candidate=""
++	local max_prio=-100
++	local prio
++	for child in $(pgrep -P "${parent_pid}" 2>/dev/null); do
++		if [ -d "/proc/${child}" ]; then
++			prio=$(get_sched_priority "${child}" 2>/dev/null)
++			prio=${prio:--1}
++			if [ "${prio}" -gt "${max_prio}" ] 2>/dev/null; then
++				candidate="${child}"
++				max_prio="${prio}"
++			fi
++		fi
++	done
++
++	if [ -n "${candidate}" ]; then
++		echo "${candidate}"
++		return 0
++	fi
++	return 1
++}
++
+ # Assert that stalld detects a starving task within the timeout.
+ # Usage: assert_starvation_detected <log_file> <message> [timeout] [cpu]
+ assert_starvation_detected() {
+@@ -1187,7 +1215,7 @@ start_starvation_gen() {
+ }
+ 
+ # Export functions for use in tests
+-export -f start_test end_test test_section cleanup_scenario assert_starvation_detected assert_boost_detected
++export -f start_test end_test test_section cleanup_scenario find_starved_child assert_starvation_detected assert_boost_detected
+ export -f pass fail assert_equals assert_contains assert_not_contains
+ export -f assert_file_exists assert_file_not_exists
+ export -f assert_process_running assert_process_not_running
 -- 
 2.54.0
 
