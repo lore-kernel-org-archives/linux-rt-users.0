@@ -1,70 +1,70 @@
-Received: from mail-qt1-f171.google.com (mail-qt1-f171.google.com [209.85.160.171])
+Received: from mail-qt1-f170.google.com (mail-qt1-f170.google.com [209.85.160.170])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id D72E7FC0A
-	for <linux-rt-users@vger.kernel.org>; Thu, 11 Jun 2026 20:38:53 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.160.171
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id A2B46481236
+	for <linux-rt-users@vger.kernel.org>; Thu, 11 Jun 2026 20:38:54 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.160.170
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1781210338; cv=none; b=NSEa+PmMUw1vIzNXQRpmq6UHJHVgNtE9kf2jkFSG9ShAVxGqWx2u1sqr6zsEzHcMDBRD60Fe8EieFUrDKSbyOxKAh2sk4NZV5KxCCQA6EHZlQx+fuq179Kn6meXmfE3MupqP7BqcvTFVNAixRNWwsKBbhOF/pEGH55rAxQUi0OQ=
+	t=1781210337; cv=none; b=lX7w3jV615/oDTECzeKQocXVgU7XJKUt302vmMeEWAIAegUiMGocCwv5Pofdtt9QLMIT9zhkjTj161zdgrpibG5nOUmAttwJOyJW0vf4gsLykfyQjphq8i9opPPeUjI+yYbw/72pks5wwNmE/T0CRnbK4v1AG0aMe/VvIqoWL3I=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1781210338; c=relaxed/simple;
-	bh=kpHfKYgnrBzhKIRvhNzTqxY0ofUk0TY4s1cYYKvnFLk=;
+	s=arc-20240116; t=1781210337; c=relaxed/simple;
+	bh=a4MFKeuWqkMsNxaBtRWEG2c8v91kLroESaiQtDIsklA=;
 	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version:Content-Type; b=vBmwcPD3/zrGhpfVEkXi5Lp8C9NoiLQGFQ3uMtn+SN+MIP0L0JvNcsA0flz4Q+bK3hs3ieS0yMqieL7vEkgPUhxObjJLFvmNzSoFrz7AQUdFvFWIuI5yqXnbVyTAAqp3bK+sjdRl51qA9KFT89v57lxTDoQ2yGSd/SPpgbCac4E=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=fail (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=CswoXrMx; arc=none smtp.client-ip=209.85.160.171
+	 MIME-Version; b=EEBqfIpA3wJPuh4I6QM15/P311ppV8WjD5Zov4rxVXd/8ASEYa60At1C4QWtmxQGnpLTI32IS+9UrOO2V+gYZksFpFHojhp4iGAeMaaJu8QGqWoYk6Ea0qb/5dcmI44koyXP+YNqmHPwJKD5JTClog0BUO+7/s5gW8JtF4aVNx8=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=fail (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=AM49jkIJ; arc=none smtp.client-ip=209.85.160.170
 Authentication-Results: smtp.subspace.kernel.org; dmarc=fail (p=quarantine dis=none) header.from=redhat.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="CswoXrMx"
-Received: by mail-qt1-f171.google.com with SMTP id d75a77b69052e-517863a2edfso1721411cf.1
-        for <linux-rt-users@vger.kernel.org>; Thu, 11 Jun 2026 13:38:53 -0700 (PDT)
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="AM49jkIJ"
+Received: by mail-qt1-f170.google.com with SMTP id d75a77b69052e-5176a2fd597so1760241cf.1
+        for <linux-rt-users@vger.kernel.org>; Thu, 11 Jun 2026 13:38:54 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20251104; t=1781210332; x=1781815132; darn=vger.kernel.org;
+        d=gmail.com; s=20251104; t=1781210333; x=1781815133; darn=vger.kernel.org;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:sender:from:to:cc:subject:date
          :message-id:reply-to;
-        bh=Q5Kir3lKD9Nn3afcNhQm0a5tYkuXpeYD5zw8HEdOY+o=;
-        b=CswoXrMx7JBBaYDZ6okOSzxnFnJp9wCA8VQv+HKM8Bn/AbdXeixYFQrgH/JASQwkRi
-         HKJbwnRxi14nra5I8KY2vI7QvAiJdti1z0mUyjLcPHvTmjpFOTwgxMIuzW5t4xLoWG8e
-         ge7FT759Bv0NJqTXlnJYrftULP3zuqMjfPG7NHSLNyh07cT/i8KCLiyPZVhPL4L0Jhp4
-         ogjh+NHcD8YMz94Z+9nplJX8jFYPwdxLFAdLZmm7VcrRDAAinhMG1/XitUvehjqrOX+K
-         PhgdzzkUrAAOTNwsf7NcXo99tSDFNCt54qxwvejAfljof7iuuR6diXw2dJ3nKbZjRSUh
-         JQNw==
+        bh=yFwUnoNF4N0Pt0JCt+ovnP99QiC/04VsOgfV9GTh/G8=;
+        b=AM49jkIJ+UJvB2FwCQDRciZd4byvY5WyiKrxyFkd68QXmJhJzvcQCtCMNLjtAqQwB5
+         teHtwIl5VxCGQEno6lL5meIaUzvNHAblxHEUC9wJClh3ymnaixYVlulr/IofR8Uezsd6
+         4cbE9PprASpqqBcA/xNhIDsE78Nbw/60AzYrvYuuM+AEmZk2X6RIHa8pQdiQF/HJ1tdP
+         MeIM1+e7ZygDL8yEWIiGpNsus/vVP35ve9FyjNqKe6D10VXLwkmKubRWMPCSXi51KleP
+         iaLa8Q9mUqW4rYLrP2czJRsAGSzlg02cNZtImOy220EtpBMQXvbVs0tBkqssbIlWV/5W
+         QPfQ==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20251104; t=1781210332; x=1781815132;
+        d=1e100.net; s=20251104; t=1781210333; x=1781815133;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:sender:x-gm-gg
          :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
-        bh=Q5Kir3lKD9Nn3afcNhQm0a5tYkuXpeYD5zw8HEdOY+o=;
-        b=sDf3ZBo9EUknoWu74mYDMTWfqXyo69kYRSOP19zs0F1opT+/d1fJYXTWC2lJGEvH1v
-         pyO/SYKtKag+5wFgtL+p+OoOW3VhmUoedL47Lm2u8iFbY8PjS6SzB4+1O0FvJc/4APau
-         gkuKSYpFh0sXLkL6i6/KBqgd7Uqm69kwyi8Jy6mSenQn9+gAE8nf/QqaxuXwq3+hDbY0
-         aOAFYrWbiLd7fboIYBoCCtbpD/gf/20XPtHV+GQV0lKroqUAuOCHLEBG01+4T+JOvDu6
-         ZUBJsHcRwUKIq6A4uQyy+LW4Ik+xlntHbnSCRSlXuq10V1OODMhkN7aTAiAqWw+rQOPX
-         shQQ==
-X-Gm-Message-State: AOJu0YyKJ1UzM64xCvGSbyEh++QyK/DtfouJUmCQ2kQ2UHl6dBpTYBEL
-	Eh2yMeXYITzVhIYM4GIDYQH5MLCL6lpWMZxSJ8rbrS8PdoePLaQUS5y/DRLTlQ==
-X-Gm-Gg: Acq92OGo9u8+y3rPSALYL4Qh/0NrM1tK49zN24LHSOLseuitebruQhydmUJM7S/A4lJ
-	7A3jdyjR+asWHgQwfBhPK4SGzRHBl6gy4gPDolZVXIUEHhlwGDFTB74GWvEFPdntxHk0sf2v3X5
-	pkRyCePOzxbJZGVeJGYdCp+YazULDU1kdm0VmdXMGkBrx9q0/Gvxktra/PZIOAmFkoGLTdaJlFd
-	qnyQlEiWS0lKlFGOhZKwKc9HzEtF+HTahnN1XNd7Wmj81Jlj0e2lWP/uW5bAusTz3cjIPM4lyNN
-	e+mNbZ+M+liGBcxhvrNAaiWWY6wIPJnU1SvrjFgxASC836kR26qpiyYgiLz0j6nyoP6LyZCvDjl
-	L09Qa1aLTSig1Z94pYcTFyhBivUovOn/A/lixvyWBgAMUAFpSnfcFf/SqPJHzK5z5cw67zjrG04
-	kFZ5rtnCvopxnQqzZVrswTKccsMZSEMRkAlfpCHWDjyS7wfaQqqNsoMcSrOsrjvBvgR9WjvaPMD
-	kFROky6OQ+/kOVtmd4=
-X-Received: by 2002:ac8:5e46:0:b0:517:626b:778 with SMTP id d75a77b69052e-517ee25753amr65092861cf.49.1781210332346;
-        Thu, 11 Jun 2026 13:38:52 -0700 (PDT)
+        bh=yFwUnoNF4N0Pt0JCt+ovnP99QiC/04VsOgfV9GTh/G8=;
+        b=TUg2RvciXZVE4ATyr1WUcGiobLdZdEZF404JBNlclifoQOo76OcF/eeYFctcbl0I5w
+         WP7ShBAwSTqDE4gP22ySzv+tFWm64PDn3NAReXX050u75tHUOZa5s2IVEgnRyCqKJJqd
+         NMQgiN5lpaLGswc97d04zitI4tsa9iAPt6cVs2m9CodOihFfsfYLiYyiKAQTx0S3Z/UQ
+         II0S4Gc2qEfRLkuVd1D+xOCKs1nm10hzI7OzGQVuPrg75ok33NsCC+SPPaPM2KXlQ9PN
+         6ln9fIE5JW5KPmTTu9QAn8GeZbcCfoF+xCslqmIcKyNPyjWlKSxh6i1HfO22pvI9xTNw
+         4LdA==
+X-Gm-Message-State: AOJu0Yy92PecQuXBuO8bBaHrarycrrr6EuXI4rcB9bK3x01gKnblxChr
+	S10efo5+6+yeTiYTB7vYb2VbTfnJMyxv7+maGFWRryt1BcGMQBnnXlUooLgQYw==
+X-Gm-Gg: Acq92OG8tsSafwAdxzs6kVTnBlaeCXxK65XZhZhT3mqoikXQ/qswQI+nhAY7tnadp4d
+	8bd8s1t+6MxbrbzDp7M5q6jXmtE3xcbMw7oLsojN6yFQu+Ina14wr2aLG7StB/WcwPZcvjKouRe
+	RyoOuIFptgFQj+p0JqxcyPbYnQ5DZQHfIK25c89SC59W4kemVT5YKYSlk3n0sdC01L+xOVrhZZ7
+	61h8VGrGh+seggCPtgTs1KuffJbKoygspB6/n/z1ULWG4Jzf9GnfOvSTbb4ZGDEf5PHEpLT016F
+	XgmpgQpLkNxRO7BRCWv8KHx//IhUE4QfcXkJrEUMSkRoi2kv5RGH09WmaIzLTonCRnAf8AR/3bJ
+	WqCaAM945srFkmr27pJFb9NHfGSEb2BKvyEvC0YB9qLkfy/xTFmS2ujBDNtHMG3B7vMJM+3qa88
+	oKucHh0Ebl+RjZSfnNz8ylqaHr9YGDqqM20QXgEzDGakeeb386kvZa+ql1OAjKZ/Ptd8L9F65LM
+	ANkgOVf0C55Z2u/VW0=
+X-Received: by 2002:a05:622a:99b:b0:50b:4a84:aa94 with SMTP id d75a77b69052e-517edcd82f9mr71731351cf.7.1781210333276;
+        Thu, 11 Jun 2026 13:38:53 -0700 (PDT)
 Received: from Cumhall.redhat.com ([216.209.112.32])
-        by smtp.gmail.com with ESMTPSA id d75a77b69052e-517fb642541sm3214051cf.10.2026.06.11.13.38.51
+        by smtp.gmail.com with ESMTPSA id d75a77b69052e-517fb642541sm3214051cf.10.2026.06.11.13.38.52
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Thu, 11 Jun 2026 13:38:51 -0700 (PDT)
+        Thu, 11 Jun 2026 13:38:52 -0700 (PDT)
 Sender: John Kacur <jkacur@gmail.com>
 From: John Kacur <jkacur@redhat.com>
 To: linux-rt-users@vger.kernel.org
 Cc: Clark Williams <williams@redhat.com>
-Subject: [PATCH 2/5] tuna: Eliminate side effects from argparse by deferring type conversions
-Date: Thu, 11 Jun 2026 16:38:29 -0400
-Message-ID: <20260611203832.176805-3-jkacur@redhat.com>
+Subject: [PATCH 3/5] tuna: Eliminate global ps and irqs variables
+Date: Thu, 11 Jun 2026 16:38:30 -0400
+Message-ID: <20260611203832.176805-4-jkacur@redhat.com>
 X-Mailer: git-send-email 2.54.0
 In-Reply-To: <20260611203832.176805-1-jkacur@redhat.com>
 References: <20260611203832.176805-1-jkacur@redhat.com>
@@ -74,211 +74,174 @@ List-Id: <linux-rt-users.vger.kernel.org>
 List-Subscribe: <mailto:linux-rt-users+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit
 
-Refactor argument parsing to remove side effects during the argparse phase
-by deferring type conversions until after parsing completes. This creates a
-clearer separation between parsing, conversion, and execution.
+Remove the remaining global variables (ps and irqs) and pass them as
+function parameters instead. This completes the refactoring to eliminate
+side effects and global state from the codebase.
 
-Problems with the previous implementation:
-- Converter functions (threadstring_to_list, irqstring_to_list) were called
-  via type= parameter during argparse parsing
-- These converters set global variables and created procfs objects before
-  knowing what command would run
-- Global state (match_requested) was used to coordinate between parsing
-  time and execution time
+The ps and irqs globals were used as a cache/singleton pattern where they
+would be lazily initialized on first use and reused across function calls.
+However, most commands only call these functions once, so the caching
+benefit was minimal while the global state made the code harder to
+understand and test.
 
 Changes:
-- Removed type= parameters for threadstring_to_list and irqstring_to_list
-  from POS and MODS dictionaries, changed to type=str with default=''
-- Changed sockets argument to store in 'sockets' dest instead of 'cpu_list'
-- Updated threadstring_to_list() to accept ps parameter and return tuple
-  (thread_list, match_requested_flag)
-- Updated irqstring_to_list() to return tuple (irq_list, match_requested_flag)
-- Added explicit conversion block in main() after argument parsing
-- Eliminated match_requested global variable, now local in main()
-- Updated ps_show(), show_irqs(), do_ps() to accept match_requested parameter
-- Kept ps and irqs as module-level variables for now
+- Removed global variable declarations for ps and irqs (lines 78-82)
+- Removed "FIXME: ETOOMANYGLOBALS" comment - issue is now resolved
+- Updated thread_help() to accept ps as parameter
+- Removed global ps declaration from main(), made it local variable
+- Added irqs parameter to ps_show_thread() signature
+- Added irqs parameter to ps_show() signature
+- Updated do_ps() to create irqs locally and pass to ps_show()
+- Updated show_irqs() to create irqs locally instead of using global
+- Updated what_is command to create ps if needed and pass to thread_help()
+- Updated all call sites to pass parameters correctly
 
 Benefits:
-- No side effects during argument parsing
-- Clear control flow: parse → convert → execute
-- match_requested is now local state instead of global
-- Easier to understand and maintain
-- Sets foundation for future refactoring of remaining globals
+- No global variables - all state is now local or explicitly passed
+- Functions are pure with clear dependencies visible in signatures
+- Code is more testable and easier to understand
+- Explicit control flow with no hidden state
 
 All 6 existing unit tests pass.
 
 Assisted-by: Claude:claude-sonnet-4-5
 Signed-off-by: John Kacur <jkacur@redhat.com>
 ---
- tuna-cmd.py | 65 ++++++++++++++++++++++++++++++++---------------------
- 1 file changed, 39 insertions(+), 26 deletions(-)
+ tuna-cmd.py | 37 +++++++++++++------------------------
+ 1 file changed, 13 insertions(+), 24 deletions(-)
 
 diff --git a/tuna-cmd.py b/tuna-cmd.py
-index 54f0666fa1bb..4da6c6ea6ce5 100755
+index 4da6c6ea6ce5..d83e57732360 100755
 --- a/tuna-cmd.py
 +++ b/tuna-cmd.py
-@@ -79,7 +79,6 @@ except ImportError:
+@@ -75,11 +75,6 @@ try:
+ except ImportError:
+     have_inet_diag = False
  
- ps = None
- irqs = None
--match_requested = False
- 
+-# FIXME: ETOOMANYGLOBALS, we need a class!
+-
+-ps = None
+-irqs = None
+-
  class HelpMessageParser(argparse.ArgumentParser):
      def error(self, message):
-@@ -92,7 +91,7 @@ def gen_parser():
+         sys.stderr.write(f'error: {message}\n')
+@@ -250,11 +245,7 @@ def gen_parser():
+     return parser
  
-     POS = {
-             "cpu_list": dict(metavar='CPU-LIST', type=tuna.cpustring_to_list, help="CPU-LIST affected by commands"),
--            "thread_list": dict(metavar='THREAD-LIST', type=threadstring_to_list, help="THREAD-LIST affected by commands"),
-+            "thread_list": dict(metavar='THREAD-LIST', type=str, help="THREAD-LIST affected by commands"),
-             "filename": dict(metavar='FILENAME', type=str, help="Save kthreads sched tunables to this file"),
-             "profilename": dict(type=str, help="Apply changes described in this file"),
-             "run_command": dict(metavar='COMMAND', type=str, help="fork a new process and run the \"COMMAND\""),
-@@ -103,10 +102,10 @@ def gen_parser():
-             "logging": dict(dest='loglevel', metavar='LOG-LEVEL', type=get_loglevel, help="Log application details to file for given LOG-LEVEL"),
-             "debug" : dict(action='store_true', dest='debug', help='Print DEBUG level logging details to console'),
-             "version": dict(action='version', version='0.20', help="show version"),
--            "threads": dict(dest='thread_list', default=[], metavar='THREAD-LIST', type=threadstring_to_list, help="THREAD-LIST affected by commands"),
--            "irqs": dict(dest='irq_list', default=[], metavar='IRQ-LIST', type=irqstring_to_list, help="IRQ-LIST affect by commands"),
-+            "threads": dict(dest='thread_list', default='', metavar='THREAD-LIST', type=str, help="THREAD-LIST affected by commands"),
-+            "irqs": dict(dest='irq_list', default='', metavar='IRQ-LIST', type=str, help="IRQ-LIST affect by commands"),
-             "cpus": dict(dest='cpu_list', default=[], metavar='CPU-LIST', type=tuna.cpustring_to_list, help='CPU-LIST affected by commands'),
--            "sockets": dict(dest='cpu_list', default=[], metavar='CPU-SOCKET-LIST', type=socketstring_to_list, help="CPU-SOCKET-LIST affected by commands"),
-+            "sockets": dict(dest='sockets', default='', metavar='CPU-SOCKET-LIST', type=str, help="CPU-SOCKET-LIST affected by commands"),
-             "show_sockets": dict(action='store_true', help='Show network sockets in use by threads'),
-             "cgroups": dict(action='store_true', dest='cgroups', help='Display the processes with the type of cgroups they are in'),
-             "spaced": dict(action='store_false', dest='compact', help='Display spaced view for cgroups'),
-@@ -394,9 +393,7 @@ def ps_show_thread(pid, affect_children, ps, has_ctxt_switch_info, sock_inodes,
+ 
+-def thread_help(tid):
+-    global ps
+-    if not ps:
+-        ps = procfs.pidstats()
+-
++def thread_help(tid, ps):
+     if tid not in ps:
+         print(f"tuna: thread {tid} doesn't exist!")
+         return
+@@ -329,8 +320,7 @@ def format_affinity(affinity):
+     return ",".join(str(hex(a)) for a in procfs.hexbitmask(affinity, utils.get_nr_cpus()))
+ 
+ def ps_show_thread(pid, affect_children, ps, has_ctxt_switch_info, sock_inodes,
+-                   sock_inode_re, cgroups, columns=None, compact=True):
+-    global irqs
++                   sock_inode_re, cgroups, irqs, columns=None, compact=True):
+     try:
+         affinity = format_affinity(os.sched_getaffinity(pid))
+     except OSError as e:
+@@ -345,8 +335,6 @@ def ps_show_thread(pid, affect_children, ps, has_ctxt_switch_info, sock_inodes,
+     users = ""
+     if tuna.is_irq_thread(cmd):
+         try:
+-            if not irqs:
+-                irqs = procfs.interrupts()
+             users = irqs[tuna.irq_thread_number(cmd)]["users"]
+             for u in users:
+                 if u in utils.get_nics():
+@@ -388,12 +376,12 @@ def ps_show_thread(pid, affect_children, ps, has_ctxt_switch_info, sock_inodes,
+         for tid in list(ps[pid]["threads"].keys()):
+             ps_show_thread(tid, False, ps[pid]["threads"],
+                            has_ctxt_switch_info,
+-                           sock_inodes, sock_inode_re, cgroups, columns, compact)
++                           sock_inodes, sock_inode_re, cgroups, irqs, columns, compact)
+ 
  
  def ps_show(ps, affect_children, thread_list, cpu_list,
              irq_list_numbers, show_uthreads, show_kthreads,
--            has_ctxt_switch_info, sock_inodes, sock_inode_re, cgroups, compact):
--
--    global match_requested
-+            has_ctxt_switch_info, sock_inodes, sock_inode_re, cgroups, compact, match_requested):
+-            has_ctxt_switch_info, sock_inodes, sock_inode_re, cgroups, compact, match_requested):
++            has_ctxt_switch_info, sock_inodes, sock_inode_re, cgroups, compact, match_requested, irqs):
  
      ps_list = []
      for pid in list(ps.keys()):
-@@ -467,7 +464,7 @@ def load_sockets():
+@@ -443,7 +431,7 @@ def ps_show(ps, affect_children, thread_list, cpu_list,
+ 
+     for pid in ps_list:
+         ps_show_thread(pid, affect_children, ps, has_ctxt_switch_info,
+-                       sock_inodes, sock_inode_re, cgroups, columns, compact)
++                       sock_inodes, sock_inode_re, cgroups, irqs, columns, compact)
  
  
- def do_ps(thread_list, cpu_list, irq_list, show_uthreads, show_kthreads,
--          affect_children, show_sockets, cgroups, compact):
-+          affect_children, show_sockets, cgroups, compact, match_requested):
-     ps = procfs.pidstats()
+ def load_socktype(socktype, inodes):
+@@ -469,6 +457,8 @@ def do_ps(thread_list, cpu_list, irq_list, show_uthreads, show_kthreads,
      if affect_children:
          ps.reload_threads()
-@@ -484,7 +481,7 @@ def do_ps(thread_list, cpu_list, irq_list, show_uthreads, show_kthreads,
+ 
++    irqs = procfs.interrupts()
++
+     sock_inodes = None
+     sock_inode_re = None
+     if show_sockets:
+@@ -481,7 +471,7 @@ def do_ps(thread_list, cpu_list, irq_list, show_uthreads, show_kthreads,
              ps_show_header(has_ctxt_switch_info, cgroups)
          ps_show(ps, affect_children, thread_list,
                  cpu_list, irq_list, show_uthreads, show_kthreads,
--                has_ctxt_switch_info, sock_inodes, sock_inode_re, cgroups, compact)
-+                has_ctxt_switch_info, sock_inodes, sock_inode_re, cgroups, compact, match_requested)
+-                has_ctxt_switch_info, sock_inodes, sock_inode_re, cgroups, compact, match_requested)
++                has_ctxt_switch_info, sock_inodes, sock_inode_re, cgroups, compact, match_requested, irqs)
      except IOError:
          # 'tuna -P | head' for instance
          pass
-@@ -507,9 +504,8 @@ def find_drivers_by_users(users):
-     return drivers
+@@ -505,9 +495,7 @@ def find_drivers_by_users(users):
  
  
--def show_irqs(irq_list, cpu_list):
-+def show_irqs(irq_list, cpu_list, match_requested):
-     global irqs
--    global match_requested
-     if not irqs:
-         irqs = procfs.interrupts()
+ def show_irqs(irq_list, cpu_list, match_requested):
+-    global irqs
+-    if not irqs:
+-        irqs = procfs.interrupts()
++    irqs = procfs.interrupts()
  
-@@ -554,30 +550,29 @@ def do_list_op(op, current_list, op_list):
-         return list(set(current_list) - set(op_list))
-     return list(set(op_list))
+     if sys.stdout.isatty():
+         print("%4s %-16s %8s" % ("#", _("users"), _("affinity"),))
+@@ -655,8 +643,6 @@ def nohz_full_to_cpu():
  
--def threadstring_to_list(threadstr):
+ 
+ def main():
 -    global ps
--    global match_requested
--    if threadstr:
--        match_requested = True
-+def threadstring_to_list(threadstr, ps=None):
-+    match_requested = bool(threadstr)
-     thread_list = []
-+    if not threadstr:
-+        return thread_list, match_requested
-     thread_strings = list(set(threadstr.split(',')))
-     for s in thread_strings:
-         if s.isdigit():
-             thread_list.append(int(s))
-         else:
--            ps = procfs.pidstats()
-+            if ps is None:
-+                ps = procfs.pidstats()
-             try:
-                 thread_list += ps.find_by_regex(re.compile(fnmatch.translate(s)))
-             except re.error:
-                 thread_list += ps.find_by_name(s)
--    return thread_list
-+    return thread_list, match_requested
- 
- def irqstring_to_list(irqstr):
 -
--    global match_requested
--    if irqstr:
--        match_requested = True
-+    match_requested = bool(irqstr)
-     irq_list = []
-+    if not irqstr:
-+        return irq_list, match_requested
-     irq_strings = list(set(irqstr.split(',')))
-     for s in irq_strings:
-         if s.isdigit():
-@@ -586,7 +581,7 @@ def irqstring_to_list(irqstr):
-             # find_by_user_regex returns a list of strings corresponding to irq number
-             irq_list_str = procfs.interrupts().find_by_user_regex(re.compile(fnmatch.translate(s)))
-             irq_list += [int(i) for i in irq_list_str if i.isdigit()]
--    return irq_list
-+    return irq_list, match_requested
+     i18n_init()
+     parser = gen_parser()
+     # Set all necessary defaults for gui subparser if no arguments provided
+@@ -681,6 +667,7 @@ def main():
  
- def socketstring_to_list(socketstr):
-     cpu_list = []
-@@ -684,6 +679,24 @@ def main():
-             print("Valid log levels: NOTSET, DEBUG, INFO, WARNING, ERROR")
-             print("Log levels may be specified numerically (0-4)\n")
+     # Convert string arguments to lists after parsing
+     match_requested = False
++    ps = None
  
-+    # Convert string arguments to lists after parsing
-+    match_requested = False
-+
-+    # Convert thread_list from string to list
-+    if 'thread_list' in vars(args) and args.thread_list:
-+        if isinstance(args.thread_list, str):
-+            args.thread_list, match_requested = threadstring_to_list(args.thread_list, ps)
-+
-+    # Convert irq_list from string to list
-+    if 'irq_list' in vars(args) and args.irq_list:
-+        if isinstance(args.irq_list, str):
-+            args.irq_list, irq_match_requested = irqstring_to_list(args.irq_list)
-+            match_requested = match_requested or irq_match_requested
-+
-+    # Convert socket strings to cpu lists
-+    if hasattr(args, 'sockets') and args.sockets:
-+        args.cpu_list = socketstring_to_list(args.sockets)
-+
-     if args.command == 'cpu_power':
-         if not cpw.have_cpupower:
-             print(f"Error: libcpupower bindings are not detected; please install libcpupower bindings from at least kernel {cpw.cpupower_required_kernel}.", file=sys.stderr)
-@@ -738,10 +751,10 @@ def main():
+     # Convert thread_list from string to list
+     if 'thread_list' in vars(args) and args.thread_list:
+@@ -772,8 +759,10 @@ def main():
+         save(args.cpu_list, args.thread_list, args.filename)
  
-     elif args.command in ['show_threads']:
-         do_ps(args.thread_list, args.cpu_list, args.irq_list, args.uthreads,
--                args.kthreads, args.affect_children, args.show_sockets if "show_sockets" in args else None, args.cgroups, args.compact)
-+                args.kthreads, args.affect_children, args.show_sockets if "show_sockets" in args else None, args.cgroups, args.compact, match_requested)
+     elif args.command in ['W', 'what_is']:
++        if not ps:
++            ps = procfs.pidstats()
+         for tid in args.thread_list:
+-            thread_help(tid)
++            thread_help(tid, ps)
  
-     elif args.command in ['show_irqs']:
--        show_irqs(args.irq_list, args.cpu_list)
-+        show_irqs(args.irq_list, args.cpu_list, match_requested)
- 
-     elif args.command in ['move', 'm', 'spread', 'x']:
-         spread = args.command in ['spread', 'x']
+     elif args.command in ['g', 'gui']:
+         # Don't try to start the gui if no display is available
 -- 
 2.54.0
 
