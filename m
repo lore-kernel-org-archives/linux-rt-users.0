@@ -1,159 +1,102 @@
-Received: from mail-qk1-f178.google.com (mail-qk1-f178.google.com [209.85.222.178])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 0BAA734BA49
-	for <linux-rt-users@vger.kernel.org>; Mon, 22 Jun 2026 20:21:53 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.222.178
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id D320A384CC1
+	for <linux-rt-users@vger.kernel.org>; Tue, 23 Jun 2026 00:32:07 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1782159715; cv=none; b=sK0iYlwohcwQyx8WtjPqsGzMveh7G+Uytint/QcKiLANZhCxEu0Nn4nEeLfkgK7T5Ky1v2kOoqdCdGNBQeUH5d1HJ6ru16X/iltwvq3nCqc6gn3si/msAS2hobu/tf9bewBhJcRwb/3dmDABvV9o9RJcBUatLPq+cYKQs1s92bg=
+	t=1782174731; cv=none; b=GBLl6DGV1LhE7epthhJgwKx1EedB60pJ8YTTxNtY6PIdEbvUY3KC+JwubOQ5RYNcBavkQTcIlhf/jWZwA8E/0paSFPd+DuygvYUicQmBOAlBCoogte83hVkDS5e+jJ5qtTs3HnFqSRg+PRKSD8aKDksKDT9Zq6Z0WQXevnV2fY8=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1782159715; c=relaxed/simple;
-	bh=KHQiCnlKMJlcAVF7WkhjFJmdt8uYD6CUChOLzc89PCw=;
-	h=From:To:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=ESr00wX9AvcjBiY5q9b3bWCl7/bELdEgWGLI9HaOgIGuwMHNrdZh3arWmhA6UAu2HyjACk8YrhVwP66ecKJ1T6D1AokCHy5gl7DIQp+PZR4TFbErFx/PYAF+20bHifHXnuhfI3gE/iNluFvglM1LacDYkfpRNkd/qy5Ao6r+3vA=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=fail (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=lXb6UPFL; arc=none smtp.client-ip=209.85.222.178
-Authentication-Results: smtp.subspace.kernel.org; dmarc=fail (p=quarantine dis=none) header.from=redhat.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
+	s=arc-20240116; t=1782174731; c=relaxed/simple;
+	bh=dZfJ8i/m413vVNq38a+hh56nyh/rMxJhTtOuNIXaidA=;
+	h=Date:From:To:Subject:Message-ID:MIME-Version:Content-Type:
+	 Content-Disposition; b=B8NX+z8kmLX7PTy3tsIiMEhqtPYfTN+VwN5Ux4jzTI47QLk7Iqd42N59c8DAy8GEunk1KCx6LpHVD0U1tZm6vN0jmuQrlEVoAY6tY1gBm086d4wkm/2dLWGAqN2cuK99IlcR6EXk99WXZHBi6DAMCbzcMjRP9s1AikN3rgWFT5k=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=MVdTpI6/; arc=none smtp.client-ip=170.10.129.124
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="lXb6UPFL"
-Received: by mail-qk1-f178.google.com with SMTP id af79cd13be357-9159f631656so42135485a.1
-        for <linux-rt-users@vger.kernel.org>; Mon, 22 Jun 2026 13:21:53 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20251104; t=1782159713; x=1782764513; darn=vger.kernel.org;
-        h=content-transfer-encoding:mime-version:references:in-reply-to
-         :message-id:date:subject:to:from:sender:from:to:cc:subject:date
-         :message-id:reply-to;
-        bh=JsWTJBkx3diUPRMRkO81OHx7pyIKwEbxfHAGJFdlovc=;
-        b=lXb6UPFLtpuBTSlyyfkixXLkrax+BhlZRfBmIUqp4dFDZBLzA/RlACfRqBUG9V7/gE
-         JjMe8AdMYCtSx7eCkVmKpEtBBQ62nrOrDLxrb8oMoh49KZhQESgXivBh/mJPNXRJ2o67
-         GDEAgbOO6q6Bo2mtnn4x7VpPnBe+hBiItkqDn3ZQpS3soEiM/Mj2OhRlx30t8RZ4VIDd
-         ZdfFVR7mn/Cv5Lba8WuA3gC5ISnoIbyja2TrGKCjMH0uI4BjK4k0PUFjw9kAen6LyXym
-         tk4Q+x6lkVADgwMOJlApvcBD/KSeS2Vus37VxNzaHTeDnxaflphesLdYqsh0BzeVQZoB
-         tyBQ==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20251104; t=1782159713; x=1782764513;
-        h=content-transfer-encoding:mime-version:references:in-reply-to
-         :message-id:date:subject:to:from:sender:x-gm-gg:x-gm-message-state
-         :from:to:cc:subject:date:message-id:reply-to;
-        bh=JsWTJBkx3diUPRMRkO81OHx7pyIKwEbxfHAGJFdlovc=;
-        b=MdNy9mh+0aAeh6clQFcHtfbK0UcyYWrlerU7RqED8tCNx4rpw9rdNEATv3XT1jEPQS
-         oF/1S1vIW8gzTicSxwdMRNbu+NNlPuFwMnimcUgefcryZKXV2KwoZDunIwc9u8KZIVgB
-         s9aRFRG52WNYVjUXMWOIVJT2f0rHx2jMkBtTeuuAK6DJWZ8CCL8HkSeFWPVY45KUTEp5
-         GuIW/YY2bhyHUfljEDvAF1DXRmWhrTy+UYevnUHXmfx7gbDJFCEG6bRsMKwUHywo0TR2
-         rPSX9zQU7433Hx8jcaQaHY3bUL53kGNYEpEaiy98SRe/hZch3JQceno7HTKDMV148Dpf
-         5U/A==
-X-Gm-Message-State: AOJu0YyCDX0HKwFiJohcTft/+yEzR+NjLLb/Bo927CXWiEnPNUIuJMGH
-	WXz+LWVYs6r1E8FwDT2K4E/ZWWBm+ctEgaj6pfJYukRyk3yddpkPbHEiGt+qKA==
-X-Gm-Gg: AfdE7cmG0jQy8KKJHdtzXWmHZ3l2h7PW/l7iWwjxApmbBM/Yrny4exV+RGRGn61uM5y
-	czubkTQvvpc/rbXNnwNry8u7amYW0q+dP+l1grP3rbzmc184XmODNHoWWICgwhnZWhc0NN2Jwxc
-	6CppOo0CWlwY9zqyrCtmLese2AvYLmLFO5qkPBZV+LErO56dpJVCHaMGwailnCvcKFHsk0rTRdz
-	6yuSUjyeHkXi3H6zbK+rZt9z4l4Ic7xu8rTHXL6MR7QMRhb5fC6jjKZSnKtiuiW2lt3/5Pjreg7
-	KTt3igPlSaFjGmiaA7mZ0MsPeLogNHDbI0uL4dUCWOx+oGFt4wvuzuMjtMoMToT/zcsmXGZAm0h
-	ySXUV09A6FPFfm6kjHBygVhZIr/Ky9mt4GnZ44iQYtgHDV09T30KTM58/N4HLcPAllXo47GS0zq
-	OgcPI8m5MxHTJ+3qnpfzm5C89IuqOHSXOA5bA//j5oMN6CCdxfJ5rcHwuS1LRgfqcaMLya+RRe6
-	Sha5HzXjS7M01+5HU35
-X-Received: by 2002:a05:620a:4107:b0:915:6ce1:3576 with SMTP id af79cd13be357-92601f1bdbfmr170665585a.20.1782159712813;
-        Mon, 22 Jun 2026 13:21:52 -0700 (PDT)
-Received: from Cumhall.redhat.com ([216.209.112.119])
-        by smtp.gmail.com with ESMTPSA id af79cd13be357-92600c7bd89sm70661285a.45.2026.06.22.13.21.52
-        for <linux-rt-users@vger.kernel.org>
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Mon, 22 Jun 2026 13:21:52 -0700 (PDT)
-Sender: John Kacur <jkacur@gmail.com>
-From: John Kacur <jkacur@redhat.com>
-To: linux-rt-users@vger.kernel.org
-Subject: [PATCH 6/6] tuna: Add centralized input validation for CPU numbers and RT priorities
-Date: Mon, 22 Jun 2026 16:21:31 -0400
-Message-ID: <20260622202131.182067-7-jkacur@redhat.com>
-X-Mailer: git-send-email 2.54.0
-In-Reply-To: <20260622202131.182067-1-jkacur@redhat.com>
-References: <20260622202131.182067-1-jkacur@redhat.com>
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="MVdTpI6/"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1782174726;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:mime-version:mime-version:content-type:content-type;
+	bh=QBxGUgRVysqNewTGd2q+SOA5tHAjuhMYTPES9N5YS3w=;
+	b=MVdTpI6/nkFLxPtbZwtq9wPiY9wOx8SeR0C6zs7nb60OBqujg9Avsl30hr+hgRw2iUuR43
+	QWBecwwHgtGR5Gl7Y/nTnYmQgFVf+AOQEMkNHLzOOrEpFhVbfBZ632dK5YFfdq+STUExlB
+	8/TQVBvyQvxEBqdrfvwCIdDiNT7OhFM=
+Received: from mx-prod-mc-01.mail-002.prod.us-west-2.aws.redhat.com
+ (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
+ relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-613-jFXaOj0eOKKy7vNdpJZSlQ-1; Mon,
+ 22 Jun 2026 20:32:03 -0400
+X-MC-Unique: jFXaOj0eOKKy7vNdpJZSlQ-1
+X-Mimecast-MFC-AGG-ID: jFXaOj0eOKKy7vNdpJZSlQ_1782174722
+Received: from mx-prod-int-08.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-08.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.111])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
+	(No client certificate requested)
+	by mx-prod-mc-01.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 894561956056;
+	Tue, 23 Jun 2026 00:32:01 +0000 (UTC)
+Received: from localhost (unknown [10.22.80.11])
+	by mx-prod-int-08.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTP id B3D2F1800591;
+	Tue, 23 Jun 2026 00:32:00 +0000 (UTC)
+Date: Mon, 22 Jun 2026 21:31:59 -0300
+From: "Luis Claudio R. Goncalves" <lgoncalv@redhat.com>
+To: LKML <linux-kernel@vger.kernel.org>,
+	linux-rt-users <linux-rt-users@vger.kernel.org>,
+	stable-rt <stable-rt@vger.kernel.org>,
+	Steven Rostedt <rostedt@goodmis.org>,
+	Thomas Gleixner <tglx@linutronix.de>,
+	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+	Daniel Wagner <daniel.wagner@suse.com>,
+	Clark Williams <williams@redhat.com>,
+	Mark Gross <markgross@kernel.org>, Pavel Machek <pavel@denx.de>,
+	Jeff Brady <jeffreyjbrady@gmail.com>,
+	Jan Kiszka <jan.kiszka@siemens.com>,
+	Luis Goncalves <lgoncalv@redhat.com>
+Subject: [ANNOUNCE] 5.10.259-rt155
+Message-ID: <ajnTzvfmwlUK409f@redhat.com>
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
 List-Subscribe: <mailto:linux-rt-users+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+X-Scanned-By: MIMEDefang 3.4.1 on 10.30.177.111
 
-Add a validation block in main() that validates converted arguments before
-command dispatch. This provides early detection of invalid inputs with
-clear, user-friendly error messages.
+Hello RT-list!
 
-CPU number validation:
-- Validates that all CPU numbers in cpu_list are within valid range
-  (0 to nr_cpus-1)
-- Applies to commands: move, spread, isolate, include, run, save,
-  show_threads, show_irqs, gui, cpu_power
-- Error message shows invalid CPUs and system's valid range
+I'm pleased to announce the 5.10.259-rt155 stable release.
 
-RT priority validation:
-- Validates that RT priorities are within valid range (1-99)
-- Applies to commands: priority, run
-- Validates both POLICY:RTPRIO format and priority-only format
-- Only validates when a policy is specified or priority is non-zero
+This release is just an update to the new stable 5.10.259 version
+and no RT-specific changes have been made.
 
-Old behavior with invalid inputs:
-- Invalid CPU: Either silent failure (show_threads) or confusing
-  tracebacks (move, isolate)
-- Invalid RT priority: Generic "Invalid argument" errno message
+You can get this release via the git tree at:
 
-New behavior:
-- Clear error message (e.g., "tuna: Invalid CPU numbers: [999].
-  System has 16 CPUs (0-15)")
-- Fails fast before attempting operations
-- No verbose usage output, just the concise error
+  git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
 
-Benefits:
-- Better user experience with clear error messages
-- Centralized validation logic (easier to maintain)
-- Prevents confusing error messages from system calls
+  branch: v5.10-rt
+  Head SHA1: 5ef784fc69516940ac91f2b24f3c5067859d50f1
 
-This completes task #6 from the argparse enhancements tracking document.
+Or to build 5.10.259-rt155 directly, the following patches should be applied:
 
-Assisted-by: Claude Sonnet 4.5 <noreply@anthropic.com>
-Signed-off-by: John Kacur <jkacur@redhat.com>
----
- tuna-cmd.py | 26 ++++++++++++++++++++++++++
- 1 file changed, 26 insertions(+)
+  https://www.kernel.org/pub/linux/kernel/v5.x/linux-5.10.tar.xz
 
-diff --git a/tuna-cmd.py b/tuna-cmd.py
-index f1605896c33c..b9a071414125 100755
---- a/tuna-cmd.py
-+++ b/tuna-cmd.py
-@@ -852,6 +852,32 @@ def main():
-             if 'irq_list' in vars(args) and isinstance(args.irq_list, list) and not args.irq_list:
-                 print("[WARNING] IRQ pattern matched 0 IRQs", file=sys.stderr)
- 
-+    # Validate converted arguments
-+    if args.command in ['move', 'm', 'spread', 'x', 'isolate', 'i', 'include', 'I', 'run', 'r', 'save', 's', 'show_threads', 'show_irqs', 'gui', 'g', 'cpu_power']:
-+        if 'cpu_list' in vars(args) and args.cpu_list:
-+            nr_cpus = utils.get_nr_cpus()
-+            invalid_cpus = [c for c in args.cpu_list if c >= nr_cpus]
-+            if invalid_cpus:
-+                print(f"[ERROR] Invalid CPU numbers: {invalid_cpus}. System has {nr_cpus} CPUs (0-{nr_cpus-1})", file=sys.stderr)
-+                sys.exit(2)
-+
-+    if args.command in ['priority', 'p', 'run', 'r']:
-+        if 'priority' in vars(args) and args.priority:
-+            policy, rtprio = args.priority
-+            # Only validate rtprio if a policy was specified or if rtprio is non-zero
-+            if policy is not None or rtprio != 0:
-+                # RT policies (FIFO, RR) require priority 1-99
-+                # SCHED_FIFO = 1, SCHED_RR = 2 in Linux
-+                if policy in (1, 2) and rtprio is not None:
-+                    if rtprio < 1 or rtprio > 99:
-+                        print(f"[ERROR] Invalid RT priority: {rtprio}. RT priorities must be 1-99", file=sys.stderr)
-+                        sys.exit(2)
-+                # If only priority specified (no policy), assume RT and validate
-+                elif policy is None and rtprio != 0:
-+                    if rtprio < 1 or rtprio > 99:
-+                        print(f"[ERROR] Invalid RT priority: {rtprio}. RT priorities must be 1-99", file=sys.stderr)
-+                        sys.exit(2)
-+
-     # if args.command in ['apply', 'a']:
-     #     apply_config(args.profilename)
- 
--- 
-2.54.0
+  https://www.kernel.org/pub/linux/kernel/v5.x/patch-5.10.259.xz
+
+  https://www.kernel.org/pub/linux/kernel/projects/rt/5.10/older/patch-5.10.259-rt155.patch.xz
+
+Signing key fingerprint:
+
+  9354 0649 9972 8D31 D464  D140 F394 A423 F8E6 7C26
+
+All keys used for the above files and repositories can be found on the
+following git repository:
+
+   git://git.kernel.org/pub/scm/docs/kernel/pgpkeys.git
+
+Enjoy!
+Luis
 
