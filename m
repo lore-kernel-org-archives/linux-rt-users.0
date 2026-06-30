@@ -1,72 +1,72 @@
-Received: from mail-qt1-f175.google.com (mail-qt1-f175.google.com [209.85.160.175])
+Received: from mail-qt1-f182.google.com (mail-qt1-f182.google.com [209.85.160.182])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id AA5CC3C4B83
-	for <linux-rt-users@vger.kernel.org>; Tue, 30 Jun 2026 16:45:26 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.160.175
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id CF7093D75C2
+	for <linux-rt-users@vger.kernel.org>; Tue, 30 Jun 2026 16:45:28 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.160.182
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1782837927; cv=none; b=IMjwKdhCsLJ4rw/Gb0ZMrJUvbCg6jkaswab+bLg1tEcCLAAoOfCahydPy2q/3UrVJmxjh+m9bv6A6Ed42MhrG/MgF68R9lCUwzKPSYaqlCLwUQtTF2BcLdMHdNUIZj+FVSUm92Rw0D5deUFLqU47rPt6/9WijPgVtRrND2NsXNA=
+	t=1782837930; cv=none; b=PirhYIA6m5W1xmQpx0lErl2EcbrsibdDJyWEUnoAIIuALbnnmlNniPlM/tkNS/LDznwZN9dVQvNk1A4eZlp6h1gaSV2dGYwPuUvb2N6H0aI+c3zM8GbCiN1ZO2QhwnlxOKymO7apLFJm0hksuPg7rKjBlBLle4pBLdUpPsR+Dj4=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1782837927; c=relaxed/simple;
-	bh=DAj/ijelPWcF2xG6Sy9sritmrdKJEMOFdwtybg3hD/k=;
+	s=arc-20240116; t=1782837930; c=relaxed/simple;
+	bh=hY3mFRw7yI9YjqT6AKo9JF76KKOZDUXbBwsDobZvBlE=;
 	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=tFT7k2bzS9gIul2/2ib6wAcecHt5b5fMjsuEB7MmIMW91Jo+aoWDVg4rx5nBWcUZr1OxFVl9yddpzHdITeJsxENrKm+kU3XoJOcY50ac0Z1MguUOCUdb420E0H2jhBpX8jpHHBLGAl+VosJENAs83C4XYFbt2vjKggUtWK0IhDc=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=fail (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=kTSx8zmi; arc=none smtp.client-ip=209.85.160.175
+	 MIME-Version; b=l7uNjoR58tSSdjo7/y+Ir1HCfEBh5l5RsnoStU5Nw//3xqcNl51w+Q1EWMY6ev5s2iWq9fJaS2wmvTJ8rD83JoMay+RcljObYlv+cOViTivGhlyz1aYHCU5m9O/4W3l5axHjpkKvllYICNR3npCHZmw9hoC+5uyWlNl0ayN33bw=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=fail (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=g376cf3e; arc=none smtp.client-ip=209.85.160.182
 Authentication-Results: smtp.subspace.kernel.org; dmarc=fail (p=quarantine dis=none) header.from=redhat.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="kTSx8zmi"
-Received: by mail-qt1-f175.google.com with SMTP id d75a77b69052e-51c16ac21acso5973051cf.0
-        for <linux-rt-users@vger.kernel.org>; Tue, 30 Jun 2026 09:45:26 -0700 (PDT)
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="g376cf3e"
+Received: by mail-qt1-f182.google.com with SMTP id d75a77b69052e-51c0c68aa31so17015131cf.3
+        for <linux-rt-users@vger.kernel.org>; Tue, 30 Jun 2026 09:45:28 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20251104; t=1782837926; x=1783442726; darn=vger.kernel.org;
+        d=gmail.com; s=20251104; t=1782837928; x=1783442728; darn=vger.kernel.org;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:sender:from:to:cc:subject:date
          :message-id:reply-to;
-        bh=Ccek4cqkJ1xbil8hOW1ZtBdWNeMpVs0Wr44PwoC4M7o=;
-        b=kTSx8zmiawauSVmbh0sW+hG/1YVUR/tjBIaCYZZnC8654PziGMYAg9o24YX6v81U2d
-         si9HoRA3+MQ5fPBd8oou/Q1EnO3pDng3x9WLWvYR89tc/blWyTiMash3a9fFfT5BNRcM
-         nFhjOBVaFH73ca8x9E2waK0X0jQDnbDsCYo341SIeEl2jpIhbCl+fimbOxjX2s177oAQ
-         FVLz79f3gPfM41pEG1eU1Lpd2flmiB7Tyy1GFy01GS2JgM+1MlDUU03kdTExU7ZA+lcG
-         /00LGgrJJgQsQMGqEurVA/BqZ5swCFAn0TwUgStiOGSccZ5faZ23rtXxHss3TbXxNBa6
-         uYvw==
+        bh=Bx5ceoXlZ0zb3kJ5DQ2hgYj18ekWZldLD4/hsSI/+pk=;
+        b=g376cf3eOMW82suZYtLFGz/8mMIb21oPiBigcKBbe2WPy/wzY7hmF3vwq+hmmM7p68
+         teVpkSCbdlyCiStv6ncy1+L6PYvP1tKJySJyM3fFF62O0oY2S42b+ctflK3WOmOeqFTn
+         LYJcCqWHnlTGiDwC7MmnbZUn6R2CLtean4EZK2NhWmpewkRpzo0E2akeO9DlAg8GtiG3
+         LMPDfaht3It59mzpRjv8r2oPcAYID4Att5tN5oa3a6KXcAuCy+aQZprXOH1TH6VL+kgf
+         nnMy1vD4Nsj5Gh3/7kYOZIdhIep1ZZRBt4x5c+nyccMKhnTEh2ypd6hHl6KfuLuRyZpu
+         LOUQ==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20251104; t=1782837926; x=1783442726;
+        d=1e100.net; s=20251104; t=1782837928; x=1783442728;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:sender:x-gm-gg
          :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
-        bh=Ccek4cqkJ1xbil8hOW1ZtBdWNeMpVs0Wr44PwoC4M7o=;
-        b=STKb7NwtW5cWtvGjl7F727c2zwxtCSmjauD+sxaUegUVT3DOIwpAj+i0gMXx4GN9bm
-         NGUTE8rMgdW8CcEwKoP2aoKkSI9i3Nn53Zm2/MnkTdL3P++qwdQk9C1wKiPXXyIUE5px
-         g37u4t0bF+dpm0akAzGJBhlHQP5y3D8omaIX81y7OAO28FYKnccN/OauTIk6T6FXnnoG
-         EjqEuSQFvUjPo3TivFrpSwHa1Mc39zyv8bSS6pNnVsLde9Mz34/ctC7ZAMliOlTgVgSy
-         UNt2jr0QeXuYcA4MoKfRRUBHRvNcKYXjYAdoAcJ+wyY+XTDb/zcd0oupp9q+rNOfefN5
-         EBpQ==
-X-Gm-Message-State: AOJu0YziX532Xz9ov+Etul9MZLKmidvpIo24W5NzwZvIc7UjLRSd7QiR
-	/GNuyrNLbV4PKIn+D7KtDODLzWTfpGRckSSwPncXDZNm7s8yuYKcs9rZH7CKTw==
-X-Gm-Gg: AfdE7ck8By91v3Zy6/rGSw6l1OIxuNLNYVzvAJv0vep3m9g8+xairS33GbH+JCGwu4V
-	6nP12HUba29NBrJ+5Fw5Q4voaourne19IGJrgk3eFPg2lS4FIGoBio4PGL7mu+NmXaw4i+SlUNe
-	OedsuD+ofKPbL7zulfGROUduYxriPUiTwYkg05bkrE00M2cSzYG2i+AfdVd85O9oxrw4Y9GmxKy
-	ELfjNzU9yMt3+YIJyBy2AilCzi2KkKrd8PaQ9ZJ4ZgeO1pMwdRFEANBAtzEcnNvlcb3djT9mVSI
-	V6SVmsJEedphCXA/9mj5Uq+jRu0A2QIFoJaRYryjHjztmf4sujG5D5WDITMxW3wJpdD1LHE70YZ
-	z3tPYv1DV+E2OalkN99IOKReHvfR7M1W2KUt2BUgTCIoCSBmcfEfIlWjOAwDxNxif3dZqmCJba6
-	tw5S/XCsMs76MOm4dOmBtC3TMvBCmv5CF4FVl/S6/hl02fk0IYT0VNSpvCB5nDt9lAQ148s1nx+
-	NvhCPxXjw==
-X-Received: by 2002:a05:622a:608a:b0:50b:4491:a2cf with SMTP id d75a77b69052e-51c1075f88cmr67315241cf.27.1782837925533;
-        Tue, 30 Jun 2026 09:45:25 -0700 (PDT)
+        bh=Bx5ceoXlZ0zb3kJ5DQ2hgYj18ekWZldLD4/hsSI/+pk=;
+        b=dw/6dN9jypQxRX9TUgIzcoYK0jn/7AiGILli3VsR/TC/smm4Ob+//xpRVL/dybOOkv
+         LT4MLW3Iz5MRBpiswNdDqddPQz3eke5V63J3BVlCTYi93Zbfn/x+M5mAzTC7fEWBJ7H5
+         p8ej8e9sLXw/ldpL/vdwF6T4USeIGerTvCUm2phmrhZhiikMslIqMqCj4AKKg+NzmD3Y
+         zQiqhB5s61T5RQfFIrV9xvSqqX6wpe3KSSZ9Y4q/Gj/yYzIB50jNSmMJQ/coUwzWA/qJ
+         UIlduN4xjFLYYL4uPEFpvdCObTyPLcB12vUvL+cBeacQqK1hacINZ8OnOrLUKw/MCMio
+         D3bQ==
+X-Gm-Message-State: AOJu0YyuD7c0KNwWJBnwTk4EhagqkQ6DfQLsKVGbu2CnMKlP5xcNCUXG
+	7mJMODZsC9V++SGBCt20n6PeNrgaPPY0xevpPQywypQozi47DHUiTHkt1DsF+g==
+X-Gm-Gg: AfdE7cmnc+OOtyoXd08AvpYj+OQ9jwq4sh8O0nRpM2+sIkSDmYxekV6nWnwTkO71vu5
+	Q5ZZrQ4WYrHX2Ujzbo+hleFNJ0MekNusVeo3NItYdN3thol87vr3pmP3ajhuie++9Eb3b0RFGPn
+	XBAnlBkOfBvyUA2ugYJom/g/wou1/6+6vKMR3WDR8TITU5EL6t5c4XvXN+gB0NImlhLgpzHfMe/
+	welwALilu/3JvvhLCpDXM//dp3dUBsV3KayUIJC1baU1gcR5XRrCYwLGw30Uird09CmyVRukAW7
+	/RLmRIHOCs4dk6aXAOJguoK62v/ianOAg1VphnJKHDrR6EaY7yhoGl6GbCTJEt+C2Y+El/sduyj
+	tQETajb/arpCC/WGQgUIrIuSkPJkpuCB2HSlFfstdI7mDAIxXnVFiW7N3GxKsoZRrqugaiPf0m5
+	qbw5qCzCHaywS76LQ5BJ4+jWi1hBSijCw8yxmxv2PN6rYsnrFQi6VqhRpwt8H0OMyrGV8vxDB4W
+	6dTiZ/DvA==
+X-Received: by 2002:a05:622a:1a84:b0:51a:8c9b:649c with SMTP id d75a77b69052e-51c108d29e0mr56310511cf.64.1782837927595;
+        Tue, 30 Jun 2026 09:45:27 -0700 (PDT)
 Received: from Cumhall.redhat.com ([216.209.112.119])
-        by smtp.gmail.com with ESMTPSA id d75a77b69052e-51c1080d4f4sm22722361cf.4.2026.06.30.09.45.24
+        by smtp.gmail.com with ESMTPSA id d75a77b69052e-51c1080d4f4sm22722361cf.4.2026.06.30.09.45.25
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Tue, 30 Jun 2026 09:45:24 -0700 (PDT)
+        Tue, 30 Jun 2026 09:45:26 -0700 (PDT)
 Sender: John Kacur <jkacur@gmail.com>
 From: John Kacur <jkacur@redhat.com>
 To: linux-rt-users@vger.kernel.org
 Cc: Derek Barbosa <debarbos@redhat.com>,
 	Clark Williams <williams@redhat.com>,
 	"Luis Claudio R . Goncalves" <lclaudio@uudg.org>
-Subject: [PATCH 2/5] pi_stress: Validate numeric command-line arguments
-Date: Tue, 30 Jun 2026 12:44:59 -0400
-Message-ID: <20260630164502.95740-3-jkacur@redhat.com>
+Subject: [PATCH 3/5] pi_stress: Improve error message for permission failures
+Date: Tue, 30 Jun 2026 12:45:00 -0400
+Message-ID: <20260630164502.95740-4-jkacur@redhat.com>
 X-Mailer: git-send-email 2.54.0
 In-Reply-To: <20260630164502.95740-1-jkacur@redhat.com>
 References: <20260630164502.95740-1-jkacur@redhat.com>
@@ -78,71 +78,41 @@ List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 
-The parse_unsigned() and parse_signed() functions were using strtoul()
-and strtol() but not checking if the entire string was consumed. This
-allowed invalid input like "123abc" to be silently accepted as "123".
+When pi_stress fails to set real-time scheduling priority, it printed
+a cryptic hex error code (0x1) that didn't explain what went wrong or
+how to fix it.
 
-Additionally, the -g (groups) and -i (inversions) options were calling
-strtol() directly instead of using the parse_signed() helper function,
-bypassing any validation entirely.
+Replace the error message with a clear explanation that indicates the
+failure reason and suggests running with root privileges.
 
-Add validation to parse_unsigned() and parse_signed() to ensure the
-entire input string is a valid number by checking that the end pointer
-points to a null terminator. Update -g and -i options to use
-parse_signed() for consistent error handling.
+Before:
+    main: boosting to max priority: 0x1
+
+After:
+    Failed to set real-time priority: Operation not permitted
+    Please run with root privileges to set real-time priorities.
 
 Assisted-by: Claude:claude-sonnet-4-5
 Signed-off-by: John Kacur <jkacur@redhat.com>
 ---
- src/pi_tests/pi_stress.c | 14 ++++++++++++--
- 1 file changed, 12 insertions(+), 2 deletions(-)
+ src/pi_tests/pi_stress.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
 
 diff --git a/src/pi_tests/pi_stress.c b/src/pi_tests/pi_stress.c
-index b7f7515fa9b1..c8c895a71e44 100644
+index c8c895a71e44..675953923c3a 100644
 --- a/src/pi_tests/pi_stress.c
 +++ b/src/pi_tests/pi_stress.c
-@@ -1092,6 +1092,11 @@ unsigned long parse_unsigned(const char *str)
- 		exit(EXIT_FAILURE);
+@@ -134,8 +134,8 @@ int main(int argc, char **argv)
+ 	status = pthread_setschedparam(pthread_self(), admin_sa.sched_policy,
+ 				       &thread_param);
+ 	if (status) {
+-		pi_error("%s: boosting to max priority: 0x%x\n", __func__,
+-			 status);
++		pi_error("Failed to set real-time priority: %s\n", strerror(status));
++		pi_error("Please run with root privileges to set real-time priorities.\n");
+ 		return FAILURE;
  	}
- 
-+	if (*p != '\0') {
-+		pi_error("invalid number format: %s\n", str);
-+		exit(EXIT_FAILURE);
-+	}
-+
- 	return n;
- }
- 
-@@ -1109,6 +1114,11 @@ long parse_signed(const char *str)
- 		exit(EXIT_FAILURE);
- 	}
- 
-+	if (*p != '\0') {
-+		pi_error("invalid number format: %s\n", str);
-+		exit(EXIT_FAILURE);
-+	}
-+
- 	return n;
- }
- 
-@@ -1211,7 +1221,7 @@ void process_command_line(int argc, char **argv)
- 			break;
- 		case OPT_GROUPS:
- 		case 'g':
--			ngroups = strtol(optarg, NULL, 10);
-+			ngroups = parse_signed(optarg);
- 			if (ngroups > num_processors) {
- 				pi_error("the number of groups cannot exceed the number of online processors (%ld)\n", num_processors);
- 				exit(-1);
-@@ -1224,7 +1234,7 @@ void process_command_line(int argc, char **argv)
- 			break;
- 		case OPT_INVERSIONS:
- 		case 'i':
--			inversions = strtol(optarg, NULL, 10);
-+			inversions = parse_signed(optarg);
- 			pi_info("doing %d inversion per group\n", inversions);
- 			break;
- 		case OPT_JSON:
+ 	/* block unwanted signals */
 -- 
 2.54.0
 
