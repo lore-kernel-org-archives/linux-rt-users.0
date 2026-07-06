@@ -1,75 +1,53 @@
-Received: from mail-qt1-f182.google.com (mail-qt1-f182.google.com [209.85.160.182])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 05873387588
-	for <linux-rt-users@vger.kernel.org>; Tue, 30 Jun 2026 16:45:36 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.160.182
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 4A301353A64
+	for <linux-rt-users@vger.kernel.org>; Mon,  6 Jul 2026 11:16:09 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1782837938; cv=none; b=Amcn0OTJdMcTKmyQYwyunCFR4H2xbaslFmbv1ssuBat/p4CrnglEWeac/Cw0JFtVpIUeo86hIzu3K0CdxU/lRRy49pXul6mGrSjjp0JfPRjXp5DTuq4RmDGX4C1xj73umbOyXatBmmLXXgshN1/o3pxPf2WrmMgLyzh6Oyz47WM=
+	t=1783336571; cv=none; b=gwBZeNGDuk1iEfNiP0ijTpeWtrs0NLn/hqJbsLwwnw/HFExNH4E8Rd/X97zNsBu8btrZSWfADdEmzXlh6sL1HH0SMzeLe93vBcd8SU/mDrwrv3r0O9+rTE3yfo+RhJK6ddNwz/9EjL7ce4Fv/sEXljgvwbGWk4DJAAZQ0ExNziM=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1782837938; c=relaxed/simple;
-	bh=75mR/KndX6/LAtrnWmTqsAtMGk3jB8qQM7ksfPpBSU8=;
-	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=GxIPNybG71YHpJwTRL39SKdv/uJd0fDoIpWimNb4076tD5xLSy3/+Pn2sl3M4tRpAVySxK8pDGynIFNF/plUVOx0O6X2Vm7Z/wmpFP0KkfhyExet+Scd2hJfiqdIUUZVHFiDM+k8zHjiS+20xtAuy2ZJL4qBlDYbXToGDCqvpkQ=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=fail (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=a/c8BlyR; arc=none smtp.client-ip=209.85.160.182
-Authentication-Results: smtp.subspace.kernel.org; dmarc=fail (p=quarantine dis=none) header.from=redhat.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
+	s=arc-20240116; t=1783336571; c=relaxed/simple;
+	bh=StdrIDtP7AjPpvTzcXIAGigTZoZluMP8pXzGeZX9l0s=;
+	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=e18ipY5W76MnicOO9RM7MtYE+6Mc4hF/DSjgNBxPeTuf+gFv2Do3Nyh/iAdvQKH8HDiRqefMiGcvlImt/4JnNo6nHrbDFfyYYkZ/43cCcMQ5Y9skIMGNzM3MmwucmVjLkmGas7n0Z+Xwf10HFYH2inmtJAOTT2Tuno/CDU99QOw=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=Ye7HQuZ4; arc=none smtp.client-ip=170.10.133.124
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="a/c8BlyR"
-Received: by mail-qt1-f182.google.com with SMTP id d75a77b69052e-51c1805b8a7so9929011cf.3
-        for <linux-rt-users@vger.kernel.org>; Tue, 30 Jun 2026 09:45:36 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20251104; t=1782837936; x=1783442736; darn=vger.kernel.org;
-        h=content-transfer-encoding:mime-version:references:in-reply-to
-         :message-id:date:subject:cc:to:from:sender:from:to:cc:subject:date
-         :message-id:reply-to;
-        bh=LPjo67SveNvIpbqCU0SZWhCDZtIdmPRyJTIYCMnTCMw=;
-        b=a/c8BlyRHz2eO3Zz1IrcIAWVDpCxO/r+WlPf6yeTRzfMPmU/vI6qFUuHQBCGSicwxJ
-         9KzmOpj7xFSr0QuTm1ey/Hqnh+M3Erh1Qu1wRLTOTPuJhovSLFgkd/FDL9dIbxBWVnxK
-         nyv1tGuIymPw3jmybfJ26YpL3y1N0+Za1l8EMFve+nT9W3CCIBEQxKoN56IdYstPLeXV
-         I8ZR+f9U2JmqPW097m/Bwe0n1gNDJ+Y5MrWbbuL8tIicrrmbHSTCpv2PVimpo0HvxfDt
-         Vxy1P/Q9mhogqMq74XFYxe5YQFMAA7yiH6420cwlJ/wjMWMWc3sV/fWXdgtgAVX2ietf
-         oNGQ==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20251104; t=1782837936; x=1783442736;
-        h=content-transfer-encoding:mime-version:references:in-reply-to
-         :message-id:date:subject:cc:to:from:sender:x-gm-gg
-         :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
-        bh=LPjo67SveNvIpbqCU0SZWhCDZtIdmPRyJTIYCMnTCMw=;
-        b=aulw/8EMMnXKZVGQyJAdvIHB5c3JJ8xODeenZjNQyhRx1qi800XlVbM7NS035A4ZIu
-         1Fj9p82U/h96CA206oupNDJW4RI3M4ZA9Yk7cBv0Ar2eSe3hUWhR+UI6jP1d/39e218E
-         RkJmoF0RAGZnqViqKit2GVOOM3IQohB1ynV3uC/P9NbRSbRFey86gyJfE59GCGCyyS90
-         6FvyDTIH2TlXBBPiEw2kof0++x+uTNjSzhwVIqcRXax/LtN5WfnWX5rj9hhtIRAFdZB2
-         tRs/lSgYqabBX+bBhkIIlZ4RJbYt0GZmQSUAJklCsiGMgfX73hBb3v95l/uOEmES+683
-         D55A==
-X-Gm-Message-State: AOJu0YxTiNBlMK21cLAU8V/0/EywOxEPvS1c3ngCE1q0jnHJ6p9/5o/S
-	Hr/wuypAS8Q6LaWiXtKONylpXO+/qpCRKEm6qJyFycYpKY5EHrxnf3CIH8Ucxw==
-X-Gm-Gg: AfdE7cnEteS8xBYvlocbMqPv4dL6JHN7ZD4Gyldi/sDwSd9v7uE0lHFQR41aEsOXKIb
-	3A9wOHgcevmAe21T8xELn59et+b9x8XlUGmxZC6OaZxFqCOz3ojcvCtXQ2XX25PGxddMP1naE26
-	CcK3jdJXL2OvEb6IMC5/PjqDeIKPsY9X0WZJUl1ATmX+Vopps6wiLixSYS+PHNCPu28JU5R0kp4
-	bF4JFhoDuXwmQ/KbY7Dwr+bWQT92rbc+c8v9nl2OEduaH9xJLof/1b2O+BvdeAzV6TP2M5PyFGj
-	08A/wxDEskHuviXdcdJhuXPoTcT922JZ1lmVUF/2yDVPOZ20vtbjavnRBcYDf1cs4/bET5qmMuZ
-	8KfyM6SZThNUbQSe1d+oT6v8Bsq9Mw6d07EB1LDwA+7anMN/xeAaZaAEyK9ZKUpwraV92v+zjOV
-	YUQcMTfmUc8WlZNsx9xNMzl5hvJQISKcFF4XyOuni3SutdehWEknQlZcRQfJC423zAodg2YH8oK
-	b7scw2z8D2cU6J0qrtB
-X-Received: by 2002:a05:622a:15cb:b0:51a:8c86:bd44 with SMTP id d75a77b69052e-51c1ca6e8b5mr18396251cf.65.1782837930546;
-        Tue, 30 Jun 2026 09:45:30 -0700 (PDT)
-Received: from Cumhall.redhat.com ([216.209.112.119])
-        by smtp.gmail.com with ESMTPSA id d75a77b69052e-51c1080d4f4sm22722361cf.4.2026.06.30.09.45.27
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Tue, 30 Jun 2026 09:45:28 -0700 (PDT)
-Sender: John Kacur <jkacur@gmail.com>
-From: John Kacur <jkacur@redhat.com>
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="Ye7HQuZ4"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1783336569;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:
+	 content-transfer-encoding:content-transfer-encoding;
+	bh=nVWfpQ7z04PLa5N48z4VGwOgfzLMfviw+upE8SKbEoI=;
+	b=Ye7HQuZ4Y3rncL2JKeMlPQNfTzlJ4Ri0h+AKEvzKH53y3UokECkeQJQtxIffADjKckIu8d
+	yWwlJUw/2MPAo3De679QnsLV1L8KE71jcgNxEvHhXYnM8myq132e7r0jsmYrqO0wqD7XDK
+	4+AQE7cc4ejQrPgHck4uh7xBB8iqguA=
+Received: from mx-prod-mc-05.mail-002.prod.us-west-2.aws.redhat.com
+ (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
+ relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-54-VVktCEhoPBSZZXV-iLt12Q-1; Mon,
+ 06 Jul 2026 07:16:07 -0400
+X-MC-Unique: VVktCEhoPBSZZXV-iLt12Q-1
+X-Mimecast-MFC-AGG-ID: VVktCEhoPBSZZXV-iLt12Q_1783336567
+Received: from mx-prod-int-01.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-01.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.4])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
+	(No client certificate requested)
+	by mx-prod-mc-05.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id E77A11955F0C
+	for <linux-rt-users@vger.kernel.org>; Mon,  6 Jul 2026 11:16:06 +0000 (UTC)
+Received: from gmonaco-thinkpadt14gen3.rmtit.csb (unknown [10.44.49.117])
+	by mx-prod-int-01.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTP id BCC243000715;
+	Mon,  6 Jul 2026 11:16:04 +0000 (UTC)
+From: Gabriele Monaco <gmonaco@redhat.com>
 To: linux-rt-users@vger.kernel.org
-Cc: Derek Barbosa <debarbos@redhat.com>,
-	Clark Williams <williams@redhat.com>,
-	"Luis Claudio R . Goncalves" <lclaudio@uudg.org>
-Subject: [PATCH 4/5] pi_stress: Fix error and debug message formatting
-Date: Tue, 30 Jun 2026 12:45:01 -0400
-Message-ID: <20260630164502.95740-5-jkacur@redhat.com>
-X-Mailer: git-send-email 2.54.0
-In-Reply-To: <20260630164502.95740-1-jkacur@redhat.com>
-References: <20260630164502.95740-1-jkacur@redhat.com>
+Cc: Clark Williams <williams@redhat.com>,
+	John Kacur <jkacur@redhat.com>,
+	Gabriele Monaco <gmonaco@redhat.com>
+Subject: [PATCH] rteval: Make thread excepthook portable and support chaining
+Date: Mon,  6 Jul 2026 13:16:01 +0200
+Message-ID: <20260706111601.363596-1-gmonaco@redhat.com>
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
@@ -77,59 +55,38 @@ List-Subscribe: <mailto:linux-rt-users+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
+X-Scanned-By: MIMEDefang 3.4.1 on 10.30.177.4
 
-Fix three message formatting issues:
+Replace the direct use of threading.__excepthook__ with the original
+threading.excepthook captured at module initialization. This enables
+compatibility with Python versions 3.8 and 3.9 (where __excepthook__ is
+not defined) and preserves any custom exception hooks registered by test
+runners or parent programs.
 
-1. Incorrect barrier name in error message (line 212): The error
-   referenced "all_threads_ready" but was actually checking
-   "all_threads_done"
-
-2. Typo in SCHED_DEADLINE error message (line 746): Fixed malformed
-   parenthesis in "affinity*dl)" to "affinity (dl)"
-
-3. Wrong format specifier (line 808): Variable 'count' is unsigned long
-   but was using %d instead of %lu
-
-These are cosmetic fixes that improve debugging clarity but don't
-affect program behavior.
-
-Assisted-by: Claude:claude-sonnet-4-5
-Signed-off-by: John Kacur <jkacur@redhat.com>
+Signed-off-by: Gabriele Monaco <gmonaco@redhat.com>
 ---
- src/pi_tests/pi_stress.c | 6 +++---
- 1 file changed, 3 insertions(+), 3 deletions(-)
+ rteval/__init__.py | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
 
-diff --git a/src/pi_tests/pi_stress.c b/src/pi_tests/pi_stress.c
-index 675953923c3a..45ccac739646 100644
---- a/src/pi_tests/pi_stress.c
-+++ b/src/pi_tests/pi_stress.c
-@@ -209,7 +209,7 @@ int main(int argc, char **argv)
- 		pi_info("waiting for all threads to complete\n");
- 		status = pthread_barrier_wait(&all_threads_done);
- 		if (status && status != PTHREAD_BARRIER_SERIAL_THREAD) {
--			pi_error("%s: pthread_barrier_wait(all_threads_ready): 0x%x\n", __func__, status);
-+			pi_error("%s: pthread_barrier_wait(all_threads_done): 0x%x\n", __func__, status);
- 			return FAILURE;
- 		}
- 		pi_info("All threads terminated!\n");
-@@ -743,7 +743,7 @@ void *high_priority(void *arg)
- 		status = sched_setaffinity(0, sizeof(cpu_set_t), &cpu_mask);
- 		if (status < 0) {
- 			pi_error
--			    ("high_priority[%d]: set cpu affinity*dl): %x\n",
-+			    ("high_priority[%d]: set cpu affinity (dl): %x\n",
- 			    p->id, status);
- 			return NULL;
- 		}
-@@ -805,7 +805,7 @@ void *high_priority(void *arg)
- 			}
- 			pthread_mutex_unlock(&shutdown_mtx);
- 		}
--		pi_debug("high_priority[%d]: entering start state (%d)\n", p->id,
-+		pi_debug("high_priority[%d]: entering start state (%lu)\n", p->id,
- 		      count++);
- 		status = pthread_barrier_wait(&p->start_barrier);
- 		if (status && status != PTHREAD_BARRIER_SERIAL_THREAD) {
+diff --git a/rteval/__init__.py b/rteval/__init__.py
+index 2eadb20..6e49889 100644
+--- a/rteval/__init__.py
++++ b/rteval/__init__.py
+@@ -41,10 +41,11 @@ def sig_handler(signum, frame):
+     else:
+         raise RuntimeError(f"SIGNAL received! ({signum})")
+ 
++orig_excepthook = threading.excepthook
+ def except_hook(args):
+     global threaderr
+ 
+-    threading.__excepthook__(args)
++    orig_excepthook(args)
+     threaderr = True
+     stopsig.set()
+ 
+
+base-commit: 6b38190d2d66968b637dada5c8af9226ca8a7a5b
 -- 
-2.54.0
+2.55.0
 
