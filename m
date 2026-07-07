@@ -1,106 +1,110 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+Received: from mail-qv1-f50.google.com (mail-qv1-f50.google.com [209.85.219.50])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 15D9B2FFDE1
-	for <linux-rt-users@vger.kernel.org>; Tue,  7 Jul 2026 13:25:59 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 5A8BA43C7C5
+	for <linux-rt-users@vger.kernel.org>; Tue,  7 Jul 2026 18:18:29 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.219.50
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1783430761; cv=none; b=UvP4XhT5ehv3AICSagJC7yPynPNUIuRiJXaEnTcdnEjC53LW5BpuzH5WB1dnBe+Wj/DJVP4wu+mxjdX4ZWm43HXt728wjC032lMuzx+J+jpeB0omaJ1ecrHYaIqgKBd3s/m/yBxD34r9X+4U0oZ10xBid+tkqbf0AjG8HbpWsfQ=
+	t=1783448310; cv=none; b=MbF/u/LHgUER9GqjZGp6q/BragTQRzC2LqLu9ZgBCQMpHv98nTq1aBQQTDpkA+E2zn6kEWf9D9sAp1foquX5f+XeLllGCUk7pLuPQXIcQbulE+03L7ym9FDWopfF59rU7IVCs0dZBH88jhsf+w/Blbg8aMqNf/9KlEWjQXN5BFM=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1783430761; c=relaxed/simple;
-	bh=ayP2GGh7kHlpDdW9rJVgMI83F7NC3N90oPAibtWtiks=;
-	h=Date:From:To:Subject:Message-ID:MIME-Version:Content-Type:
-	 Content-Disposition; b=RZlnw0107nvKm9nAiuJJvhWhAznOsJxJqhr0cZzqx+qK/BDdohxzDoxRrsO8WDySDOOiuVxodO5iCcmFYmB8EMJ32LGl7DZnNX9SyCjPHMp7DdbXAwF7W/FeitKkdszdSRxfkWWVtUdPlUKjt+INP3rD8sY6uI6QGk3ofAeqy1Y=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=JvAPBKmI; arc=none smtp.client-ip=170.10.129.124
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
+	s=arc-20240116; t=1783448310; c=relaxed/simple;
+	bh=nhy4YWfm+8rFlKwoQ6kYTHQ2qlG11KlbzZt3i/Bjoy8=;
+	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
+	 MIME-Version; b=PQb25/UMmetnlg3kPoo8V4UGdYlOAJupQ1pmI3pSn49lOmqyVEVtwvJP/WWA+DVF0ciozolIy6gzPYXmrpqeZOCQUCek8G5LekgVh5zK4ecM8T6iDh8zFNAIK9NEjpG6MKn+NPpzKRhttkgNS2TziKVpigedrrRcrWINKZC1uhU=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=fail (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=WdG84s4e; arc=none smtp.client-ip=209.85.219.50
+Authentication-Results: smtp.subspace.kernel.org; dmarc=fail (p=quarantine dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="JvAPBKmI"
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1783430759;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:mime-version:mime-version:content-type:content-type;
-	bh=Lw1QlAzHbEYqiIECgDF5JQR9V35i2bZ0eU+ZKjWFzYQ=;
-	b=JvAPBKmINGYy9RPq5EohkVCuUK7jOVBWjkXNNCwL3Z4tdR5MQJOnsRj82cBHp51fOhV9fZ
-	4xpsuGgyfy6tTnZ4zwnYugt25PQSZ2hlCmB6hmmYfpiP+Wx5yzf/2fOtlO5PfWC0KxhCmu
-	wvCBNhQWg8yM3L/QL7XJ+uaKyGJTLMQ=
-Received: from mx-prod-mc-03.mail-002.prod.us-west-2.aws.redhat.com
- (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
- relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-379-L5At6Ir5OD2a2Rt3Kiu1gg-1; Tue,
- 07 Jul 2026 09:25:55 -0400
-X-MC-Unique: L5At6Ir5OD2a2Rt3Kiu1gg-1
-X-Mimecast-MFC-AGG-ID: L5At6Ir5OD2a2Rt3Kiu1gg_1783430754
-Received: from mx-prod-int-06.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-06.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.93])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
-	(No client certificate requested)
-	by mx-prod-mc-03.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id CCC211955D96;
-	Tue,  7 Jul 2026 13:25:53 +0000 (UTC)
-Received: from localhost (unknown [10.22.80.89])
-	by mx-prod-int-06.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTP id 2A4AE18005B3;
-	Tue,  7 Jul 2026 13:25:52 +0000 (UTC)
-Date: Tue, 7 Jul 2026 10:25:51 -0300
-From: "Luis Claudio R. Goncalves" <lgoncalv@redhat.com>
-To: LKML <linux-kernel@vger.kernel.org>,
-	linux-rt-users <linux-rt-users@vger.kernel.org>,
-	stable-rt <stable-rt@vger.kernel.org>,
-	Steven Rostedt <rostedt@goodmis.org>,
-	Thomas Gleixner <tglx@linutronix.de>,
-	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-	Daniel Wagner <daniel.wagner@suse.com>,
-	Clark Williams <williams@redhat.com>,
-	Mark Gross <markgross@kernel.org>, Pavel Machek <pavel@denx.de>,
-	Jeff Brady <jeffreyjbrady@gmail.com>,
-	Jan Kiszka <jan.kiszka@siemens.com>,
-	Luis Goncalves <lgoncalv@redhat.com>
-Subject: [ANNOUNCE] 5.10.260-rt156
-Message-ID: <akz-X1U6yqts_E0V@redhat.com>
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="WdG84s4e"
+Received: by mail-qv1-f50.google.com with SMTP id 6a1803df08f44-8f0079614b2so48213236d6.1
+        for <linux-rt-users@vger.kernel.org>; Tue, 07 Jul 2026 11:18:29 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20251104; t=1783448308; x=1784053108; darn=vger.kernel.org;
+        h=content-transfer-encoding:mime-version:references:in-reply-to
+         :message-id:date:subject:cc:to:from:sender:from:to:cc:subject:date
+         :message-id:reply-to;
+        bh=AEEtJ/X8bkbnOCSzo2yLeS8awWPTkFJlDQq8PLfpV6A=;
+        b=WdG84s4ezbTKBLGTUR9BY76/jSnwxFK3+MJVK3iV6cr8DYJL7z27ByE0JynReJ1olI
+         1lE7hxEX1MZCNAPWUWW8dQqElJGx/39k0iJJDIIsjxKYM2wV0Ww015nxuItvgFHgX8D4
+         XUKx36sT9q04p1hcVhuyfoKRjzLOa/CJy99TNFBNkRLuu9rtD8Sdx/EtFLSTEfwjMAEp
+         8nxbEo7kXMYhVRFHLemuho7uHCdYtb6M8w4T+ZVuP08qOHpJPrcj30SMFqiK2ZQJLR3k
+         yVvakRsVNehsdwTM9n18+H6FCMggb8x4tfquj3c6gzkwB7nefswpBTHaFk45opBSTxx1
+         PrZw==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20251104; t=1783448308; x=1784053108;
+        h=content-transfer-encoding:mime-version:references:in-reply-to
+         :message-id:date:subject:cc:to:from:sender:x-gm-gg
+         :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
+        bh=AEEtJ/X8bkbnOCSzo2yLeS8awWPTkFJlDQq8PLfpV6A=;
+        b=UO3wQ3Bdm5fKTMuzVjx8mGbbxGengl4PYOe45MgUHcBY18FT8qFpBeskGiDU3/18r9
+         VF5+c5EcF72EkoBvvYSXq2fWNJdUWgLMow2qQdCKNX9DNdeiOAOuHC7MtIsGOktCGVsn
+         3H5yPBmrUqciIyrdsZeZwsi28X8x25BjQn2RBzJuah9e3bHubfFBLGOXqyrILjKc/0kj
+         DTK+siTXuR2m2qnyFfkECKmClVdGo/GfjTJBccxyWDjbPM4mSiLMLIIcFxI3SSlMvRvx
+         Fd+akv7IQCQQMkilfxRO6HxYZPse+07dRDZwFAkyFPjTUE4kBw1Mr60cULTbhUyWik6m
+         8zyQ==
+X-Gm-Message-State: AOJu0Yxuf0hjhxCQeuuwAUAmogWnH9nDXlsZGnaY8CUC7JKGoUPgn0ZH
+	kuDLFjTdc2AiXauzTSO1MCZsyuzDnElYCpGD22XsaeFGzH4RpkajwqjGtIZXdw==
+X-Gm-Gg: AfdE7cnpRiuCh+27LU6I7jzk1b4ev3HSB5iI7zas5fWi/Kuyclc5gWFDRWSAYjuSSkG
+	YeQeCc6m4s6P+Cfbm3/ovr4+zm0CmbN9F3BpTgEdLAefMdbRdkEMH+UKr32hknSZvPcFGtd6W4p
+	b47xot7BkJijyfkzk0PPY7uwxULk3Zh7BlvUWYBNMoSSEwmtbdoktCDukdtnZJBYQ6ZuuzSHunW
+	txQrusxyCsZaf0pKgQB22NgV1WlMEIkXtbSMWklwLhOiEYVXN5nYsJVYLkC4VDp8v3/2S+dZkZV
+	UUck5w9afMZnUaaUejteynGZuSluaPAtSWqW7sj01EjSMPp7w73wSpsENKrdYdi47gEDrB78f8U
+	4dLFLrweSNPyOTK/+TvHii6bJMgeb54q7RQqI2w6Bo+uqNHMIEMr8Pj/5AppTtaJ1jN2x6AJ8Oe
+	nlq85Sc4ZEztBZn4V1oS0qKnaEUypI42MOCPHP9l3Pebeca8RzjrZaRZV3Ey4kGhRgCnEoS2+GD
+	5ZsTlOdCw==
+X-Received: by 2002:a05:6214:f2e:b0:8e1:4508:ee58 with SMTP id 6a1803df08f44-8fcb5bb3a7bmr75661676d6.40.1783448308035;
+        Tue, 07 Jul 2026 11:18:28 -0700 (PDT)
+Received: from Cumhall.redhat.com ([216.209.112.119])
+        by smtp.gmail.com with ESMTPSA id 6a1803df08f44-8f4724bad04sm179598496d6.44.2026.07.07.11.18.27
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Tue, 07 Jul 2026 11:18:27 -0700 (PDT)
+Sender: John Kacur <jkacur@gmail.com>
+From: John Kacur <jkacur@redhat.com>
+To: Gabriele Monaco <gmonaco@redhat.com>
+Cc: linux-rt-users@vger.kernel.org
+Subject: [PATCH] rteval: Make thread excepthook portable and support chaining
+Date: Tue,  7 Jul 2026 14:18:12 -0400
+Message-ID: <20260707181812.133267-1-jkacur@redhat.com>
+X-Mailer: git-send-email 2.54.0
+In-Reply-To: <20260706111601.363596-1-gmonaco@redhat.com>
+References: <20260706111601.363596-1-gmonaco@redhat.com>
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
 List-Subscribe: <mailto:linux-rt-users+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-X-Scanned-By: MIMEDefang 3.4.1 on 10.30.177.93
+Content-Transfer-Encoding: 8bit
 
-Hello RT-list!
+Replace the direct use of threading.__excepthook__ with the original
+threading.excepthook captured at module initialization. This enables
+compatibility with Python versions 3.8 and 3.9 (where __excepthook__ is
+not defined) and preserves any custom exception hooks registered by test
+runners or parent programs.
 
-I'm pleased to announce the 5.10.260-rt156 stable release.
+Signed-off-by: Gabriele Monaco <gmonaco@redhat.com>
+Signed-off-by: John Kacur <jkacur@redhat.com>
+---
+ rteval/__init__.py | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
 
-This release is just an update to the new stable 5.10.260 version and
-no RT-specific changes have been performed.
-
-You can get this release via the git tree at:
-
-  git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
-
-  branch: v5.10-rt
-  Head SHA1: 3d73dc88a54627945d0003034e19101b8f12e40d
-
-Or to build 5.10.260-rt156 directly, the following patches should be applied:
-
-  https://www.kernel.org/pub/linux/kernel/v5.x/linux-5.10.tar.xz
-
-  https://www.kernel.org/pub/linux/kernel/v5.x/patch-5.10.260.xz
-
-  https://www.kernel.org/pub/linux/kernel/projects/rt/5.10/older/patch-5.10.260-rt156.patch.xz
-
-Signing key fingerprint:
-
-  9354 0649 9972 8D31 D464  D140 F394 A423 F8E6 7C26
-
-All keys used for the above files and repositories can be found on the
-following git repository:
-
-  git://git.kernel.org/pub/scm/docs/kernel/pgpkeys.git
-
-This release has been tested in KernelCI via tag v5.10.260-rt156-rc1:
-
-  https://dashboard.kernelci.org/tree/stable-rt/v5.10-rt-next/ddb0e070eba763536fef82f0779439e8efa3a326
-
-Enjoy!
-Luis
+diff --git a/rteval/__init__.py b/rteval/__init__.py
+index 2eadb2045e2b..6e49889a6d67 100644
+--- a/rteval/__init__.py
++++ b/rteval/__init__.py
+@@ -41,10 +41,11 @@ def sig_handler(signum, frame):
+     else:
+         raise RuntimeError(f"SIGNAL received! ({signum})")
+ 
++orig_excepthook = threading.excepthook
+ def except_hook(args):
+     global threaderr
+ 
+-    threading.__excepthook__(args)
++    orig_excepthook(args)
+     threaderr = True
+     stopsig.set()
+ 
+-- 
+2.54.0
 
