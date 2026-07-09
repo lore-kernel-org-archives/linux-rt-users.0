@@ -1,127 +1,70 @@
-Received: from galois.linutronix.de (Galois.linutronix.de [193.142.43.55])
+Received: from relay.hostedemail.com (smtprelay0016.hostedemail.com [216.40.44.16])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 1B508364949
-	for <linux-rt-users@vger.kernel.org>; Thu,  9 Jul 2026 15:22:17 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=193.142.43.55
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 96ACD347524
+	for <linux-rt-users@vger.kernel.org>; Thu,  9 Jul 2026 15:54:29 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=216.40.44.16
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1783610539; cv=none; b=TYwRLMfXHouFAsoFFULTxykE1lhDqt+jYPbOJ7f9iinxYKrc3wKi7JBfSBJ8SrMO2YApjRUaSltOu//UfUSw2GcSLpxzBf3rlFgJDDAAten4ORGQ/2RL0YN+cfkGGh04A7MxBiSaQ/86Yi43qXEICiBKmtlQA7hYSmOy21peYTw=
+	t=1783612471; cv=none; b=bBSwFogq6nqoi8eVuu/lJncoq/3X/sDiJCbTD23bdOMJ4ytJT5kD75n1Qx20n+fiHwoZqheV1yA9eUQIbBT6OjifansvCu0GMOJlrTgmSZke80tL2/uOeVuLLDwxuCzweQEcTxcdnoYBq9hjUqc8gKDOrsqZGNzOiqaJHksGPNo=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1783610539; c=relaxed/simple;
-	bh=Avu3zt/h9UsavX8wNzIe+JndjpBKa41frzVQAb2CyuE=;
-	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 Content-Type:Content-Disposition:In-Reply-To; b=uANP33NCmQw+/V0q3bA2V2U0deYYOhLM4A22bZtb1pP0UG4QGwlNT34bJG7+TjNzmZHXiRMslnTWL/4QCrM/2IlZHL55yExjvglHjqf9nRVj7+McKhJKG7e3pcRpJP9G9hLxqos1KiwTh5dDyjUyOuBH01FCHg0XVgk2gkQy+uk=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linutronix.de; spf=pass smtp.mailfrom=linutronix.de; dkim=pass (2048-bit key) header.d=linutronix.de header.i=@linutronix.de header.b=oPwbU1Jw; dkim=permerror (0-bit key) header.d=linutronix.de header.i=@linutronix.de header.b=TAaYbcaP; arc=none smtp.client-ip=193.142.43.55
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linutronix.de
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=linutronix.de
-Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="oPwbU1Jw";
-	dkim=permerror (0-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="TAaYbcaP"
-Date: Thu, 9 Jul 2026 17:22:14 +0200
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
-	s=2020; t=1783610535;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 in-reply-to:in-reply-to:references:references;
-	bh=r9EG/H1uUjNxWze83yzXvpoT9YUdC0MLYvueN66PiCc=;
-	b=oPwbU1JwJE/zxctw8ZZL/E7BuIdbmZkGZm+Re7/zV10hD7jgQBjrUopbI2e3VBU8c27Fqp
-	IDfb39TWHkAOh2MC8fOmqLm2FPc93tG6/+H/5c4zaxTG6NaExOxghldb8Hbr7dC9BIMUhy
-	ak7Z1CuMHpv87hTyC29niIoJ9jWIaajGwkk3CxDikNqWiapWgmZdaPoecubYlm6PM+ApMg
-	KDWkiyyoRRM9SSs3hadlQ+jYmWcYVPmgKMktQvsVuqKw8xXXiS01iiuH6LGUIehwxjMBVC
-	xtTc6jvzZUlVGO+ale2rfoAU1Ndb1wR4F5AhBQ2BbsXAi0NX+0qfg/3rlohVMA==
-DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
-	s=2020e; t=1783610535;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 in-reply-to:in-reply-to:references:references;
-	bh=r9EG/H1uUjNxWze83yzXvpoT9YUdC0MLYvueN66PiCc=;
-	b=TAaYbcaPx8u50NYJjo6oSTRc7xtOoUa1kcgz3/GOr84PotxLzNtd+rYk7Qc8/BjeIHCvQa
-	JeZx6fTZyAreVJAw==
-From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+	s=arc-20240116; t=1783612471; c=relaxed/simple;
+	bh=3y6GdJYv7Dgt5sVoWsZJteFzO43v5wLB4YaiK9DIrDs=;
+	h=Date:From:To:Cc:Subject:Message-ID:In-Reply-To:References:
+	 MIME-Version:Content-Type; b=aL4uDZtznCk1wa4t/wMGKdUSZk14PBAv50tEwJwiQ3HevTl8o/a1/SF3W1LrhJNo29WmH3X2DhYB9Jb7OFr2UW818xGrDwTDKhNadWn1VTA9qHTBvH7YFI7MsfqBxeyKYmuk6NwvCeadMKlP8Y2sDeu2TbPJAkgmFUOnz1NYwgA=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=goodmis.org; spf=pass smtp.mailfrom=goodmis.org; arc=none smtp.client-ip=216.40.44.16
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=goodmis.org
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=goodmis.org
+Received: from omf15.hostedemail.com (lb01a-stub [10.200.18.249])
+	by unirelay10.hostedemail.com (Postfix) with ESMTP id 32907C101B;
+	Thu,  9 Jul 2026 15:54:22 +0000 (UTC)
+Received: from [HIDDEN] (Authenticated sender: rostedt@goodmis.org) by omf15.hostedemail.com (Postfix) with ESMTPA id F1C9118;
+	Thu,  9 Jul 2026 15:54:19 +0000 (UTC)
+Date: Thu, 9 Jul 2026 11:54:27 -0400
+From: Steven Rostedt <rostedt@goodmis.org>
 To: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
-Cc: driver-core@lists.linux.dev, linux-rt-devel@lists.linux.dev,
-	linux-rt-users@vger.kernel.org,
-	"Rafael J. Wysocki" <rafael@kernel.org>,
-	Arnd Bergmann <arnd@arndb.de>, Clark Williams <williams@redhat.com>,
-	Danilo Krummrich <dakr@kernel.org>,
-	Peter Zijlstra <peterz@infradead.org>,
-	Steven Rostedt <rostedt@goodmis.org>,
-	Thomas Gleixner <tglx@linutronix.de>
+Cc: Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+ driver-core@lists.linux.dev, linux-rt-devel@lists.linux.dev,
+ linux-rt-users@vger.kernel.org, "Rafael J. Wysocki" <rafael@kernel.org>,
+ Arnd Bergmann <arnd@arndb.de>, Clark Williams <williams@redhat.com>, Danilo
+ Krummrich <dakr@kernel.org>, Peter Zijlstra <peterz@infradead.org>, Thomas
+ Gleixner <tglx@linutronix.de>
 Subject: Re: [RFC PATCH] sysfs: Add /sys/kernel/realtime entry
-Message-ID: <20260709152214.rH1O_8SM@linutronix.de>
+Message-ID: <20260709115427.3249f48a@gandalf.local.home>
+In-Reply-To: <2026070922-kilowatt-matador-5e1c@gregkh>
 References: <20260709143108.UYeCUUcd@linutronix.de>
- <2026070922-kilowatt-matador-5e1c@gregkh>
+	<2026070922-kilowatt-matador-5e1c@gregkh>
+X-Mailer: Claws Mail 3.20.0git84 (GTK+ 2.24.33; x86_64-pc-linux-gnu)
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
 List-Subscribe: <mailto:linux-rt-users+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Disposition: inline
-In-Reply-To: <2026070922-kilowatt-matador-5e1c@gregkh>
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
+X-Stat-Signature: xcr3uohwhm9jpa11to38oa6s9kkc5krm
+X-Rspamd-Server: rspamout04
+X-Rspamd-Queue-Id: F1C9118
+X-Session-Marker: 726F737465647440676F6F646D69732E6F7267
+X-Session-ID: U2FsdGVkX19laf4mXE6dugHSf6R/8MR7K3ns4R5b1Fk=
+X-HE-Tag: 1783612459-275221
+X-HE-Meta: U2FsdGVkX1+VyMkqRkuUx9fvOqbeD1dFtr+lhfRXZHcJyYXX84JoYutUCqXLiY33inqPk/fOh0t7mWFLA7HSN9+MyZpmQEUN/MWYZDP2+GPrW+gaZikqs9C3vNTPEIMw4cNgmGfY0yQkTTvbPyr2QoMMoro2Hop2Q8ik0jpxJlSTXrfLRP/5/X4RDwWyeSkMUgGGFK8j1GzjuEcHsZzhkSNjnZbmWn2/RSJcb1BQS82gx2WIjJzpY80+rz7O8XcAdsXhHBgoOFI31J00e17Em0jKliHROeV20YKT3s1tVZWqD9yjWoCnrSMpgpbrsd6nIqHqA2kJTYwdGa0Q4XuTLYkxJOy0JtwPou9cw8AQGccsrUNWmTXAk+fso4x0RdbG
 
-On 2026-07-09 16:46:19 [+0200], Greg Kroah-Hartman wrote:
-> On Thu, Jul 09, 2026 at 04:31:08PM +0200, Sebastian Andrzej Siewior wrote:
-> > Hi,
-> > 
-> > The following patch sat in the RT queue for almost 15years now. I can't
-> > find its origin on the list.
-> > All it does is adding /sys/kernel/realtime once PREEMPT_RT is enabled
-> > and returns 1.
-> > 
-> > Is this something that is still wanted and considered useful?
-> > Is this something that can be expressed better by other means?
-> > 
-> > There was an in person discussion about this and it was suggested to add
-> > /sys/kernel/realtime as a folder and having individual realtime features
-> > as files. I don't remember a single feature that would quality for this
-> > today but who knows. This is all I remember so far.
-> > 
-> > Now. Discussion go!
-> 
+On Thu, 9 Jul 2026 16:46:19 +0200
+Greg Kroah-Hartman <gregkh@linuxfoundation.org> wrote:
+
 > At the very least, it's not ok as it's not documented in
 > Documentation/ABI/ :)
-
-:)
-
+> 
 > But really, why is this needed?  Userspace shouldn't care, right?
 
-So there is Clark who needed it 15y ago for some udev rules. Maybe he
-elaborate on that.
+User space most definitely does care if it's running on a real-time kernel
+or not. Otherwise it may not be able to make its deadlines.
 
-There is custom "software" that is designed for realtime environment and
-if it is run on a regular kernel then it missed its timing requirements
-and the software goes usually in a fail state and people start debugging
-what has happen. If this happens often enough (booting a non-RT kernel)
-they tend to add a check so that the software complains early enough
-since checking the kernel is usually the last thing that is done.
+But I believe a more appropriate way is via uname, which I believe it
+already does what we want:
 
-This could work with the file (or folder) or by parsing uname output. I
-know of at least two individuals that switched to uname because the
-upstream RT does not have that file.
+  $ uname -a
+  Linux bxtest 7.2.0-rc2-test+ #16 SMP PREEMPT_RT Thu Jul  9 11:50:36 EDT 2026 x86_64 GNU/Linux
 
-cyclictest (from rt-tests) is using this file but only while collecting
-system information, nothing else.
-	https://git.kernel.org/pub/scm/utils/rt-tests/rt-tests.git/tree/src/lib/rt-utils.c#n528
-
-There is also sosreport
-	https://github.com/sosreport/sos/blob/main/sos/report/plugins/kernelrt.py#L32
-
-using for information collection purpose.
-There is thermald
-	https://github.com/intel/thermal_daemon/blob/master/src/thd_engine.cpp#L1065
-but this looks like just information gathering. That check looks wrong
-since there is a space instead of an underline in the check so this was
-not tested on a RT kernel.
-
-> And checkpatch should complain about the sprintf(), should be
-> sysfs_emit().
-
-Sure.
-
-> thanks,
-> 
-> greg k-h
-
-Sebastian
+-- Steve
