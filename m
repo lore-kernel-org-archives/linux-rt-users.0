@@ -1,70 +1,117 @@
-Received: from relay.hostedemail.com (smtprelay0016.hostedemail.com [216.40.44.16])
+Received: from smtp.kernel.org (aws-us-west-2-korg-mail-alma10-1.taild15c8.ts.net [100.103.45.18])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 96ACD347524
-	for <linux-rt-users@vger.kernel.org>; Thu,  9 Jul 2026 15:54:29 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=216.40.44.16
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 332A842669C;
+	Thu,  9 Jul 2026 16:02:23 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=100.103.45.18
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1783612471; cv=none; b=bBSwFogq6nqoi8eVuu/lJncoq/3X/sDiJCbTD23bdOMJ4ytJT5kD75n1Qx20n+fiHwoZqheV1yA9eUQIbBT6OjifansvCu0GMOJlrTgmSZke80tL2/uOeVuLLDwxuCzweQEcTxcdnoYBq9hjUqc8gKDOrsqZGNzOiqaJHksGPNo=
+	t=1783612945; cv=none; b=TTX5jU/+KADZooEVCIy1f6cRt/n6furItoshsjlCgrFsILBZIsgoZ5LMifBlfmGIMkXLalQbMqgLSsMbW+kOGsqhepv7XkOJAXAy1rMv6TOY3Z1IAULugcKkAvJUgpdUzYzLrxn4Uf4rIgipBTVvWeCUst9ZumWjjnolEsR0n54=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1783612471; c=relaxed/simple;
-	bh=3y6GdJYv7Dgt5sVoWsZJteFzO43v5wLB4YaiK9DIrDs=;
-	h=Date:From:To:Cc:Subject:Message-ID:In-Reply-To:References:
-	 MIME-Version:Content-Type; b=aL4uDZtznCk1wa4t/wMGKdUSZk14PBAv50tEwJwiQ3HevTl8o/a1/SF3W1LrhJNo29WmH3X2DhYB9Jb7OFr2UW818xGrDwTDKhNadWn1VTA9qHTBvH7YFI7MsfqBxeyKYmuk6NwvCeadMKlP8Y2sDeu2TbPJAkgmFUOnz1NYwgA=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=goodmis.org; spf=pass smtp.mailfrom=goodmis.org; arc=none smtp.client-ip=216.40.44.16
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=goodmis.org
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=goodmis.org
-Received: from omf15.hostedemail.com (lb01a-stub [10.200.18.249])
-	by unirelay10.hostedemail.com (Postfix) with ESMTP id 32907C101B;
-	Thu,  9 Jul 2026 15:54:22 +0000 (UTC)
-Received: from [HIDDEN] (Authenticated sender: rostedt@goodmis.org) by omf15.hostedemail.com (Postfix) with ESMTPA id F1C9118;
-	Thu,  9 Jul 2026 15:54:19 +0000 (UTC)
-Date: Thu, 9 Jul 2026 11:54:27 -0400
-From: Steven Rostedt <rostedt@goodmis.org>
-To: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
-Cc: Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
- driver-core@lists.linux.dev, linux-rt-devel@lists.linux.dev,
- linux-rt-users@vger.kernel.org, "Rafael J. Wysocki" <rafael@kernel.org>,
- Arnd Bergmann <arnd@arndb.de>, Clark Williams <williams@redhat.com>, Danilo
- Krummrich <dakr@kernel.org>, Peter Zijlstra <peterz@infradead.org>, Thomas
- Gleixner <tglx@linutronix.de>
+	s=arc-20240116; t=1783612945; c=relaxed/simple;
+	bh=yPRjF3TD3+zUJQSXqDWx38rnAPzsS2sPSwNj5z+j6vc=;
+	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
+	 Content-Type:Content-Disposition:In-Reply-To; b=FsJI3f0t4vENCj+Qatasq8ZTJnTxr37eQItXkFWDbBeM9seYUgi6vgwEN0KOGtEuEGB2fkZQpQo37wF4L7VJ5dWqiLeca76YQEVzIfqQTSaMCUrQQah5U+H0SCGH/nDOu85Ix22ijFln88anUqTK70cZp/32AIZpZB/C5upmgDM=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; arc=none smtp.client-ip=100.103.45.18
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id 8C5311F000E9;
+	Thu,  9 Jul 2026 16:02:23 +0000 (UTC)
+Date: Thu, 9 Jul 2026 11:02:22 -0500
+From: Clark Williams <williams@redhat.com>
+To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Cc: Greg Kroah-Hartman <gregkh@linuxfoundation.org>,
+	driver-core@lists.linux.dev, linux-rt-devel@lists.linux.dev,
+	linux-rt-users@vger.kernel.org,
+	"Rafael J. Wysocki" <rafael@kernel.org>,
+	Arnd Bergmann <arnd@arndb.de>, Danilo Krummrich <dakr@kernel.org>,
+	Peter Zijlstra <peterz@infradead.org>,
+	Steven Rostedt <rostedt@goodmis.org>,
+	Thomas Gleixner <tglx@linutronix.de>
 Subject: Re: [RFC PATCH] sysfs: Add /sys/kernel/realtime entry
-Message-ID: <20260709115427.3249f48a@gandalf.local.home>
-In-Reply-To: <2026070922-kilowatt-matador-5e1c@gregkh>
+Message-ID: <ak_GDsJS6kVoUM2f@lysander>
 References: <20260709143108.UYeCUUcd@linutronix.de>
-	<2026070922-kilowatt-matador-5e1c@gregkh>
-X-Mailer: Claws Mail 3.20.0git84 (GTK+ 2.24.33; x86_64-pc-linux-gnu)
+ <2026070922-kilowatt-matador-5e1c@gregkh>
+ <20260709152214.rH1O_8SM@linutronix.de>
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
 List-Subscribe: <mailto:linux-rt-users+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
-X-Stat-Signature: xcr3uohwhm9jpa11to38oa6s9kkc5krm
-X-Rspamd-Server: rspamout04
-X-Rspamd-Queue-Id: F1C9118
-X-Session-Marker: 726F737465647440676F6F646D69732E6F7267
-X-Session-ID: U2FsdGVkX19laf4mXE6dugHSf6R/8MR7K3ns4R5b1Fk=
-X-HE-Tag: 1783612459-275221
-X-HE-Meta: U2FsdGVkX1+VyMkqRkuUx9fvOqbeD1dFtr+lhfRXZHcJyYXX84JoYutUCqXLiY33inqPk/fOh0t7mWFLA7HSN9+MyZpmQEUN/MWYZDP2+GPrW+gaZikqs9C3vNTPEIMw4cNgmGfY0yQkTTvbPyr2QoMMoro2Hop2Q8ik0jpxJlSTXrfLRP/5/X4RDwWyeSkMUgGGFK8j1GzjuEcHsZzhkSNjnZbmWn2/RSJcb1BQS82gx2WIjJzpY80+rz7O8XcAdsXhHBgoOFI31J00e17Em0jKliHROeV20YKT3s1tVZWqD9yjWoCnrSMpgpbrsd6nIqHqA2kJTYwdGa0Q4XuTLYkxJOy0JtwPou9cw8AQGccsrUNWmTXAk+fso4x0RdbG
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+In-Reply-To: <20260709152214.rH1O_8SM@linutronix.de>
 
-On Thu, 9 Jul 2026 16:46:19 +0200
-Greg Kroah-Hartman <gregkh@linuxfoundation.org> wrote:
-
-> At the very least, it's not ok as it's not documented in
-> Documentation/ABI/ :)
+On Thu, Jul 09, 2026 at 05:22:14PM +0200, Sebastian Andrzej Siewior wrote:
+> > But really, why is this needed?  Userspace shouldn't care, right?
 > 
-> But really, why is this needed?  Userspace shouldn't care, right?
+> So there is Clark who needed it 15y ago for some udev rules. Maybe he
+> elaborate on that.
+> 
 
-User space most definitely does care if it's running on a real-time kernel
-or not. Otherwise it may not be able to make its deadlines.
+Ugh, I've always been embarrassed about that patch. We added it because
+in the dim dark past, something triggered udev many, many times and that
+called a shell script which searched the 'uname -v' output for
+PREEMPT_RT, meaning boot times slowed to a crawl. Instead we added 
+/sys/kernel/realtime and it just became a stat(2) call to see if the
+file existed. Pretty sure that was a RHEL6 kernel (2.6.32-ish) and I
+suspect that the need for it is long gone. 
 
-But I believe a more appropriate way is via uname, which I believe it
-already does what we want:
+I'm hesitant to call for it's removal, because the only other way for
+startup code that want's to know if it's on a realtime kernel is to look
+for PREEMPT_RT in the 'uname -v' output. I know that the financials and
+the telcos tune specifically for RT, pretty sure there are others. 
 
-  $ uname -a
-  Linux bxtest 7.2.0-rc2-test+ #16 SMP PREEMPT_RT Thu Jul  9 11:50:36 EDT 2026 x86_64 GNU/Linux
+> There is custom "software" that is designed for realtime environment and
+> if it is run on a regular kernel then it missed its timing requirements
+> and the software goes usually in a fail state and people start debugging
+> what has happen. If this happens often enough (booting a non-RT kernel)
+> they tend to add a check so that the software complains early enough
+> since checking the kernel is usually the last thing that is done.
+> 
+> This could work with the file (or folder) or by parsing uname output. I
+> know of at least two individuals that switched to uname because the
+> upstream RT does not have that file.
+> 
 
--- Steve
+Really? We always took the absence of that file to mean Not Realtime.
+
+> cyclictest (from rt-tests) is using this file but only while collecting
+> system information, nothing else.
+> 	https://git.kernel.org/pub/scm/utils/rt-tests/rt-tests.git/tree/src/lib/rt-utils.c#n528
+
+I'll ask around, but I'm betting RTLA checks for this as well. 
+
+> 
+> There is also sosreport
+> 	https://github.com/sosreport/sos/blob/main/sos/report/plugins/kernelrt.py#L32
+> 
+
+Forgot about sosreport.
+
+> using for information collection purpose.
+> There is thermald
+> 	https://github.com/intel/thermal_daemon/blob/master/src/thd_engine.cpp#L1065
+> but this looks like just information gathering. That check looks wrong
+> since there is a space instead of an underline in the check so this was
+> not tested on a RT kernel.
+> 
+> > And checkpatch should complain about the sprintf(), should be
+> > sysfs_emit().
+> 
+> Sure.
+
+I can certainly fix that.
+
+The question I have is, would a folder with RT-specific information be useful? 
+Someone just wanting to know if they're on RT could still check for existance
+if that's all they want to know, but I'm not really coming up with any
+other information that would prove useful for someone tuning for an RT
+workload. 
+
+Is there a "better" way to indicate that the system is running a
+PREEMPT_RT kernel?
+
+Clark
+
+-- 
+The United States Coast Guard
+Ruining Natural Selection since 1790
