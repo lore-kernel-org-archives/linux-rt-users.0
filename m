@@ -1,47 +1,47 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id C6243313E00
-	for <linux-rt-users@vger.kernel.org>; Fri, 10 Jul 2026 13:39:23 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 28B0E39447C
+	for <linux-rt-users@vger.kernel.org>; Fri, 10 Jul 2026 13:39:22 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1783690766; cv=none; b=iuOBAe3txUOYEl0SqfbDoXr4EOmdC20pETBPZjhjNRY1kjcIY2edodfGMSJJPd0XlPUIPgJ8TOzG8+/jW11W1JBnDmhrOPLCV3XKUIW1lD39jgSsuUCbKKwY2HoFITEnlwHT6czhZtroMT2cparYY/tI0DnlbTKy5WsXwJ1WZdA=
+	t=1783690765; cv=none; b=e38SqRSdu+uP8x73AtNEsT8QPy3sPPFqZ3g23vc17246NzaljsCc/foamSzUsQmkWTc901V1pxTC22DuEQ0DTKNjwk+VWsPUuBgL7dvZaBqdNECOERHbngwzK3pt7EXTROkkh7DRRBYwAjE3XYy9kYcExcglr41hszyRhWaC4Qw=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1783690766; c=relaxed/simple;
-	bh=kSgjzg9Ywszba++2EXz50r5Sg45ZIKyzNFH+knYgOHg=;
+	s=arc-20240116; t=1783690765; c=relaxed/simple;
+	bh=lAf7t5lAxHcA7OTVTaOiyhLdMN6eOD2gzAb/vnEdGQw=;
 	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=I+vfaPggALvaC+CSu3quxmRmVa2H7LW55Sacj0tH+KvfjTSodXtv8EKw5dOtEy5KBFq+xxASWZttNcdpTAhN8ISPVjvrdUqqI7XKX0mv4fr4YPYHdjQdmMPLOfrS3Fb4GF3gd+MRxUDe3og419ga3AERWxY/gaYGz3b+ODLZSUI=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=Rf8WOCbs; arc=none smtp.client-ip=170.10.129.124
+	 MIME-Version; b=R1wLlBytCzGUWUjTk3PVTAW00kbxoIY8pgfGWrfW669RBepJLKDFWnYWNOWqfoZnKnRhvDAikmp/u/B7Aji7BvbnR1I75neMRnFwq4cMMZ3VvZ4MYEDv3dgqA2Pll+27RJ5pZAumCLZT4MKT11CLoKuDwDs/V/oXufAP2KpsSbo=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=BjGIlIHZ; arc=none smtp.client-ip=170.10.133.124
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="Rf8WOCbs"
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="BjGIlIHZ"
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1783690762;
+	s=mimecast20190719; t=1783690761;
 	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
 	 to:to:cc:cc:mime-version:mime-version:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references;
-	bh=I4iB4FqdVxkvYA3PzAeyDuO6GPQfcdEWLTRfK7ZZrbw=;
-	b=Rf8WOCbsK5+dLi6nxeWB0WqUgbXQGUOaCmm1x3rtRp9QCZI4O00U3nR4mxaulPZqsHg+20
-	HbN5RILfM4dTPuLmOEhAiehU9xl8QXZtK/YWZMLyaaFMD2YBVltd+6y6mc1ZkKD3cnBCuI
-	vBsPV7LS7+QypXFlqNzphcPKj4C70sU=
-Received: from mx-prod-mc-06.mail-002.prod.us-west-2.aws.redhat.com
+	bh=H/AS+XEpO/2XHUBizOsG+vJMnCWO9XODKgIZWIcZZrY=;
+	b=BjGIlIHZPBbQ2VkgbwfiBh1yYaZRmP4AgDDQQ9Hx41JBiSx15yzhMzVPtV/P+iV3KMkFFT
+	DNBP8KaNc8vP/PXokWx/0zDKyv60dlbtERcY6/sIHDvqaHUlgp9c1bXjGHTqVz8oB9eioi
+	ptycZik+wIoQjRy66mR+95sLExBvdjY=
+Received: from mx-prod-mc-08.mail-002.prod.us-west-2.aws.redhat.com
  (ec2-35-165-154-97.us-west-2.compute.amazonaws.com [35.165.154.97]) by
  relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-173-Fy_jJ5McNDWrvDH77xxfxQ-1; Fri,
- 10 Jul 2026 09:39:18 -0400
-X-MC-Unique: Fy_jJ5McNDWrvDH77xxfxQ-1
-X-Mimecast-MFC-AGG-ID: Fy_jJ5McNDWrvDH77xxfxQ_1783690756
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-124-nX9i_GcMNji9vkIVPc4mew-1; Fri,
+ 10 Jul 2026 09:39:20 -0400
+X-MC-Unique: nX9i_GcMNji9vkIVPc4mew-1
+X-Mimecast-MFC-AGG-ID: nX9i_GcMNji9vkIVPc4mew_1783690759
 Received: from mx-prod-int-03.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-03.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.12])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
 	(No client certificate requested)
-	by mx-prod-mc-06.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id A62C318009C8;
-	Fri, 10 Jul 2026 13:39:16 +0000 (UTC)
+	by mx-prod-mc-08.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 4EF4E1801379;
+	Fri, 10 Jul 2026 13:39:19 +0000 (UTC)
 Received: from wcosta-defaultstring.rmtbr.csb (unknown [10.22.88.130])
-	by mx-prod-int-03.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTP id 92840195608E;
-	Fri, 10 Jul 2026 13:39:14 +0000 (UTC)
+	by mx-prod-int-03.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTP id 1B021195608F;
+	Fri, 10 Jul 2026 13:39:16 +0000 (UTC)
 From: Wander Lairson Costa <wander@redhat.com>
 To: williams@redhat.com,
 	jkacur@redhat.com,
@@ -50,9 +50,9 @@ Cc: juri.lelli@redhat.com,
 	luffyluo@tencent.com,
 	davidlt@rivosinc.com,
 	Wander Lairson Costa <wander@redhat.com>
-Subject: [PATCH 10/11] tests: add startup timing to stalld launch helpers
-Date: Fri, 10 Jul 2026 10:38:09 -0300
-Message-ID: <20260710133810.72398-11-wander@redhat.com>
+Subject: [PATCH 11/11] tests: increase stalld initialization timeout to 240s
+Date: Fri, 10 Jul 2026 10:38:10 -0300
+Message-ID: <20260710133810.72398-12-wander@redhat.com>
 In-Reply-To: <20260710133810.72398-1-wander@redhat.com>
 References: <20260710133810.72398-1-wander@redhat.com>
 Precedence: bulk
@@ -64,64 +64,52 @@ MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 X-Scanned-By: MIMEDefang 3.0 on 10.30.177.12
 
-Instrument start_stalld and start_stalld_with_log to measure and log
-the elapsed time from process launch to readiness.  Both functions
-capture nanosecond timestamps via date +%s%N before and after the
-startup sequence, compute the elapsed seconds with awk, and report
-the result through log().
+On PREEMPT_RT systems with large CPU counts (32+), BPF tracepoint
+attachment triggers SRCU synchronization that can take well over
+15 seconds, causing spurious test failures. Raise the
+wait_for_stalld_ready timeout from 15s to 240s in
+start_stalld_with_log and test_backend_selection.
 
-The echo in start_stalld is converted to log() for consistency with
-the rest of the test framework.
+This does not affect happy-path latency: the underlying grep -m1
+returns as soon as "monitoring started" appears in the log.
 
 Signed-off-by: Wander Lairson Costa <wander@redhat.com>
 ---
- tests/helpers/test_helpers.sh | 12 +++++++++++-
- 1 file changed, 11 insertions(+), 1 deletion(-)
+ tests/functional/test_backend_selection.sh | 2 +-
+ tests/helpers/test_helpers.sh              | 4 ++--
+ 2 files changed, 3 insertions(+), 3 deletions(-)
 
-diff --git a/tests/helpers/test_helpers.sh b/tests/helpers/test_helpers.sh
-index 85b1805..9222d07 100755
---- a/tests/helpers/test_helpers.sh
-+++ b/tests/helpers/test_helpers.sh
-@@ -459,6 +459,8 @@ start_stalld() {
- 		esac
- 	fi
- 
-+	local start_ns=$(date +%s%N)
-+
- 	${stalld_bin} ${args} &
- 	local shell_pid=$!
- 
-@@ -537,7 +539,9 @@ start_stalld() {
- 	fi
- 
- 	CLEANUP_PIDS+=("${STALLD_PID}")
--	echo "stalld started with PID ${STALLD_PID}"
-+	local end_ns=$(date +%s%N)
-+	local elapsed=$(awk "BEGIN {printf \"%.3f\", (${end_ns} - ${start_ns}) / 1000000000}")
-+	log "stalld started with PID ${STALLD_PID} (startup: ${elapsed}s)"
- 	return 0
- }
- 
-@@ -1152,6 +1156,8 @@ start_stalld_with_log() {
- 
- 	# Start stalld with line-buffered output so tail -f can detect
- 	# readiness immediately instead of waiting for the buffer to fill.
-+	local start_ns=$(date +%s%N)
-+
- 	stdbuf -oL ${TEST_ROOT}/../stalld ${stalld_args} > "${log_file}" 2>&1 &
+diff --git a/tests/functional/test_backend_selection.sh b/tests/functional/test_backend_selection.sh
+index 26654e1..e6924ff 100755
+--- a/tests/functional/test_backend_selection.sh
++++ b/tests/functional/test_backend_selection.sh
+@@ -38,7 +38,7 @@ test_backend_flag() {
  	STALLD_PID=$!
  	CLEANUP_PIDS+=("${STALLD_PID}")
-@@ -1162,6 +1168,10 @@ start_stalld_with_log() {
- 		stop_stalld
- 		fail "stalld did not initialize within 15s"
- 	fi
-+
-+	local end_ns=$(date +%s%N)
-+	local elapsed=$(awk "BEGIN {printf \"%.3f\", (${end_ns} - ${start_ns}) / 1000000000}")
-+	log "stalld ready (PID ${STALLD_PID}, startup: ${elapsed}s)"
- }
  
- # Wait for scheduling policy to change to expected value
+-	if ! wait_for_stalld_ready "${log_file}" 15; then
++	if ! wait_for_stalld_ready "${log_file}" 240; then
+ 		fail "stalld failed to start (${description})"
+ 	fi
+ 
+diff --git a/tests/helpers/test_helpers.sh b/tests/helpers/test_helpers.sh
+index 9222d07..e06ff8b 100755
+--- a/tests/helpers/test_helpers.sh
++++ b/tests/helpers/test_helpers.sh
+@@ -1162,11 +1162,11 @@ start_stalld_with_log() {
+ 	STALLD_PID=$!
+ 	CLEANUP_PIDS+=("${STALLD_PID}")
+ 
+-	if ! wait_for_stalld_ready "${log_file}" 15; then
++	if ! wait_for_stalld_ready "${log_file}" 240; then
+ 		log "Log contents:"
+ 		cat "${log_file}"
+ 		stop_stalld
+-		fail "stalld did not initialize within 15s"
++		fail "stalld did not initialize within 240s"
+ 	fi
+ 
+ 	local end_ns=$(date +%s%N)
 -- 
 2.55.0
 
