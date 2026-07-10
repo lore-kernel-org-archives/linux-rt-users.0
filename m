@@ -1,72 +1,72 @@
-Received: from mail-vk1-f178.google.com (mail-vk1-f178.google.com [209.85.221.178])
+Received: from mail-vs1-f51.google.com (mail-vs1-f51.google.com [209.85.217.51])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 783CF202F70
-	for <linux-rt-users@vger.kernel.org>; Fri, 10 Jul 2026 14:15:49 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.221.178
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 64A263368A5
+	for <linux-rt-users@vger.kernel.org>; Fri, 10 Jul 2026 14:15:50 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.217.51
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1783692950; cv=none; b=alDSFvVNo/rPfvaPD8VuurDUlQKxJgssTWWJ3EZiue0k+6ISurrgdXBl68TVEWGDg0x+IXieYOL12JpYOobO+l24du95/uSHIPlemQL7OrGGKd51BEt6WfqaV9umB7ew3miMwjSMzoxwRBthY485EwoZopvO5aVhThQ245sSd9Y=
+	t=1783692952; cv=none; b=MnF4kWDgSomyXohigFkOZ42aoCYTVen8KKx8iceY2mursMBlPh/jGBSOgu1CLxMVzfVFLnTXfvVmW5eV53dNWbb8IjyYZJxz3DzVqTqR4HP9FZjxWwDy6poh3BLobJM+whKUaoxz4bDbIjw1jQN19rGisNT3PxjCBSGelJkX+WU=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1783692950; c=relaxed/simple;
-	bh=4BUscVkerUi1cg9gA9pTiOeVvpzgAnsxLZrR0CykbRo=;
+	s=arc-20240116; t=1783692952; c=relaxed/simple;
+	bh=0JAIhU6nY8CXSe27LfgktZqUBjEfKnbHNGdUVeLfnrs=;
 	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=N6PXOAdg0nFGHTyb+wZPxRAMLZepUpeJ6mQMBEohbUVGbX4QXxYZ1MezaCY9vdPhEVh7yhVY0rq/s6dsirP32QN/1nSvOwbnAuRKfVxK2tXUZtKwiA0+92+CnH5s+S0j+dL410Dxo5j1yWMfsuBvVwd44JTzIjzMJy0Vl2qbMy4=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=fail (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=UCqqcUPl; arc=none smtp.client-ip=209.85.221.178
+	 MIME-Version; b=rL1aOcq2zzambA5FWoi6ZS5jdfLQLyIxNipH4Bg3IbLFxMJ4VmYOvSEM+A03K/Z6HzJ6PWEsNMMKTub7lDoRMNVhHLcz/odG4pB8E45FFFQdDp5bm05CtrP1VOaF61oX44sufU8UNNVGQx47jOPZaBD5P7EZRygpouzi7vyQIow=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=fail (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=WX7EIngQ; arc=none smtp.client-ip=209.85.217.51
 Authentication-Results: smtp.subspace.kernel.org; dmarc=fail (p=quarantine dis=none) header.from=redhat.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="UCqqcUPl"
-Received: by mail-vk1-f178.google.com with SMTP id 71dfb90a1353d-5bdd0779366so256561e0c.1
-        for <linux-rt-users@vger.kernel.org>; Fri, 10 Jul 2026 07:15:49 -0700 (PDT)
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="WX7EIngQ"
+Received: by mail-vs1-f51.google.com with SMTP id ada2fe7eead31-738a5cc517eso586614137.2
+        for <linux-rt-users@vger.kernel.org>; Fri, 10 Jul 2026 07:15:50 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20251104; t=1783692948; x=1784297748; darn=vger.kernel.org;
+        d=gmail.com; s=20251104; t=1783692949; x=1784297749; darn=vger.kernel.org;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:sender:from:to:cc:subject:date
          :message-id:reply-to:content-type;
-        bh=nxE+2xGNPEmUKUE+0JB+fczwCkOYKL6yjjxp5SaW2g0=;
-        b=UCqqcUPl/xf5PEHupXzwgy5BPlA49S8ecflxG2dYdk3Xyp32qgIedM0Vi15l7jOTxY
-         GFAhijUkcHvxzz3gv28Ksn1Xo1KE867GtfRvkkMT7ma9NWdHaeW9xxUaCHzDDxJJ1Egv
-         Y1xCZocdn1mAVwa5zMsfaaw9BFOza1JkpX5uDjnQ8YqJ3CjhvPszTGyyEfi6Kz6daRjC
-         AeZHeuw9ikfX9WGXp7um4toxsWVmy3Afa2l3mxguiY2OujRJsU12M1aoXhghMpssQoqO
-         xX9rPl3KxKOLKD4C7JO5dMOPMyKlM/o8fPqXbh/AFnsxaGI9dVyF673iwhTY482Yhe8X
-         d0yw==
+        bh=e7ySbfEbRojhhWGCD1QfYy4KwAORmXwj2yuEvr3uSZs=;
+        b=WX7EIngQVAuY/0/96iBV+9ORtC7IFYSGeHjd7oLTLC4npjZ0aUqyo1/V78em/NvKsn
+         RKTVRs/SylVb0/ERPIeuK/uf8HWiswciFJqtck1B4o7kvQc0EmzFq7Qr6bcfYdw99dL+
+         n9MFrHU70vAPKJhahmmvlMLdzmTz6rg+OZVmbBwMv+dkCM+G6djdS1FjCPQf2TFbNus6
+         yoUYqhDJYASUq3pyBOkE8ys66keyhYDUKATagcKuhBtJFhvA7oUEeJu9Yp08GfAuD8xh
+         N9yf+6VwDqz5/SJYIVlalhBerHisoOrYyTSGeCAeiULQelm/hhxnbL3Oinvbpa/Rc+ea
+         LXWg==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20251104; t=1783692948; x=1784297748;
+        d=1e100.net; s=20251104; t=1783692949; x=1784297749;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:sender:x-gm-gg
          :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to
          :content-type;
-        bh=nxE+2xGNPEmUKUE+0JB+fczwCkOYKL6yjjxp5SaW2g0=;
-        b=mV7o6mhwUXEdP/h26DINROatVzfSHFshS3pSyNMs2LE9oYjEO+I3UNHaWMfXNocerE
-         mhn5PnKbJQiRfgFAglxu05LC92oVBucqvd8Fy3HvyIBer2KLN4wRdo8V/YPQDV0UWgES
-         y26gOWpw11DxU/iw+6fNOWulspgmadXNnUgmW5VVXlHg1o79Wgru/Hw3FTYMtN7+Mmfq
-         ihXMHzja2RQANSxcqljjgMdj8PExm+wNbPm/aVOg6F/FJ3lH5sLkgEM10caL21ZjWlPK
-         qpuA5BxN6No3P2wO6TlYGEOUBZ+vsoCo6LohxTE8o3MpKuX4Z7I35nxMc0qSdb7nvqJB
-         nAFw==
-X-Gm-Message-State: AOJu0YywsQENOdXKFLQiuFWBnWxVPIQr8Ffcaq+OC1PpPq4pf9IeFvMr
-	gVBeVm+rFFCuCuj3BpejbVkr4+HEczWnob/1giiHvr4tgD5VIdtaLi9zn+Lq1A==
-X-Gm-Gg: AfdE7clKiOD2OcHNCOQUaMccoC7k+I+TPcuBPukG/k1ZiDsyS5SQkRSNa2eYRxGuATd
-	b1zwpcad13gyeNxx672gwWThmdCne0ttNwHfAWoryXkGEj+m0mwYpRN7L1Plr89uSZF2CKAt2G1
-	fk8OlBUwWyYw+peEJ0aRMBuZhbTCOeRxN+iFbNRr7pFX2EGf5tKCIAUJ0gcuCVkwHcR62fGRBuM
-	1U2xUnM8CchtR9HwFfOkXoEfn9mZZj0SZhlibcGNpDXHGwhGI9G+u/GCeDXFUpFNEh/PREe8Nbq
-	gOtat/Wv+Woxb3PKfFxKjuuAoV1AUkJy8ptikwRuILrna3We6gzm6eCmhzBe6nUaJWAsx+nW8qC
-	BB5jcRQcCGnMxB3lzTkaxAf3FBpRtUP9O/VOFHBi8VYGgdfztDX0PWwS8g4FBhO0uAF/V31M4qh
-	W3l5tOShTMeqzJTm2MrzNWPaqpfTTHiXdw28AZEDoDQQRT3CxffhPl25BM6m7hHs7kOVoEOzXRB
-	A==
-X-Received: by 2002:a05:6102:4190:b0:739:8c52:f2b with SMTP id ada2fe7eead31-744e0312fa6mr6759185137.18.1783692948218;
-        Fri, 10 Jul 2026 07:15:48 -0700 (PDT)
+        bh=e7ySbfEbRojhhWGCD1QfYy4KwAORmXwj2yuEvr3uSZs=;
+        b=etujPsWAXvYWSXjExnudS58fhJr1U8UcoI/Tj4+RnL4BBKGfL82UpOZx4mOEkDf3Uc
+         D4EUi1EdQN9a++iuQglMpW02d3viNuSDpTS0UPMc2tz+ZGAyiRaO+9mIq2mqqCnDXNho
+         V65/mVCnamnV7lWgUw7Z0uDcQQO28rpqRKM+aWdb0SS4Q1AE4NhnJrQBMDk7eop6JOGL
+         /6ztsy7rSx+kToJs3ONpWWdYWYsvnsM5QBhnxWz4dWfc0Eiaa/IQ8AYI3qQJEyMNP4uS
+         aSa1DWFtYBkhF4P2y6clhwCPl8/EpwsP1QtQgCIl/8USjLzJ13WFqN4d0TLIFwklVM5k
+         NLIQ==
+X-Gm-Message-State: AOJu0Yx9MLu2hKtvr76UXkxdLgclIjzX/I/cJIRZtqYk5zxjPwXaoPt7
+	/rXH5hg2zHN3+7l9f3zIwg1Qwn7xE4P8koZs24GvhNQFa9kCCWHWsO4fBqzxZw==
+X-Gm-Gg: AfdE7ckoag2YPP7I1m1zJaSwwUssgX4QWzNfnLXUsDmBvYb/HgJOnMT/G+IxDq1nQEX
+	JFV24J1ZOU89P0tqiPpdgjh2vZj6oWPdHskNGxf2gBv8TiA0CY4FK/OGITTupC8K5B0QvcP1/PH
+	j+946bnf2H0rM4DfZtNX/ufEw+kESYPwa84eeZG425vLRmYdJ6IHEnd6h0i6rf8BKebgCcigy5R
+	+7/LjydBQJX2DcUzWrSO7Q4Hux9gpLaWsvrDQknNdVYtDRu3loYK/fnVfl0uCnfFE+vItSfAm0B
+	QU7NsALF3vtU6jRineviYPHN+H2971HWqwPT4sxOmLy4ZGza8wtKxkBCthlKRwXZGlpEi6Ba9bv
+	yy9e26HSdPE/+RDCJuRYMrEHY2HtANElUf5ONu3luDjXmQuMe9PNx4CCeftd0CIZoEQW5DNeoDT
+	H0ZOxb/jh1QyDUCmp0hixDyaPCtVxzay41rPSM7aYalz5pLJF0jrb+/LYpyoBWgvgx1lRf/18F1
+	Q==
+X-Received: by 2002:a05:6102:8001:b0:631:26f6:7022 with SMTP id ada2fe7eead31-744e0406554mr7862304137.23.1783692949291;
+        Fri, 10 Jul 2026 07:15:49 -0700 (PDT)
 Received: from Cumhall.home ([216.209.112.119])
-        by smtp.gmail.com with ESMTPSA id ada2fe7eead31-744d6771d49sm5565087137.0.2026.07.10.07.15.47
+        by smtp.gmail.com with ESMTPSA id ada2fe7eead31-744d6771d49sm5565087137.0.2026.07.10.07.15.48
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Fri, 10 Jul 2026 07:15:47 -0700 (PDT)
+        Fri, 10 Jul 2026 07:15:48 -0700 (PDT)
 Sender: John Kacur <jkacur@gmail.com>
 From: John Kacur <jkacur@redhat.com>
 To: linux-rt-users@vger.kernel.org
 Cc: Chris White <chwhite@redhat.com>,
 	Clark Williams <williams@redhat.com>
-Subject: [PATCH 01/36] tuna: Warn when user-specified patterns match zero threads or IRQs
-Date: Fri, 10 Jul 2026 10:14:39 -0400
-Message-ID: <20260710141523.36440-2-jkacur@redhat.com>
+Subject: [PATCH 02/36] tuna: Suppress output when pattern matches zero results
+Date: Fri, 10 Jul 2026 10:14:40 -0400
+Message-ID: <20260710141523.36440-3-jkacur@redhat.com>
 X-Mailer: git-send-email 2.54.0
 In-Reply-To: <20260710141523.36440-1-jkacur@redhat.com>
 References: <20260710141523.36440-1-jkacur@redhat.com>
@@ -78,49 +78,63 @@ List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 
-When a user specifies a thread or IRQ pattern that matches nothing,
-tuna previously showed only empty output with column headers. This left
-users uncertain whether their pattern syntax was incorrect, the pattern
-was valid but matched nothing, or something failed silently.
+When a user-specified pattern matches nothing, showing empty column
+headers is redundant after already displaying the warning message.
 
-Add feedback when patterns match zero results by printing a warning to
-stderr. This helps users debug their patterns and understand that tuna
-processed the pattern but found no matches.
-
-The warning appears for relevant commands (show_threads, show_irqs,
-move, spread, priority, what_is) only when the user explicitly specified
-a pattern (match_requested == True) and the resulting list is empty.
+Suppress the display output entirely for show_threads and show_irqs
+commands when patterns match zero results. The warning message to
+stderr provides sufficient feedback to the user.
 
 Example:
   $ tuna show_threads -t 'foo*'
   tuna: warning: thread pattern matched 0 threads
+  (no headers or empty output displayed)
 
 Assisted-by: Claude:claude-sonnet-4-5
 Signed-off-by: John Kacur <jkacur@redhat.com>
 ---
- tuna-cmd.py | 9 +++++++++
- 1 file changed, 9 insertions(+)
+ tuna-cmd.py | 26 +++++++++++++++++++++++---
+ 1 file changed, 23 insertions(+), 3 deletions(-)
 
 diff --git a/tuna-cmd.py b/tuna-cmd.py
-index 293044920223..015bb7a54663 100755
+index 015bb7a54663..d9d1eaa83757 100755
 --- a/tuna-cmd.py
 +++ b/tuna-cmd.py
-@@ -712,6 +712,15 @@ def main():
-     if 'nohz_full' in vars(args) and args.nohz_full:
-         args.cpu_list = nohz_full_to_cpu()
+@@ -746,11 +746,31 @@ def main():
+         list_config()
  
-+    # Warn if user-specified patterns matched nothing
-+    if match_requested:
-+        if args.command in ['show_threads', 'move', 'm', 'spread', 'x', 'priority', 'p', 'what_is', 'W']:
-+            if 'thread_list' in vars(args) and isinstance(args.thread_list, list) and not args.thread_list:
-+                print("tuna: warning: thread pattern matched 0 threads", file=sys.stderr)
-+        if args.command in ['show_irqs', 'move', 'm', 'spread', 'x']:
-+            if 'irq_list' in vars(args) and isinstance(args.irq_list, list) and not args.irq_list:
-+                print("tuna: warning: IRQ pattern matched 0 IRQs", file=sys.stderr)
+     elif args.command in ['show_threads']:
+-        do_ps(args.thread_list, args.cpu_list, args.irq_list, args.uthreads,
+-                args.kthreads, args.affect_children, args.show_sockets if "show_sockets" in args else None, args.cgroups, args.compact, match_requested)
++        # Skip display if pattern matched nothing (warning already shown)
++        has_content = False
++        if match_requested:
++            if 'thread_list' in vars(args) and isinstance(args.thread_list, list) and args.thread_list:
++                has_content = True
++            if 'irq_list' in vars(args) and isinstance(args.irq_list, list) and args.irq_list:
++                has_content = True
++        else:
++            has_content = True  # No filtering, will show content
 +
-     # if args.command in ['apply', 'a']:
-     #     apply_config(args.profilename)
++        if has_content:
++            do_ps(args.thread_list, args.cpu_list, args.irq_list, args.uthreads,
++                    args.kthreads, args.affect_children, args.show_sockets if "show_sockets" in args else None, args.cgroups, args.compact, match_requested)
  
+     elif args.command in ['show_irqs']:
+-        show_irqs(args.irq_list, args.cpu_list, match_requested)
++        # Skip display if pattern matched nothing (warning already shown)
++        has_content = False
++        if match_requested:
++            if 'irq_list' in vars(args) and isinstance(args.irq_list, list) and args.irq_list:
++                has_content = True
++        else:
++            has_content = True  # No filtering, will show content
++
++        if has_content:
++            show_irqs(args.irq_list, args.cpu_list, match_requested)
+ 
+     elif args.command in ['move', 'm', 'spread', 'x']:
+         spread = args.command in ['spread', 'x']
 -- 
 2.54.0
 
