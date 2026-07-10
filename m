@@ -1,83 +1,110 @@
-Received: from relay.hostedemail.com (smtprelay0013.hostedemail.com [216.40.44.13])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+Received: from mail-qv1-f46.google.com (mail-qv1-f46.google.com [209.85.219.46])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id C23EA425CF9
-	for <linux-rt-users@vger.kernel.org>; Fri, 10 Jul 2026 16:12:07 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=216.40.44.13
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id DEC2C434E4B
+	for <linux-rt-users@vger.kernel.org>; Fri, 10 Jul 2026 16:14:49 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.219.46
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1783699936; cv=none; b=jHbuSWUEq5VRNRktpnjyV/X2MZ8z+Na4iaR6GI2005nP63IGbMGVU6zrA/IDtflvfO9ERUwF4cxfSLMHLI8mxBYNp+TI7ic+4TXFbu8vrx8oZhtH8KJ0Lck+jNK7ZoL+5NR/+Cs3IMfPZGO+AG5/n7m/wjPEEypWxU5lYOiRsU8=
+	t=1783700092; cv=none; b=nG7P4L4RuuQYU2P/7gUVDojk3BUE/tfq0jKHv1OxmOggJZ3bYjolsD4cPE5bMsnbTM93FXTpsdFXo9Ek4BxWvybfHlkV2rgKTl8qSX6+ManHOzPUazgq7+kiIEImjOAbh0B9BttE4oSMdE8iHvawOlHxRfs0rhGm76wUCK/Zk5U=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1783699936; c=relaxed/simple;
-	bh=GdUdZfmf7MiuR/NXiH/XuRtoK4WmQXKBuhNL9m53M/s=;
-	h=Date:From:To:Cc:Subject:Message-ID:In-Reply-To:References:
-	 MIME-Version:Content-Type; b=SZGMJZjsJoRmmdZKFa5zLrtYyFaafWfFwSTBl40hOtA6tpoWOyDPpbxjMo1PxDwlUITmZwcCYJOCZJ/apnPeakg5ApUfXMidQxoXIW+iGK6CXnTrPnm5g61dtJsMvvDWsoANTTFUtn0FqtRKXv1FeNso4l8gqCtwKHN3B/9lg/E=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=goodmis.org; spf=pass smtp.mailfrom=goodmis.org; arc=none smtp.client-ip=216.40.44.13
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=goodmis.org
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=goodmis.org
-Received: from omf03.hostedemail.com (lb01a-stub [10.200.18.249])
-	by unirelay05.hostedemail.com (Postfix) with ESMTP id 9925F404E5;
-	Fri, 10 Jul 2026 16:12:00 +0000 (UTC)
-Received: from [HIDDEN] (Authenticated sender: rostedt@goodmis.org) by omf03.hostedemail.com (Postfix) with ESMTPA id DDE6F6000A;
-	Fri, 10 Jul 2026 16:11:57 +0000 (UTC)
-Date: Fri, 10 Jul 2026 12:12:07 -0400
-From: Steven Rostedt <rostedt@goodmis.org>
-To: Florian Bezdeka <florian.bezdeka@siemens.com>
-Cc: Sebastian Andrzej Siewior <bigeasy@linutronix.de>, Greg Kroah-Hartman	
- <gregkh@linuxfoundation.org>, driver-core@lists.linux.dev,
- linux-rt-devel@lists.linux.dev, linux-rt-users@vger.kernel.org, "Rafael J.
- Wysocki" <rafael@kernel.org>, Arnd Bergmann <arnd@arndb.de>, Clark Williams
- <williams@redhat.com>, Danilo Krummrich	 <dakr@kernel.org>, Peter Zijlstra
- <peterz@infradead.org>, Thomas Gleixner	 <tglx@linutronix.de>, Jan Kiszka
- <jan.kiszka@siemens.com>
-Subject: Re: [RFC PATCH] sysfs: Add /sys/kernel/realtime entry
-Message-ID: <20260710121207.7e55d6c3@gandalf.local.home>
-In-Reply-To: <ae96c274f166301aba762d97caccddf176ad7968.camel@siemens.com>
-References: <20260709143108.UYeCUUcd@linutronix.de>
-	<2026070922-kilowatt-matador-5e1c@gregkh>
-	<20260709152214.rH1O_8SM@linutronix.de>
-	<748a489687000b21d0e8f961fc2f9f963b0bc1d1.camel@siemens.com>
-	<20260710115145.32729a7c@gandalf.local.home>
-	<ae96c274f166301aba762d97caccddf176ad7968.camel@siemens.com>
-X-Mailer: Claws Mail 3.20.0git84 (GTK+ 2.24.33; x86_64-pc-linux-gnu)
+	s=arc-20240116; t=1783700092; c=relaxed/simple;
+	bh=JYgvhxPBfQL9cjpgezp2EipfqeaVsY2NvMkuLGrnVRw=;
+	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=SOsOKf17esSGsf7tSxTpDKxsqMdqIqEwkoEApl/WGP0OWMZFxcFLm5nXAYlupmMFhxJ8VyThTuuViDxkH8UmHcCj2C7TmR6dGG8bB8zctqKhtMxQff6ThfA4FsnF+l99XHro9BqpvVe2nBNl6wK1oZbaXyVAUM74r17+GqqMO8s=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=fail (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=Dp3iOC9p; arc=none smtp.client-ip=209.85.219.46
+Authentication-Results: smtp.subspace.kernel.org; dmarc=fail (p=quarantine dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
+Authentication-Results: smtp.subspace.kernel.org;
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="Dp3iOC9p"
+Received: by mail-qv1-f46.google.com with SMTP id 6a1803df08f44-8efec2c28f8so8754606d6.2
+        for <linux-rt-users@vger.kernel.org>; Fri, 10 Jul 2026 09:14:49 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20251104; t=1783700088; x=1784304888; darn=vger.kernel.org;
+        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+         :to:from:sender:from:to:cc:subject:date:message-id:reply-to
+         :content-type;
+        bh=jidyz0m2pyBT9HTJJIRRr+C9ZxN+bBe5QqlIStZVsLA=;
+        b=Dp3iOC9p1NHQvPvZKfvAV2C29HniMjjLrwAHlHQUnx1o+uV0EzTjmSQP28iqUFC+Vq
+         dKX+/NayqPq7MINLsjVf8OLaGpY7zaLYrYGMaPj+KiTs+8NIMnuLRXZmUhkVXuMJEdGX
+         W4OSpnN7W4bRBJVwsVAQ5lIhsf87Z55X+t3u9hLdruLunY2skws56OEMN2oF5yh7/vAw
+         FskUSGXnqQaNcOI6PU4uMFS4oRIuMTeOtgx/IbLQWzvUUeLskCDadsGe5SaoKf8v6i+i
+         jlCA8c8vgNvBsQDmghqAqOc1XjpuMAXxRRHO0LOvbJUPn1F+69TqDHJxZZa7djsJtaNA
+         XhvQ==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20251104; t=1783700088; x=1784304888;
+        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+         :to:from:sender:x-gm-gg:x-gm-message-state:from:to:cc:subject:date
+         :message-id:reply-to:content-type;
+        bh=jidyz0m2pyBT9HTJJIRRr+C9ZxN+bBe5QqlIStZVsLA=;
+        b=kGWHFA3KnFNCe7gDdT0L7LfzHW8Wub9IbNPW2QaBuB8WxAIwwNbWKf5TpCKuE2KCIi
+         aj6CiWYd6ozudOtcYP9hMnsfdQiAzLBEM+4c7j7F2SoR+nBmt8U6fC0ZZKdTNMM3V1ai
+         ISQtgms7pxqjlWHYZ/uc21NeECDfJ8R6zCBOqiXbDqVux15terWDRDk8yKYkedbPQ+iT
+         FzgojdDVxoZvGkJ8nV3Q3KNlukUvw5fJZpbHatuhH8KkeHHxF7y7fTFEB8hKnKUfyx3J
+         Ji2UHSttq83Q71z5u8lQr4fbXe0hL8o1wM9y8xFnMAPN1+p2y6zuHBaoIhig22BoWMZq
+         W8hA==
+X-Gm-Message-State: AOJu0Yz/XX+VusR4cvDHW5ru9gRQcYXbUiJ0+n/PPqOCvbEAkQESRr0C
+	JDP1oGGCOmQzaaEYOtFyHJ6uESp+V7GNwgCtY3hpvYEZ5sTotspS+1YzXAlDUA==
+X-Gm-Gg: AfdE7cnSgebkBybFd8wKuIcAP2BWWdivqXz4N27nB+IyRa8vvYftizx0VIVGgaDNgP4
+	6vWnfh4yT2fsYZEflaRDAch0TvGy03V2M5h2ZGj8AIZRgJmte4sDEF30ioBYQWLby/CixgvHVJe
+	UYUIBpCYs9T6FgF/RGXCiuDlHvK2fhWW11rOYUDLEuekxaXYdE9wk9NoSzW/kmH1WAI+8OectQ5
+	hu/BztsfQyriUjRMhCKN3Uh2XUF7H5ViPWcJEflBqGOaNXyBwYqZUw4z2YTQS+ev7Nwn8xsV/xv
+	DudUKuAIHG2c9x293NfarByWrtf/6KEXfIk+P1qMPrWvcEas8SoDyrr9V/PD9foPNcEJn6xNKsA
+	726azukiALaihXhFiCMrUMguIfA+gW1zCNM4j88nYObU9R8beEseuLf2/E15R9WrSKK1dno3t9L
+	8UdWu5sXe/mZMl6BgJ8Vu9ZZMuC01mi4EE6qur4FMxwSKyuwPqvg+OE5qD7aNqcVy/eKSmcJ41q
+	bdi9UzOBw==
+X-Received: by 2002:a05:6214:468a:b0:8ee:871e:f2e0 with SMTP id 6a1803df08f44-8fec179bb97mr159104816d6.27.1783700088100;
+        Fri, 10 Jul 2026 09:14:48 -0700 (PDT)
+Received: from Cumhall.redhat.com ([216.209.112.119])
+        by smtp.gmail.com with ESMTPSA id 6a1803df08f44-902de1fdb3bsm17894416d6.23.2026.07.10.09.14.47
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Fri, 10 Jul 2026 09:14:47 -0700 (PDT)
+Sender: John Kacur <jkacur@gmail.com>
+From: John Kacur <jkacur@redhat.com>
+To: linux-rt-users@vger.kernel.org
+Cc: Clark Williams <williams@redhat.com>
+Subject: [PATCH] rteval: Set measurement cpuset to partition=isolated for CPU isolation
+Date: Fri, 10 Jul 2026 12:14:32 -0400
+Message-ID: <20260710161432.117058-1-jkacur@redhat.com>
+X-Mailer: git-send-email 2.54.0
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
 List-Subscribe: <mailto:linux-rt-users+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
-X-Stat-Signature: 9qt18usyjjtxnwu91jmx1hyunneue574
-X-Rspamd-Server: rspamout02
-X-Rspamd-Queue-Id: DDE6F6000A
-X-Session-Marker: 726F737465647440676F6F646D69732E6F7267
-X-Session-ID: U2FsdGVkX1/gWt7CHnMoNhn0ZP27yxkPjM9qm1bxEo0=
-X-HE-Tag: 1783699917-50465
-X-HE-Meta: U2FsdGVkX1+r8SdiorZOat/FEemXjoEGUldToOgyALL/p3eV6MXEn3xt+O3HF4yMfz8lyXNbEs9nGjcXFwWemZVi7Sr11wavDbEBv/kYLQ1saf/46v9pVvJPqCyNxMozVsYwcDoxdEJLcX6gYSf0WF9fGEl3CeOQcrpqMrmi26mSI2tE29gpHLS9031VNkJBiTwm5alqm3hlXUX7TbVSbJ3o6kZhlPIJh+QLzC2sC34wnesOoJgU9X9U7LDS1sc1yNsv+rzhLTuelHQ8xQzkap/91hoQldoVzSFCU5x+qU0bE31Fyn41RcySEW/oABgVOkTO7xp1QMrCxlucoUDgym8dxPgfnSs6
+Content-Transfer-Encoding: 8bit
 
-On Fri, 10 Jul 2026 18:01:20 +0200
-Florian Bezdeka <florian.bezdeka@siemens.com> wrote:
-> 
-> Depends on what you consider a valid update scenario. Updating from 6.1-
-> rt with sysfs available to something like 6.18 (no sysfs anymore) will
-> still break - as long as you do not (force) update userspace in
-> lockstep.
+Change the rteval_measurement cpuset from partition=member to
+partition=isolated to provide kernel-enforced CPU isolation for
+measurement workloads.
 
-The key difference above is the drop of "-rt" in the version.
+With partition=isolated, the kernel prevents tasks from being scheduled
+on measurement CPUs unless explicitly placed there, eliminating
+interference from system tasks and the load balancer. This is essential
+for accurate latency measurements.
 
-The "Don't break user space" rule is from Linus, and he only cares about
-what is in his tree. It was never "some external tree supported this and
-now that code from that tree is accepted in his tree, he must support this
-other feature too". To get any feature in, it must be accepted by upstream
-maintainers, regardless if without it, it breaks user space from the
-out-of-tree code. Greg already showed his reluctance about this change.
-It's people like Greg that get to decide if it gets upstream or not. In
-their POV, it's *not* a regression.
+The existing error handling in write_cpu_exclusive() ensures graceful
+fallback to partition=member if isolated partitions are not supported
+by the kernel.
 
-> 
-> I learned meanwhile that our detection moved to uname meanwhile, so this
-> is not a problem for us anymore.
+Assisted-by: Claude:claude-sonnet-4-5
+Signed-off-by: John Kacur <jkacur@redhat.com>
+---
+ rteval/cpusetmanager.py | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-Then I guess it's not a problem :-)
+diff --git a/rteval/cpusetmanager.py b/rteval/cpusetmanager.py
+index 2fe931cc4574..abf5760db28c 100644
+--- a/rteval/cpusetmanager.py
++++ b/rteval/cpusetmanager.py
+@@ -125,7 +125,7 @@ class CpusetManager:
+         self.measurement_cpuset = Cpuset('rteval_measurement')
+         self.measurement_cpuset.write_memnode(self.numa_nodes)
+         self.measurement_cpuset.assign_cpus(collapse_cpulist(self.measurement_cpus))
+-        self.measurement_cpuset.write_cpu_exclusive(False)  # partition=member
++        self.measurement_cpuset.write_cpu_exclusive(True)  # partition=isolated
+ 
+         self.logger.log(Log.INFO, "Cpusets created successfully")
+         return self
+-- 
+2.54.0
 
--- Steve
