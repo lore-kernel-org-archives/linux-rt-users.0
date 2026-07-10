@@ -1,72 +1,72 @@
-Received: from mail-vs1-f49.google.com (mail-vs1-f49.google.com [209.85.217.49])
+Received: from mail-ua1-f54.google.com (mail-ua1-f54.google.com [209.85.222.54])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id A6EFD33FE0D
-	for <linux-rt-users@vger.kernel.org>; Fri, 10 Jul 2026 14:16:27 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.217.49
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 79CC533CEA2
+	for <linux-rt-users@vger.kernel.org>; Fri, 10 Jul 2026 14:16:30 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.222.54
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1783692989; cv=none; b=ASTkzaW4tEIwlXutfcAp0Go76dNZpbFxCvcNXwkXr+zJknJIOneNQ7WzS9Hx7QCXHpK6m48iFJjK2Ouoebmz8n3ZZfTZIR2/7P53lV6HUDGA7u/7a42a1gXiPOpjkSL3kCNnKjoBwVsdQoG+uQN7NCBFfg2Hn9BDmALABSaV9e4=
+	t=1783692992; cv=none; b=gqVNji8x5fm+WVjDCPbSCeDXjIHKoGopakHQ5coidYVXVbdsxQKaCKWS05fBucqSlOuRTE2QkXHXKPvHH2dhgufwP0+6A0kfeHc3wIQkfm4nb/EMHyHXNbZxOX6dr286TNsqRuoryBnGCs5+pUuT/TBAyJfMkwfiSc5NShlQ55U=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1783692989; c=relaxed/simple;
-	bh=rIO14qXs+iGT2JJ13ErmypDgUFOGPahQ+QkEqgaw4EA=;
+	s=arc-20240116; t=1783692992; c=relaxed/simple;
+	bh=28SHLvC8gkY25xva8RZmJvT0tjGtmwoS/yYYBjBTeGQ=;
 	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=JY2xBYdXaqpPqpBj3t/V6LKSNL1A+8LHaM4YeWkXGjd9uoRoNrFmn/UFNpsk29g1JuUtDLMvZZR/E2i8/bg7uu8Ss/Sw7s4wXzJKdxueDHKSa8lZ//AYdPnXqbrdOSZCG1B+QP1dwBeWmWZHjVXgGd/xSbA3GHToYokbHuz/gdA=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=fail (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=kz/nF2OR; arc=none smtp.client-ip=209.85.217.49
+	 MIME-Version; b=H5IGhW2sLJz13w0OV4JMzjp60kS+fcTPUA/lYhnejgxlW217npNZQkUkgy8SFKZZVxEQBqqgOX8Ult0hO2VVqFzerSEm4kXkA+X4PROp44W54qqeWHiT5PD3GtM3Wgi4WblgQ6a4a17IFUr1HYGjaE/9KwQgAZZA44aEFz4PHFk=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=fail (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=pbBF9Mqv; arc=none smtp.client-ip=209.85.222.54
 Authentication-Results: smtp.subspace.kernel.org; dmarc=fail (p=quarantine dis=none) header.from=redhat.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="kz/nF2OR"
-Received: by mail-vs1-f49.google.com with SMTP id ada2fe7eead31-735f73287e2so674228137.2
-        for <linux-rt-users@vger.kernel.org>; Fri, 10 Jul 2026 07:16:27 -0700 (PDT)
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="pbBF9Mqv"
+Received: by mail-ua1-f54.google.com with SMTP id a1e0cc1a2514c-966d4da9fa6so250509241.0
+        for <linux-rt-users@vger.kernel.org>; Fri, 10 Jul 2026 07:16:30 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20251104; t=1783692987; x=1784297787; darn=vger.kernel.org;
+        d=gmail.com; s=20251104; t=1783692989; x=1784297789; darn=vger.kernel.org;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:sender:from:to:cc:subject:date
          :message-id:reply-to:content-type;
-        bh=6oflIfduHzeirZwdKe+k+h0Spk/0az2MrVysOXhi4+o=;
-        b=kz/nF2ORZNRpQIdYsimtBDITQQ1twY5iA6ETt/B5B8qJOBfCV5sMFrzYyWb7WutgR6
-         5TXREd2XbwkmbCcixTLdRK/abfjFQSDe0RQEWAuItz1Soq3hbYXr+vEQ4wtMWICBxBuM
-         Kzd2Puca5oNJsc3fJl64Pu3Vh2/1XVA7VNBQpswGmbyO/+3VXxly/y1Sit4b2oxOvsvP
-         kSY1JBkoVWX8UlFSSFriyvnPAnRbEBjONluB9Wjw7LEWTYcnVNm97rXXhPp3rR/mREGw
-         wsr/uo+MYRXO/VNvpe3iZXVmwp+Ohq4c86nGknCI2ZK1HSNwzAApuPyF3Ao7TF58LrjL
-         WJhA==
+        bh=FOGQCk2gHj8zC4jmmcyOjkVmGCwfqxQN2IAjlnvu21o=;
+        b=pbBF9MqvKtQjEP5VLleQ/Vb4jSgGttnrK97BZs62TeAZLbWhmfpKZeRcBYzPb7WVjR
+         zFKzUPW3mDJUg5UnImdqbegfC/eG6Wl3dSSBIF79ZCQLk/wIDW98VbqgnMdX0q4Aj+T4
+         JvUa1Td10frazFYPD0IbKFueeLw1SVLHbHbBzsru79rIHZff9e3XNVZrl53TGr1svX3O
+         15RIJcdmcj5jF6qt6c+KQzyJGluFcwqrTb3vvJVhSrYvI/f/zZQB2WLo41PeYmXdS96a
+         LA1DjOqFwoQBhFfvLSZzT23bNhA8MLKU3G1UJOf+Mb+n+vjV14g/B+2w8Z+BDGtTtIvx
+         zV3w==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20251104; t=1783692987; x=1784297787;
+        d=1e100.net; s=20251104; t=1783692989; x=1784297789;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:sender:x-gm-gg
          :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to
          :content-type;
-        bh=6oflIfduHzeirZwdKe+k+h0Spk/0az2MrVysOXhi4+o=;
-        b=gEgenS+LNairJQnDpyA0lSLSbjVU8LW7j3KPX6Vt78/AEkXx7PmlwTBob2VCy1HHDq
-         x+6ftGGs282G4//jqJoQsGzW9YYT/2xclH2gTA2gohbWUChQ8eBe9HvZQKgjxLs/PHtZ
-         x46zdWIqUn2Rfj1Z0tEypuw/k7ZiiovSJ4XKGxHPreyEkN1/dWsGpP9btjZ/WKmj2ZfB
-         azWOp+Z66r1Ff9jBhEaw6MqCMZPwqvbfaXpWL/1uiKSf6b+1khwZLp1w7DJ2mFmtNEZv
-         LUiz6QGW2OCo4nIY3bp9NA9hze61Z23NnOMV0q8O48EzKFp0kDVoAnNaAatO7ZJwSJ3q
-         KuFQ==
-X-Gm-Message-State: AOJu0YxSP42Nd/N05rXns+44FNtjgwafk79IzowM4c82gOruDZBi7h5U
-	0TfE2DLOKyX25qusfSsB2Iw7z54VNVp/I+Dmj6uORRmLq1GTsOa5QHeZxtcxCg==
-X-Gm-Gg: AfdE7cl6fz7HsEDxj3XnVEeFEW5ZPCTHaNPP38kMI1FpzWuqEZVXknOonGhaIY3tc3O
-	Uvq64h8KNjlUqz5yPu8hHujQVLd1GWZCZ1Bgj0oiTYSSSv1EDefZDXW0kFppmEjms7fhXRlm3zO
-	MDZwlLryHnHEGuZSLiLs+TTX2ON2e58xMIGwi6+BCHMU36d7LWjAye9c6KoMYmJ+ZuBKao4mrh9
-	2ABFVqjzf6p/+T15LcdOzGzMbChSxuL+f6rbvr09cZYWySlQiZ5K1ex3H3hxrPgYBxm0VFONXZJ
-	ujun71YchddcfWZdX4LGny8Z2uZp/UgDPAd+KCLlYjbLdotuo8TpEUZWJ2YUu+gHWwfnrIrNt5G
-	RZXYGAfnQs6yfkkh63BAtYHBlXhaF1pYa1TsdZPQX+T3e2AzJbWhF/SN9uRcv2osHOKgq4BBLYd
-	DIQKGHIu03iXcMBLSFEwiY5/1JYHMXxmlC57Xd2z3tsZMa/D7xdyKmIr+NluJj+L31cDC16WGLk
-	Q==
-X-Received: by 2002:a05:6102:2923:b0:6c1:85f8:29b3 with SMTP id ada2fe7eead31-744dff7a44emr7149027137.6.1783692986684;
-        Fri, 10 Jul 2026 07:16:26 -0700 (PDT)
+        bh=FOGQCk2gHj8zC4jmmcyOjkVmGCwfqxQN2IAjlnvu21o=;
+        b=GH0VBbGt59zHrv4DYEBRFv8LvPsss9/5R4ivc5CeGnapK3Nm5xRvkA4Agud8Q7feHW
+         6LXyfU0er5zu5cHZSzxg9xaVBt2QP9RBCZEz/RbnnXRbM11DYBRubH1EE2ioOsOLP0kj
+         JecSbMfYiVOQkm17SCAr2b0hxbgOEK/XCO8oMMtV0u/5bb+oroItB/rAzofJ3MHNwftZ
+         T8YhQkBa8dYSAgW2CSGyNx/FAXJaZCxv9Cb1fFcEO0J/b1sugJF5UFMatpehLDuDzcv+
+         BlI9lWUYL0S/pbkcw8DDl5dPADM7zzvmlLWI25k4mEzx5lRnOZp+lxHLDQyy1Jn1xJr9
+         N4YQ==
+X-Gm-Message-State: AOJu0YylTEurBFFpqRr0EQ7c/fIeobQxC2VcnP9Fi0Clikb4FHmw7IO8
+	Q1HAuRgiiMCLQGWf8lv04LgdEXdMdmcgCi6jMKm/H3rtQIJdNY+mtX6kyOtKEg==
+X-Gm-Gg: AfdE7ckt9R5nbZwFTQz/BVjcpoQ/pdIpqDORDq/vysU2fg0bj9sW1u0dyzo8qSZD4Px
+	T0yMDpZeRZIMPWNXdpvjfMemvht77iczfQLTwMpgxjnrgazAgNL2YWKhfY50YtkOYC409jCGnF9
+	Nag4u+VLiyHyuIRlN6IexDUpPTMQPmvd8Z26+Vijr+32XYkPsLkykFgI78GHdeCMgbC9XT146Da
+	u07t9ZppKlxcNQMIpLV9mMhf8cwu73zbnTY8acOjAV/7DPzeMbgtXZo1ELGYNLXKSfBc/h+TryV
+	EnHlisAkML03i8OXVHIgmYr0j6wpYVGaVDsnqmY/KrZ0DQAiMAeKiFyQG2UewSmQtnJMnuAA0Im
+	qLhYdgjJPc7IzUxRsDjZC0xYq/z4YZQX9/pTcuDuDeVNOlqIWw2u7bg5U/s6rlvDOoNAP8zTXzL
+	7esP8OpptOHej1nEcB8bu8Dzow6iIy8eeuSUHOI0wcL7+tCPdtFw4EH0pVRvmacv2hNMMFgLpcI
+	w==
+X-Received: by 2002:a05:6102:c4d:b0:6a2:b2a1:f16a with SMTP id ada2fe7eead31-744dfc5834dmr6598316137.2.1783692989342;
+        Fri, 10 Jul 2026 07:16:29 -0700 (PDT)
 Received: from Cumhall.home ([216.209.112.119])
-        by smtp.gmail.com with ESMTPSA id ada2fe7eead31-744d6771d49sm5565087137.0.2026.07.10.07.16.25
+        by smtp.gmail.com with ESMTPSA id ada2fe7eead31-744d6771d49sm5565087137.0.2026.07.10.07.16.28
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Fri, 10 Jul 2026 07:16:25 -0700 (PDT)
+        Fri, 10 Jul 2026 07:16:28 -0700 (PDT)
 Sender: John Kacur <jkacur@gmail.com>
 From: John Kacur <jkacur@redhat.com>
 To: linux-rt-users@vger.kernel.org
 Cc: Chris White <chwhite@redhat.com>,
 	Clark Williams <williams@redhat.com>
-Subject: [PATCH 25/36] tuna: Add --cpuset option to move command
-Date: Fri, 10 Jul 2026 10:15:03 -0400
-Message-ID: <20260710141523.36440-26-jkacur@redhat.com>
+Subject: [PATCH 27/36] tuna: Add --cpuset option to isolate command
+Date: Fri, 10 Jul 2026 10:15:05 -0400
+Message-ID: <20260710141523.36440-28-jkacur@redhat.com>
 X-Mailer: git-send-email 2.54.0
 In-Reply-To: <20260710141523.36440-1-jkacur@redhat.com>
 References: <20260710141523.36440-1-jkacur@redhat.com>
@@ -78,130 +78,140 @@ List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 
-Add cpuset integration to the tuna move command, allowing users to move
-threads and IRQs into cpusets (cgroup v2) instead of just setting CPU
-affinity. This brings cpuset support to tuna's existing rich entity
-selection mechanisms (IRQ patterns, thread patterns, sockets, nohz_full).
+Add support for cpuset-based CPU isolation using cgroup v2 isolated
+partitions. This provides stronger, kernel-enforced CPU isolation
+compared to traditional affinity-based isolation.
 
-Changes:
-- Add --cpuset option to move command parser (mutually exclusive with
-  -c/--cpus, -S/--sockets, -N/--nohz_full)
-- Implement cpuset-based move logic for threads and IRQ handler threads
-- Verify cpuset exists before attempting to move processes
-- Honor process blocklist to protect critical system processes
-- Provide success/failure summary output
-- Update move command help text to reflect new cpuset capability
+The new --cpuset option creates an isolated cpuset (partition=isolated)
+for RT applications after performing traditional affinity-based isolation.
+An optional --cpuset-housekeeping option creates a second isolated cpuset
+and migrates non-blocklisted processes from the root cgroup to it.
 
-Example usage:
-  tuna move --cpuset tuna0 -t 1234,5678
-  tuna move --cpuset tuna0 -q eth0*
-  tuna move --cpuset tuna0 -t systemd*
+This implements a 3-tier CPU model:
+- Isolated cpuset: CPUs for RT applications (kernel-enforced exclusive)
+- Housekeeping cpuset: CPUs for system tasks (optional, isolated partition)
+- Root cgroup: Remaining CPUs for normal workloads
 
-The --cpuset option cannot be used with the spread command (argparse
-enforces mutual exclusion, defensive check remains in code).
+Features:
+- NUMA-aware memory node assignment for both cpusets
+- Automatic process migration with blocklist protection
+- Backward compatible (opt-in via --cpuset flag)
+- Customizable cpuset names
+
+Usage:
+  tuna isolate -c 0-3 --cpuset
+    Creates tuna_isolated cpuset with partition=isolated
+
+  tuna isolate -c 0-3 --cpuset my_rt
+    Creates my_rt cpuset with custom name
+
+  tuna isolate -c 0-3 --cpuset --cpuset-housekeeping 4-7
+    Creates both tuna_isolated and tuna_housekeeping cpusets,
+    migrates processes to housekeeping
+
+  tuna isolate -c 0-3 --cpuset my_rt --cpuset-housekeeping my_hk 4-7
+    Custom names for both cpusets
+
+Both isolated and housekeeping cpusets use partition=isolated for
+kernel-enforced CPU exclusivity. Critical system processes (systemd,
+systemd-logind, etc.) are protected by the existing blocklist and
+remain in the root cgroup.
 
 Assisted-by: Claude:claude-sonnet-4-5
 Signed-off-by: John Kacur <jkacur@redhat.com>
 ---
- tuna-cmd.py | 70 ++++++++++++++++++++++++++++++++++++++++++++++++-----
- 1 file changed, 64 insertions(+), 6 deletions(-)
+ tuna-cmd.py | 69 +++++++++++++++++++++++++++++++++++++++++++++++++++++
+ 1 file changed, 69 insertions(+)
 
 diff --git a/tuna-cmd.py b/tuna-cmd.py
-index 557a07891183..b50691fa2d05 100755
+index b50691fa2d05..ce34aee8e909 100755
 --- a/tuna-cmd.py
 +++ b/tuna-cmd.py
-@@ -159,8 +159,8 @@ def gen_parser():
-                                     help="Move all allowed threads and IRQs away from CPU-LIST")
-     include = subparser.add_parser('include', description="Allow all threads to run on CPU-LIST",
-                                      help="Allow all threads to run on CPU-LIST")
--    move = subparser.add_parser('move', description="Move selected entities to CPU-LIST",
--                                    help="Move selected entities to CPU-LIST")
-+    move = subparser.add_parser('move', description="Move selected threads/IRQs to specified CPUs, sockets, or cpusets",
-+                                    help="Move selected threads/IRQs to specified CPUs, sockets, or cpusets")
-     spread = subparser.add_parser('spread', description="Spread selected entities to CPU-LIST",
-                                     help="Spread selected entities over CPU-LIST")
-     priority = subparser.add_parser('priority', description="Set thread scheduler tunables: POLICY and RTPRIO",
-@@ -192,6 +192,7 @@ def gen_parser():
-     move_group.add_argument('-c', '--cpus', **MODS['cpus'])
-     move_group.add_argument('-S', '--sockets', **MODS['sockets'])
-     move_group.add_argument('-N', '--nohz_full', **MODS['nohz_full'])
-+    move_group.add_argument('--cpuset', type=str, metavar='CPUSET-NAME', help='Move threads/IRQs into cpuset (cgroup v2) instead of setting CPU affinity')
-     move.add_argument('-t', '--threads', **MODS['threads'])
-     move.add_argument('-q', '--irqs', **MODS['irqs'])
-     move.add_argument('-U', '--no_uthreads', **MODS['no_uthreads'])
-@@ -1662,11 +1663,68 @@ def main():
-         if not (args.thread_list or args.irq_list):
-             parser.error(f"tuna: {args.command} requires a thread/irq list!\n")
+@@ -182,6 +182,11 @@ def gen_parser():
+     isolate_group.add_argument('-c', '--cpus', **MODS['cpus'])
+     isolate_group.add_argument('-S', '--sockets', **MODS['sockets'])
+     isolate_group.add_argument('-N', '--nohz_full', **MODS['nohz_full'])
++    isolate.add_argument('--cpuset', type=str, nargs='?', const='tuna_isolated',
++                        metavar='NAME', default=None,
++                        help='Use cpusets for isolation with optional name (default: tuna_isolated, partition=isolated)')
++    isolate.add_argument('--cpuset-housekeeping', nargs='+', metavar='...',
++                        help='Create housekeeping cpuset: [NAME] CPU-LIST (default name: tuna_housekeeping, partition=isolated)')
  
--        if args.thread_list:
--            tuna.move_threads_to_cpu(args.cpu_list, args.thread_list, args.uthreads, args.kthreads, spread=spread)
-+        # Check if using cpuset mode
-+        if hasattr(args, 'cpuset') and args.cpuset:
-+            # Cpuset mode: move entities to a cpuset instead of setting affinity
-+            if spread:
-+                print("Error: --cpuset cannot be used with spread command", file=sys.stderr)
-+                sys.exit(2)
+     include_group = include.add_mutually_exclusive_group(required=True)
+     include_group.add_argument('-c', '--cpus', **MODS['cpus'])
+@@ -1613,8 +1618,72 @@ def main():
+         tuna.include_cpus(args.cpu_list, utils.get_nr_cpus())
+ 
+     elif args.command in ['isolate', 'i']:
++        # Parse --cpuset-housekeeping arguments
++        housekeeping_name = None
++        housekeeping_cpus = None
 +
-+            # Verify cpuset exists
-+            cpuset_path = os.path.join('/sys/fs/cgroup', args.cpuset)
-+            if not os.path.exists(cpuset_path):
-+                print(f"Error: cpuset '{args.cpuset}' does not exist", file=sys.stderr)
++        if args.cpuset_housekeeping:
++            # Validate that --cpuset is also specified
++            if not args.cpuset:
++                print("Error: --cpuset-housekeeping requires --cpuset", file=sys.stderr)
 +                sys.exit(1)
 +
-+            # Create cpuset object
-+            try:
-+                cs = cpuset.Cpuset(args.cpuset, existing_ok=True)
-+            except (OSError, ValueError) as e:
-+                print(f"Error accessing cpuset '{args.cpuset}': {e}", file=sys.stderr)
-+                sys.exit(1)
-+
-+            success_count = 0
-+            fail_count = 0
-+
-+            # Move threads to cpuset
-+            if args.thread_list:
-+                for pid in args.thread_list:
-+                    if cs.write_pid(pid):
-+                        success_count += 1
-+                    else:
-+                        fail_count += 1
-+
-+            # Move IRQ threads to cpuset
-+            if args.irq_list:
-+                if not ps:
-+                    ps = procfs.pidstats()
-+                irqs = procfs.interrupts()
-+
-+                for irq in args.irq_list:
-+                    # Find IRQ thread for this IRQ number
-+                    irq_re = tuna.threaded_irq_re(irq)
-+                    irq_threads = ps.find_by_regex(irq_re)
-+
-+                    for irq_pid in irq_threads:
-+                        if cs.write_pid(irq_pid):
-+                            success_count += 1
-+                        else:
-+                            fail_count += 1
-+
-+            # Print summary
-+            print(f"Moved {success_count} task(s) to cpuset '{args.cpuset}'", end='')
-+            if fail_count > 0:
-+                print(f" ({fail_count} failed)")
++            # Parse: [NAME] CPU-LIST or just CPU-LIST
++            if len(args.cpuset_housekeeping) == 1:
++                housekeeping_name = 'tuna_housekeeping'
++                housekeeping_cpus = args.cpuset_housekeeping[0]
++            elif len(args.cpuset_housekeeping) == 2:
++                housekeeping_name = args.cpuset_housekeeping[0]
++                housekeeping_cpus = args.cpuset_housekeeping[1]
 +            else:
-+                print()
++                print("Error: --cpuset-housekeeping takes 1 or 2 arguments: [NAME] CPU-LIST", file=sys.stderr)
++                sys.exit(1)
 +
-+        else:
-+            # Original affinity mode
-+            if args.thread_list:
-+                tuna.move_threads_to_cpu(args.cpu_list, args.thread_list, args.uthreads, args.kthreads, spread=spread)
++        # Traditional affinity-based isolation (existing behavior)
+         tuna.isolate_cpus(args.cpu_list, utils.get_nr_cpus())
  
--        if args.irq_list:
--            tuna.move_irqs_to_cpu(args.cpu_list, args.irq_list, spread=spread)
-+            if args.irq_list:
-+                tuna.move_irqs_to_cpu(args.cpu_list, args.irq_list, spread=spread)
++        # Create cpusets if requested
++        if args.cpuset:
++            try:
++                # Check cgroup v2 support
++                cpusets_init = cpuset.CpusetsInit()
++                if not cpusets_init.supported:
++                    print("Error: cgroup v2 cpuset controller not available", file=sys.stderr)
++                    sys.exit(1)
++
++                # Get NUMA nodes for isolated CPUs
++                isolated_numa = cpuset.get_numa_nodes_for_cpus(args.cpu_list)
++
++                # Create isolated cpuset (partition=isolated, empty)
++                print(f"Creating isolated cpuset '{args.cpuset}' with CPUs {tuna.collapse_cpulist(args.cpu_list)}")
++                isolated_cpuset = cpuset.Cpuset(args.cpuset)
++                isolated_cpuset.write_memnode(isolated_numa)
++                isolated_cpuset.assign_cpus(tuna.collapse_cpulist(args.cpu_list))
++                isolated_cpuset.write_cpu_exclusive(True)  # partition=isolated
++                print(f"Isolated cpuset '{args.cpuset}' created successfully")
++
++                # Create housekeeping cpuset if requested
++                if housekeeping_cpus:
++                    # Parse housekeeping CPU list from string to list
++                    hk_cpu_list = tuna.cpustring_to_list(housekeeping_cpus)
++                    hk_numa = cpuset.get_numa_nodes_for_cpus(hk_cpu_list)
++
++                    print(f"Creating housekeeping cpuset '{housekeeping_name}' with CPUs {housekeeping_cpus}")
++                    hk_cpuset = cpuset.Cpuset(housekeeping_name)
++                    hk_cpuset.write_memnode(hk_numa)
++                    hk_cpuset.assign_cpus(housekeeping_cpus)
++                    hk_cpuset.write_cpu_exclusive(True)  # partition=isolated
++
++                    # Migrate processes from root to housekeeping
++                    print(f"Migrating processes to housekeeping cpuset...")
++                    tm = cpuset.TaskMigrate(cpusets_init, hk_cpuset)
++                    migrated, failed = tm.migrate()
++                    print(f"Migrated {migrated} processes to '{housekeeping_name}' (failed: {failed})")
++
++            except Exception as e:
++                print(f"Error creating cpusets: {e}", file=sys.stderr)
++                sys.exit(1)
++
+     elif args.command in ['run', 'r']:
  
-     elif args.command in ['s', 'save']:
-         save(args.cpu_list, args.thread_list, args.filename)
+         tuna.run_command(args.run_command, args.priority[0], args.priority[1], args.cpu_list, args.background)
 -- 
 2.54.0
 
