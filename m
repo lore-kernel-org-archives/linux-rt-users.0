@@ -1,72 +1,72 @@
-Received: from mail-ua1-f42.google.com (mail-ua1-f42.google.com [209.85.222.42])
+Received: from mail-vs1-f47.google.com (mail-vs1-f47.google.com [209.85.217.47])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 0B3BF345CDD
-	for <linux-rt-users@vger.kernel.org>; Fri, 10 Jul 2026 14:16:42 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.222.42
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 938133438A1
+	for <linux-rt-users@vger.kernel.org>; Fri, 10 Jul 2026 14:16:44 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.217.47
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1783693004; cv=none; b=CZUixvU+9Pt7IvIngSBRu2Gr1TOxSi7fIV6CFtsSq7voQdwn3FHzDnGmbMPqbKl40Sbtkitr2TyeYtrNMGr/rC4jd3T8EDBT9yoMxvS7x8tUJjuJijiIQNQVl5uM6lnhswtNskPZyCG4Ms5WMQK1wFQqVSSowLSl65vXV+zl4qs=
+	t=1783693006; cv=none; b=dUMUFWcCj9lbiG6WyVoRmJJg/BqmTlYcrZ3EpTzW2Nosmd7ngEC25sNN+Ku9vVjgeOAWEyWwE+HbASw4hm3qx6ec/WQSUmtU200t2g4/MpKDAyBcsNG9v4Pu09/Ro6r3xNsoh+Qc1IKfYFttRcgd9BhKCx+wawQudm6xWnqbhzg=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1783693004; c=relaxed/simple;
-	bh=j/e4ejBrX0Y1jTokqEQ3wivax8qCHMjDBuRjiYnZmvQ=;
+	s=arc-20240116; t=1783693006; c=relaxed/simple;
+	bh=cQR07l6HsNNPsjCttQrvxL3DjOjUoVRUvOEbb8dItdU=;
 	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=Bzgb7jTliwom6shlE6SODf1gP22Kvbj8rmnxNQxk60OQBACYYfiiuE5x1FdDPelJ+Bp4oG3URTYHI/6RHyyY5QIemh3STmrFxKmtzHKZAloJggd7Xfj/Mq2i8A+XVrewBEIkPYCn51x8U0BS6NP0HBPPzRSOI4PyxnrzslKe9w0=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=fail (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=Jnao4t9E; arc=none smtp.client-ip=209.85.222.42
+	 MIME-Version; b=q55MC9znyEwqyJlFNQhrE13wVM8inrZfkup6YlLfBr4CKdlbfKYVJGpMzpCoEq9yE1RKqReWO+4w/JGj8ymPnBZhUBwg9cfCmNjQqX+aVQ3cYc/707/hTpJcaIK+YmZBAUu/MMp/PEiESg82uTunxkVjitCaIIaFZTxuhAHoXIE=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=fail (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=GiXr0hn0; arc=none smtp.client-ip=209.85.217.47
 Authentication-Results: smtp.subspace.kernel.org; dmarc=fail (p=quarantine dis=none) header.from=redhat.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="Jnao4t9E"
-Received: by mail-ua1-f42.google.com with SMTP id a1e0cc1a2514c-9618b8bdc51so325636241.1
-        for <linux-rt-users@vger.kernel.org>; Fri, 10 Jul 2026 07:16:42 -0700 (PDT)
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="GiXr0hn0"
+Received: by mail-vs1-f47.google.com with SMTP id ada2fe7eead31-725cf9a923aso847470137.0
+        for <linux-rt-users@vger.kernel.org>; Fri, 10 Jul 2026 07:16:44 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20251104; t=1783693002; x=1784297802; darn=vger.kernel.org;
+        d=gmail.com; s=20251104; t=1783693003; x=1784297803; darn=vger.kernel.org;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:sender:from:to:cc:subject:date
          :message-id:reply-to:content-type;
-        bh=/iKk3y3XQwneOPKvxeNiIfPIsg0l/PtJ5upCgm1lJSM=;
-        b=Jnao4t9EIIdNngdts6ETLxaQw0nr/wCzovMYjNsULBvNdtRzpTk9sRNyB/Q8SAeNWL
-         ULpb/jFYs5wACEKGVjxy4aL8RMj6tQ2DK9RYNAQi7Ud4gKWQCEmz0m/B+3+c7TefANV6
-         GYqKGcwbVcrwiKsEfr2NNx/EW1FkIOCB7aGI4BEilhKPVO9w1bL3HnFBNwKgL+QPed8K
-         648UykMNVUhlNN7vFP+5YUm0g4WBquxcOnSKfaHoW2Ff/jUPZyjLYHL27M2iHvN3P8TP
-         tOd6nleh4l65d2cVZYBTya0CtTiUpJCFaK9KpbRo8JUY0pTltDExscbIUYIkrpFUEFlf
-         8LEA==
+        bh=pYraBPO+52irO9yAiDZd2zrSpdTmr6/L2IUjKhpOIcc=;
+        b=GiXr0hn0+FHZu3ndlHO7iGdx3MyD3vnWJlyzmVr3U/VDQ+MdQM8oM3KW/EWAbEdgxK
+         KOA+lmjykRVK3/sBsxsDKih8L0Zx1va3bGirXukuTJ2Eq1IGonqOGH8SCELuxv7TKzgm
+         YL2kUL0SvU/VjpdsAKJyOOdW7izXqdRWFwr38L89rrj5USxYpMXCgn8stJXjShQC+75b
+         7jBRwWesg+r/oSxMUYPZwfDtNyhrTTlYbt7ZdLb3V4Zx3O31v4HjumZxinbK6uJ+vR7L
+         hM/GTULeiqxyuFXIJJgWCSfmM3zTnUwcSMdxa/mqT6y8YDZXA+MYOr1eypSMXv406Jnl
+         LeFA==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20251104; t=1783693002; x=1784297802;
+        d=1e100.net; s=20251104; t=1783693003; x=1784297803;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:sender:x-gm-gg
          :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to
          :content-type;
-        bh=/iKk3y3XQwneOPKvxeNiIfPIsg0l/PtJ5upCgm1lJSM=;
-        b=FmhkcLAZPv1GCHizErpBE71UpFloWoHyNbORbLvNFhuc6H8PYUrcM3gErXWFnH/f3U
-         nURPWE+uG2dJvNtkcB/LJaDsw0HgRvE0Igo3BQLpaJz0kKl3ZpI0i/PTI8wsentMFVth
-         Zzx5ZXyqrslv0UaE3p66uiQ0TgpcWe8uuUDKYZ9P560h7ueBRK7xhC4/NBChS7WBjkyK
-         Bh1qMvHzXvMd5T/6zk3DNAKmOmip/a0BWOjx8g/qscuZQZXrinpZtLZd0xzoMd4vJdKY
-         Wut1Ki5DXtvXinfhTOsbsKKj1g3sle0IaS6pCzLJzVTb7FpPyP1zjMyy9Fq8ArZlPBox
-         RNuQ==
-X-Gm-Message-State: AOJu0YwmSYLKAL+iZl+2yHnuejUcLOMw5GxeoADrcHT5hGrK8/eFzNnR
-	yNYqReJr1vpC1wnnEWOWUYbVBCzpOYPk45rXNtvuY81oZ5wY6kLDg6DI52xxEA==
-X-Gm-Gg: AfdE7cko/ydjCQIvc/5b6H/YluKXGUNtPJivWwYytSLhYs2xtGaRnkorzi67MrznddA
-	Rb5QhXs/vtNybk61mMmErCq0uegA4TjYK3iZbSNh/Q2RDyySec5U2aBUY3VV7Q/6wMoljyPv2pQ
-	z219rBSdL+e6DHrtKt3meoMChQVqjXbKHiyJ5h6qRFWubImoR3nA/SXwCxYIv3DU85JrhJ8W4JH
-	0FURowiQ9PbtNhQZ5o144ATQNcfGhj80weYkoBk63Cb7K8SQHDDQIsrE6TiXz2AnKFGWZaJRSB9
-	U95WVXw57U/jyLM0CwXhZVqApF7G3GuBP4Ol2z0qv1f4lzErIE+q1sd6N6+FUanQJqgzrcnvifa
-	YFdVm9JQWFdqELlqlb314fH/FPYx6YrZKscOJOjEts0mO1NjwgbumRZx/at5G0o1M8tPmnMTmVd
-	sGJUlZQTehebJHEOvzOHfLxzIzcAzshr7GbXxK3uzae92Xc28XcYzIa8DM79UYRNTNDhEmjomAc
-	w==
-X-Received: by 2002:a05:6102:6a85:b0:739:4470:db with SMTP id ada2fe7eead31-744e01684e9mr6732210137.21.1783693001787;
-        Fri, 10 Jul 2026 07:16:41 -0700 (PDT)
+        bh=pYraBPO+52irO9yAiDZd2zrSpdTmr6/L2IUjKhpOIcc=;
+        b=DxjUFsjTgAxKxTMdJcpWJVRL88tTWy/Ay5XBL37kpMjMt0R1Fd8QDw63qcak4pwmra
+         cKWsnLv0eViwLcqLF0PIFLVsIor4mT7JmUriVVf5iJ6CLsXnTU5r2z9wnzUPM7dPHiJu
+         NvHlNyuyW7xNZNkWlQxyjwDZ5QnBO/uMtkdcHNcQYTYriZxmx+yGeox1hhELJ28EiXle
+         zksOJKylr5xUcDlpV9A/3SdHan5jvzTRpS56MKbwHpKFpA5n/2rRHCANfPo1neqcNI/6
+         rw+Qqrfx3n0OK//rDy+sFsOH66OG+eGPxaRcrOlExPodL35IdIWmaoCDURcQLdGgaWVh
+         zPow==
+X-Gm-Message-State: AOJu0YyMLfuZGXGnnzUj6zuzXWlvSbqvdrmoK4DMTYUQcVBHXAY5yc36
+	qytUDg8jV6k16DwF4cQBFjv3QvyRMtZnhRooNaGkBpbbbDhzW/bQVtW+WLgL3w==
+X-Gm-Gg: AfdE7cnVdTGKD+3DhdsrbFp086RSekLrICMpe7cxeje6yPZlzbx17ZvpOnyvmncp9W0
+	dsDlH3Yuf4qjWyNlhmqZ+F1R2kUlKYMZwp65++9UQ6KcSLVbtniKl+UCfDPuYszYqzJvAciDzY1
+	9Uu2X4bEiR2dBJvqqwruT1DOhus6o4u2YcwnbdIEjoZ0O1KczN/3z+D7dy3crk1v3AX0cyYyid9
+	CwfHNoedHFuFpleosk3EupguaASjXoyhx/Mld5c0/IOpFtA9N7bINp9sZ5WcFCsR5oGOoemdyJY
+	yAer7X3DmTcbv2QmdO03MXBlQEOS3hoSy5zjNp77STKTqkzcYdxNOItBRr+C2YZkeBqHKVDs/Hc
+	xK4BIwT0Ue6NJZ/WkMXud+QUA0uBnrbfNBX3n0kGCJ6D64ZmPz9hgQwhfolDtNdaQdPhlJ31E38
+	h960Uou88fq6tfIZzlMpSuKc8C0IRkZm6DDiscrRuBvK5NhQ98sA80cNUoTqcRCxfVRZ+8wBSsN
+	A==
+X-Received: by 2002:a05:6102:2920:b0:71e:39e9:ce5a with SMTP id ada2fe7eead31-744dfff5163mr8419481137.26.1783693003339;
+        Fri, 10 Jul 2026 07:16:43 -0700 (PDT)
 Received: from Cumhall.home ([216.209.112.119])
-        by smtp.gmail.com with ESMTPSA id ada2fe7eead31-744d6771d49sm5565087137.0.2026.07.10.07.16.40
+        by smtp.gmail.com with ESMTPSA id ada2fe7eead31-744d6771d49sm5565087137.0.2026.07.10.07.16.41
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Fri, 10 Jul 2026 07:16:41 -0700 (PDT)
+        Fri, 10 Jul 2026 07:16:42 -0700 (PDT)
 Sender: John Kacur <jkacur@gmail.com>
 From: John Kacur <jkacur@redhat.com>
 To: linux-rt-users@vger.kernel.org
 Cc: Chris White <chwhite@redhat.com>,
 	Clark Williams <williams@redhat.com>
-Subject: [PATCH 35/36] tuna: Add tests for run --cpuset functionality
-Date: Fri, 10 Jul 2026 10:15:13 -0400
-Message-ID: <20260710141523.36440-36-jkacur@redhat.com>
+Subject: [PATCH 36/36] tuna: Update man page for cpusets and current functionality
+Date: Fri, 10 Jul 2026 10:15:14 -0400
+Message-ID: <20260710141523.36440-37-jkacur@redhat.com>
 X-Mailer: git-send-email 2.54.0
 In-Reply-To: <20260710141523.36440-1-jkacur@redhat.com>
 References: <20260710141523.36440-1-jkacur@redhat.com>
@@ -78,321 +78,374 @@ List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 
-Add comprehensive test coverage for the tuna run --cpuset feature,
-which allows launching processes directly in cpusets.
+The man page (docs/tuna.8) was last updated in February 2010 and was
+missing documentation for cpuset features and other recent additions.
 
-Test coverage includes:
-- test_run_with_cpuset_basic: Verifies running commands in cpusets
-- test_run_with_cpuset_and_priority: Tests combining cpuset with
-  priority settings (FIFO:50)
-- test_run_with_nonexistent_cpuset: Tests error handling for
-  non-existent cpusets
-- test_run_cpuset_mutually_exclusive_with_cpus: Tests mutual
-  exclusivity with -c option
-- test_run_help_shows_cpuset_option: Verifies --cpuset appears
-  in help output
+This update brings the documentation current with the codebase:
 
-Also updates:
-- Makefile: Adds test-run-cpuset target for running these tests
-- tests/README.md: Updates test counts from 142 to 146 total tests
-  (45 non-root + 101 root-required), documents the new test class
+Documentation structure changes:
+- Updated date from February 2010 to July 2026
+- Added SPDX-License-Identifier: GPL-2.0-only header
+- Updated description to mention cgroup v2 cpusets support
 
-All tests require root permissions and cgroup v2 support. Tests
-create temporary cpusets, run commands, verify behavior, and clean up.
+Global options:
+- Added missing -w/--warn flag documentation
+
+Command updates with cpuset support:
+- isolate: Added --cpuset and --cpuset-housekeeping options
+- move: Added --cpuset option, -U/--no_uthreads, -K/--no_kthreads flags
+- spread: Added -U/--no_uthreads, -K/--no_kthreads flags
+- run: Added --cpuset option for running commands in cpusets
+- show_threads: Added --cpuset filter option and -n/--show_sockets
+  with inet_diag module requirement note
+
+Cpuset command documentation:
+- Added complete cpuset command section with all 7 subcommands:
+  * create: Create cpusets with CPU/memory node assignment
+  * list: List cpusets with pattern matching
+  * destroy: Destroy cpusets with pattern support
+  * move: Move processes to cpusets
+  * show: Display detailed cpuset information
+  * status: System-wide cpuset overview
+  * modify: Modify existing cpusets (add/remove CPUs, change partition)
+
+Modifiers section:
+- Added -q/--irqs documentation
+
+Usage examples:
+- Added comprehensive cpuset examples demonstrating isolation,
+  process migration, and cpuset management workflows
+
+All documentation now accurately reflects the current implementation
+as verified by comparing against actual command-line help output.
 
 Assisted-by: Claude:claude-sonnet-4-5
 Signed-off-by: John Kacur <jkacur@redhat.com>
 ---
- Makefile                 |  5 +-
- tests/README.md          | 36 +++++++++------
- tests/test_cpuset_cli.py | 99 ++++++++++++++++++++++++++++++++++++++++
- 3 files changed, 125 insertions(+), 15 deletions(-)
+ docs/tuna.8 | 201 +++++++++++++++++++++++++++++++++++++++++++++++++---
+ 1 file changed, 190 insertions(+), 11 deletions(-)
 
-diff --git a/Makefile b/Makefile
-index b68c2a2a9925..9bee6cd24c1a 100644
---- a/Makefile
-+++ b/Makefile
-@@ -21,7 +21,7 @@ cleanlogs:
- .PHONY: clean
- clean: pyclean
+diff --git a/docs/tuna.8 b/docs/tuna.8
+index 8c15c2ef535c..8d43c3ac73c8 100644
+--- a/docs/tuna.8
++++ b/docs/tuna.8
+@@ -1,4 +1,5 @@
+-.TH TUNA "8" "February 2010" "tuna" "System Administration Utilities"
++.\" SPDX-License-Identifier: GPL-2.0-only
++.TH TUNA "8" "July 2026" "tuna" "System Administration Utilities"
+ .SH NAME
+ tuna \- program for tuning running processes
+ .SH SYNOPSIS
+@@ -6,8 +7,8 @@ tuna \- program for tuning running processes
+ [\fIOPTIONS\fR]
+ .SH DESCRIPTION
+ This manual page explains the \fBtuna\fR program. The program can be used to change the attributes of application and kernel threads. \fBtuna\fR can operate on IRQs by name or number, and tasks or threads by process ID or command-line. CPUs and sets of CPUs can be specified by CPU or socket number. IRQ names and process command-lines can include wildcards.
+-.PP 
+-\fBtuna\fP can change scheduling policy, scheduler priority and processor affinity for processes and process threads. \fBtuna\fR can also change the processor affinity for interrupts.
++.PP
++\fBtuna\fP can change scheduling policy, scheduler priority and processor affinity for processes and process threads. \fBtuna\fR can also change the processor affinity for interrupts. \fBtuna\fR supports cgroup v2 cpusets for CPU and memory node isolation, providing fine-grained control over which processes can run on which CPUs.
+ When \fBtuna\fR is invoked without any options it starts up in its graphical interface mode. This manual page explains only the command\-line options for \fBtuna\fR
+ .SH "GLOBAL OPTIONS"
+ .TP
+@@ -22,6 +23,9 @@ Log application details to file for given LOG-LEVEL
+ .TP
+ \fB\-D\fR, \fB\-\-debug\fR
+ Print DEBUG level logging details to console
++.TP
++\fB\-w\fR, \fB\-\-warn\fR
++Warn when thread/IRQ patterns match nothing
+ .SH "COMMANDS"
+ .TP
+ \fBtuna cpu_power\fR
+@@ -44,6 +48,7 @@ optional arguments:
+ .TP
+ \fBtuna isolate\fR
+ usage: tuna-cmd.py isolate [-h] (-c CPU-LIST | -S CPU-SOCKET-LIST | -N)
++                           [--cpuset [NAME]] [--cpuset-housekeeping ...]
  
--.PHONY: tests unit-tests test-eperm test-converters test-cpuset test-cpuset-cli test-isolate-cpuset test-show-threads-cpuset test-show-threads-cgroups test-all
-+.PHONY: tests unit-tests test-eperm test-converters test-cpuset test-cpuset-cli test-isolate-cpuset test-run-cpuset test-show-threads-cpuset test-show-threads-cgroups test-all
- tests: unit-tests
+ Move all allowed threads and IRQs away from CPU\-LIST. Requires \fB\-c\fR, \fB-S\fR, or \fB-N\fR.
  
- unit-tests:
-@@ -42,6 +42,9 @@ test-cpuset-cli:
- test-isolate-cpuset:
- 	@sudo python3 -m unittest tests.test_cpuset_cli.TestTunaIsolateCpusetCLI -v
+@@ -55,6 +60,11 @@ optional arguments:
+                         CPU-SOCKET-LIST affected by commands
+   -N, --nohz_full       CPUs in nohz_full kernel command line will be affected
+                         by operations
++  --cpuset [NAME]       Use cpusets for isolation with optional name (default: tuna_isolated,
++                        partition=isolated)
++  --cpuset-housekeeping [NAME] CPU-LIST
++                        Create housekeeping cpuset: [NAME] CPU-LIST (default name:
++                        tuna_housekeeping, partition=isolated)
+ .TP
+ \fBtuna include\fR
+ usage: tuna-cmd.py include [-h] (-c CPU-LIST | -S CPU-SOCKET-LIST | -N)
+@@ -71,10 +81,10 @@ optional arguments:
+                         by operations
+ .TP
+ \fBtuna move\fR
+-usage: tuna-cmd.py move [-h] (-c CPU-LIST | -S CPU-SOCKET-LIST | -N)
+-                        [-t THREAD-LIST] [-q IRQ-LIST]
++usage: tuna-cmd.py move [-h] (-c CPU-LIST | -S CPU-SOCKET-LIST | -N | --cpuset CPUSET-NAME)
++                        [-t THREAD-LIST] [-q IRQ-LIST] [-U] [-K]
  
-+test-run-cpuset:
-+	@sudo python3 -m unittest tests.test_cpuset_cli.TestTunaRunCpusetCLI -v
+-Move selected entities to CPU\-LIST. Requires \fB\-c\fR, \fB-S\fR, or \fB-N\fR and \fB-t\fR or \fB-q\fR.
++Move selected entities to CPU\-LIST or cpuset. Requires \fB\-c\fR, \fB-S\fR, \fB-N\fR, or \fB--cpuset\fR and \fB-t\fR or \fB-q\fR.
+ 
+ optional arguments:
+   -h, --help            show this help message and exit
+@@ -84,18 +94,21 @@ optional arguments:
+                         CPU-SOCKET-LIST affected by commands
+   -N, --nohz_full       CPUs in nohz_full kernel command line will be affected
+                         by operations
++  --cpuset CPUSET-NAME  Move threads/IRQs into cpuset (cgroup v2) instead of
++                        setting CPU affinity
+   -t THREAD-LIST, --threads THREAD-LIST
+                         THREAD-LIST affected by commands
+   -q IRQ-LIST, --irqs IRQ-LIST
+                         IRQ-LIST affect by commands
++  -U, --no_uthreads     Operations will not affect user threads
++  -K, --no_kthreads     Operations will not affect kernel threads
+ .TP
+ \fBtuna spread\fR
+ usage: tuna-cmd.py spread [-h] (-c CPU-LIST | -S CPU-SOCKET-LIST | -N)
+-                          [-t THREAD-LIST] [-q IRQ-LIST]
++                          [-t THREAD-LIST] [-q IRQ-LIST] [-U] [-K]
+ 
+ Spread selected entities over CPU-LIST. The specified threads and IRQs are each assigned to one cpu in CPU-LIST. Requires \fB\-c\fR, \fB-S\fR, or \fB-N\fR and \fB-t\fR or \fB-q\fR.
+ 
+-
+ optional arguments:
+   -h, --help            show this help message and exit
+   -c CPU-LIST, --cpus CPU-LIST
+@@ -108,6 +121,8 @@ optional arguments:
+                         THREAD-LIST affected by commands
+   -q IRQ-LIST, --irqs IRQ-LIST
+                         IRQ-LIST affect by commands
++  -U, --no_uthreads     Operations will not affect user threads
++  -K, --no_kthreads     Operations will not affect kernel threads
+ .TP
+ 
+ \fBtuna priority\fR
+@@ -126,11 +141,11 @@ optional arguments:
+                         Operation will affect children threads
+ .TP
+ \fBtuna run\fR
+-usage: tuna-cmd.py run [-h] [-c CPU-LIST | -S CPU-SOCKET-LIST | -N]
++usage: tuna-cmd.py run [-h] [-c CPU-LIST | -S CPU-SOCKET-LIST | -N | --cpuset CPUSET-NAME]
+                        [-p PRIORITY] [-b]
+                        COMMAND
+ 
+-Run the COMMAND. The entire command line must be provided inside "quotes". Modifiers \fB-c\fR, \fB-S\fR and \fB-p\fR can be used to set the affinity and scheduler tunables of the given COMMAND.
++Run the COMMAND. The entire command line must be provided inside "quotes". Modifiers \fB-c\fR, \fB-S\fR, \fB--cpuset\fR and \fB-p\fR can be used to set the affinity and scheduler tunables of the given COMMAND.
+ 
+ positional arguments:
+   COMMAND               fork a new process and run the "COMMAND"
+@@ -143,6 +158,8 @@ optional arguments:
+                         CPU-SOCKET-LIST affected by commands
+   -N, --nohz_full       CPUs in nohz_full kernel command line will be affected
+                         by operations
++  --cpuset CPUSET-NAME  Run process in specified cpuset (cgroup v2) instead of
++                        setting CPU affinity
+   -p PRIORITY, --priority PRIORITY
+                         Set thread scheduler tunables: POLICY and RTPRIO
+   -b, --background      Run command as background task
+@@ -184,7 +201,7 @@ optional arguments:
+ \fBtuna show_threads\fR
+ usage: tuna-cmd.py show_threads [-h] [-c CPU-LIST | -N | -S CPU-SOCKET-LIST]
+                                 [-t THREAD-LIST | -q IRQ-LIST] [-U] [-K] [-C]
+-                                [-G]
++                                [-n] [-G] [--cpuset CPUSET-NAME] [-z]
+ 
+ Show thread list
+ 
+@@ -204,8 +221,10 @@ optional arguments:
+   -K, --no_kthreads     Operations will not affect kernel threads
+   -C, --affect_children
+                         Operation will affect children threads
++  -n, --show_sockets    Show network sockets in use by threads (requires inet_diag module)
+   -G, --cgroups         Display the processes with the type of cgroups they
+                         are in
++  --cpuset CPUSET-NAME  Show only threads in the specified cpuset
+   -z, --spaced          Display spaced view for cgroups
+ 
+ .TP
+@@ -267,6 +286,124 @@ optional arguments:
+                         CPU-SOCKET-LIST affected by commands
+   -U, --no_uthreads     Operations will not affect user threads
+   -K, --no_kthreads     Operations will not affect kernel threads
++.TP
++\fB tuna cpuset\fR
++usage: tuna-cmd.py cpuset [-h] {create,list,destroy,move,show,status,modify}
 +
- test-show-threads-cpuset:
- 	@sudo python3 -m unittest tests.test_show_threads_cpuset -v
- 
-diff --git a/tests/README.md b/tests/README.md
-index 799fc1ffe2dd..3e8b84a81fd4 100644
---- a/tests/README.md
-+++ b/tests/README.md
-@@ -12,7 +12,7 @@ This directory contains the test suite for tuna, using Python's `unittest` frame
- # Run all non-root tests only (45 tests)
- make tests
- 
--# Run ALL tests (all 142 tests, requires sudo for root-required tests)
-+# Run ALL tests (all 146 tests, requires sudo for root-required tests)
- make test-all
- 
- # Run specific test module
-@@ -37,7 +37,7 @@ make tests
- # or
- make unit-tests
- 
--# Using make (ALL tests including root-required tests, 142 tests)
-+# Using make (ALL tests including root-required tests, 146 tests)
- make test-all
- 
- # Using the test runner directly (non-root tests only)
-@@ -63,6 +63,7 @@ make test-converters
- make test-cpuset
- make test-cpuset-cli
- make test-isolate-cpuset
-+make test-run-cpuset
- make test-show-threads-cpuset
- make test-show-threads-cgroups
- 
-@@ -167,7 +168,7 @@ Tests are organized using Python's `unittest` framework. Each test file contains
-   - Tests edge cases: empty string and None inputs
-   - Run: `python3 -m unittest tests.test_show_threads_cgroups.TestExtractCpusetName -v`
- 
--#### Root-Required Tests (97 tests)
-+#### Root-Required Tests (102 tests)
- 
- - **test_process_blocklist.py** (2 tests) - Process blocklist root tests
-   - Tests actual blocking of systemd from being moved to cpusets
-@@ -185,7 +186,7 @@ Tests are organized using Python's `unittest` framework. Each test file contains
-   - Note: TestCpusetsInit (5 tests) and TestNumaDetection (6 tests) run without root, see non-root section
-   - Run: `sudo python3 -m unittest tests.test_cpuset -v` (runs all 43 tests with root)
- 
--- **test_cpuset_cli.py** (45 tests) - CLI command tests
-+- **test_cpuset_cli.py** (50 tests) - CLI command tests
-   - TestGetNextTunaCpusetName: Auto-naming logic (tuna0, tuna1, gap-filling)
-   - TestCpusetCreateCLI: Create command with auto/custom names, --isolated, and NUMA auto-detection/override
-   - TestCpusetListCLI: List command with --pattern, --verbose, --skip-empty
-@@ -199,6 +200,12 @@ Tests are organized using Python's `unittest` framework. Each test file contains
-     - Tests cpuset-based CPU isolation with isolated and housekeeping cpusets
-     - Verifies partition types, CPU assignments, and process migration
-     - Tests error handling and backward compatibility
-+  - TestTunaRunCpusetCLI: Integration of --cpuset with tuna run command (5 tests)
-+    - test_run_with_cpuset_basic: Verifies running commands in cpusets
-+    - test_run_with_cpuset_and_priority: Tests combining cpuset with priority settings
-+    - test_run_with_nonexistent_cpuset: Tests error handling for non-existent cpusets
-+    - test_run_cpuset_mutually_exclusive_with_cpus: Tests mutual exclusivity with -c
-+    - test_run_help_shows_cpuset_option: Verifies --cpuset appears in help
-   - Run: `sudo python3 -m unittest tests.test_cpuset_cli -v`
- 
- - **test_show_threads_cpuset.py** (6 tests) - show_threads --cpuset filter tests
-@@ -219,7 +226,7 @@ Tests are organized using Python's `unittest` framework. Each test file contains
-     - test_cgroups_displays_system_slice_shortened: Verifies system.slice shows shortened name
-   - Run: `sudo python3 -m unittest tests.test_show_threads_cgroups.TestShowThreadsCgroupsDisplay -v`
- 
--**Total: 142 tests** (45 non-root + 97 root-required)
-+**Total: 146 tests** (45 non-root + 101 root-required)
- 
- ### Test Requirements: Root vs Non-Root
- 
-@@ -268,7 +275,7 @@ These tests run without root privileges:
- - Tests are fast and don't affect the running system
- - Tests verify both happy path (with mocks) and error path (with real EPERM)
- 
--#### Root-Required Tests (97 tests)
-+#### Root-Required Tests (102 tests)
- 
- These tests require root to create/manipulate cgroups:
- 
-@@ -278,7 +285,7 @@ These tests require root to create/manipulate cgroups:
-    - Test task migration between cpusets
-    - All tests clean up created cpusets in tearDown()
- 
--2. **Cpuset CLI tests** (45 tests) test command-line interface functions
-+2. **Cpuset CLI tests** (50 tests) test command-line interface functions
-    - Test cpuset create/list/destroy/move/show/status/modify commands
-    - Verify auto-naming logic (tuna0, tuna1, etc.)
-    - Test NUMA-aware memory node auto-detection and manual override
-@@ -287,6 +294,7 @@ These tests require root to create/manipulate cgroups:
-    - Test cpuset modification with --add-cpus, --remove-cpus, --memory-nodes, --isolated
-    - Test tuna move --cpuset integration (5 tests)
-    - Test tuna isolate --cpuset integration (8 tests) - cpuset-based CPU isolation
-+   - Test tuna run --cpuset integration (5 tests) - running commands in cpusets
-    - All tests clean up created cpusets afterwards
- 
- 3. **show_threads --cpuset filter tests** (6 tests) test process filtering by cpuset
-@@ -435,12 +443,12 @@ test_extract_cpuset_name_none (test_show_threads_cgroups.TestExtractCpusetName)
- ----------------------------------------------------------------------
- Ran 45 tests in 0.XXXs
- 
--OK (skipped=97)
-+OK (skipped=102)
- ```
- 
--### All Tests Including Root-Required (142 tests)
-+### All Tests Including Root-Required (146 tests)
- 
--Running with sudo will run all 142 tests:
-+Running with sudo will run all 146 tests:
- 
- ```bash
- $ sudo python3 -m unittest discover -s tests -p "test_*.py" -v
-@@ -450,12 +458,12 @@ test_cpuset_path (test_cpuset.TestCpusetsInit) ... ok
- ... (32 cpuset module tests)
- test_first_name_is_tuna0 (test_cpuset_cli.TestGetNextTunaCpusetName) ... ok
- test_sequential_naming (test_cpuset_cli.TestGetNextTunaCpusetName) ... ok
--... (45 cpuset CLI tests)
-+... (50 cpuset CLI tests)
- ... (6 show_threads --cpuset tests)
- ... (4 show_threads -G display tests)
- 
- ----------------------------------------------------------------------
--Ran 142 tests in X.XXXs
-+Ran 146 tests in X.XXXs
- 
- OK
- ```
-@@ -472,7 +480,7 @@ The test suite includes:
- - **show_threads --cpuset help test**: CLI documentation verification (read-only)
- - **Cpuset name extraction tests**: Cgroup path parsing logic (pure function testing)
- 
--### Integration Tests (97 tests - require root)
-+### Integration Tests (102 tests - require root)
- - **Process blocklist tests**: Test blocklist protection (2 root-required tests)
- - **Cpuset module tests**: Test interaction with cgroup v2 subsystem
- - **Cpuset CLI tests**: Test command-line interface integration
-@@ -502,7 +510,7 @@ python3 -m unittest discover -s tests -p "test_*.py" -v
- 
- ### Root-Required Tests (Optional for CI)
- 
--The cpuset tests (97 tests) can run in CI with special setup:
-+The cpuset tests (102 tests) can run in CI with special setup:
- - Requires root access or privileged containers
- - Requires cgroup v2 support
- - May need dedicated test runners with appropriate permissions
-diff --git a/tests/test_cpuset_cli.py b/tests/test_cpuset_cli.py
-index cc51428cc55b..c95cea29b4a3 100644
---- a/tests/test_cpuset_cli.py
-+++ b/tests/test_cpuset_cli.py
-@@ -1195,6 +1195,104 @@ class TestTunaIsolateCpusetCLI(unittest.TestCase):
-         self.assertFalse(os.path.exists('/sys/fs/cgroup/tuna_housekeeping'))
- 
- 
-+@unittest.skipUnless(os.geteuid() == 0, "Requires root permissions")
-+@unittest.skipUnless(cpuset.CpusetsInit().supported, "Requires cgroup v2 support")
-+class TestTunaRunCpusetCLI(unittest.TestCase):
-+    """Test tuna run --cpuset command"""
++Manage CPU sets (cgroup v2). Cpusets provide fine-grained control over which CPUs processes can run on, with NUMA-aware memory node assignment and kernel-enforced isolation.
 +
-+    def setUp(self):
-+        """Clean up before each test"""
-+        self.test_cpuset = 'test_run_cpuset'
-+        try:
-+            cpuset.destroy_cpuset(self.test_cpuset, force=True)
-+        except:
-+            pass
++subcommands:
++  {create,list,destroy,move,show,status,modify}
 +
-+    def tearDown(self):
-+        """Clean up after each test"""
-+        try:
-+            cpuset.destroy_cpuset(self.test_cpuset, force=True)
-+        except:
-+            pass
++.B tuna cpuset create
++usage: tuna-cmd.py cpuset create [-h] -c CPU-LIST [-n NAME] [-i]
++                                 [-m MEM-NODES]
 +
-+    def test_run_with_cpuset_basic(self):
-+        """Test running a command in a cpuset"""
-+        # Create test cpuset
-+        cs = cpuset.Cpuset(self.test_cpuset)
-+        cs.assign_cpus('0-1')
-+        cs.write_memnode('0')
++Create a new cpuset with specified CPUs. Memory nodes are auto-detected from CPU topology unless specified manually.
 +
-+        # Run a simple command in the cpuset
-+        result = subprocess.run(
-+            [sys.executable, 'tuna-cmd.py', 'run', '--cpuset', self.test_cpuset, 'echo hello'],
-+            capture_output=True,
-+            text=True
-+        )
++required arguments:
++  -c CPU-LIST, --cpus CPU-LIST
++                        CPU-LIST to assign to the cpuset
 +
-+        self.assertEqual(result.returncode, 0)
-+        self.assertIn('hello', result.stdout)
++optional arguments:
++  -h, --help            show this help message and exit
++  -n NAME, --name NAME  Cpuset name (default: auto-generate tunaN)
++  -i, --isolated        Set CPU partition to isolated (kernel-enforced exclusivity)
++  -m MEM-NODES, --memory-nodes MEM-NODES
++                        Memory nodes (default: auto-detect from CPUs, e.g., "0" or "0-1")
 +
-+    def test_run_with_cpuset_and_priority(self):
-+        """Test running a command with both cpuset and priority"""
-+        # Create test cpuset
-+        cs = cpuset.Cpuset(self.test_cpuset)
-+        cs.assign_cpus('0-1')
-+        cs.write_memnode('0')
++.B tuna cpuset list
++usage: tuna-cmd.py cpuset list [-h] [-p PATTERN] [-v] [--show-empty]
++                               [--no-recursive]
 +
-+        # Run command with priority
-+        result = subprocess.run(
-+            [sys.executable, 'tuna-cmd.py', 'run', '--cpuset', self.test_cpuset,
-+             '-p', 'FIFO:50', 'echo priority test'],
-+            capture_output=True,
-+            text=True
-+        )
++List cpusets. By default, empty cpusets (no CPUs assigned) are skipped.
 +
-+        self.assertEqual(result.returncode, 0)
-+        self.assertIn('priority test', result.stdout)
++optional arguments:
++  -h, --help            show this help message and exit
++  -p PATTERN, --pattern PATTERN
++                        Filter by glob pattern (e.g., tuna*)
++  -v, --verbose         Show detailed information (CPUs, tasks, partition type)
++  --show-empty          Include cpusets with no CPUs assigned (default: skip empty)
++  --no-recursive        Only search top-level cpusets
 +
-+    def test_run_with_nonexistent_cpuset(self):
-+        """Test error handling for non-existent cpuset"""
-+        result = subprocess.run(
-+            [sys.executable, 'tuna-cmd.py', 'run', '--cpuset', 'nonexistent_cpuset', 'echo test'],
-+            capture_output=True,
-+            text=True
-+        )
++.B tuna cpuset destroy
++usage: tuna-cmd.py cpuset destroy [-h] [NAME] [-p PATTERN] [-f]
++                                  [--include-empty] [--no-recursive]
 +
-+        self.assertNotEqual(result.returncode, 0)
-+        self.assertIn('does not exist', result.stderr)
++Destroy cpuset(s). Use either NAME or --pattern, not both.
 +
-+    def test_run_cpuset_mutually_exclusive_with_cpus(self):
-+        """Test that --cpuset and -c are mutually exclusive"""
-+        # Create test cpuset
-+        cs = cpuset.Cpuset(self.test_cpuset)
-+        cs.assign_cpus('0-1')
-+        cs.write_memnode('0')
++positional arguments:
++  NAME                  Cpuset name to destroy (use this OR --pattern)
 +
-+        # Try to use both --cpuset and -c
-+        result = subprocess.run(
-+            [sys.executable, 'tuna-cmd.py', 'run', '--cpuset', self.test_cpuset,
-+             '-c', '0-1', 'echo test'],
-+            capture_output=True,
-+            text=True
-+        )
++optional arguments:
++  -h, --help            show this help message and exit
++  -p PATTERN, --pattern PATTERN
++                        Glob pattern to destroy multiple cpusets (e.g., tuna*)
++  -f, --force           Migrate tasks to root cgroup before destroying
++  --include-empty       When using --pattern, include cpusets with no CPUs assigned
++  --no-recursive        Only destroy top-level cpusets when using --pattern
 +
-+        # Should fail with error about mutually exclusive arguments
-+        self.assertNotEqual(result.returncode, 0)
-+        self.assertIn('not allowed with argument', result.stderr)
++.B tuna cpuset move
++usage: tuna-cmd.py cpuset move [-h] [-t THREAD-LIST] [-p PID-LIST] NAME
 +
-+    def test_run_help_shows_cpuset_option(self):
-+        """Test that --cpuset option appears in help"""
-+        result = subprocess.run(
-+            [sys.executable, 'tuna-cmd.py', 'run', '--help'],
-+            capture_output=True,
-+            text=True
-+        )
++Move processes to a cpuset
 +
-+        self.assertEqual(result.returncode, 0)
-+        self.assertIn('--cpuset', result.stdout)
-+        self.assertIn('Run process in specified cpuset', result.stdout)
++positional arguments:
++  NAME                  Cpuset name to move processes to
 +
++optional arguments:
++  -h, --help            show this help message and exit
++  -t THREAD-LIST, --threads THREAD-LIST
++                        THREAD-LIST affected by commands (supports patterns)
++  -p PID-LIST, --pids PID-LIST
++                        Comma-separated list of PIDs to move
 +
- def suite():
-     """Create test suite"""
-     loader = unittest.TestLoader()
-@@ -1211,6 +1309,7 @@ def suite():
-     suite.addTests(loader.loadTestsFromTestCase(TestCpusetModifyCLI))
-     suite.addTests(loader.loadTestsFromTestCase(TestTunaMoveCpusetCLI))
-     suite.addTests(loader.loadTestsFromTestCase(TestTunaIsolateCpusetCLI))
-+    suite.addTests(loader.loadTestsFromTestCase(TestTunaRunCpusetCLI))
++.B tuna cpuset show
++usage: tuna-cmd.py cpuset show [-h] [--show-tasks] NAME
++
++Show detailed information about a cpuset
++
++positional arguments:
++  NAME           Cpuset name to show
++
++optional arguments:
++  -h, --help     show this help message and exit
++  --show-tasks   Show detailed list of tasks/processes
++
++.B tuna cpuset status
++usage: tuna-cmd.py cpuset status [-h] [-p PATTERN] [--show-empty]
++                                 [--no-recursive]
++
++Show system-wide cpuset overview with statistics
++
++optional arguments:
++  -h, --help            show this help message and exit
++  -p PATTERN, --pattern PATTERN
++                        Filter by glob pattern (e.g., tuna*)
++  --show-empty          Include cpusets with no CPUs assigned (default: skip empty)
++  --no-recursive        Only show top-level cpusets
++
++.B tuna cpuset modify
++usage: tuna-cmd.py cpuset modify [-h] [--add-cpus CPU-LIST]
++                                 [--remove-cpus CPU-LIST] [-m MEM-NODES]
++                                 [--isolated | --no-isolated]
++                                 NAME
++
++Modify an existing cpuset without destroying it
++
++positional arguments:
++  NAME                  Cpuset name to modify
++
++optional arguments:
++  -h, --help            show this help message and exit
++  --add-cpus CPU-LIST   CPUs to add to the cpuset (e.g., 4-7 or 4,5,6,7)
++  --remove-cpus CPU-LIST
++                        CPUs to remove from the cpuset (e.g., 0-1 or 0,1)
++  -m MEM-NODES, --memory-nodes MEM-NODES
++                        Set memory nodes (e.g., "0" or "0-1")
++  --isolated            Set CPU partition to isolated
++  --no-isolated         Set CPU partition to member (not isolated)
++
+ .IP \fIModifiers\fR
+ .TP
+ \fB\-c\fR, \fB\-\-cpus\fR=\fICPU\-LIST\fR
+@@ -278,7 +415,10 @@ CPU\-SOCKET\-LIST affected by commands. Requires a socket number or a comma-sepa
+ \fB\-t\fR, \fB\-\-threads\fR=\fITHREAD\-LIST\fR
+ THREAD\-LIST affected by commands. Requires a thread number or thread name, or a comma-separated list of thread numbers and/or names. Thread names may contain wildcards. Be sure to quote or escape any wildcard specifications.
+ .TP
++\fB\-q\fR, \fB\-\-irqs\fR=\fIIRQ\-LIST\fR
++IRQ\-LIST affected by commands. Requires an IRQ number or IRQ user name, or a comma-separated list of IRQ numbers and/or user names. IRQ user names may contain wildcards. Be sure to quote or escape any wildcard specifications.
+ .SH USAGE EXAMPLES
++.SS CPU Affinity Examples
+ If for instance the Ethernet NICs have multiple queues for both receive and transmit, each with its own IRQ, the Ethernet IRQs can be associated with a CPU socket:
+ .TP
+ .B tuna isolate -S 2
+@@ -286,3 +426,42 @@ If for instance the Ethernet NICs have multiple queues for both receive and tran
+ .B tuna spread -q 'eth*' -S 2
  
-     return suite
- 
+ Move everything off the CPUs in socket 2, then spread the IRQs for the Ethernet devices across those same CPUs.
++
++.SS Cpuset Examples
++Create an isolated cpuset for real-time workloads:
++.TP
++.B tuna cpuset create -c 2-5 -n rt_workload -i
++
++Create a cpuset named 'rt_workload' with CPUs 2-5, set to isolated partition. Memory nodes are auto-detected from CPU topology.
++
++.TP
++.B tuna run --cpuset rt_workload -p FIFO:80 'my_rt_app'
++
++Launch a real-time application in the rt_workload cpuset with FIFO scheduler and priority 80.
++
++.TP
++Isolate CPUs using cpusets (more powerful than traditional affinity):
++.TP
++.B tuna isolate -c 4-7 --cpuset my_isolated --cpuset-housekeeping my_hk 0-3
++
++Isolate CPUs 4-7 by creating 'my_isolated' cpuset with kernel-enforced exclusivity, and move all existing processes to 'my_hk' cpuset on CPUs 0-3. Both cpusets use partition=isolated for kernel enforcement.
++
++.TP
++.B tuna move --cpuset rt_workload -t 'kworker/*'
++
++Move all kworker threads to the rt_workload cpuset.
++
++.TP
++.B tuna show_threads --cpuset rt_workload
++
++Show only processes running in the rt_workload cpuset.
++
++.TP
++.B tuna cpuset modify rt_workload --add-cpus 6-7
++
++Add CPUs 6-7 to the rt_workload cpuset without disrupting running processes.
++
++.TP
++.B tuna cpuset status
++
++Display system-wide overview of all cpusets with statistics.
 -- 
 2.54.0
 
