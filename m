@@ -1,47 +1,47 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 8D2BA4266B3
-	for <linux-rt-users@vger.kernel.org>; Fri, 10 Jul 2026 13:39:10 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 5F15741166B
+	for <linux-rt-users@vger.kernel.org>; Fri, 10 Jul 2026 13:39:12 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1783690753; cv=none; b=A/1kRDexHsUQ7gVXgYPIl3jQn9rhWH9NLWE1GLhm3U6cC8M4L1DJyb6eycfeFWzvhxgBXrKWXf39t2MGh/ZOnR1flkU4DruamocQ/87dZrBpNbn/VqJrTgndsQIFPyaId6XlWRN8aWktU7CWbfqzTsBJcwBDcEFVdc0HJLgf/ro=
+	t=1783690755; cv=none; b=g4laZCOn6BQi3wewEvGORE+/Nev5FmJ1UR4UMmoe0MgzOX3iXLvfOgWji8ZW0fRRIAxHbuDqpzO66Qh1bZS0jPXJ1XFCxzYksfszRROmn/uU22dSwBiCzf+q3/tuP+xCHV//C53Br3nhb8yTYYKJfCyxoQyC3jJeGWbO8fBP6KA=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1783690753; c=relaxed/simple;
-	bh=m2+Nyi5bDF2iNvV9zLt7V8VbLmZfezSuVQqU/NALgt0=;
+	s=arc-20240116; t=1783690755; c=relaxed/simple;
+	bh=mak1QVpjxTm4ahONOPcwQ9ehbB/5YJsAsar9W1HfC2M=;
 	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=QK0sm2F/SbxM1mygn8oi0UWsmtgPN0tgCJw8SunwZeF55cdYvoRTJzTVdM80Z0ull7JhtgKXittTkkGX6J99ID2m1uGeWzjoMhwunVk3cbBhhS5t28t/L0Vm5ib/fLwLRr5WPvAeQucRsC860ptETeVXvX+fb4DfZON10RWwt3E=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=a58Yxj6b; arc=none smtp.client-ip=170.10.133.124
+	 MIME-Version; b=Novrz86GjqejEIbPMmHKlDRafDULicwn1eHT/KXp+tv5DH3J50mtrEE/enogerxrtiRaTacydjCAP8lRD98XXeAa+Eb3m8dvGxrXxMd7XYg2DP6qS6WSh6sh6IaSBfpFAyS6ZWr9EEzzIopWf1AdCgItodepy9p/xCezs1GQnrg=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=LGmfWQDy; arc=none smtp.client-ip=170.10.129.124
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="a58Yxj6b"
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="LGmfWQDy"
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1783690748;
+	s=mimecast20190719; t=1783690751;
 	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
 	 to:to:cc:cc:mime-version:mime-version:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references;
-	bh=GfNDAx3P7ciKEPNJawjCW6hLyvzGfb+LCKeNPvUER4o=;
-	b=a58Yxj6bS2GTMnqzymnrntTRaP/+DPdYcwGD8pCyjkYSTPqVMRwikSOxsKKrDUu5CGX2iJ
-	i5fGGrifnXJdcDiQ0gEQA71KLaJk8QCaGCJpnUCPx3pvBcy2sts9Mh9C3uOi3m0uR0NAcj
-	fPjhvzYchoP6gz7aNINcqlHkIsAxAbs=
-Received: from mx-prod-mc-06.mail-002.prod.us-west-2.aws.redhat.com
- (ec2-35-165-154-97.us-west-2.compute.amazonaws.com [35.165.154.97]) by
+	bh=DbRsKaSuFm1TlsfpUl6w6aX21ijlezloRiqYannEDsI=;
+	b=LGmfWQDyJQUnrJHoUWMY1aJOHl12h5BQIfpwjOMLDqUJ+XePhZcA8WLoUfxj8C5ZOA8Vzo
+	EnrNIsJYaWyx8wxsQwzhLNqn7km1wnNWnLYshdfvsWXg9+MvC3w2pywgOSxxZTVGB9FT0d
+	367SNPkrtI6zHExcwNB8fhiCUH/Gyhk=
+Received: from mx-prod-mc-03.mail-002.prod.us-west-2.aws.redhat.com
+ (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
  relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-586-uSzZOj-mNe20tSwgez4ySA-1; Fri,
- 10 Jul 2026 09:39:05 -0400
-X-MC-Unique: uSzZOj-mNe20tSwgez4ySA-1
-X-Mimecast-MFC-AGG-ID: uSzZOj-mNe20tSwgez4ySA_1783690743
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-633-mFucx2T8MWmy_AjJUvY6gw-1; Fri,
+ 10 Jul 2026 09:39:10 -0400
+X-MC-Unique: mFucx2T8MWmy_AjJUvY6gw-1
+X-Mimecast-MFC-AGG-ID: mFucx2T8MWmy_AjJUvY6gw_1783690749
 Received: from mx-prod-int-03.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-03.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.12])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
 	(No client certificate requested)
-	by mx-prod-mc-06.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id CCA8F18005A2;
-	Fri, 10 Jul 2026 13:39:03 +0000 (UTC)
+	by mx-prod-mc-03.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 202E01955F15;
+	Fri, 10 Jul 2026 13:39:09 +0000 (UTC)
 Received: from wcosta-defaultstring.rmtbr.csb (unknown [10.22.88.130])
-	by mx-prod-int-03.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTP id 7D7F0195608E;
-	Fri, 10 Jul 2026 13:39:01 +0000 (UTC)
+	by mx-prod-int-03.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTP id BB595195608E;
+	Fri, 10 Jul 2026 13:39:06 +0000 (UTC)
 From: Wander Lairson Costa <wander@redhat.com>
 To: williams@redhat.com,
 	jkacur@redhat.com,
@@ -50,9 +50,9 @@ Cc: juri.lelli@redhat.com,
 	luffyluo@tencent.com,
 	davidlt@rivosinc.com,
 	Wander Lairson Costa <wander@redhat.com>
-Subject: [PATCH 05/11] tests: fix intermittent starvation_gen readiness failure
-Date: Fri, 10 Jul 2026 10:38:04 -0300
-Message-ID: <20260710133810.72398-6-wander@redhat.com>
+Subject: [PATCH 07/11] tests: dump log contents on assert_log_contains failure
+Date: Fri, 10 Jul 2026 10:38:06 -0300
+Message-ID: <20260710133810.72398-8-wander@redhat.com>
 In-Reply-To: <20260710133810.72398-1-wander@redhat.com>
 References: <20260710133810.72398-1-wander@redhat.com>
 Precedence: bulk
@@ -64,55 +64,29 @@ MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 X-Scanned-By: MIMEDefang 3.0 on 10.30.177.12
 
-The process_alive check in the start_starvation_gen polling loop
-uses kill -0, which can occasionally fail even when the process
-is running. When this happens before the readiness grep has a
-chance to run, the test aborts with a spurious "exited
-prematurely" error.
-
-Reorder the loop to check the log file for the ready message
-before checking process liveness, so a transient kill -0 failure
-does not prevent detection of a process that is already running.
-Increase the initial sleep from 0.01s to 0.5s to give
-starvation_gen time to start up before the first poll.
+assert_starvation_detected and assert_boost_detected already dump the
+log file before calling fail, but assert_log_contains does not, making
+failures harder to diagnose in CI.  Add the same log-dump pattern so
+the file contents appear in the output on any assertion failure.
 
 Signed-off-by: Wander Lairson Costa <wander@redhat.com>
 ---
- tests/helpers/test_helpers.sh | 12 ++++++------
- 1 file changed, 6 insertions(+), 6 deletions(-)
+ tests/helpers/test_helpers.sh | 2 ++
+ 1 file changed, 2 insertions(+)
 
 diff --git a/tests/helpers/test_helpers.sh b/tests/helpers/test_helpers.sh
-index 1e3d736..20937a3 100755
+index 20937a3..a2db0a9 100755
 --- a/tests/helpers/test_helpers.sh
 +++ b/tests/helpers/test_helpers.sh
-@@ -1267,21 +1267,21 @@ start_starvation_gen() {
- 	# starvation_gen prints "ready" after all threads pass the barrier.
- 	# Brief initial sleep covers the fast path, then 1-second polling
- 	# for slow/loaded systems.
--	sleep 0.01
-+	sleep 0.5
- 
- 	local timeout=10
- 	local elapsed=0
- 	while [ $elapsed -lt $timeout ]; do
--		if ! process_alive ${STARVE_PID}; then
--			echo "  Log contents:"
--			cat "${STARVE_LOG}"
--			fail "starvation_gen exited prematurely"
--		fi
- 		if grep -q "Press Ctrl+C to stop early" "${STARVE_LOG}" 2>/dev/null; then
- 			echo "starvation_gen ready (PID ${STARVE_PID})"
- 			return 0
+@@ -209,6 +209,8 @@ assert_log_contains() {
+ 		else
+ 			log "    Pattern '${pattern}' not found in ${log_file}"
  		fi
- 		sleep 1
-+		if ! process_alive ${STARVE_PID}; then
-+			echo "  Log contents:"
-+			cat "${STARVE_LOG}"
-+			fail "starvation_gen exited prematurely"
-+		fi
- 		elapsed=$((elapsed + 1))
- 	done
- 
++		log "Log contents:"
++		cat "${log_file}"
+ 		fail "${message}"
+ 	fi
+ }
 -- 
 2.55.0
 
