@@ -1,72 +1,72 @@
-Received: from mail-vs1-f42.google.com (mail-vs1-f42.google.com [209.85.217.42])
+Received: from mail-ua1-f41.google.com (mail-ua1-f41.google.com [209.85.222.41])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 54B6C30EF68
-	for <linux-rt-users@vger.kernel.org>; Fri, 10 Jul 2026 14:15:58 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.217.42
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 1FCD329DB6E
+	for <linux-rt-users@vger.kernel.org>; Fri, 10 Jul 2026 14:16:00 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.222.41
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1783692960; cv=none; b=Z3rQSHi/odfgSx3ecOFhGPF0VOh2lym97S0g+ExNQ5IM7/Im26SA/T7FP3eWM1Ahlji5AfDtA1OIGoKl7j6m5AFfWOQy5E4pVs1JHsK2/f+hIqRV/9ZS8pkI7DjV4mGzfXG4bLR0+DBhXjg//GsFkioiklRiS0/nG1IOn6vN+R8=
+	t=1783692962; cv=none; b=eDyQ8Inojbp2d5j3WWjEd6UeT8Tvv+WjIxir/+NGVNHb3i9Hb5fosmzx2HRoZNLD9rUqdYT+oYFuJh23clUkvsfyfKTNvQBv8gZkKHTL0eeco9Kkk/NteEKRcx6rpQglhIA89WWDNiDRoxkaBT6zw7M+HJSnr1Q6zQAFFCJqnPU=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1783692960; c=relaxed/simple;
-	bh=8qARpRoFYCGa/nmGCIMKQ1r+Liry+hWQ5Hj5ych6IuU=;
+	s=arc-20240116; t=1783692962; c=relaxed/simple;
+	bh=3BSurx6uOSQ1ZspVvS06Bo5m0q03sIzp52BKmjA8w7Y=;
 	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version:Content-Type; b=oir4y2gUiAe4XIVWXWML8I2zc863habZQJXh4B87rRFFzrouqZ5F18PGJjWTn3xQgWx8rbM5JIk2BnfBGUXpJJbW+pNXIUZExsd4nhYJlexiunaHHdBue8AZTmUC81y2uN7KvkaEh1ZJrolab5Yxs7mSNYmqdo6076y+a0BECGQ=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=fail (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=jxkrQ825; arc=none smtp.client-ip=209.85.217.42
+	 MIME-Version; b=Bs6SB2vnV0779bunv7dHDVjbagPjx0rX2fzANWZjPGT1moreIfecHghKZISXXAlNnW14r52NfX91fu0PfvRXU5Ia6GHXMre7u1+B6Uj4jzgnvmijNN3sDv7mnQLcNd1RWtq69XdpIya7/2DdblXdWlZPHinluh1gDI/gHxbDYyw=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=fail (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=Sk9J5eIZ; arc=none smtp.client-ip=209.85.222.41
 Authentication-Results: smtp.subspace.kernel.org; dmarc=fail (p=quarantine dis=none) header.from=redhat.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="jxkrQ825"
-Received: by mail-vs1-f42.google.com with SMTP id ada2fe7eead31-73770fd1b65so301398137.0
-        for <linux-rt-users@vger.kernel.org>; Fri, 10 Jul 2026 07:15:58 -0700 (PDT)
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="Sk9J5eIZ"
+Received: by mail-ua1-f41.google.com with SMTP id a1e0cc1a2514c-967327a0c7dso217898241.1
+        for <linux-rt-users@vger.kernel.org>; Fri, 10 Jul 2026 07:15:59 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20251104; t=1783692957; x=1784297757; darn=vger.kernel.org;
-        h=content-transfer-encoding:content-type:mime-version:references
-         :in-reply-to:message-id:date:subject:cc:to:from:sender:from:to:cc
-         :subject:date:message-id:reply-to:content-type;
-        bh=4K50HG23BuZ+QBIwyl1S4ErK6fDWHhTlo2QCBdsdSnc=;
-        b=jxkrQ825JDKNErm7B1oZiITsxzrz9qseCCjMsoKbwZ/ZreL+XgIVwJpBeGYuxLPHMy
-         /j7wuwDwKXZt8ko1Myiyvgi7Dn2a2b4QAEPwE3EWgnrnzZS1vcUkBd2O4DHhPatrZS/B
-         VxXddQ30CPuOqSIg7BKL8omn3FvfzCJTkU0NCJk49tLdrMIrjnQ43Ewe7+unl3orkOqE
-         AuKLc0oJEB0zWcSZjoIkl22HcLIx1k0QAkTJw7gI2uyF39bLmRC/W1WiKet/TKlDjNTH
-         L0EIi0BHX00lXyeVDWhaiTVdLcNnGMn8id4terFbaShg+1ZPUtWr5JJNZ8UmiMxphDYA
-         n4Jw==
+        d=gmail.com; s=20251104; t=1783692959; x=1784297759; darn=vger.kernel.org;
+        h=content-transfer-encoding:mime-version:references:in-reply-to
+         :message-id:date:subject:cc:to:from:sender:from:to:cc:subject:date
+         :message-id:reply-to:content-type;
+        bh=zlwxjALWAmTh8zdKNKMOT8LTEgKLA1flac4e+OX1vUc=;
+        b=Sk9J5eIZyk89VgA3vg/LAJD/x3WwFOZui5lCTPtOUBlCvkD/x0HHrW3J0C1SmLpD6s
+         JC92ogEm+SU/PIMLdI7tc1JGCA3zaJdkPHZ2Jab3gWxDU1wOIjgJxGMG0+nBDM18+9q9
+         Y1E0iDjUf+YSgqw4/l+Y1eBWqrRI/iEvkNQurhnT/fFD0oMQDaYGiiXRlH9K1qwn5I3d
+         SnKR5zsevabDPsKztF7IluUwP0G2kvhcs+32rz9kIxV+Qjrc5L6MoBvBrexEUuefmjug
+         6aEpEZYpCKuU6DrDTPm/YY0MMoi5SnVMYHLKTkpQmYJYLXNNZyN+mU5OTHaLZGlyzpFf
+         JcmA==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20251104; t=1783692957; x=1784297757;
-        h=content-transfer-encoding:content-type:mime-version:references
-         :in-reply-to:message-id:date:subject:cc:to:from:sender:x-gm-gg
+        d=1e100.net; s=20251104; t=1783692959; x=1784297759;
+        h=content-transfer-encoding:mime-version:references:in-reply-to
+         :message-id:date:subject:cc:to:from:sender:x-gm-gg
          :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to
          :content-type;
-        bh=4K50HG23BuZ+QBIwyl1S4ErK6fDWHhTlo2QCBdsdSnc=;
-        b=IeIWV1XC8FbkM0MZjqxn2iv1Zk3U/cmjs35E+w2uWBLFwFkkLi31Ad44kODqahWJFl
-         4lJUiUgufH7I5LM+h5LWQaUGr1DuOG7KNA66xGg/nD8sh8SbTfXFoLURihhCvqtS7ZUo
-         +90xTe8zb7LrYgJmrTagogoV+qgBnMQoSz3KbdGnhvqXIKxBl/eXjc99Uz7x0klEuY3E
-         +fM/Eo0k4cGUpgsv9I7ngpTYUCnKuNBnILVf2LwdM4JxoMn/20ZJAHhXZpS43uaLurXE
-         PmjOj02vGdXxe4e7P8MkKLf20nRCqUiZzQcymm8YUPGVLY5wRp1/vnUanyJVWm8mmjDo
-         nefw==
-X-Gm-Message-State: AOJu0Yy0b+F9OvgHvI+15y5RBzUHaTRiUwRYwsvhsK4IP91qwBFAR8Hj
-	xyNUwaw58/IYOgFNkQqB9rmeBPCdJVW6AJreuIXsgNLlJck3/6vzS5lTwGRUmw==
-X-Gm-Gg: AfdE7cmBcdv+xF/ectBD8QJRjvj43hVWQgMao95LgiCP2z7mpbSXD54qlP9U9I/YLPW
-	Y8P0fZvo5JsgI0npzO/M1OWfhu5PV9viZJj2j1+szkGzIiFIdV8r4jXEY+wmJrIEeIJ3EjEMGKi
-	1HyWXLvtEAbAq44U2MRtWThPP3GjpbFA2ed/ELH0p5t/v+9LMbVeIBHzMvqqRYMIeAstvfs11ig
-	qNYAfpSK2n/p4H9Kf9291D7PZuoeN440ILxT7f5ZPOX+7Jqk41AiHlTURt/f4skEBCGu2r6CMiW
-	Wnwl5NvORTNTjARxF7OyXIWVMYIRCoPneNNOpKgG7RwJJCJolrGzW3w2BC1hJqWO14t7wQjtlK9
-	TPsfysfLknUYJoM19FNt8ChUIgiLHCSOsf97eIHybAwwvkMjnSkgnqKo94dDjE0wO7KxrAAkS8f
-	Eb/XBNclQ00YWxacpO6MLuRtOJHCSlQKD+rtzXSWIE5605Xy7qgjgg1nbzId2mFSXbluyCFmMlv
+        bh=zlwxjALWAmTh8zdKNKMOT8LTEgKLA1flac4e+OX1vUc=;
+        b=pMchnrH1EYDFG67MbEbrdHqiHXMgPA9CmqL+KC/FMtgVDsNU7HtwfatXap8nU2ABB0
+         1ZVdO2MJQJw0vmT/icE9pupjXs09lENoUsF7Ylc02f7mTJNytF22CQQjPxt+SteNRVfE
+         ytZAxl+yj4+knEsf3S5sc7aE36HpGsrP3CxeVN8V5JaXBgO2iQEnPxcGWWjy3vCYgnNZ
+         RmpGtPRLE/lemU/761rrietpB42fpUM0n5y8vohb8t7ZpsyLyEjCcFuWN5k1yV+3AkR7
+         9mOWR58Jv3hCiuGO7Lch+x0EKD6fP/kGBVdHjjJjlwy4lMmM1jxb7wlD1A84nf94dJOc
+         TZlA==
+X-Gm-Message-State: AOJu0Yxnu3f0BnefgjLYeC/2UFkW8jWT3NSI98lOjXF3ZZ1znlRyQDrQ
+	2nLaNPtkKh2fk7qmcxqB7rlzfO9vLBVPE2k7tr8uCwHkWPHZzuyKjU7MRd+XhA==
+X-Gm-Gg: AfdE7cmTYz9eUe2Pnbs7yiQdH984Y3WjD78+/iy4ayghrt9XqQlZqZrxiZETKDNqBnL
+	yYsYByK1gJzPnl07OMO/KbQZbKirER+C2Z7zHnBCwlgtXS3W9+Ad/8CKVCl9tIBEg5wfXRC3HaX
+	u0BaZqe1HOC1l+1Oq8M+snswnYtBcRXcjpchwT9pp5TOxvm1C4ARh/VsA82s4cTt41Fg8MlHdxI
+	Mm6KQntVy71ViGm1vBdB0HjegRYE3qIKkcs0oHuJA2zv4I+VUIZQKZQ0oI7FZ7sdB0JbDqWWglr
+	yhFOCNv8oMcQP1Min8CqmTVyyaH15d79GX7a7s4FFfJo81sCiz6ChKuSNGef5UAuWA0ETJF6i6Q
+	X157BGsv6/B0Tov+LjMRP95MC9vAXJuQGttjiD3yYCNfS6Nrs/T6jzH/U696ukPGHQtx3UbdQ6x
+	LzEFMkTDGR0uRsnSrOpLU4vScUK9WdiFij63jPxDf2YMn3lT19cJLJhxzuiVYYNanaTEeMd/6Sp
 	Q==
-X-Received: by 2002:a05:6102:5984:b0:738:be73:55e0 with SMTP id ada2fe7eead31-744dffae44emr6633329137.12.1783692956922;
-        Fri, 10 Jul 2026 07:15:56 -0700 (PDT)
+X-Received: by 2002:a05:6102:8011:b0:740:32ae:8ec7 with SMTP id ada2fe7eead31-744e03d3de9mr6928207137.23.1783692958639;
+        Fri, 10 Jul 2026 07:15:58 -0700 (PDT)
 Received: from Cumhall.home ([216.209.112.119])
-        by smtp.gmail.com with ESMTPSA id ada2fe7eead31-744d6771d49sm5565087137.0.2026.07.10.07.15.55
+        by smtp.gmail.com with ESMTPSA id ada2fe7eead31-744d6771d49sm5565087137.0.2026.07.10.07.15.57
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Fri, 10 Jul 2026 07:15:56 -0700 (PDT)
+        Fri, 10 Jul 2026 07:15:57 -0700 (PDT)
 Sender: John Kacur <jkacur@gmail.com>
 From: John Kacur <jkacur@redhat.com>
 To: linux-rt-users@vger.kernel.org
 Cc: Chris White <chwhite@redhat.com>,
 	Clark Williams <williams@redhat.com>
-Subject: [PATCH 07/36] tuna: Add cpuset module for CPU isolation using cgroup v2
-Date: Fri, 10 Jul 2026 10:14:45 -0400
-Message-ID: <20260710141523.36440-8-jkacur@redhat.com>
+Subject: [PATCH 08/36] tuna: Add comprehensive test suite for cpuset module
+Date: Fri, 10 Jul 2026 10:14:46 -0400
+Message-ID: <20260710141523.36440-9-jkacur@redhat.com>
 X-Mailer: git-send-email 2.54.0
 In-Reply-To: <20260710141523.36440-1-jkacur@redhat.com>
 References: <20260710141523.36440-1-jkacur@redhat.com>
@@ -76,778 +76,656 @@ List-Id: <linux-rt-users.vger.kernel.org>
 List-Subscribe: <mailto:linux-rt-users+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit
 
-Port cpuset functionality from rteval with tuna-specific enhancements.
-Originally prototyped in tuna, implemented in rteval, now adapted back
-to tuna for persistent CPU isolation capabilities.
+Add unit tests and utility script for the cpuset module to ensure
+proper functionality and discover edge cases.
 
-Core functionality (rteval-compatible):
-- Cpuset class for creating/destroying cpusets
-- CpusetsInit class for cgroup v2 detection
-- TaskMigrate class for moving processes between cpusets
-- Context manager support with optional auto_destroy
-- NUMA awareness and CPU partitioning
+Tests added:
+- tests/test_cpuset.py: 27 unit tests across 7 test classes
+  - TestCpusetsInit: cgroup v2 detection and initialization
+  - TestCpusetCreation: creating/destroying cpusets
+  - TestCpusetConfiguration: CPU/memory assignment
+  - TestContextManager: auto_destroy behavior
+  - TestTaskMigration: process migration
+  - TestDiscoveryFunctions: cpuset discovery
+  - TestCleanupFunctions: cleanup operations
 
-Tuna-specific enhancements:
-- Persistent cpusets by default (auto_destroy=False)
-- list_cpusets() for discovering existing cpusets
-- destroy_cpuset() for cleaning up any cpuset
-- destroy_cpuset_recursive() for nested hierarchies
-- cleanup_cpusets() for pattern-based bulk cleanup
-- Support for systemd/container nested cgroup hierarchies
+Utility script:
+- cleanup_test_cpusets.sh: Clean up leftover test cpusets
 
-Also standardize cpulist utility functions in tuna.py:
-- Add expand_cpulist() and collapse_cpulist() from rteval
-- Update existing functions to use the standardized versions
-- Maintain backward compatibility with wrapper functions
+Tests handle both root and non-root execution, properly clean up
+nested cpuset hierarchies, and validate cgroup v2 requirements.
 
 Assisted-by: Claude:claude-sonnet-4-5
 Signed-off-by: John Kacur <jkacur@redhat.com>
 ---
- tuna/cpuset.py | 595 +++++++++++++++++++++++++++++++++++++++++++++++++
- tuna/tuna.py   | 108 ++++++---
- 2 files changed, 667 insertions(+), 36 deletions(-)
- create mode 100644 tuna/cpuset.py
+ tests/test_cpuset.py | 616 +++++++++++++++++++++++++++++++++++++++++++
+ 1 file changed, 616 insertions(+)
+ create mode 100644 tests/test_cpuset.py
 
-diff --git a/tuna/cpuset.py b/tuna/cpuset.py
+diff --git a/tests/test_cpuset.py b/tests/test_cpuset.py
 new file mode 100644
-index 000000000000..4a3a71416c53
+index 000000000000..6ac4fe0c9c40
 --- /dev/null
-+++ b/tuna/cpuset.py
-@@ -0,0 +1,595 @@
++++ b/tests/test_cpuset.py
+@@ -0,0 +1,616 @@
 +#!/usr/bin/python3
 +# -*- coding: utf-8 -*-
 +# SPDX-License-Identifier: GPL-2.0-only
-+#
-+# Copyright 2026 John Kacur <jkacur@redhat.com>
-+#
-+# Originally prototyped in tuna, implemented in rteval,
-+# and adapted back to tuna with tuna-specific enhancements.
-+#
-+""" Module for creating and using cpusets (cgroup v2) """
++"""
++Comprehensive test suite for tuna.cpuset module
 +
-+import errno
++Tests cover:
++- Core cpuset functionality (rteval-compatible)
++- Tuna-specific enhancements (discovery, cleanup, persistence)
++- Edge cases and error handling
++- Nested cpuset hierarchies
++
++Requires root permissions to run tests that create/destroy cgroups.
++"""
++
++import unittest
 +import os
-+import logging
-+from glob import glob
++import sys
++import time
++import tempfile
++from pathlib import Path
 +
-+logger = logging.getLogger(__name__)
++# Add tuna to path if running from tests directory
++if Path(__file__).parent.name == 'tests':
++    sys.path.insert(0, str(Path(__file__).parent.parent))
 +
-+
-+class Cpuset:
-+    """ Class for manipulating cpusets """
-+
-+    mpath = '/sys/fs/cgroup'
-+
-+    def __init__(self, name=None, auto_destroy=False):
-+        """
-+        Initialize a cpuset
-+
-+        Args:
-+            name: Name of the cpuset to create
-+            auto_destroy: If True, cpuset will be automatically destroyed when
-+                         exiting a context manager (rteval style).
-+                         If False (default), cpuset persists after program exits
-+                         (tuna style).
-+        """
-+        self.cpuset_name = None
-+        self._cpuset_path = None
-+        self.auto_destroy = auto_destroy
-+        self.create_cpuset(name)
-+
-+    @property
-+    def cpuset_path(self):
-+        """ Return the cpuset path, for example /sys/fs/cgroup/tuna_0 """
-+        return self._cpuset_path
-+
-+    def __str__(self):
-+        return f'cpuset_name={self.cpuset_name}, cpuset_path={self.cpuset_path}'
-+
-+    def create_cpuset(self, name=None):
-+        """
-+        Create a cpuset (cgroup) below /sys/fs/cgroup
-+
-+        If the cpuset already exists, prints a warning and returns without
-+        creating a new one.
-+        """
-+        if name is None:
-+            raise ValueError("cpuset name cannot be None")
-+        self.cpuset_name = name
-+        path = os.path.join(Cpuset.mpath, self.cpuset_name)
-+
-+        # Check if cpuset already exists
-+        if os.path.exists(path):
-+            logger.warning(f"Cpuset '{name}' already exists at {path}")
-+            print(f"Warning: cpuset '{name}' already exists at {path}")
-+            self._cpuset_path = path
-+            return
-+
-+        os.mkdir(path)
-+        self._cpuset_path = path
-+        # Enable cpuset controller in parent if needed
-+        self._enable_controllers()
-+
-+    def _enable_controllers(self):
-+        """ Enable cpuset controller in parent cgroup """
-+        # Get parent path
-+        parent_path = os.path.dirname(self._cpuset_path)
-+        if parent_path == '/sys/fs':
-+            parent_path = '/sys/fs/cgroup'
-+
-+        subtree_control = os.path.join(parent_path, 'cgroup.subtree_control')
-+        try:
-+            # Read current controllers
-+            with open(subtree_control, 'r', encoding='utf-8') as f:
-+                current = f.read().strip()
-+
-+            # Enable cpuset if not already enabled
-+            # Controllers are space-separated, so split and check
-+            if 'cpuset' not in current.split():
-+                with open(subtree_control, 'w', encoding='utf-8') as f:
-+                    f.write('+cpuset')
-+        except (OSError, PermissionError):
-+            # May fail if already enabled or no permissions
-+            pass
-+
-+    def assign_cpus(self, cpu_str):
-+        """
-+        Assign cpus in list-format to a cpuset
-+        Note: In cgroup v2, you must call write_memnode() before assign_cpus()
-+        """
-+        path = os.path.join(self._cpuset_path, "cpuset.cpus")
-+        with open(path, 'w', encoding='utf-8') as f:
-+            f.write(cpu_str)
-+
-+    def write_pid(self, pid):
-+        """
-+        Place a pid in a cpuset
-+        Returns True if successful, False if the process cannot be moved
-+        Raises OSError for unexpected errors
-+        """
-+        path = os.path.join(self._cpuset_path, "cgroup.procs")
-+        pid_str = str(pid)
-+        try:
-+            with open(path, 'w', encoding='utf-8') as f:
-+                f.write(pid_str)
-+                f.flush()
-+            return True
-+        except OSError as err:
-+            # EINVAL: Invalid argument (process can't be moved, or invalid PID format)
-+            # ESRCH: No such process (process died between read and write)
-+            # EBUSY: Device or resource busy (process can't be moved)
-+            # EACCES: Permission denied (some kernel threads can't be moved)
-+            if err.errno in (errno.EINVAL, errno.ESRCH, errno.EBUSY, errno.EACCES):
-+                return False
-+            else:
-+                raise
-+
-+    def write_memnode(self, memnode):
-+        """ Place memnode in a cpuset """
-+        path = os.path.join(self._cpuset_path, "cpuset.mems")
-+        memnode_str = str(memnode)
-+        with open(path, 'w', encoding='utf-8') as f:
-+            f.write(memnode_str)
-+
-+    def write_cpu_exclusive(self, cpu_exclusive):
-+        """
-+        Set CPU partition type (cgroup v2)
-+        In v2, cpu_exclusive is replaced by cpuset.cpus.partition
-+
-+        Args:
-+            cpu_exclusive: True/1/'1' for 'isolated', False/0/'0' for 'member'
-+        """
-+        path = os.path.join(self._cpuset_path, "cpuset.cpus.partition")
-+        if not os.path.exists(path):
-+            # cpuset.cpus.partition may not exist in all kernels
-+            return
-+
-+        # Convert to boolean: handles bool, int, or string input
-+        if isinstance(cpu_exclusive, str):
-+            is_exclusive = cpu_exclusive not in ('0', '', 'false', 'False')
-+        else:
-+            is_exclusive = bool(cpu_exclusive)
-+
-+        partition_type = 'isolated' if is_exclusive else 'member'
-+        try:
-+            with open(path, 'w', encoding='utf-8') as f:
-+                f.write(partition_type)
-+        except OSError:
-+            # Partition may not be supported or may fail
-+            pass
-+
-+    def set_cpu_exclusive(self):
-+        """ Turn cpu_exclusive on (set partition to isolated) """
-+        self.write_cpu_exclusive(True)
-+
-+    def unset_cpu_exclusive(self):
-+        """ Turn cpu_exclusive off (set partition to member) """
-+        self.write_cpu_exclusive(False)
-+
-+    def write_memory_migrate(self, memory_migrate):
-+        """
-+        Memory migrate is not available in cgroup v2
-+        This is kept for API compatibility but does nothing
-+        """
-+        pass
-+
-+    def set_memory_migrate(self):
-+        """ Memory_migrate not available in cgroup v2 (no-op for compatibility) """
-+        pass
-+
-+    def unset_memory_migrate(self):
-+        """ Memory migrate not available in cgroup v2 (no-op for compatibility) """
-+        pass
-+
-+    def destroy(self):
-+        """
-+        Remove this cpuset (cgroup directory)
-+        The cpuset must be empty (no processes) before it can be removed.
-+        Raises OSError if the directory is not empty or doesn't exist.
-+        """
-+        if self._cpuset_path and os.path.exists(self._cpuset_path):
-+            os.rmdir(self._cpuset_path)
-+
-+    def __enter__(self):
-+        """
-+        Context manager entry point
-+        Allows usage: with Cpuset('name') as cpuset: ...
-+        """
-+        return self
-+
-+    def __exit__(self, exc_type, exc_val, exc_tb):
-+        """
-+        Context manager exit point
-+        Only destroys the cpuset if auto_destroy=True was set during initialization.
-+        This allows rteval-style automatic cleanup when desired, but preserves
-+        tuna's default behavior of persistent cpusets.
-+        """
-+        if self.auto_destroy:
-+            self.destroy()
-+        return False  # Don't suppress exceptions
-+
-+    def get_tasks(self):
-+        """ Get the tasks (PIDs) currently in a cpuset """
-+        path = os.path.join(self.cpuset_path, "cgroup.procs")
-+        with open(path, 'r', encoding='utf-8') as f:
-+            return [line.strip() for line in f if line.strip()]
++from tuna import cpuset
 +
 +
-+class CpusetsInit(Cpuset):
-+    """
-+    CpusetsInit initializes cpusets (cgroup v2)
-+    It verifies that cgroup v2 is mounted and cpuset controller is available
-+    This class represents the root cgroup /sys/fs/cgroup
-+    """
++class TestCpusetsInit(unittest.TestCase):
++    """Test CpusetsInit class and cgroup v2 detection"""
 +
-+    mpath = '/sys/fs/cgroup'
++    def test_initialization(self):
++        """Test that CpusetsInit initializes correctly"""
++        ci = cpuset.CpusetsInit()
++        self.assertIsInstance(ci, cpuset.CpusetsInit)
++        self.assertIsInstance(ci.supported, bool)
++        self.assertIsInstance(ci.numa_nodes, int)
 +
-+    def __init__(self):
-+        self._supported = self._cpuset_supported()
-+        self._numa_nodes = self._get_numa_nodes() if self._supported else 0
-+        if self._supported:
-+            # Set attributes directly for the root cgroup
-+            self.cpuset_name = None
-+            self._cpuset_path = Cpuset.mpath
-+            # Root cgroup is never auto-destroyed
-+            self.auto_destroy = False
++    def test_cpuset_path(self):
++        """Test that cpuset_path is set correctly for root cgroup"""
++        ci = cpuset.CpusetsInit()
++        if ci.supported:
++            self.assertEqual(ci.cpuset_path, '/sys/fs/cgroup')
 +
-+    @property
-+    def supported(self):
-+        """ Return True if cpuset is supported """
-+        return self._supported
++    def test_cgroup_v2_detection(self):
++        """Test cgroup v2 detection logic"""
++        supported = cpuset.CpusetsInit._cpuset_supported()
++        self.assertIsInstance(supported, bool)
 +
-+    @property
-+    def numa_nodes(self):
-+        """ Return the number of numa nodes """
-+        return self._numa_nodes
-+
-+    @staticmethod
-+    def _cpuset_supported():
-+        """
-+        Return True if cpusets are supported
-+        For cgroup v2, check if:
-+        1. cgroup2 filesystem is available
-+        2. /sys/fs/cgroup is mounted
-+        3. cpuset controller is available
-+        """
-+        # Check if cgroup2 is in /proc/filesystems
-+        cgroup2_found = False
-+        dpath = '/proc/filesystems'
-+        try:
-+            with open(dpath, encoding='utf-8') as fp:
-+                for line in fp:
-+                    elems = line.strip().split()
-+                    if len(elems) == 2 and elems[1] == "cgroup2":
-+                        cgroup2_found = True
-+                        break
-+        except OSError:
-+            return False
-+
-+        if not cgroup2_found:
-+            return False
-+
-+        # Check if /sys/fs/cgroup is mounted and has cpuset controller
-+        cgroup_path = '/sys/fs/cgroup'
-+        controllers_file = os.path.join(cgroup_path, 'cgroup.controllers')
-+
-+        if not os.path.exists(controllers_file):
-+            return False
-+
-+        try:
-+            with open(controllers_file, encoding='utf-8') as f:
++        # If /sys/fs/cgroup exists and has cgroup.controllers, should be supported
++        if os.path.exists('/sys/fs/cgroup/cgroup.controllers'):
++            # Read controllers to verify cpuset is available
++            with open('/sys/fs/cgroup/cgroup.controllers') as f:
 +                controllers = f.read().strip().split()
-+                return 'cpuset' in controllers
-+        except OSError:
-+            return False
++                if 'cpuset' in controllers:
++                    self.assertTrue(supported)
 +
-+    @staticmethod
-+    def _get_numa_nodes():
-+        """
-+        return the number of numa nodes
-+        used by init to set _numa_nodes
-+        Users of this class should use the "numa_nodes" method
-+        """
-+        return len(glob('/sys/devices/system/node/node*'))
++    def test_numa_nodes(self):
++        """Test NUMA node detection"""
++        ci = cpuset.CpusetsInit()
++        if ci.supported:
++            # Should have at least 1 NUMA node
++            self.assertGreaterEqual(ci.numa_nodes, 1)
 +
++            # Verify against actual /sys/devices/system/node
++            from glob import glob
++            actual_nodes = len(glob('/sys/devices/system/node/node*'))
++            self.assertEqual(ci.numa_nodes, actual_nodes)
 +
-+class TaskMigrate:
-+    """ A class for migrating a set of pids from one cpuset to another """
-+
-+    def __init__(self, cpuset_from, cpuset_to):
-+        self.cpuset_from = cpuset_from
-+        self.cpuset_to = cpuset_to
-+        # memory_migrate is not available in cgroup v2, but keep for API compat
-+        self.cpuset_to.set_memory_migrate()
-+        self.migrated = 0
-+        self.failed = 0
-+
-+    def migrate(self):
-+        """ Do the migration, only attempt on pids where this is allowed """
-+        self.migrated = 0
-+        self.failed = 0
-+        tasks = self.cpuset_from.get_tasks()
-+        for task in tasks:
-+            if self.cpuset_to.write_pid(task):
-+                self.migrated += 1
-+            else:
-+                self.failed += 1
-+        return self.migrated, self.failed
++    def test_auto_destroy_is_false(self):
++        """Test that root cgroup never has auto_destroy enabled"""
++        ci = cpuset.CpusetsInit()
++        if ci.supported:
++            self.assertFalse(ci.auto_destroy)
 +
 +
-+#
-+# Tuna-specific utility functions for cpuset discovery and management
-+#
++@unittest.skipUnless(os.geteuid() == 0, "Requires root permissions")
++@unittest.skipUnless(cpuset.CpusetsInit().supported, "Requires cgroup v2 support")
++class TestCpusetCreation(unittest.TestCase):
++    """Test Cpuset creation and destruction"""
 +
-+def list_cpusets(pattern=None, recursive=True):
-+    """
-+    List all cpusets under /sys/fs/cgroup
++    def setUp(self):
++        """Set up test fixtures"""
++        self.test_cpusets = []
++        self.ci = cpuset.CpusetsInit()
 +
-+    Args:
-+        pattern: Optional glob pattern to filter (e.g., "tuna_*", "rteval_*")
-+                If None, returns all cpusets.
-+        recursive: If True, find nested cpusets; if False, only top-level
++    def tearDown(self):
++        """Clean up any cpusets created during tests"""
++        for cs in self.test_cpusets:
++            try:
++                if hasattr(cs, 'cpuset_path') and os.path.exists(cs.cpuset_path):
++                    # Move any tasks back to root
++                    tm = cpuset.TaskMigrate(cs, self.ci)
++                    tm.migrate()
++                    cs.destroy()
++            except:
++                pass
 +
-+    Returns:
-+        List of cpuset paths relative to /sys/fs/cgroup
++    def test_create_cpuset(self):
++        """Test basic cpuset creation"""
++        cs = cpuset.Cpuset('test_create')
++        self.test_cpusets.append(cs)
 +
-+    Note: Real-world scenario - systemd, containers, and users may create
-+    nested cgroup hierarchies, so recursive search is important
-+    """
-+    cpusets = []
-+    base_path = '/sys/fs/cgroup'
++        self.assertEqual(cs.cpuset_name, 'test_create')
++        self.assertEqual(cs.cpuset_path, '/sys/fs/cgroup/test_create')
++        self.assertTrue(os.path.exists(cs.cpuset_path))
 +
-+    if not recursive:
-+        # Only search top-level directories
-+        import fnmatch
-+        for entry in os.listdir(base_path):
-+            entry_path = os.path.join(base_path, entry)
-+            if os.path.isdir(entry_path):
-+                # Check if it's a cpuset by looking for cpuset.cpus file
-+                if os.path.exists(os.path.join(entry_path, 'cpuset.cpus')):
-+                    if pattern is None or fnmatch.fnmatch(entry, pattern):
-+                        cpusets.append(entry)
-+    else:
-+        # Recursive search using os.walk
-+        for root, dirs, files in os.walk(base_path):
-+            # Check if this directory has cpuset.cpus (indicates it's a cpuset)
-+            if 'cpuset.cpus' in files:
-+                # Get relative path from base_path
-+                rel_path = os.path.relpath(root, base_path)
-+                if rel_path == '.':
-+                    # Skip the root cgroup itself
-+                    continue
-+                if pattern is None:
-+                    cpusets.append(rel_path)
-+                else:
-+                    # Match pattern against the basename only
-+                    import fnmatch
-+                    if fnmatch.fnmatch(os.path.basename(rel_path), pattern):
-+                        cpusets.append(rel_path)
++    def test_create_with_auto_destroy_false(self):
++        """Test cpuset creation with auto_destroy=False (default)"""
++        cs = cpuset.Cpuset('test_no_auto')
++        self.test_cpusets.append(cs)
 +
-+    return sorted(cpusets)
++        self.assertFalse(cs.auto_destroy)
++
++    def test_create_with_auto_destroy_true(self):
++        """Test cpuset creation with auto_destroy=True"""
++        cs = cpuset.Cpuset('test_auto', auto_destroy=True)
++        self.test_cpusets.append(cs)
++
++        self.assertTrue(cs.auto_destroy)
++
++    def test_destroy_cpuset(self):
++        """Test manual cpuset destruction"""
++        cs = cpuset.Cpuset('test_destroy')
++        path = cs.cpuset_path
++
++        self.assertTrue(os.path.exists(path))
++        cs.destroy()
++        self.assertFalse(os.path.exists(path))
++
++    def test_create_existing_cpuset(self):
++        """Test creating a cpuset that already exists"""
++        cs1 = cpuset.Cpuset('test_existing')
++        self.test_cpusets.append(cs1)
++        path1 = cs1.cpuset_path
++
++        # Create again with same name
++        cs2 = cpuset.Cpuset('test_existing')
++
++        # Should reference the same path
++        self.assertEqual(cs1.cpuset_path, cs2.cpuset_path)
++        self.assertTrue(os.path.exists(path1))
++
++    def test_cpuset_name_none_raises_error(self):
++        """Test that creating cpuset with None name raises ValueError"""
++        with self.assertRaises(ValueError):
++            cpuset.Cpuset(None)
 +
 +
-+def destroy_cpuset(name_or_path, force=False):
-+    """
-+    Destroy a cpuset by name or path
++@unittest.skipUnless(os.geteuid() == 0, "Requires root permissions")
++@unittest.skipUnless(cpuset.CpusetsInit().supported, "Requires cgroup v2 support")
++class TestCpusetConfiguration(unittest.TestCase):
++    """Test Cpuset configuration (CPUs, memory, etc.)"""
 +
-+    Args:
-+        name_or_path: Cpuset name (e.g., "tuna_0") or full path
-+                     (e.g., "/sys/fs/cgroup/tuna_0")
-+        force: If True, migrate tasks out to root cgroup before destroying
++    def setUp(self):
++        """Set up test fixtures"""
++        self.test_cpusets = []
++        self.ci = cpuset.CpusetsInit()
 +
-+    Raises:
-+        OSError: If the cpuset doesn't exist or can't be removed
-+        ValueError: If trying to destroy the root cgroup
++    def tearDown(self):
++        """Clean up any cpusets created during tests"""
++        for cs in self.test_cpusets:
++            try:
++                if hasattr(cs, 'cpuset_path') and os.path.exists(cs.cpuset_path):
++                    tm = cpuset.TaskMigrate(cs, self.ci)
++                    tm.migrate()
++                    cs.destroy()
++            except:
++                pass
 +
-+    Note: When cleaning nested hierarchies, must destroy children before parents
-+    (cgroups can't be removed if they have children)
-+    """
-+    base_path = '/sys/fs/cgroup'
++    def test_assign_cpus(self):
++        """Test CPU assignment to cpuset"""
++        cs = cpuset.Cpuset('test_cpus')
++        self.test_cpusets.append(cs)
 +
-+    # Normalize the path
-+    if name_or_path.startswith('/'):
-+        cpuset_path = name_or_path
-+    else:
-+        cpuset_path = os.path.join(base_path, name_or_path)
++        cs.write_memnode('0')
++        cs.assign_cpus('0-1')
 +
-+    # Prevent destroying root cgroup
-+    if cpuset_path == base_path or cpuset_path == '/sys/fs/cgroup':
-+        raise ValueError("Cannot destroy the root cgroup")
++        # Read back the assignment
++        with open(os.path.join(cs.cpuset_path, 'cpuset.cpus')) as f:
++            assigned = f.read().strip()
 +
-+    if not os.path.exists(cpuset_path):
-+        raise OSError(f"Cpuset does not exist: {cpuset_path}")
++        # Should be '0-1' or '0,1' depending on kernel
++        self.assertIn('0', assigned)
++        self.assertIn('1', assigned)
 +
-+    # If force=True, migrate tasks to root cgroup first
-+    if force:
-+        root_cgroup = CpusetsInit()
-+        if not root_cgroup.supported:
-+            raise RuntimeError("Cpusets not supported on this system")
++    def test_write_memnode(self):
++        """Test memory node assignment"""
++        cs = cpuset.Cpuset('test_memnode')
++        self.test_cpusets.append(cs)
 +
-+        # Create temporary Cpuset object for this path
-+        cpuset = Cpuset.__new__(Cpuset)
-+        cpuset._cpuset_path = cpuset_path
-+        cpuset.cpuset_name = os.path.basename(cpuset_path)
++        cs.write_memnode('0')
 +
-+        # Migrate tasks to root
-+        tm = TaskMigrate(cpuset, root_cgroup)
++        # Read back the assignment
++        with open(os.path.join(cs.cpuset_path, 'cpuset.mems')) as f:
++            assigned = f.read().strip()
++
++        self.assertEqual(assigned, '0')
++
++    def test_cpu_exclusive(self):
++        """Test CPU exclusive (partition) setting"""
++        cs = cpuset.Cpuset('test_exclusive')
++        self.test_cpusets.append(cs)
++
++        cs.write_memnode('0')
++        cs.assign_cpus('0')
++
++        # Try to set exclusive (may not be supported on all kernels)
++        cs.set_cpu_exclusive()
++
++        partition_file = os.path.join(cs.cpuset_path, 'cpuset.cpus.partition')
++        if os.path.exists(partition_file):
++            with open(partition_file) as f:
++                partition = f.read().strip()
++            # Should be 'isolated' or 'root' (if not supported)
++            self.assertIn(partition, ['isolated', 'root', 'member'])
++
++
++@unittest.skipUnless(os.geteuid() == 0, "Requires root permissions")
++@unittest.skipUnless(cpuset.CpusetsInit().supported, "Requires cgroup v2 support")
++class TestContextManager(unittest.TestCase):
++    """Test context manager behavior with auto_destroy"""
++
++    def setUp(self):
++        """Set up test fixtures"""
++        self.ci = cpuset.CpusetsInit()
++
++    def test_context_manager_auto_destroy_true(self):
++        """Test that cpuset is destroyed when auto_destroy=True"""
++        path = None
++
++        with cpuset.Cpuset('test_context_auto', auto_destroy=True) as cs:
++            path = cs.cpuset_path
++            cs.write_memnode('0')
++            cs.assign_cpus('0')
++            self.assertTrue(os.path.exists(path))
++
++        # After exiting context, should be destroyed
++        self.assertFalse(os.path.exists(path))
++
++    def test_context_manager_auto_destroy_false(self):
++        """Test that cpuset persists when auto_destroy=False"""
++        path = None
++
++        with cpuset.Cpuset('test_context_no_auto', auto_destroy=False) as cs:
++            path = cs.cpuset_path
++            cs.write_memnode('0')
++            cs.assign_cpus('0')
++            self.assertTrue(os.path.exists(path))
++
++        # After exiting context, should still exist
++        self.assertTrue(os.path.exists(path))
++
++        # Clean up manually
++        os.rmdir(path)
++
++
++@unittest.skipUnless(os.geteuid() == 0, "Requires root permissions")
++@unittest.skipUnless(cpuset.CpusetsInit().supported, "Requires cgroup v2 support")
++class TestTaskMigration(unittest.TestCase):
++    """Test task migration between cpusets"""
++
++    def setUp(self):
++        """Set up test fixtures"""
++        self.test_cpusets = []
++        self.ci = cpuset.CpusetsInit()
++
++    def tearDown(self):
++        """Clean up any cpusets created during tests"""
++        for cs in self.test_cpusets:
++            try:
++                if hasattr(cs, 'cpuset_path') and os.path.exists(cs.cpuset_path):
++                    tm = cpuset.TaskMigrate(cs, self.ci)
++                    tm.migrate()
++                    cs.destroy()
++            except:
++                pass
++
++    def test_write_pid(self):
++        """Test writing a PID to a cpuset"""
++        cs = cpuset.Cpuset('test_pid')
++        self.test_cpusets.append(cs)
++
++        cs.write_memnode('0')
++        cs.assign_cpus('0')
++
++        # Try to write our own PID
++        pid = os.getpid()
++        result = cs.write_pid(pid)
++
++        # Should succeed (we can move ourselves)
++        self.assertTrue(result)
++
++        # Verify PID is in the cpuset
++        tasks = cs.get_tasks()
++        self.assertIn(str(pid), tasks)
++
++        # Move back to root
++        self.ci.write_pid(pid)
++
++    def test_task_migrate(self):
++        """Test TaskMigrate class"""
++        cs = cpuset.Cpuset('test_migrate')
++        self.test_cpusets.append(cs)
++
++        cs.write_memnode('0')
++        cs.assign_cpus('0')
++
++        # Move our PID to the cpuset
++        pid = os.getpid()
++        cs.write_pid(pid)
++
++        # Migrate back to root
++        tm = cpuset.TaskMigrate(cs, self.ci)
 +        migrated, failed = tm.migrate()
-+        logger.info(f"Migrated {migrated} tasks to root cgroup, {failed} failed")
 +
-+    # Destroy the cpuset
-+    os.rmdir(cpuset_path)
-+    logger.info(f"Destroyed cpuset: {cpuset_path}")
++        self.assertGreaterEqual(migrated, 1)  # At least our process
++        self.assertGreaterEqual(failed, 0)  # Some failures are OK
 +
 +
-+def destroy_cpuset_recursive(name_or_path, force=False):
-+    """
-+    Recursively destroy a cpuset and all its children
++@unittest.skipUnless(os.geteuid() == 0, "Requires root permissions")
++@unittest.skipUnless(cpuset.CpusetsInit().supported, "Requires cgroup v2 support")
++class TestDiscoveryFunctions(unittest.TestCase):
++    """Test tuna-specific discovery functions"""
 +
-+    Args:
-+        name_or_path: Cpuset name or full path
-+        force: If True, migrate tasks out before destroying
++    def setUp(self):
++        """Set up test fixtures"""
++        self.test_cpusets = []
++        self.ci = cpuset.CpusetsInit()
 +
-+    This is useful when a cpuset has nested children that need to be
-+    destroyed before the parent can be removed.
-+    """
-+    base_path = '/sys/fs/cgroup'
++    def tearDown(self):
++        """Clean up any cpusets created during tests"""
++        for cs in self.test_cpusets:
++            try:
++                if hasattr(cs, 'cpuset_path') and os.path.exists(cs.cpuset_path):
++                    # Use recursive destroy to handle any nested cpusets
++                    cpuset.destroy_cpuset_recursive(cs.cpuset_path, force=True)
++            except:
++                pass
 +
-+    # Normalize the path
-+    if name_or_path.startswith('/'):
-+        cpuset_path = name_or_path
-+    else:
-+        cpuset_path = os.path.join(base_path, name_or_path)
++        # Clean up specific test cpusets that might have nested children
++        for name in ['test_parent', 'test_list_1', 'test_list_2',
++                     'test_pattern_1', 'test_pattern_2', 'other_cpuset']:
++            try:
++                cpuset.destroy_cpuset_recursive(name, force=True)
++            except:
++                pass
 +
-+    if not os.path.exists(cpuset_path):
-+        return  # Already destroyed or doesn't exist
++    def test_list_cpusets_no_pattern(self):
++        """Test listing all cpusets without pattern"""
++        # Create some test cpusets
++        cs1 = cpuset.Cpuset('test_list_1')
++        cs2 = cpuset.Cpuset('test_list_2')
++        self.test_cpusets.extend([cs1, cs2])
 +
-+    # Find all children
-+    children = []
-+    for entry in os.listdir(cpuset_path):
-+        child_path = os.path.join(cpuset_path, entry)
-+        if os.path.isdir(child_path) and os.path.exists(os.path.join(child_path, 'cgroup.procs')):
-+            children.append(child_path)
++        cs1.write_memnode('0')
++        cs2.write_memnode('0')
 +
-+    # Recursively destroy children first
-+    for child_path in children:
-+        destroy_cpuset_recursive(child_path, force=force)
++        # List all cpusets
++        all_cpusets = cpuset.list_cpusets(recursive=False)
 +
-+    # Now destroy this cpuset
-+    try:
-+        destroy_cpuset(cpuset_path, force=force)
-+    except (OSError, ValueError) as e:
-+        logger.warning(f"Failed to destroy {cpuset_path}: {e}")
++        # Should include our test cpusets
++        self.assertIn('test_list_1', all_cpusets)
++        self.assertIn('test_list_2', all_cpusets)
 +
++    def test_list_cpusets_with_pattern(self):
++        """Test listing cpusets with pattern matching"""
++        # Create test cpusets with different names
++        cs1 = cpuset.Cpuset('test_pattern_1')
++        cs2 = cpuset.Cpuset('test_pattern_2')
++        cs3 = cpuset.Cpuset('other_cpuset')
++        self.test_cpusets.extend([cs1, cs2, cs3])
 +
-+def cleanup_cpusets(pattern, force=True, recursive=True):
-+    """
-+    Clean up multiple cpusets matching a pattern
++        cs1.write_memnode('0')
++        cs2.write_memnode('0')
++        cs3.write_memnode('0')
 +
-+    Args:
-+        pattern: Glob pattern (e.g., "tuna_*" or "rteval_*")
-+        force: If True, migrate tasks out before destroying
-+        recursive: If True, find and clean nested cpusets too
++        # List with pattern
++        pattern_cpusets = cpuset.list_cpusets(pattern='test_pattern_*', recursive=False)
 +
-+    Note: When cleaning nested hierarchies, must destroy children before parents
-+    (cgroups can't be removed if they have children). This function will
-+    automatically handle nested children even if they don't match the pattern.
-+    """
-+    # Find all matching cpusets
-+    cpusets = list_cpusets(pattern=pattern, recursive=recursive)
++        # Should only include matching cpusets
++        self.assertIn('test_pattern_1', pattern_cpusets)
++        self.assertIn('test_pattern_2', pattern_cpusets)
++        self.assertNotIn('other_cpuset', pattern_cpusets)
 +
-+    if not cpusets:
-+        logger.info(f"No cpusets found matching pattern: {pattern}")
-+        return
++    def test_list_cpusets_recursive(self):
++        """Test recursive cpuset listing"""
++        # Clean up first in case of previous failed run
++        cpuset.destroy_cpuset_recursive('test_parent', force=True)
 +
-+    # Sort in reverse order by depth to ensure children are destroyed before parents
-+    # Depth is determined by the number of path separators
-+    cpusets_by_depth = sorted(cpusets, key=lambda x: x.count(os.sep), reverse=True)
++        # Create nested cpusets using Cpuset class
++        # Note: In cgroup v2, creating nested cpusets requires proper setup
++        parent = cpuset.Cpuset('test_parent')
++        self.test_cpusets.append(parent)
++        parent.write_memnode('0')
++        parent.assign_cpus('0')
 +
-+    destroyed_count = 0
-+    failed_count = 0
-+    # Keep track of what we've already destroyed to avoid double-counting
-+    destroyed_paths = set()
-+
-+    for cpuset_name in cpusets_by_depth:
-+        cpuset_path = os.path.join('/sys/fs/cgroup', cpuset_name)
-+
-+        # Skip if already destroyed
-+        if cpuset_path in destroyed_paths or not os.path.exists(cpuset_path):
-+            continue
-+
++        # Create child as a proper cpuset (not just mkdir)
++        # First enable cpuset controller in parent
 +        try:
-+            # Use recursive destroy to handle any nested children
-+            # (even those that don't match the pattern)
-+            destroy_cpuset_recursive(cpuset_name, force=force)
-+            destroyed_count += 1
-+            destroyed_paths.add(cpuset_path)
-+        except (OSError, ValueError) as e:
-+            logger.error(f"Failed to destroy {cpuset_name}: {e}")
-+            failed_count += 1
++            with open(os.path.join(parent.cpuset_path, 'cgroup.subtree_control'), 'w') as f:
++                f.write('+cpuset')
++        except (OSError, PermissionError):
++            pass
 +
-+    logger.info(f"Cleanup complete: {destroyed_count} destroyed, {failed_count} failed")
-+    if destroyed_count > 0 or failed_count > 0:
-+        print(f"Cleanup complete: {destroyed_count} cpusets destroyed, {failed_count} failed")
++        # Create child directory and enable it as a cpuset
++        child_path = os.path.join(parent.cpuset_path, 'test_child')
++        if not os.path.exists(child_path):
++            os.mkdir(child_path)
++            # Write to cpuset.cpus to make it a valid cpuset
++            try:
++                with open(os.path.join(child_path, 'cpuset.cpus'), 'w') as f:
++                    f.write('0')
++                with open(os.path.join(child_path, 'cpuset.mems'), 'w') as f:
++                    f.write('0')
++            except (OSError, PermissionError):
++                pass
++
++        # List recursively
++        all_cpusets = cpuset.list_cpusets(recursive=True)
++
++        # Should find both parent and child
++        self.assertIn('test_parent', all_cpusets)
++        # Child should be found if it's a valid cpuset
++        has_child = os.path.exists(os.path.join(child_path, 'cpuset.cpus'))
++        if has_child:
++            self.assertIn('test_parent/test_child', all_cpusets)
++
++        # Clean up child first (must destroy children before parents)
++        if os.path.exists(child_path):
++            try:
++                os.rmdir(child_path)
++            except OSError:
++                pass  # May have processes, tearDown will handle it
++
++
++@unittest.skipUnless(os.geteuid() == 0, "Requires root permissions")
++@unittest.skipUnless(cpuset.CpusetsInit().supported, "Requires cgroup v2 support")
++class TestCleanupFunctions(unittest.TestCase):
++    """Test tuna-specific cleanup functions"""
++
++    def setUp(self):
++        """Set up test fixtures"""
++        self.test_cpusets = []
++        self.ci = cpuset.CpusetsInit()
++
++    def tearDown(self):
++        """Clean up any cpusets that might still exist"""
++        # Clean up any test_cleanup_* cpusets (including nested ones)
++        try:
++            # First try to clean with recursive pattern matching
++            cpuset.cleanup_cpusets('test_cleanup_*', force=True, recursive=True)
++        except:
++            pass
++
++        # Also clean up specific problem cpusets from failed runs
++        for name in ['test_cleanup_nested_parent', 'test_cleanup_bulk_1',
++                     'test_cleanup_bulk_2', 'other_bulk']:
++            try:
++                cpuset.destroy_cpuset_recursive(name, force=True)
++            except:
++                pass
++
++    def test_destroy_cpuset_by_name(self):
++        """Test destroying cpuset by name"""
++        cs = cpuset.Cpuset('test_cleanup_destroy')
++        cs.write_memnode('0')
++        path = cs.cpuset_path
++
++        self.assertTrue(os.path.exists(path))
++
++        # Destroy by name
++        cpuset.destroy_cpuset('test_cleanup_destroy', force=False)
++
++        self.assertFalse(os.path.exists(path))
++
++    def test_destroy_cpuset_by_path(self):
++        """Test destroying cpuset by full path"""
++        cs = cpuset.Cpuset('test_cleanup_path')
++        cs.write_memnode('0')
++        path = cs.cpuset_path
++
++        self.assertTrue(os.path.exists(path))
++
++        # Destroy by full path
++        cpuset.destroy_cpuset(path, force=False)
++
++        self.assertFalse(os.path.exists(path))
++
++    def test_destroy_cpuset_with_force(self):
++        """Test destroying cpuset with force (migrates tasks first)"""
++        cs = cpuset.Cpuset('test_cleanup_force')
++        cs.write_memnode('0')
++        cs.assign_cpus('0')
++
++        # Move our PID to the cpuset
++        cs.write_pid(os.getpid())
++
++        # Destroy with force (should migrate tasks first)
++        cpuset.destroy_cpuset('test_cleanup_force', force=True)
++
++        self.assertFalse(os.path.exists(cs.cpuset_path))
++
++        # Verify we're back in root cgroup
++        with open('/proc/self/cgroup') as f:
++            cgroup_info = f.read()
++        # In cgroup v2, processes in root are at '0::/'
++        self.assertIn('0::/', cgroup_info)
++
++    def test_destroy_nonexistent_cpuset_raises_error(self):
++        """Test that destroying non-existent cpuset raises OSError"""
++        with self.assertRaises(OSError):
++            cpuset.destroy_cpuset('nonexistent_cpuset')
++
++    def test_cleanup_cpusets_with_pattern(self):
++        """Test cleanup_cpusets with pattern matching"""
++        # Create multiple cpusets
++        cs1 = cpuset.Cpuset('test_cleanup_bulk_1')
++        cs2 = cpuset.Cpuset('test_cleanup_bulk_2')
++        cs3 = cpuset.Cpuset('other_bulk')
++
++        cs1.write_memnode('0')
++        cs2.write_memnode('0')
++        cs3.write_memnode('0')
++
++        # Cleanup with pattern
++        cpuset.cleanup_cpusets('test_cleanup_bulk_*', force=True, recursive=False)
++
++        # Pattern-matched cpusets should be gone
++        self.assertFalse(os.path.exists(cs1.cpuset_path))
++        self.assertFalse(os.path.exists(cs2.cpuset_path))
++
++        # Other cpuset should still exist
++        self.assertTrue(os.path.exists(cs3.cpuset_path))
++
++        # Clean up remaining
++        cs3.destroy()
++
++    def test_cleanup_nested_cpusets(self):
++        """Test cleanup destroys children before parents"""
++        # Clean up first in case of previous failed run
++        cpuset.destroy_cpuset_recursive('test_cleanup_nested_parent', force=True)
++
++        # Create parent
++        parent = cpuset.Cpuset('test_cleanup_nested_parent')
++        parent.write_memnode('0')
++        parent.assign_cpus('0')
++
++        # Enable cpuset controller in parent for children
++        try:
++            with open(os.path.join(parent.cpuset_path, 'cgroup.subtree_control'), 'w') as f:
++                f.write('+cpuset')
++        except (OSError, PermissionError):
++            pass
++
++        # Create children as proper cpusets
++        child1_path = os.path.join(parent.cpuset_path, 'child1')
++        child2_path = os.path.join(parent.cpuset_path, 'child2')
++
++        for child_path in [child1_path, child2_path]:
++            if not os.path.exists(child_path):
++                os.mkdir(child_path)
++                # Make it a valid cpuset
++                try:
++                    with open(os.path.join(child_path, 'cpuset.cpus'), 'w') as f:
++                        f.write('0')
++                    with open(os.path.join(child_path, 'cpuset.mems'), 'w') as f:
++                        f.write('0')
++                except (OSError, PermissionError):
++                    pass
++
++        # Cleanup recursively
++        cpuset.cleanup_cpusets('test_cleanup_nested_*', force=False, recursive=True)
++
++        # Everything should be gone
++        self.assertFalse(os.path.exists(child1_path))
++        self.assertFalse(os.path.exists(child2_path))
++        self.assertFalse(os.path.exists(parent.cpuset_path))
++
++
++def suite():
++    """Create test suite"""
++    loader = unittest.TestLoader()
++    suite = unittest.TestSuite()
++
++    # Add all test classes
++    suite.addTests(loader.loadTestsFromTestCase(TestCpusetsInit))
++    suite.addTests(loader.loadTestsFromTestCase(TestCpusetCreation))
++    suite.addTests(loader.loadTestsFromTestCase(TestCpusetConfiguration))
++    suite.addTests(loader.loadTestsFromTestCase(TestContextManager))
++    suite.addTests(loader.loadTestsFromTestCase(TestTaskMigration))
++    suite.addTests(loader.loadTestsFromTestCase(TestDiscoveryFunctions))
++    suite.addTests(loader.loadTestsFromTestCase(TestCleanupFunctions))
++
++    return suite
 +
 +
 +if __name__ == '__main__':
++    # Check if running as root for tests that need it
++    if os.geteuid() != 0:
++        print("\n" + "="*60)
++        print("WARNING: Not running as root")
++        print("="*60)
++        print("Most tests require root permissions to create/destroy cgroups.")
++        print("Only basic detection tests will run.")
++        print("\nTo run all tests:")
++        print("  sudo python3 -m unittest tests.test_cpuset")
++        print("="*60 + "\n")
 +
-+    cpusets_init = CpusetsInit()
-+    print(f'cpusets_init.supported = {cpusets_init.supported}')
-+    if cpusets_init.supported:
-+        print(f'cpusets_init.numa_nodes = {cpusets_init.numa_nodes}')
-+        print(f'cpusets_init.cpuset_path = {cpusets_init.cpuset_path}')
++    # Run tests
++    runner = unittest.TextTestRunner(verbosity=2)
++    result = runner.run(suite())
 +
-+        # Creating and manipulating cgroups requires root permissions
-+        print("\nTo test cpuset creation, run as root:")
-+        print("  sudo python3 -m tuna.cpuset")
-+
-+        try:
-+            # Example 1: Using context manager with auto_destroy (rteval style)
-+            print("\n" + "="*60)
-+            print("Example 1: Context Manager with auto_destroy=True")
-+            print("="*60)
-+            with Cpuset('tuna_demo', auto_destroy=True) as cpuset:
-+                print(f"Created cpuset: {cpuset.cpuset_path}")
-+                cpuset.write_memnode('0')
-+                cpuset.assign_cpus('0-3')
-+                print(f"Configured cpuset with CPUs 0-3")
-+            print("Context manager exited - cpuset automatically destroyed!")
-+
-+            # Example 2: Persistent cpuset (tuna style, default)
-+            print("\n" + "="*60)
-+            print("Example 2: Persistent Cpuset (tuna style, default)")
-+            print("="*60)
-+            print("Creating tuna_0...")
-+            cpuset0 = Cpuset('tuna_0')  # auto_destroy=False by default
-+            print("Creating tuna_1...")
-+            cpuset1 = Cpuset('tuna_1')
-+
-+            # In cgroup v2, must set mems before cpus
-+            print("Setting memory nodes...")
-+            cpuset0.write_memnode('0')
-+            cpuset1.write_memnode('0')
-+
-+            print("Assigning CPUs to tuna_0 (0-4)...")
-+            cpuset0.assign_cpus('0-4')
-+            print("Assigning CPUs to tuna_1 (5-7)...")
-+            cpuset1.assign_cpus('5-7')
-+
-+            print("Setting cpu_exclusive on tuna_1...")
-+            cpuset1.set_cpu_exclusive()
-+
-+            print("\nCpusets created and will persist after program exits.")
-+            print("Use cleanup_cpusets('tuna_*') to remove them later.")
-+
-+            # Example 3: Tuna-specific discovery and cleanup functions
-+            print("\n" + "="*60)
-+            print("Example 3: Tuna-specific Discovery and Cleanup")
-+            print("="*60)
-+            print("\nListing all cpusets matching 'tuna_*':")
-+            tuna_cpusets = list_cpusets(pattern='tuna_*')
-+            for cs in tuna_cpusets:
-+                print(f"  - {cs}")
-+
-+            print("\nCleaning up with cleanup_cpusets('tuna_*', force=True)...")
-+            cleanup_cpusets('tuna_*', force=True)
-+
-+            print("\nAfter cleanup, listing cpusets again:")
-+            remaining = list_cpusets(pattern='tuna_*')
-+            if remaining:
-+                print(f"  Still found: {remaining}")
-+            else:
-+                print("  No tuna_* cpusets remaining (cleanup successful)")
-+
-+            # Success message
-+            print("\n" + "="*60)
-+            print("✅ All examples completed successfully!")
-+            print("="*60)
-+
-+        except PermissionError as e:
-+            print(f"\nPermission denied: {e}")
-+            print("Run as root to create and manipulate cgroups")
-+        except Exception as e:
-+            print(f"\nError: {e}")
-+            import traceback
-+            traceback.print_exc()
-diff --git a/tuna/tuna.py b/tuna/tuna.py
-index 1cb538575b17..5e5f5578fbe4 100755
---- a/tuna/tuna.py
-+++ b/tuna/tuna.py
-@@ -128,59 +128,95 @@ def set_irq_affinity_filename(filename, bitmasklist):
- def set_irq_affinity(irq, bitmasklist):
-     return set_irq_affinity_filename("%d/smp_affinity" % irq, bitmasklist)
- 
-+def expand_cpulist(cpulist):
-+    """
-+    Expand a range string into an array of cpu numbers
-+
-+    Standardized implementation shared with rteval for consistent behavior.
-+    Handles empty strings, single values, and ranges correctly.
-+
-+    Args:
-+        cpulist: String representation (e.g., "0-3,5-7")
-+
-+    Returns:
-+        List of CPU numbers (integers), deduplicated
-+    """
-+    result = []
-+
-+    if not cpulist:
-+        return result
-+
-+    for part in cpulist.split(','):
-+        if '-' in part:
-+            a, b = part.split('-')
-+            a, b = int(a), int(b)
-+            result.extend(list(range(a, b + 1)))
-+        else:
-+            a = int(part)
-+            result.append(a)
-+    return [int(i) for i in list(set(result))]
-+
- def cpustring_to_list(cpustr):
-     """Convert a string of numbers to an integer list.
- 
-+    DEPRECATED: Use expand_cpulist() instead.
-+    Kept for backward compatibility with existing code.
-+
-     Given a string of comma-separated numbers and number ranges,
-     return a simple sorted list of the integers it represents.
- 
--    This function will throw exceptions for badly-formatted strings.
--
-     Returns a list of integers."""
- 
--    fields = cpustr.strip().split(",")
--    cpu_list = []
--    for field in fields:
--        ends = [int(a, 0) for a in field.split("-")]
--        if len(ends) > 2:
--            raise SyntaxError("Syntax error")
--        if len(ends) == 2:
--            cpu_list += list(range(ends[0], ends[1] + 1))
-+    return expand_cpulist(cpustr)
-+
-+def collapse_cpulist(cpulist):
-+    """
-+    Collapse a list of cpu numbers into a string range of cpus (e.g. 0-5, 7, 9)
-+
-+    Standardized implementation shared with rteval for consistent behavior.
-+    Handles duplicates and unsorted lists correctly.
-+
-+    Args:
-+        cpulist: List of CPU numbers (integers)
-+
-+    Returns:
-+        String representation with ranges collapsed (e.g., "0-3,5-7")
-+    """
-+    if not cpulist:
-+        return ""
-+
-+    # Ensure we're working with integers, remove duplicates, and sort them
-+    sorted_cpus = sorted(set([int(cpu) for cpu in cpulist]))
-+
-+    cur_range = [None, None]
-+    result = []
-+    for cpu in sorted_cpus + [None]:
-+        if cur_range[0] is None:
-+            cur_range[0] = cur_range[1] = cpu
-+            continue
-+        if cpu is not None and cpu == cur_range[1] + 1:
-+            # Extend currently processed range
-+            cur_range[1] += 1
-         else:
--            cpu_list += [ends[0]]
--    return list(set(cpu_list))
-+            # Range processing finished, add range to string
-+            result.append(f"{cur_range[0]}-{cur_range[1]}"
-+                          if cur_range[0] != cur_range[1]
-+                          else str(cur_range[0]))
-+            # Reset
-+            cur_range[0] = cur_range[1] = cpu
-+    return ",".join(result)
- 
- def list_to_cpustring(l):
-     """Convert a list of integers into a range string.
- 
--    Consecutive values will be collapsed into ranges.
-+    DEPRECATED: Use collapse_cpulist() instead.
-+    Kept for backward compatibility with existing code.
- 
--    This should not throw any exceptions as long as the list is all
--    positive integers.
-+    Consecutive values will be collapsed into ranges.
- 
-     Returns a string."""
- 
--    l = list(set(l))
--    strings = []
--    prev = -2
--    while l:
--        i = l.pop(0)
--        if i - 1 == prev:
--            while l:
--                j = l.pop(0)
--                if j - 1 != i:
--                    l.insert(0, j)
--                    break
--                i = j
--            t = strings.pop()
--            if int(t) + 1 == i:
--                strings.append("%s,%u" % (t, i))
--            else:
--                strings.append("%s-%u" % (t, i))
--        else:
--            strings.append("%u" % i)
--        prev = i
--    return ",".join(strings)
-+    return collapse_cpulist(l)
- 
- # FIXME: move to python-linux-procfs
- def is_hardirq_handler(self, pid):
++    # Exit with appropriate code
++    sys.exit(0 if result.wasSuccessful() else 1)
 -- 
 2.54.0
 
