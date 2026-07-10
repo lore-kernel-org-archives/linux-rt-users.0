@@ -1,126 +1,134 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 6176D3F412D
-	for <linux-rt-users@vger.kernel.org>; Fri, 10 Jul 2026 09:31:29 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id DD2C238E5DA
+	for <linux-rt-users@vger.kernel.org>; Fri, 10 Jul 2026 13:38:31 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1783675890; cv=none; b=gWtIjLdzM/5TRAElREJnO06q6d2Zdsu54jcFjtg4qhO+sKihxV40/nG+xwPBSv1mwart0UfpoxRFGTKlDfpoC+SctVsi5mJSZvFNQ3pgDHWh4uPmRvc1xHI6Q4Xdx1PVLFcY1UACxJRJglwj2tOfqPaM3v2URHm7syJrjQTrDUU=
+	t=1783690715; cv=none; b=Bivs2bhRMqByPbgAYel12GOe4Sag/y/1mcgiHvPiK/eGHkd357CnlDp244b0/FdCZhqWcFzm5EPhYm43hKQ0OgIGCGbs3FU9r1zql25jXkmwAoQVhDRcboEds7PlTyalx0jwR6fz1qXqFkusuJ5N5WD/RyysOCgyixYew7MP6cE=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1783675890; c=relaxed/simple;
-	bh=GRombGaF8HtL+INhL6PGaa6Y/1JBVI6n0/XupX+ZaIE=;
-	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 Content-Type:Content-Disposition:In-Reply-To; b=s/FcxAMFqXZBu2yOEW7xM/lcWC6QhUUJGs2ltmwwMvx0PQNCy822/BQfovdnCH//wf1Pl1rmopWaCTpnCXRFueoUhgsIDWbtbS/g36iR6FJi2O916JGH8LwO7qqyr8mSWjQSUjfesY2GcArwbDZOu15oWJiP+rsEm3Y0bJ76XP8=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=V8gJ3o4k; dkim=pass (2048-bit key) header.d=redhat.com header.i=@redhat.com header.b=mlCGv7fK; arc=none smtp.client-ip=170.10.133.124
+	s=arc-20240116; t=1783690715; c=relaxed/simple;
+	bh=cd1FzwTnexHcrZZ+0P0S3UBKmhMtRJhKk7u4TLelI9g=;
+	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=BvvMzQn8VQz2z3X9z3A1Xja5Stjlr7i+Xbv0nw2Bv9eYpVqg0hA9ZIIy5xj7nTk8lAFl/bSv19zLT95e4dmFVxw7nurrlv8C7KyUFNM3Vhbkdx7NYprVZ6QQICLy/lq9ujA9iKMZhpiP1hwAS/eJiDDH7reJnxqNtCez2TSrhtQ=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=Uu7SPclB; arc=none smtp.client-ip=170.10.129.124
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="V8gJ3o4k";
-	dkim=pass (2048-bit key) header.d=redhat.com header.i=@redhat.com header.b="mlCGv7fK"
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="Uu7SPclB"
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1783675888;
+	s=mimecast20190719; t=1783690710;
 	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 in-reply-to:in-reply-to:references:references;
-	bh=Dlk5gE/7VVmii22IJ3aIscZEZNPF1ijvtGYlZvlwGZE=;
-	b=V8gJ3o4kRQNXQCC2Ps2b/0YyIXXOHOZP8cMUfTiySIu04zgaf0jQAnUuLFhm9L/V7gZIjS
-	h7U4rwm00rn/ppWEKLcMMz8+UTnQU7UANJsjf1yE/IQF6l1bDm60FZJFhxSAxqheShugv3
-	ggmIqR3JS6syWX+Y6XzIQNH8i4ANbrk=
-Received: from mail-wr1-f70.google.com (mail-wr1-f70.google.com
- [209.85.221.70]) by relay.mimecast.com with ESMTP with STARTTLS
- (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
- us-mta-582-iWuBLegHNM6u4nXBPycb2Q-1; Fri, 10 Jul 2026 05:31:27 -0400
-X-MC-Unique: iWuBLegHNM6u4nXBPycb2Q-1
-X-Mimecast-MFC-AGG-ID: iWuBLegHNM6u4nXBPycb2Q_1783675886
-Received: by mail-wr1-f70.google.com with SMTP id ffacd0b85a97d-4729d2a64efso1034123f8f.0
-        for <linux-rt-users@vger.kernel.org>; Fri, 10 Jul 2026 02:31:26 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=redhat.com; s=google; t=1783675886; x=1784280686; darn=vger.kernel.org;
-        h=in-reply-to:content-disposition:content-type:mime-version
-         :references:message-id:subject:cc:to:from:date:from:to:cc:subject
-         :date:message-id:reply-to:content-type;
-        bh=Dlk5gE/7VVmii22IJ3aIscZEZNPF1ijvtGYlZvlwGZE=;
-        b=mlCGv7fKMCUjO5uj6SHmwySnvBpcBSMFmdDpmHAE3u/ZLcdTtD0mmP242zzFlhGQC6
-         /wjLCkjAqqadU5iAOxakee3fmKEZX9PAGD3plRlFIQ/IrJkFnpJYTi0M4WqjotVoA3oi
-         TNMQJKj+4qJTX70f9o622tE1llD5tHLZN79ro+uRriAgzard0Wberx/jMvAAy5vbEQfs
-         aFfSZKX6JWK6eHh26p8m6gVdXpDMnpHN+FY9165vlEInPbj31lFDH1PC/8WNY47h0lAx
-         ooTdcGgSf75k3gQkjDT+CtoNbYMTVqDijOyD+2czzv/bvEQtRxRtkQdljdZwaFFPYP2N
-         zKJA==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20251104; t=1783675886; x=1784280686;
-        h=in-reply-to:content-disposition:content-type:mime-version
-         :references:message-id:subject:cc:to:from:date:x-gm-gg
-         :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to
-         :content-type;
-        bh=Dlk5gE/7VVmii22IJ3aIscZEZNPF1ijvtGYlZvlwGZE=;
-        b=CpOr5TzCX80x9GfKidQEq+IYfAC+sZDCdxdjw2znGaayUh+27SyJTvygS0lAvnKgGu
-         Df+u9CN1A+1Y6v9yeOMtUGwH6oT0IUlj9lEWi76OPLzAoJAbtf9qVh1Rp+NSIDl6GZdB
-         hFQI9JPg/zLbUGAMRBbeAnCf9FC3tQTNg2IyOFLMRT2zEBbDhk1asJkT2h4aQFlyHXY8
-         oLA3MqPyeruL+tUkgGuwatXYCtrIwTDRw7pRj/zdL/mw9O1PyMKB2NWDP5Bn5OmzmO43
-         MydPStfiqh8vaLOGbbCIuf73Gnwort+8yX0WqeGEH4JxCMEdzpKYtlt41CcBzOqAmA0y
-         jDVA==
-X-Forwarded-Encrypted: i=1; AHgh+Rqf0UQmLDtQjupr7749UzvfBrXitluTTRqITzGEn+oNT5zF8ckYuTB6dxWNtiPRc/FcAySLu969Xr0PlKj5gw==@vger.kernel.org
-X-Gm-Message-State: AOJu0YzD2782p310BdkgKBfVCIIVpWbQraVxzDeZCFkCt4Mr2EvS/FzL
-	0RXm2v6RdHG33WC8qqEjHZxtwpUarboCRIDJXtB7pVYc31DdWtVGx/hggz+zAX07X2ndipS+7q8
-	Ca/Y+wyAW+cKjXX5rXrmyaALNH/U6YH1B9nZKUL6sKmq2kM6HPma6Obv2i6Oe1U/hdpPuzQ5kwD
-	2t
-X-Gm-Gg: AfdE7cmP+Xb3uqd3UNaQ0tKUgJr46ZS6rbVm2QAOV6lVR4qLd3CfkuM9h5RqjE81vE+
-	AjyJitQsVQWKZVXVozf+cIUCEMv57Nm1hUNl2QdIlq5fnlWiBVuvy72FGoCWcz4gJtUYk5OQqhG
-	7evEsfq5vWnXqBJe6XLf9rtRsaDZdVavNaW8dIlBfOIF+HtscgU/+jgRylPtBsRyoiyuTXYUn7P
-	ARZzzW+qiBBDm4XwIpZZVIstT9lchc/bXBBKnAAW1lMzw9qGZJuoLdFPcxmX77zTX4opMG0t4YJ
-	ZIzjMtjxGsA7Q4x4NhKxjz1qHZalRgH9tWJp8LS7UOP1xTwhlryfuc/uwT5/DtZQDNZCNpLoJwf
-	hYx4oSQEtZWjtMg0ATsi7hWu0ImIp1b9qMPfeLuLf0w==
-X-Received: by 2002:a05:6000:25c6:b0:475:da0e:744d with SMTP id ffacd0b85a97d-47f06d9f312mr3348895f8f.8.1783675885753;
-        Fri, 10 Jul 2026 02:31:25 -0700 (PDT)
-X-Received: by 2002:a05:6000:25c6:b0:475:da0e:744d with SMTP id ffacd0b85a97d-47f06d9f312mr3348850f8f.8.1783675885324;
-        Fri, 10 Jul 2026 02:31:25 -0700 (PDT)
-Received: from jlelli-thinkpadt14gen4.remote.csb ([151.29.133.86])
-        by smtp.gmail.com with ESMTPSA id ffacd0b85a97d-47aa039b0cesm59603204f8f.22.2026.07.10.02.31.23
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Fri, 10 Jul 2026 02:31:24 -0700 (PDT)
-Date: Fri, 10 Jul 2026 11:31:22 +0200
-From: Juri Lelli <juri.lelli@redhat.com>
-To: "Ionut Nechita (Wind River)" <ionut.nechita@windriver.com>
-Cc: peterz@infradead.org, bristot@kernel.org, mingo@redhat.com,
-	vincent.guittot@linaro.org, dietmar.eggemann@arm.com,
-	rostedt@goodmis.org, vschneid@redhat.com,
-	linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org
-Subject: Re: [REGRESSION 6.12 -> 6.18] fair (dl-)server delivers no bandwidth
- to CFS under a CPU-bound RT task on a nohz_full isolated core
-Message-ID: <alC76ozQqJ1shU5a@jlelli-thinkpadt14gen4.remote.csb>
-References: <20260709165912.518175-1-ionut.nechita@windriver.com>
+	 to:to:cc:cc:mime-version:mime-version:
+	 content-transfer-encoding:content-transfer-encoding;
+	bh=rSNDHSLuWkP3Ru445ukHiY5+jlTQSv68Q/AacevZwGQ=;
+	b=Uu7SPclBZrZP+mMXqzvOnaTm1J2BzT5iaVRsPdoy+azr4dLz2YJdfmzp4dQWh74MfruImH
+	WVLDV60WDAPIE5HPLACCbl7DFYzm2P9qHcb3tIBaFYVuS2PADMhoBCuuT+XGa/4+Sn9zRj
+	Cpvpd240rxzdCNnb7PmQBWVsUDUwxD0=
+Received: from mx-prod-mc-05.mail-002.prod.us-west-2.aws.redhat.com
+ (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
+ relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-91-5M8pK49qOe-Yo5bXucoapA-1; Fri,
+ 10 Jul 2026 09:38:27 -0400
+X-MC-Unique: 5M8pK49qOe-Yo5bXucoapA-1
+X-Mimecast-MFC-AGG-ID: 5M8pK49qOe-Yo5bXucoapA_1783690705
+Received: from mx-prod-int-03.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-03.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.12])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
+	(No client certificate requested)
+	by mx-prod-mc-05.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 916471955DD7;
+	Fri, 10 Jul 2026 13:38:25 +0000 (UTC)
+Received: from wcosta-defaultstring.rmtbr.csb (unknown [10.22.88.130])
+	by mx-prod-int-03.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTP id E3F5F195608E;
+	Fri, 10 Jul 2026 13:38:22 +0000 (UTC)
+From: Wander Lairson Costa <wander@redhat.com>
+To: williams@redhat.com,
+	jkacur@redhat.com,
+	linux-rt-users@vger.kernel.org
+Cc: juri.lelli@redhat.com,
+	luffyluo@tencent.com,
+	davidlt@rivosinc.com,
+	Wander Lairson Costa <wander@redhat.com>
+Subject: [PATCH 00/11] tests: harden functional test suite against flakiness
+Date: Fri, 10 Jul 2026 10:37:59 -0300
+Message-ID: <20260710133810.72398-1-wander@redhat.com>
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
 List-Subscribe: <mailto:linux-rt-users+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-In-Reply-To: <20260709165912.518175-1-ionut.nechita@windriver.com>
+Content-Transfer-Encoding: 8bit
+X-Scanned-By: MIMEDefang 3.0 on 10.30.177.12
 
-Hello,
+The functional test suite had several sources of intermittent
+failure and weak diagnostics that made CI failures hard to
+reproduce and debug: readiness detection for both stalld and
+starvation_gen relied on fragile heuristics and racy liveness
+checks, a test-ordering assumption used across several test
+files turned out to be backwards, and the stalld startup
+timeout was too short for PREEMPT_RT systems with large CPU
+counts, where BPF tracepoint attachment can take well over 15
+seconds due to SRCU synchronization. On top of that, many
+assertion and startup failures did not dump the relevant log
+output, and the test framework's own logging polluted the
+system journal that other tests inspect directly.
 
-Thanks for reporting!
+This series addresses these issues end to end. stalld gains a
+single deterministic "monitoring started" log marker emitted
+once initialization completes, giving the test helpers a
+stable synchronization point instead of matching internal
+debug messages that could change across refactors. The
+starvation_gen readiness check is reordered to check the log
+file before process liveness, so a transient kill -0 miss no
+longer aborts an otherwise healthy test. All 15 affected test
+sections across five functional test files (test_fifo_boosting.sh,
+test_fifo_priority_starvation.sh, test_starvation_detection.sh,
+test_starvation_threshold.sh, and test_log_only.sh) are
+reordered to start stalld before starvation_gen, since source
+analysis showed the previous ordering rested on an unfounded
+assumption about stalld's scanning loop and was itself a
+source of intermittent timeouts. The stalld initialization
+timeout is raised from 15s to 240s to tolerate slow BPF/SRCU
+synchronization on large-CPU RT systems, paired with startup
+timing instrumentation so the actual latency stays visible.
+Diagnostics are improved by dumping log contents on every
+assertion and startup failure, and helper functions are
+switched to consistently call fail() instead of silently
+swallowing errors. The test framework's own logging is
+trimmed to stdout only, removing journal writes that had been
+contaminating journalctl-based assertions in other tests.
+Finally, run_tests.sh gains --verbose and --fail-fast options
+for faster local debugging and CI triage.
 
-On 09/07/26 19:59, Ionut Nechita (Wind River) wrote:
-> Hi,
-> 
-> I'm chasing what looks like a fair (dl-)server regression between 6.12 and
-> 6.18 and wanted to ask whether this behaviour is known/expected before I
-> spend build cycles on a full bisect.
-> 
-> Question in one line: on a nohz_full isolated core, with a CPU-bound
-> SCHED_RR task pinned to it, should the fair_server still guarantee its
-> 50ms/1s (5%) to a co-scheduled SCHED_OTHER task? On 6.12 it does; on 6.18
-> it delivers essentially nothing (~0.2%).
+With the exception of the single log marker added to stalld's
+initialization path, every change in this series is confined
+to the test framework and functional test scripts; no other
+daemon runtime behavior is touched.
 
-I believe it should still guarantee the 5%.
+Wander Lairson Costa (11):
+  stalld: add readiness log marker for tests
+  tests: use fail() for error paths in helpers
+  tests: add --verbose flag for bash trace output
+  tests: drop journal logging from test framework
+  tests: fix intermittent starvation_gen readiness failure
+  tests: add --fail-fast flag to stop on first failure
+  tests: dump log contents on assert_log_contains failure
+  tests: dump log on start_stalld_with_log failure
+  tests: start stalld before starvation_gen in all tests
+  tests: add startup timing to stalld launch helpers
+  tests: increase stalld initialization timeout to 240s
 
-Can you please check if the following fixes the issue?
+ src/stalld.c                                  |  2 +
+ tests/functional/test_backend_selection.sh    |  2 +-
+ tests/functional/test_fifo_boosting.sh        | 22 ++---
+ .../test_fifo_priority_starvation.sh          | 38 ++++----
+ tests/functional/test_log_only.sh             | 10 +--
+ tests/functional/test_starvation_detection.sh | 18 ++--
+ tests/functional/test_starvation_threshold.sh | 23 ++---
+ tests/helpers/test_helpers.sh                 | 86 +++++++++----------
+ tests/run_tests.sh                            | 23 ++++-
+ 9 files changed, 109 insertions(+), 115 deletions(-)
 
-https://lore.kernel.org/lkml/20260513-upstream-fix-dlserver-nohzfull-b4-v2-1-d3e9cbe5c845@redhat.com/
-
-Thanks,
-Juri
+-- 
+2.55.0
 
