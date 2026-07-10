@@ -1,72 +1,72 @@
-Received: from mail-ua1-f44.google.com (mail-ua1-f44.google.com [209.85.222.44])
+Received: from mail-vs1-f50.google.com (mail-vs1-f50.google.com [209.85.217.50])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id C969F344D80
-	for <linux-rt-users@vger.kernel.org>; Fri, 10 Jul 2026 14:16:41 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.222.44
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 310B1340281
+	for <linux-rt-users@vger.kernel.org>; Fri, 10 Jul 2026 14:16:43 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.217.50
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1783693003; cv=none; b=O9TzTUn9VfBy7ATLEWOQKc9INC5PDcC/jUmGbXrZbdcGgU8GuA2hJZxF7oYDGsWO8AOClF37RmMVCaofrFsWoC5dhw14ZsNmsOtG5rIpVI5EfUobUtZFAQ8cF1tVWFTb1kNoYz+JEWQEKjNRGZGC+Gsf1y2iny8co0wNrqC89tk=
+	t=1783693004; cv=none; b=s1htpkId1fWU4Y1CIqKoADOU/NUvYvjRtn27gX5zpCzxFa4g1G1QSUTKUcayMgO8KR+uK0YFJJuM/BChonTr/kpWYbWfzIzrVsQ/LjF9YPWhgAPyUokp2HGhG9uersRbik0pK9GZFlnB3B6ZDexJKHEHrPGqR3sqU86x8Cqn91s=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1783693003; c=relaxed/simple;
-	bh=EAPxIKiMFABlF4G2MMXfnf7VAOGfuId7XN2sCD6GDWs=;
+	s=arc-20240116; t=1783693004; c=relaxed/simple;
+	bh=5Mo7VoWWRULDx4nj0NoTexI6YlbRnkWYXtR+IYcbcIo=;
 	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=aTvUVEcup5kygIVsqAdBMfgJ648ceiHbbwsDEvnXDbpHhf4AN/otOcPhpRXHMwwu3Wct7mZfWyx3BfrsJ78O29yxFdyzatey7Sa5MFr0Qehk6t1AyxRVr9+q0sEb1XgPahZzY0/A0TEVQrb/hlxewcvu6m1kOtGi6Yoh8j56hng=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=fail (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=Wgr4GZAl; arc=none smtp.client-ip=209.85.222.44
+	 MIME-Version:Content-Type; b=gur3SiqedNCSdQxMtuZKer8smq+blNgdSfdk3OetvDdkfn4+4VPOQwhHhdBbcpLmKuYTj5WipphcQfgmQ916CVK+VNexaVJHwAjSjjxqbEqfx2WPIAnemE0oU0ICGjFw7JU/AuYl3vhQxXaJvoU8+z6aOqxRML6ObQRwZePsn5A=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=fail (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=R9Kxcxd1; arc=none smtp.client-ip=209.85.217.50
 Authentication-Results: smtp.subspace.kernel.org; dmarc=fail (p=quarantine dis=none) header.from=redhat.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="Wgr4GZAl"
-Received: by mail-ua1-f44.google.com with SMTP id a1e0cc1a2514c-966d4748ad5so622439241.3
-        for <linux-rt-users@vger.kernel.org>; Fri, 10 Jul 2026 07:16:41 -0700 (PDT)
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="R9Kxcxd1"
+Received: by mail-vs1-f50.google.com with SMTP id ada2fe7eead31-73770fd1cd9so322662137.3
+        for <linux-rt-users@vger.kernel.org>; Fri, 10 Jul 2026 07:16:43 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20251104; t=1783693001; x=1784297801; darn=vger.kernel.org;
-        h=content-transfer-encoding:mime-version:references:in-reply-to
-         :message-id:date:subject:cc:to:from:sender:from:to:cc:subject:date
-         :message-id:reply-to:content-type;
-        bh=zb2CORDUnJW6BRuryhHxa1NJ+1JoiXeJ3wpsQOIK9e4=;
-        b=Wgr4GZAlacghC8fSTOh0ejV9QIkRLJzuu9W2MwzfiI+DR7b2D0kMDL+a0FXk3TtN6f
-         w7iNqwxXIHVlqPWpKTW71a49OMA62bO3tDvTRPPSCeVzGqx4Ovo8kiRGHqnkuYROZJTf
-         5GqVgaZpW+anUfDS622iLDskU9//xJtpUvVhK6gLSLnMMKwE2hZc8eRffI8ThNOORe87
-         2q/a1gtJvnK2QwHtFLWLkU47pt6vyfmN+6Ml7wR1JhqjH5mKstkq/yjNP5FVe0gmA8P+
-         iYTN9dXJclSxbcQkEOCVdeWSPgC51czRJmAurHqpdfkl0LWE/UoTYsHPZxdQcF7lSsgF
-         J05A==
+        d=gmail.com; s=20251104; t=1783693002; x=1784297802; darn=vger.kernel.org;
+        h=content-transfer-encoding:content-type:mime-version:references
+         :in-reply-to:message-id:date:subject:cc:to:from:sender:from:to:cc
+         :subject:date:message-id:reply-to:content-type;
+        bh=C73rBfyWOXliX/xBtZmIyuUdkXS2HpTsxvdGU5SaF2o=;
+        b=R9Kxcxd14fYRA4WtOeiwqHb/tMQBd/C5bDrsARJFXlHk6EshEnGcvKiAVNDUTEUksN
+         RUM8TDltTvwO5WfGQcXHxqT3x4LA81TvKHHVUozi5eRS162xCx3quqL7qCTX29/kKG6r
+         Toh8yjvO913nCfKazDknghpVG55baLGVnZYjI2RCzv0YbOKMJz1+LJ/hhvoYofU7MtEg
+         OcK6k+6QUhtQ+KUcl9UjtIBqLQlRsX3p5hgGOerDWrqRcASnU8qS/CVzppf8FPgjF29s
+         zctGPPkseaUcLOdDQVxy2dLW7yg2ySYdgd6/DmXQUy5EA9GZuYtBoKsPfcPODzBM++48
+         yw+A==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20251104; t=1783693001; x=1784297801;
-        h=content-transfer-encoding:mime-version:references:in-reply-to
-         :message-id:date:subject:cc:to:from:sender:x-gm-gg
+        d=1e100.net; s=20251104; t=1783693002; x=1784297802;
+        h=content-transfer-encoding:content-type:mime-version:references
+         :in-reply-to:message-id:date:subject:cc:to:from:sender:x-gm-gg
          :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to
          :content-type;
-        bh=zb2CORDUnJW6BRuryhHxa1NJ+1JoiXeJ3wpsQOIK9e4=;
-        b=ErGhfwh2N84zseQkzAKCwr0NyrL1F0bEBj+2ZF72LqnEfCKoBCzBfoN3sVWFaVT+vJ
-         vXk/9/SqJeXVvxrlaHQtJmezvdXiprY4Z5/tSjPTbIUiGEhU/cvpbBfXuOloMIoH/Bn1
-         9VuOP4Tz+Z8NVMOGTClRy/HhAeMyHTCiuF78gUJaZ+Gf0918zI4kN89le9chCt2oy/52
-         xUg0kHV4JgbA3cSipPlXYuXZ6UgRk1QPxZQLkNYhVH+D7gqanMlyBIKVMhFYbKIhJSew
-         88s+L8KR6s0wyZVhxo+pTYLCIh0H5yEsj3OnC2W7UD3mmxzKiUeHxn0EzeKLWZAga82/
-         /oJg==
-X-Gm-Message-State: AOJu0Yx8P+eVEA+6EoE1yuS9mL0mvxoouqT38s5GcEhP1eUeUVdHmCDv
-	i+c6nDQX9y3Xvnr2hBZcISyBKWiHI1TsvEyYwXvaIuPSfXLPRHKMtP/wNlUFNg==
-X-Gm-Gg: AfdE7ck+gQIEWcoO3m7Wn09LRPDjEw5Yyjzq+FMlgID5eT7Wksiy957e+ungvOwLKqx
-	IF5RsF+d4mho11Yfm73qBATqLtQcs2g/m/51mqnAMIdjrhXjT5sxNraHVhjgE46g3ID6dmc6AlH
-	1IsaR4AMHcQmyzdgqtFIkBk4VJstZk654gET3pATOosA+zX4AmKFX/Bppk2c9S/QLrU3GeGX8vR
-	rdaknP/0uc16RiBBrJo2fkglpMm8GQkYDqUGrfW9Nc6EFzvSUCvWrp9UZSYxNO3+Wa0UjObcdFh
-	VT6v+ZQT5tZ/uwIhUoVdVtRjNnfRSgnusxA+kJ8QpsHkfidQqrDCJqitLeXO1oEvR6z5BVu1sX7
-	3knKeblHoYiLOmzqywtiAArjMuvDUu+X87Z+bNCOV/cpWMr0ZMolQM3+LzKZ6orjfTNjuosFZif
-	kkKcxvebjlqL1BjgG7fqxs7Hu9Du2CuIOovPZ+Jc5EbcOBz32hmGwzymrEk6NwqKpRVL2X11olp
-	Qgx9/oo7U7d
-X-Received: by 2002:a05:6102:598c:b0:726:8813:2078 with SMTP id ada2fe7eead31-744dfebf3c1mr7138226137.11.1783693000601;
-        Fri, 10 Jul 2026 07:16:40 -0700 (PDT)
+        bh=C73rBfyWOXliX/xBtZmIyuUdkXS2HpTsxvdGU5SaF2o=;
+        b=TDzVJUPdLnL9450pJFF0EawCcONc+kH6Pra7NHPwLTMr6Ziw8Xza5ts0Mwq1BlcAsA
+         Lo+dlPPhArnkk4L0pmv+4pmgeKU9fP6/aqD/d2L37WbIZTKT32qSRikqGjNIrbqiPM/C
+         NXeEuCYND+57KyNw9lp7hPY7/h21A+/0Y7uJ2ksEsxYFfPaY6taooDqpItC8DxCddF1f
+         4ii5iFHTq/01j8TAV2Ioh434esiBWJNqhzFOhBVB5/iwF252aAwE/BHdmo9/wSXKOENj
+         34ShYdOkduZ/HR+pLTX5aONcQZZFqhEZ/G+D3ZenOEE1V4l874dkqXEm21+nA49+b2qa
+         ef3w==
+X-Gm-Message-State: AOJu0YxYEI3wFh33wyoyIdseG1DuQ9eI/lonj4kpvz4wZciFKjFWTUTl
+	5fSOUkZjwQYgZQt86HruW321pPIXREOUIhzdMUaUmvCZQoaI3ykbKdezY/uSaA==
+X-Gm-Gg: AfdE7cm5ewqEkzNlvL/gIW7Sd/cd0r2QwDuCbYeEO1oCf40sTuwDfW6LnpWmD1L1wOD
+	+9itbt9NZV47GgWeT9gxlPxQmZXmGkXEHnZzzZr/RPg5WXq2zN6J1Il+sxoc0HHKH+VrXuz8Frf
+	+x9+GAsUyV1B4Br4UWsbA4ntB9YEnFteNJ/UI6MwOmP9xeR79VeqbskHmK/fhqhCQK+LNYlEoor
+	dAsuBONnYw7GNNzNLxBORgq90zpAEzPytpdU1u4pCljwMwtMrIq1Jh6c5Kzag+C/Ek5hkgxbT2s
+	m7qsE2LaCeB4X6eIMeRxjewWAnmc09LNajv2xtGpLysSy27g3kWmIYDJ65gwCdWoEzFy5DZO0ue
+	LlukMr9Q8DTOeIZsIj9AQkbV8Gdt+dO1k4u/uggFlgIgANjVtlebwOubj3+TB9VqdLVA7kSqBu2
+	hgyTa7vfr7C8ipZVNOpST/5p/ZImt/96tZSgrUjGgP2PYHWEvFoSj4j9puAoef1WQy388/bfWol
+	+M7PqifdaXp
+X-Received: by 2002:a05:6102:418f:b0:738:1fcb:f276 with SMTP id ada2fe7eead31-744dffbeddbmr7359433137.1.1783692997367;
+        Fri, 10 Jul 2026 07:16:37 -0700 (PDT)
 Received: from Cumhall.home ([216.209.112.119])
-        by smtp.gmail.com with ESMTPSA id ada2fe7eead31-744d6771d49sm5565087137.0.2026.07.10.07.16.39
+        by smtp.gmail.com with ESMTPSA id ada2fe7eead31-744d6771d49sm5565087137.0.2026.07.10.07.16.35
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Fri, 10 Jul 2026 07:16:39 -0700 (PDT)
+        Fri, 10 Jul 2026 07:16:36 -0700 (PDT)
 Sender: John Kacur <jkacur@gmail.com>
 From: John Kacur <jkacur@redhat.com>
 To: linux-rt-users@vger.kernel.org
 Cc: Chris White <chwhite@redhat.com>,
 	Clark Williams <williams@redhat.com>
-Subject: [PATCH 34/36] tuna: Add --cpuset option to run command
-Date: Fri, 10 Jul 2026 10:15:12 -0400
-Message-ID: <20260710141523.36440-35-jkacur@redhat.com>
+Subject: [PATCH 32/36] tuna: Enhance show_threads -G to display cpuset names
+Date: Fri, 10 Jul 2026 10:15:10 -0400
+Message-ID: <20260710141523.36440-33-jkacur@redhat.com>
 X-Mailer: git-send-email 2.54.0
 In-Reply-To: <20260710141523.36440-1-jkacur@redhat.com>
 References: <20260710141523.36440-1-jkacur@redhat.com>
@@ -76,126 +76,108 @@ List-Id: <linux-rt-users.vger.kernel.org>
 List-Subscribe: <mailto:linux-rt-users+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit
 
-Add support for running commands directly in cpusets using the
---cpuset option. This allows launching processes with both CPU
-isolation (via cpusets) and scheduling priority settings.
+Changed the cgroups display in 'tuna show_threads -G' to show
+simplified cpuset names instead of full cgroup v2 paths, making
+output more user-friendly and readable.
 
-The implementation:
-- Adds --cpuset CPUSET-NAME option to run command parser
-- Makes --cpuset mutually exclusive with CPU affinity options (-c, -S, -N)
-- Validates cpuset exists before launching the process
-- Extends run_command() to accept cpuset_name parameter
-- Implements parent-child coordination: child sets priority/affinity
-  and execs command, parent migrates child to cpuset
-- Handles race condition where fast commands finish before migration
-  by checking process existence with signal 0
-- Adds signal import for SIGTERM handling
+Changes:
+- Added extract_cpuset_name() function to parse cgroup paths
+  - Extracts first component: "0::/tuna0" → "tuna0"
+  - System cgroups: "0::/system.slice/ssh.service" → "system.slice"
+  - Root cgroup: "0::/" → "" (empty string)
+- Changed column header from "cgroup" to "cpuset"
+- Modified ps_show_thread() to use extracted cpuset name in display
 
-Example usage:
-  tuna run --cpuset my_rt 'taskset -pc $$ && sleep 5'
-  tuna run --cpuset my_rt -p FIFO:50 'stress-ng --cpu 1'
+This makes it much easier to see which cpuset a process belongs to
+without having to parse long cgroup paths.
 
 Assisted-by: Claude:claude-sonnet-4-5
 Signed-off-by: John Kacur <jkacur@redhat.com>
 ---
- tuna-cmd.py  | 14 ++++++++++++--
- tuna/tuna.py | 28 +++++++++++++++++++++++++++-
- 2 files changed, 39 insertions(+), 3 deletions(-)
+ tuna-cmd.py | 46 +++++++++++++++++++++++++++++++++++++++++-----
+ 1 file changed, 41 insertions(+), 5 deletions(-)
 
 diff --git a/tuna-cmd.py b/tuna-cmd.py
-index 4703ea41f8d4..25257c465532 100755
+index c2208e268c97..4703ea41f8d4 100755
 --- a/tuna-cmd.py
 +++ b/tuna-cmd.py
-@@ -221,6 +221,7 @@ def gen_parser():
-     run_group.add_argument('-c', '--cpus', **MODS['cpus'])
-     run_group.add_argument('-S', '--sockets', **MODS['sockets'])
-     run_group.add_argument('-N', '--nohz_full', **MODS['nohz_full'])
-+    run_group.add_argument('--cpuset', type=str, metavar='CPUSET-NAME', help='Run process in specified cpuset (cgroup v2) instead of setting CPU affinity')
-     run.add_argument('-p', '--priority', **MODS['priority'])
-     run.add_argument('-b', '--background', **MODS['background'])
+@@ -358,6 +358,41 @@ def save(cpu_list, thread_list, filename):
+     tuna.generate_rtgroups(filename, kthreads, utils.get_nr_cpus())
  
-@@ -1659,7 +1660,7 @@ def main():
-                         print(f"[ERROR] Invalid RT priority: {rtprio}. RT priorities must be 1-99", file=sys.stderr)
-                         sys.exit(2)
-                 # If only priority specified (no policy), assume RT and validate
--                elif policy is None and rtprio != 0:
-+                elif policy is None and rtprio is not None and rtprio != 0:
-                     if rtprio < 1 or rtprio > 99:
-                         print(f"[ERROR] Invalid RT priority: {rtprio}. RT priorities must be 1-99", file=sys.stderr)
-                         sys.exit(2)
-@@ -1738,8 +1739,17 @@ def main():
-                 sys.exit(1)
  
-     elif args.command in ['run', 'r']:
-+        # Check if using cpuset mode
-+        cpuset_name = None
-+        if hasattr(args, 'cpuset') and args.cpuset:
-+            # Verify cpuset exists
-+            cpuset_path = os.path.join('/sys/fs/cgroup', args.cpuset)
-+            if not os.path.exists(cpuset_path):
-+                print(f"Error: cpuset '{args.cpuset}' does not exist", file=sys.stderr)
-+                sys.exit(1)
-+            cpuset_name = args.cpuset
- 
--        tuna.run_command(args.run_command, args.priority[0], args.priority[1], args.cpu_list, args.background)
-+        tuna.run_command(args.run_command, args.priority[0], args.priority[1], args.cpu_list, args.background, cpuset_name)
- 
-     elif args.command in ['priority', 'p']:
- 
-diff --git a/tuna/tuna.py b/tuna/tuna.py
-index 5e5f5578fbe4..fd08b5efe1ae 100755
---- a/tuna/tuna.py
-+++ b/tuna/tuna.py
-@@ -6,6 +6,7 @@ import copy
- import errno
- import os
- import re
-+import signal
- import sys
- import shlex
- import fnmatch
-@@ -708,7 +709,7 @@ def get_kthread_sched_tunings(proc=None):
- 
-     return kthreads
- 
--def run_command(cmd, policy, rtprio, cpu_list, background):
-+def run_command(cmd, policy, rtprio, cpu_list, background, cpuset_name=None):
-     newpid = os.fork()
-     if newpid == 0:
-         cmd_list = shlex.split(cmd)
-@@ -732,6 +733,31 @@ def run_command(cmd, policy, rtprio, cpu_list, background):
-             print(f"tuna: {err}")
-             sys.exit(2)
-     else:
-+        # If cpuset mode, move the child process to the cpuset
-+        if cpuset_name:
-+            from tuna import cpuset
-+            try:
-+                cs = cpuset.Cpuset(cpuset_name, existing_ok=True)
-+                if not cs.write_pid(newpid):
-+                    # Check if process still exists - if it exited quickly, that's okay
-+                    try:
-+                        os.kill(newpid, 0)  # Signal 0 just checks if process exists
-+                        # Process still exists but couldn't be moved to cpuset - this is an error
-+                        print(f"tuna: failed to move process {newpid} to cpuset '{cpuset_name}'", file=sys.stderr)
-+                        os.kill(newpid, signal.SIGTERM)
-+                        sys.exit(1)
-+                    except OSError:
-+                        # Process already exited - that's okay, it just ran quickly
-+                        pass
-+            except (OSError, ValueError) as e:
-+                print(f"tuna: error accessing cpuset '{cpuset_name}': {e}", file=sys.stderr)
-+                # Try to kill the child process if it still exists
-+                try:
-+                    os.kill(newpid, signal.SIGTERM)
-+                except OSError:
-+                    pass
-+                sys.exit(1)
++def extract_cpuset_name(cgroup_path):
++    """
++    Extract cpuset/cgroup name from full cgroup path for display.
 +
-         if not background:
-             os.waitpid(newpid, 0)
++    Examples:
++        "0::/tuna0" → "tuna0"
++        "0::/" → ""
++        "0::/system.slice/ssh.service" → "system.slice"
++        "0::/user.slice/user-1000.slice/session-2.scope" → "user.slice"
++
++    Args:
++        cgroup_path: Full cgroup path from /proc/[pid]/cgroup
++
++    Returns:
++        First component of the cgroup path (cpuset name or top-level cgroup)
++    """
++    if not cgroup_path:
++        return ""
++
++    # Remove "0::" prefix
++    if cgroup_path.startswith("0::"):
++        cgroup_path = cgroup_path[3:]
++
++    # Remove leading slash
++    if cgroup_path.startswith("/"):
++        cgroup_path = cgroup_path[1:]
++
++    # Return empty string for root cgroup
++    if not cgroup_path:
++        return ""
++
++    # Return first component (cpuset name or top-level cgroup like "system.slice")
++    return cgroup_path.split('/')[0]
++
++
+ def ps_show_header(has_ctxt_switch_info, cgroups=False):
+     print("%7s %6s %5s %7s       %s" %
+           (" ", " ", " ", _("thread"),
+@@ -366,7 +401,7 @@ def ps_show_header(has_ctxt_switch_info, cgroups=False):
+                                       has_ctxt_switch_info and " %9s %12s" % (
+                                           "voluntary", "nonvoluntary")
+                                       or "", "cmd"), end=' ')
+-    print(" %7s" % ("cgroup") if cgroups else "")
++    print(" %7s" % ("cpuset") if cgroups else "")
+ 
+ 
+ def ps_show_sockets(pid, ps, inodes, inode_re, indent=0):
+@@ -419,7 +454,8 @@ def ps_show_thread(pid, affect_children, ps, has_ctxt_switch_info, sock_inodes,
+ 
+     sched = tuna_sched.sched_str(os.sched_getscheduler(pid))[6:]
+     rtprio = int(ps[pid]["stat"]["rt_priority"])
+-    cgout = ps[pid]["cgroups"]
++    cgroup_path = ps[pid]["cgroups"]
++    cpuset_name = extract_cpuset_name(cgroup_path)
+     cmd = ps[pid]["stat"]["comm"]
+     users = ""
+     if tuna.is_irq_thread(cmd):
+@@ -451,10 +487,10 @@ def ps_show_thread(pid, affect_children, ps, has_ctxt_switch_info, sock_inodes,
+ 
+     if cgroups:
+         length = int(columns) - len(s1 + " ") - len(s2 + " ")
+-        if len(" %9s" % cgout) <= length:
+-            print("%s" % cgout)
++        if len(" %9s" % cpuset_name) <= length:
++            print("%s" % cpuset_name)
+         else:
+-            print("\n %s" % cgout + ("" if compact else "\n"))
++            print("\n %s" % cpuset_name + ("" if compact else "\n"))
+     else:
+         print()
  
 -- 
 2.54.0
