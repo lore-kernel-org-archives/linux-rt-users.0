@@ -1,80 +1,96 @@
-Received: from relay.hostedemail.com (smtprelay0017.hostedemail.com [216.40.44.17])
+Received: from galois.linutronix.de (Galois.linutronix.de [193.142.43.55])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id C3703435ABD
-	for <linux-rt-users@vger.kernel.org>; Fri, 10 Jul 2026 16:20:48 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=216.40.44.17
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id C298B379C5E
+	for <linux-rt-users@vger.kernel.org>; Tue, 14 Jul 2026 11:07:21 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=193.142.43.55
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1783700455; cv=none; b=DlUWvN9bI4TQZYTPf//3CZYC+wCggi0w14uoo9N0XXWsO8DPfd/S5xS/MVs4BGbmMEcHuI3M9jxR02dEps1U8TyGuBmBVdwPHJ20l2Qb5B2F8+V9yaj2tHBbr75920KY/K5A5OITDddxk5IcWZURRH70mAaczpzSBr/IKPE496o=
+	t=1784027243; cv=none; b=f21m3+9TT6Xz6vrc+1C//CrPhNbaiNEGGRcJ9davnA1Hjn6rL3bzp8hQDpPtJnoEDP+N9jv7352HMCM5sxnOIr15NU1zwCSZ1k4goktDQJc9d/GGJOpE7VEl4JMXBv5TnQASVB3CpXTMhzucOX4uUNAtE9ddRQMJ/hzb56GkKTw=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1783700455; c=relaxed/simple;
-	bh=GvwTa/62diZ/Zn8kt0oriCZbdJ698Nc4TIvwnU2j3EU=;
-	h=Date:From:To:Cc:Subject:Message-ID:In-Reply-To:References:
-	 MIME-Version:Content-Type; b=QqHPF3Tz7nMICL9bupV3JXdYj0p6JB3xXuLVCnEeZiiJCGUz6yuOD2yH5pcYScWTrI3B3g8B53JD8rml2utGTKie+sHwB7kqfNu7o/rFpUM7Ni3ro9iaW3vtSnM2AThvLNO6zGJtTGJZG4dALGGipg51rMqld5br6E0B4548n78=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=goodmis.org; spf=pass smtp.mailfrom=goodmis.org; arc=none smtp.client-ip=216.40.44.17
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=goodmis.org
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=goodmis.org
-Received: from omf01.hostedemail.com (lb01a-stub [10.200.18.249])
-	by unirelay06.hostedemail.com (Postfix) with ESMTP id 8EE291C85AB;
-	Fri, 10 Jul 2026 16:13:58 +0000 (UTC)
-Received: from [HIDDEN] (Authenticated sender: rostedt@goodmis.org) by omf01.hostedemail.com (Postfix) with ESMTPA id 028196000F;
-	Fri, 10 Jul 2026 16:13:55 +0000 (UTC)
-Date: Fri, 10 Jul 2026 12:14:05 -0400
-From: Steven Rostedt <rostedt@goodmis.org>
-To: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
-Cc: Florian Bezdeka <florian.bezdeka@siemens.com>, Sebastian Andrzej Siewior
- <bigeasy@linutronix.de>, driver-core@lists.linux.dev,
- linux-rt-devel@lists.linux.dev, linux-rt-users@vger.kernel.org, "Rafael J.
- Wysocki" <rafael@kernel.org>, Arnd Bergmann <arnd@arndb.de>, Clark Williams
- <williams@redhat.com>, Danilo Krummrich <dakr@kernel.org>, Peter Zijlstra
- <peterz@infradead.org>, Thomas Gleixner <tglx@linutronix.de>, Jan Kiszka
- <jan.kiszka@siemens.com>
+	s=arc-20240116; t=1784027243; c=relaxed/simple;
+	bh=5Gic6jFqDAw2jFM2Jd/b6j2X3I/6cTrDW6/5MaQqIHI=;
+	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
+	 Content-Type:Content-Disposition:In-Reply-To; b=EyzTFvJumc8VrDlR+mo/OeYChbPaluKdkYZIKJdymkOjLY2Y6Inf+nUgQNdtM2WFNjlHq0EciUmrqfbQ28dwlMDdxN5OUUMOicdlQuLikFirxewmd/PfT6/jNaFDTZ18HTWfoeg60hc3lMUOrzwXzluU/+augT5ZlQuM/8iqgR4=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linutronix.de; spf=pass smtp.mailfrom=linutronix.de; dkim=pass (2048-bit key) header.d=linutronix.de header.i=@linutronix.de header.b=nKWMmgeO; dkim=permerror (0-bit key) header.d=linutronix.de header.i=@linutronix.de header.b=c3tDafPm; arc=none smtp.client-ip=193.142.43.55
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linutronix.de
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=linutronix.de
+Authentication-Results: smtp.subspace.kernel.org;
+	dkim=pass (2048-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="nKWMmgeO";
+	dkim=permerror (0-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="c3tDafPm"
+Date: Tue, 14 Jul 2026 13:07:18 +0200
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
+	s=2020; t=1784027239;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 in-reply-to:in-reply-to:references:references;
+	bh=5Gic6jFqDAw2jFM2Jd/b6j2X3I/6cTrDW6/5MaQqIHI=;
+	b=nKWMmgeOZusGz4tUgy+jHb8f7dPLZ6VmnGW/lJa6oQfWarzLUflFbamW/ZR1RsNbBnu43L
+	9Qwg8/+OsvuWBSp4e23ZNGDzVih7J7h3DZYae6lHi1IO0ah/xSAPjkPofGtRDmqk9ofnvF
+	G1WmNrle4tTx2BDqy+qtMg4TuTSoR70R70aF9YFEGzxxuzNqRG2NVPKYp2nEbQ2QIArpV+
+	U7XIClgPkKwYdq6Sqrw1uCC3Cdf+2SQJJkBk1fV8VawzRb1ldJ1UhZHjnIETEHEkM+l1Cr
+	DGNnMiFN8bvQW8fj+1xZ0vQcHOLKVbf6E2OIbFuhbEMBqZSVcO+G1BuA6BHZlA==
+DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
+	s=2020e; t=1784027239;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 in-reply-to:in-reply-to:references:references;
+	bh=5Gic6jFqDAw2jFM2Jd/b6j2X3I/6cTrDW6/5MaQqIHI=;
+	b=c3tDafPmqOjhcblwv6ldGP21Lj7aKhxu0ykVLDb560LIUJ8tcB6SNF/u6uo8PqjAfVqy2L
+	30NxFxsnSeF12qDQ==
+From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+To: Florian Bezdeka <florian.bezdeka@siemens.com>
+Cc: Steven Rostedt <rostedt@goodmis.org>,
+	Greg Kroah-Hartman <gregkh@linuxfoundation.org>,
+	driver-core@lists.linux.dev, linux-rt-devel@lists.linux.dev,
+	linux-rt-users@vger.kernel.org,
+	"Rafael J. Wysocki" <rafael@kernel.org>,
+	Arnd Bergmann <arnd@arndb.de>, Clark Williams <williams@redhat.com>,
+	Danilo Krummrich <dakr@kernel.org>,
+	Peter Zijlstra <peterz@infradead.org>,
+	Thomas Gleixner <tglx@linutronix.de>,
+	Jan Kiszka <jan.kiszka@siemens.com>
 Subject: Re: [RFC PATCH] sysfs: Add /sys/kernel/realtime entry
-Message-ID: <20260710121405.0262ad6c@gandalf.local.home>
-In-Reply-To: <2026071052-backstage-skype-f22d@gregkh>
+Message-ID: <20260714110718.E5qV5-Hf@linutronix.de>
 References: <20260709143108.UYeCUUcd@linutronix.de>
-	<2026070922-kilowatt-matador-5e1c@gregkh>
-	<20260709152214.rH1O_8SM@linutronix.de>
-	<748a489687000b21d0e8f961fc2f9f963b0bc1d1.camel@siemens.com>
-	<20260710115145.32729a7c@gandalf.local.home>
-	<2026071052-backstage-skype-f22d@gregkh>
-X-Mailer: Claws Mail 3.20.0git84 (GTK+ 2.24.33; x86_64-pc-linux-gnu)
+ <2026070922-kilowatt-matador-5e1c@gregkh>
+ <20260709152214.rH1O_8SM@linutronix.de>
+ <748a489687000b21d0e8f961fc2f9f963b0bc1d1.camel@siemens.com>
+ <20260710115145.32729a7c@gandalf.local.home>
+ <ae96c274f166301aba762d97caccddf176ad7968.camel@siemens.com>
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
 List-Subscribe: <mailto:linux-rt-users+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
-X-Stat-Signature: 9e4zt8i1b9q184cadfietxgb15erzchr
-X-Rspamd-Server: rspamout08
-X-Rspamd-Queue-Id: 028196000F
-X-Session-Marker: 726F737465647440676F6F646D69732E6F7267
-X-Session-ID: U2FsdGVkX19Xu4sWlEIau/Z6FExvfaQhFYPafq2kbE0=
-X-HE-Tag: 1783700035-510940
-X-HE-Meta: U2FsdGVkX18WIHfCHAI+qI4jNCOhsm3KBDSzNZC9MKP4HTuSB5NErqVWSAgI7bXc0xs59wNQ3TNU4NLxR8/iNKRCv466blJPiDMnVsH4YM09JovS9AVeJ9OEOIk7NFo5XVFksNMkVkS1IwhclJrM7XJ9KmSmHMuor2u0IrCNQt31LoZiqWJot8J0zyLrbW6jCyKQiu2ifX19nVVKDsznSuOj1g+SWirnaZ56bPBSjIElwF+okAdqGYVsc9BFjnQeRqhnxd/ExAt0eKaFsWN0FSjHnAZ3Z54aeq++jFF8NzZPPEx1g9oYcT2KM6MFiri0u0wRUPXZOcuwjmwGAsE4hWUBt1KiDjymBuSaB2F7ybljcANAFhRUmdnZ8viEcnkDKK0hNh5kwIFRmxaqfeD0YA==
+Content-Type: text/plain; charset=utf-8
+Content-Disposition: inline
+In-Reply-To: <ae96c274f166301aba762d97caccddf176ad7968.camel@siemens.com>
 
-On Fri, 10 Jul 2026 18:05:12 +0200
-Greg Kroah-Hartman <gregkh@linuxfoundation.org> wrote:
+On 2026-07-10 18:01:20 [+0200], Florian Bezdeka wrote:
+> Depends on what you consider a valid update scenario. Updating from 6.1-
+> rt with sysfs available to something like 6.18 (no sysfs anymore) will
+> still break - as long as you do not (force) update userspace in
+> lockstep.
 
-> On Fri, Jul 10, 2026 at 11:51:45AM -0400, Steven Rostedt wrote:
-> > On Fri, 10 Jul 2026 09:23:16 +0200
-> > Florian Bezdeka <florian.bezdeka@siemens.com> wrote:
-> >   
-> > > uname might qualify, yes, but keep in mind that this sysfs based API is
-> > > already used, so a removal might break applications. Yes, userspace can
-> > > be fixed / adjusted, but it remains bad style, no?  
-> > 
-> > Then at most it will likely just stay in the -rt patch set. As it was never
-> > mainlined, it's not breaking any user space that uses only the mainline
-> > kernel.  
-> 
-> I never said I wouldn't take it, just that if I would, it has to be
-> cleaned up...
+v6.1-RT to v6-18 no-rt will not provide the file. Also will not provide
+ARM, PowerPC or 8250-nbcon support. So it is not just that single thing
+that you "lose" if you don't apply the RT patch. It is just what you
+notice because you don't use the other things.
 
-I didn't say you wouldn't take it. But you brought up a valid point about
-if it is even needed. The point I'm making is that it's not a regression
-from the POV of mainline maintainers (people like you and Linus).
+> I learned meanwhile that our detection moved to uname meanwhile, so this
+> is not a problem for us anymore.
 
--- Steve
+Okay. So you yelled loudly that you need it, now not anymore.
+
+So can we state that this it does not provide anything of value, is not
+considered needed and can be dropped?
+
+Clark, what is the status on your end?
+
+I can postpone this and get back in a month or so if we need thinking
+time.
+
+> Florian
+
+Sebastian
