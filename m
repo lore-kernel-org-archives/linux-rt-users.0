@@ -1,71 +1,71 @@
-Received: from mail-qv1-f54.google.com (mail-qv1-f54.google.com [209.85.219.54])
+Received: from mail-qv1-f41.google.com (mail-qv1-f41.google.com [209.85.219.41])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id F019B442FB4
-	for <linux-rt-users@vger.kernel.org>; Thu, 16 Jul 2026 17:46:14 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.219.54
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 490CD44210A
+	for <linux-rt-users@vger.kernel.org>; Thu, 16 Jul 2026 17:46:18 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.219.41
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1784223977; cv=none; b=RKDM8LA5q4jEjaf8uARMxVuKaE1LYVuXCcDPdI9gg5Bi90Mv7sHtljeqwUcuUPfBVuWGuITb9UxPzjEmMUb9Km3+x/pYq16wmXBY4GjNzIsgvBOE+v3+rPd7QYAiLValUX2zvhbBCMYvr0rcgnFir2fZPQU8fHtFtnJ0QIazt9g=
+	t=1784223980; cv=none; b=Dv2gkzlxCrIPNkRPMwsoM7crGSlh4ctlz1xRGJq/Ovf/9lw/z309x6JNCth99rAinY8zmcDxkAsjoYguAgFd0reDlsdzW0dfVA5/Zunkraze0eDqObkReCPdoftD39g3v6tqUkhSgq2LebKq4/3qv+pla9EkUYOLluE7k/N6oJQ=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1784223977; c=relaxed/simple;
-	bh=xCNIIg4dzc03fr6gnsjWsEqSfN2nrO0oeG2Pdf+NKLA=;
+	s=arc-20240116; t=1784223980; c=relaxed/simple;
+	bh=kXaVGwCpAimGLNFawFuE5vVSKzjijr9zBjQCRJVz+XI=;
 	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version:Content-Type; b=ta/epNZhSO08PSAF5lXsKljKOWX9kVhWemOou4qRzehQR+b7oqgTn/wGhwPRP7p04WOfpeImkzc/69RvmScT2XVkkA4LKQqGcTl2SdTxmeu4cx1BJjV8cCU77OLbbOeJ294XytgqOPjJ9Ps8607cU5zB0ckfkf2oPNDg7vpnBSk=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=fail (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=KecMjPq3; arc=none smtp.client-ip=209.85.219.54
+	 MIME-Version; b=EP0GVI5VgWfcHY1w0QyftVRqFQ+ms/ktU803ZUOgXU58xvH3ryGzUC2BJrw3YSf5T1nhjqD3QGXMoQXJTppW9FIwItKlwfUr3JNNz6XP1ul4AnDvVBJeXAvEjNpXdiEKIsbOquWK/BAhtrfbXhjlJNqjED3tj4ymEGT+K9xJ+a8=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=fail (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=s8W5J/Nt; arc=none smtp.client-ip=209.85.219.41
 Authentication-Results: smtp.subspace.kernel.org; dmarc=fail (p=quarantine dis=none) header.from=redhat.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="KecMjPq3"
-Received: by mail-qv1-f54.google.com with SMTP id 6a1803df08f44-90327237340so6166066d6.1
-        for <linux-rt-users@vger.kernel.org>; Thu, 16 Jul 2026 10:46:14 -0700 (PDT)
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="s8W5J/Nt"
+Received: by mail-qv1-f41.google.com with SMTP id 6a1803df08f44-902f92b8504so61694576d6.2
+        for <linux-rt-users@vger.kernel.org>; Thu, 16 Jul 2026 10:46:18 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20251104; t=1784223974; x=1784828774; darn=vger.kernel.org;
-        h=content-transfer-encoding:content-type:mime-version:references
-         :in-reply-to:message-id:date:subject:cc:to:from:sender:from:to:cc
-         :subject:date:message-id:reply-to:content-type;
-        bh=DGM1A6iYtI/u2ItH6HRC8I9CT4mOgqMVk3HkqpzyYNU=;
-        b=KecMjPq3ZVuTkiXwqIojt5pDc3oCboMyIT/D2C6sQjLfIDAOQVhAZnruZ4I5t4sj2a
-         ncU1ItDZpOSYJ7U/9QKT2pnnUT/UkfH2oi/t4qdrWGMNsHYz9HSzcaqM4YJWIzI1SbdE
-         zLWNbowrI+kqgKroSniZq03fzk4OqGZlqetTD19OOBDtbj0l9QwgCZHYG/5DWewBAFiA
-         HRyERmaONq+LIbtcDM4rgcQWQlyuD2tHgWtv4r/B9kT4ab8nLFnZRIftoCwLowXSC1J8
-         TSYn9oNImvogBA0Z7DmAFPbeW0a/uesXDrl8jt9R0nIthS2FcTqyPzT9MUcpOIGBvInf
-         Sq+g==
+        d=gmail.com; s=20251104; t=1784223977; x=1784828777; darn=vger.kernel.org;
+        h=content-transfer-encoding:mime-version:references:in-reply-to
+         :message-id:date:subject:cc:to:from:sender:from:to:cc:subject:date
+         :message-id:reply-to:content-type;
+        bh=SXBQMCVsmnCe7ndWGvc5B5/1QaER0qVna/zoSZj5VY0=;
+        b=s8W5J/Nt9jNvHJVC4Xas1BVaiHoOmksYWxP7jwsjPlwJOsyVGdiWUcpxvV75AgQi6M
+         rnBmj19pNS3nqYb/zriocXKWRod/dLN5CBUpOhfl8YyKByRKcVS2jfY1VbwYEz/1nuU7
+         Uj9ccu1rd9gxzXEGzade1++/Rd3+nmo+YxHKw5c2YKXpC6B3QkfkwaYwoqQjuQA0OOlA
+         KUam+VBCrmL3iGoQlh50pC7f7htf5KP4Ya09kxo+7mOUGrXvMFnZsD466pXOMXVJAz29
+         NTwsBkiX1Z96f0FIKe5KE6tW7NvjWFzJ5RmwGeu+p3HMCMv1cJbkV7F680kZXJS2jreY
+         KtOA==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20251104; t=1784223974; x=1784828774;
-        h=content-transfer-encoding:content-type:mime-version:references
-         :in-reply-to:message-id:date:subject:cc:to:from:sender:x-gm-gg
+        d=1e100.net; s=20251104; t=1784223977; x=1784828777;
+        h=content-transfer-encoding:mime-version:references:in-reply-to
+         :message-id:date:subject:cc:to:from:sender:x-gm-gg
          :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to
          :content-type;
-        bh=DGM1A6iYtI/u2ItH6HRC8I9CT4mOgqMVk3HkqpzyYNU=;
-        b=d2GEe/SQ9PyTZ8C6zjKI8/wZ0qhXmWn1nFn7gjhznpHxfihTeRjUzK1qKXvZh8nUmA
-         8zeaC5n5Nc4ZCAtw3EJxRPrXO7CcIVF9GLKiDW8p6Xf4qEiPeCtCcs64LZiouq8QNidK
-         /03NN5gNSmNwqeZotTTcmLEBuR2j4gTgpMsP6B7s8NKdbgSAhzW8lLA1e1Vt6Zc3ruiZ
-         6blm2qEVl/0cuFY4MPxNVHK/3oUim8PD7Zn2ASuRUqFpzelz131jowoOeoMZya2K1KaZ
-         f8i8uhknq05lsQMubn8ObEI7jfgkLffqsdjF2AYLQSvTIpqV4ANQs/gyKF/9wA/uk55x
-         n1lw==
-X-Gm-Message-State: AOJu0YxOX0BixfOKFzuUFDgBgsomEEqGKizYQFJKkMlkdJCpDIi5KFIT
-	fx3D3TkgarlZHuLmyVHE5edx/Vm6glAIYm3d5aNPu7Nq5H7mGEJL60G/ytIBQQ==
-X-Gm-Gg: AfdE7cmYxxodVo6ow+aT5o7b+2B68mFDFV5Lo7CD2NoSzQq1NXxm7azU58ZSWrb2OAS
-	e1vS8cAqdm111hCfCQLTL9AS/MqoEHIlqJ12UUYBW4b5r6z3XfFd6oDd9jooknaFJsWN66Q62hl
-	K8Y9FpFHwRu0J8cbzW2UzZ6Qa9bowDr9R4U8ALEgPa3uFsQj00ORBRHxl/jTw2+XKJ0A33dLY8L
-	MXR3KqiuGyKsX2EqdDMpyi5uwqEnoc/JW3o2Rxvppa9jSVENH9wgsVL953luszg+BceAgT1luf4
-	8Pu2xCRM2Cvl0PyZIevOEM4KpqAJa9CTIpdV2Rsc7Qoq7JMhXe13CuNbo2vNW3gBzdb+Jxt+2m3
-	U9Sfa5MhY9lf5ErVdKPbu9dax+vArH195QLM7f9FdJ/8bZTfU1kd5gzXe17jThc5dYSKVOg+NPN
-	Dw25nXLeGrH8g0ZHMsOmIBdsPsiEaoUYJqm0LNrfSeK10JoFcGO/z/h/JyuLLsPWnDaNUu
-X-Received: by 2002:a05:6214:459c:b0:8ef:a6b:18a with SMTP id 6a1803df08f44-90768cc4252mr37880486d6.6.1784223973604;
-        Thu, 16 Jul 2026 10:46:13 -0700 (PDT)
+        bh=SXBQMCVsmnCe7ndWGvc5B5/1QaER0qVna/zoSZj5VY0=;
+        b=T4aykShmVvwGkEScBnm85WdeG0uSv0RT0BZ8JbUe8s+WwZ/UC/B62Pk1PDD1qiMtS0
+         fWHzfs8IJSzzwjyC+IDRdWX9g8s2/DAgDK5G1/zj6sWPtzWkrkTva5OFxN6b80cTv/Zl
+         LAM+dw3DqDexC7+iky42OvCW7zno7ysl5UJ1ewTjlcPgSxXq6m7pY1BO4voH8XgewIxO
+         4pwPVlNi6wZH3ru8T7khxb1Zb8tOXonw69MitsyPKyTs45+2RczKyvUYQMJ7tXuLFlqG
+         hjszlPSXkHE/oPJo2+YSYAldW6UE9SS7t0GOo4LpRK8ZO3HV42yzqa3xzCbOVbxJriww
+         E0xw==
+X-Gm-Message-State: AOJu0YzEdqObLYOaR6pPg3m2HYnZB27ZLnPUrgI10uLgyek23FMjmvMt
+	Tgs2yOXaw4BlXEcoiU5zEeJbyhjgJZ7D3GlmYCJzWYp18fPhQ6SVXjscVk27pQ==
+X-Gm-Gg: AfdE7cm+lP5dChLeEeyfXy/MDzogaCcMRXyPd99FG3d3Qoc0Ag+gKxDzNVCv4F1jssf
+	NnMM2ESEJHsxUZkDPXlJfvGRtaDinNbvlglFI+ijunIcOE+BhfQB5KnPABLw/YIqvJTcsn2YK5Y
+	Z5Fce8jwiRVwo3M9Sa292FvsleXcXHNd3HrC8mvtTriLpdDm3Qh3MoIuDVItTkGup4Omsw8/LOo
+	B7VAo1O4Vgk6HTl1oUhon7Cic5awpe6+uVAjGWaOZ/C8ol0Byp6QWPnvDH9ZLXMgj9UXgHw+69g
+	ewu2va7mfOBYQuaqDDW/FpD8eQw6TvZe4b+tpP20qkNF85PdbybNxLLScaygKRZpShH3Dm6Xmq3
+	fxpDRC48+Glsv+981m+ArbY4TC5LKxY7qf/42V/Brly3GiFKHvqzv0kgeuBpyPnBH8Nlqv8d1Du
+	l+rL1no+17QY8CluKlcyos7yRMiDKUKmm/czHqrG6IUH9k1hh/6Exr9rAZM3sezT4pAZVo
+X-Received: by 2002:a05:6214:4006:b0:8fd:d5a7:f95c with SMTP id 6a1803df08f44-90758d0d7ccmr99814976d6.28.1784223976781;
+        Thu, 16 Jul 2026 10:46:16 -0700 (PDT)
 Received: from Cumhall.redhat.com ([174.95.68.136])
-        by smtp.gmail.com with ESMTPSA id 6a1803df08f44-8ffd50e0347sm224952276d6.2.2026.07.16.10.46.12
+        by smtp.gmail.com with ESMTPSA id 6a1803df08f44-8ffd50e0347sm224952276d6.2.2026.07.16.10.46.16
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Thu, 16 Jul 2026 10:46:13 -0700 (PDT)
+        Thu, 16 Jul 2026 10:46:16 -0700 (PDT)
 Sender: John Kacur <jkacur@gmail.com>
 From: John Kacur <jkacur@redhat.com>
 To: linux-rt-users@vger.kernel.org
 Cc: Chris White <chwhite@redhat.com>,
 	Clark Williams <williams@redhat.com>
-Subject: [PATCH 3/7] tuna: Add comprehensive tests for save/apply functionality
-Date: Thu, 16 Jul 2026 13:45:46 -0400
-Message-ID: <20260716174554.126145-4-jkacur@redhat.com>
+Subject: [PATCH 6/7] tuna: Change housekeeping cpuset default to partition=member
+Date: Thu, 16 Jul 2026 13:45:49 -0400
+Message-ID: <20260716174554.126145-7-jkacur@redhat.com>
 X-Mailer: git-send-email 2.55.0
 In-Reply-To: <20260716174554.126145-1-jkacur@redhat.com>
 References: <20260716174554.126145-1-jkacur@redhat.com>
@@ -75,60 +75,41 @@ List-Id: <linux-rt-users.vger.kernel.org>
 List-Subscribe: <mailto:linux-rt-users+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit
 
-Add Python test suite for cpuset save/apply subcommands with 12 test
-cases covering all functionality and edge cases.
+Change the default partition type for housekeeping cpusets from 'isolated'
+to 'member', aligning with rteval's design. In rteval, housekeeping cpusets
+use partition=member while only the measurement cpuset uses partition=isolated.
 
-Test coverage (tests/test_save_apply.py):
-- test_save_creates_yaml_file: Verify save creates output file
-- test_save_captures_all_cpusets: Verify all user cpusets are saved
-- test_save_captures_partition_types: Verify isolated vs member preserved
-- test_save_captures_cpu_ranges: Verify CPU assignments preserved
-- test_apply_recreates_cpusets: Verify apply recreates from YAML
-- test_apply_preserves_partition_types: Verify partition types restored
-- test_apply_preserves_cpu_assignments: Verify CPU assignments restored
-- test_apply_with_existing_cpusets_warns: Verify idempotent operation
-- test_apply_missing_file_returns_error: Error handling for missing files
-- test_roundtrip_preserves_configuration: Full save→destroy→apply→verify
-- test_save_with_no_cpusets: Handle empty cpuset case gracefully
-- test_save_skips_system_cpusets: Verify system cpuset filtering
+This change makes tuna's behavior consistent with rteval for users who are
+familiar with both tools.
 
-Test structure:
-- Uses unittest framework (consistent with existing tests)
-- Requires root permissions (@skipUnless decorator)
-- Requires cgroup v2 support (@skipUnless decorator)
-- setUp/tearDown for cleanup (creates temp files, cleans cpusets)
-- Cleans up test cpusets from both automated and manual testing
-- Helper method create_test_cpusets() for test data
-- Uses tempfile module for safe YAML file handling
+Add a new --housekeeping-isolated flag to allow users to override the default
+and create housekeeping cpusets with partition=isolated if desired.
 
-All tests follow the same pattern as existing cpuset tests in
-test_cpuset.py and test_cpuset_cli.py, ensuring consistency
-across the test suite.
-
-Tests can be run with:
-  sudo python3 -m unittest tests.test_save_apply -v
+Updated tests to reflect the new behavior:
+- Fixed two existing tests to expect partition=member for housekeeping
+- Added test_isolate_housekeeping_isolated_flag to verify the new flag works
+- Updated tests/README.md to document the changes (159 total tests now)
 
 Assisted-by: Claude:claude-sonnet-4-5
 Signed-off-by: John Kacur <jkacur@redhat.com>
 ---
- tests/README.md          |  37 +++--
- tests/test_save_apply.py | 300 +++++++++++++++++++++++++++++++++++++++
- 2 files changed, 327 insertions(+), 10 deletions(-)
- create mode 100644 tests/test_save_apply.py
+ tests/README.md          | 27 +++++++++++++++------------
+ tests/test_cpuset_cli.py | 30 ++++++++++++++++++++++++++++--
+ tuna-cmd.py              |  8 ++++++--
+ 3 files changed, 49 insertions(+), 16 deletions(-)
 
 diff --git a/tests/README.md b/tests/README.md
-index 3e8b84a81fd4..1b96a54807f9 100644
+index 1b96a54807f9..073f79837196 100644
 --- a/tests/README.md
 +++ b/tests/README.md
 @@ -12,7 +12,7 @@ This directory contains the test suite for tuna, using Python's `unittest` frame
  # Run all non-root tests only (45 tests)
  make tests
  
--# Run ALL tests (all 146 tests, requires sudo for root-required tests)
-+# Run ALL tests (all 158 tests, requires sudo for root-required tests)
+-# Run ALL tests (all 158 tests, requires sudo for root-required tests)
++# Run ALL tests (all 159 tests, requires sudo for root-required tests)
  make test-all
  
  # Run specific test module
@@ -136,405 +117,181 @@ index 3e8b84a81fd4..1b96a54807f9 100644
  # or
  make unit-tests
  
--# Using make (ALL tests including root-required tests, 146 tests)
-+# Using make (ALL tests including root-required tests, 158 tests)
+-# Using make (ALL tests including root-required tests, 158 tests)
++# Using make (ALL tests including root-required tests, 159 tests)
  make test-all
  
  # Using the test runner directly (non-root tests only)
-@@ -168,7 +168,7 @@ Tests are organized using Python's `unittest` framework. Each test file contains
-   - Tests edge cases: empty string and None inputs
-   - Run: `python3 -m unittest tests.test_show_threads_cgroups.TestExtractCpusetName -v`
+@@ -186,7 +186,7 @@ Tests are organized using Python's `unittest` framework. Each test file contains
+   - Note: TestCpusetsInit (5 tests) and TestNumaDetection (6 tests) run without root, see non-root section
+   - Run: `sudo python3 -m unittest tests.test_cpuset -v` (runs all 43 tests with root)
  
--#### Root-Required Tests (102 tests)
-+#### Root-Required Tests (114 tests)
+-- **test_cpuset_cli.py** (50 tests) - CLI command tests
++- **test_cpuset_cli.py** (51 tests) - CLI command tests
+   - TestGetNextTunaCpusetName: Auto-naming logic (tuna0, tuna1, gap-filling)
+   - TestCpusetCreateCLI: Create command with auto/custom names, --isolated, and NUMA auto-detection/override
+   - TestCpusetListCLI: List command with --pattern, --verbose, --skip-empty
+@@ -196,9 +196,11 @@ Tests are organized using Python's `unittest` framework. Each test file contains
+   - TestCpusetStatusCLI: Status command for system-wide cpuset overview
+   - TestCpusetModifyCLI: Modify command with --add-cpus, --remove-cpus, --memory-nodes, --isolated/--no-isolated
+   - TestTunaMoveCpusetCLI: Integration of --cpuset with tuna move command (5 tests)
+-  - TestTunaIsolateCpusetCLI: Integration of --cpuset with tuna isolate command (8 tests)
++  - TestTunaIsolateCpusetCLI: Integration of --cpuset with tuna isolate command (9 tests)
+     - Tests cpuset-based CPU isolation with isolated and housekeeping cpusets
+-    - Verifies partition types, CPU assignments, and process migration
++    - Verifies partition types: isolated cpuset uses partition=isolated, housekeeping uses partition=member by default
++    - Tests --housekeeping-isolated flag to override default and make housekeeping partition=isolated
++    - Verifies CPU assignments and process migration
+     - Tests error handling and backward compatibility
+   - TestTunaRunCpusetCLI: Integration of --cpuset with tuna run command (5 tests)
+     - test_run_with_cpuset_basic: Verifies running commands in cpusets
+@@ -242,7 +244,7 @@ Tests are organized using Python's `unittest` framework. Each test file contains
+     - test_save_skips_system_cpusets: Verify system cpuset filtering
+   - Run: `sudo python3 -m unittest tests.test_save_apply -v`
  
- - **test_process_blocklist.py** (2 tests) - Process blocklist root tests
-   - Tests actual blocking of systemd from being moved to cpusets
-@@ -226,7 +226,23 @@ Tests are organized using Python's `unittest` framework. Each test file contains
-     - test_cgroups_displays_system_slice_shortened: Verifies system.slice shows shortened name
-   - Run: `sudo python3 -m unittest tests.test_show_threads_cgroups.TestShowThreadsCgroupsDisplay -v`
- 
--**Total: 146 tests** (45 non-root + 101 root-required)
-+- **test_save_apply.py** (12 tests) - save/apply cpuset configuration tests
-+  - TestSaveApply: Tests cpuset save and apply functionality
-+    - test_save_creates_yaml_file: Verify save creates output file
-+    - test_save_captures_all_cpusets: Verify all user cpusets are saved
-+    - test_save_captures_partition_types: Verify isolated vs member preserved
-+    - test_save_captures_cpu_ranges: Verify CPU assignments preserved
-+    - test_apply_recreates_cpusets: Verify apply recreates from YAML
-+    - test_apply_preserves_partition_types: Verify partition types restored
-+    - test_apply_preserves_cpu_assignments: Verify CPU assignments restored
-+    - test_apply_with_existing_cpusets_warns: Verify idempotent operation
-+    - test_apply_missing_file_returns_error: Error handling for missing files
-+    - test_roundtrip_preserves_configuration: Full save→destroy→apply→verify
-+    - test_save_with_no_cpusets: Handle empty cpuset case gracefully
-+    - test_save_skips_system_cpusets: Verify system cpuset filtering
-+  - Run: `sudo python3 -m unittest tests.test_save_apply -v`
-+
-+**Total: 158 tests** (45 non-root + 113 root-required)
+-**Total: 158 tests** (45 non-root + 113 root-required)
++**Total: 159 tests** (45 non-root + 114 root-required)
  
  ### Test Requirements: Root vs Non-Root
  
-@@ -275,7 +291,7 @@ These tests run without root privileges:
- - Tests are fast and don't affect the running system
- - Tests verify both happy path (with mocks) and error path (with real EPERM)
+@@ -301,7 +303,7 @@ These tests require root to create/manipulate cgroups:
+    - Test task migration between cpusets
+    - All tests clean up created cpusets in tearDown()
  
--#### Root-Required Tests (102 tests)
-+#### Root-Required Tests (114 tests)
+-2. **Cpuset CLI tests** (50 tests) test command-line interface functions
++2. **Cpuset CLI tests** (51 tests) test command-line interface functions
+    - Test cpuset create/list/destroy/move/show/status/modify commands
+    - Verify auto-naming logic (tuna0, tuna1, etc.)
+    - Test NUMA-aware memory node auto-detection and manual override
+@@ -309,7 +311,8 @@ These tests require root to create/manipulate cgroups:
+    - Test process migration with --pids and --threads
+    - Test cpuset modification with --add-cpus, --remove-cpus, --memory-nodes, --isolated
+    - Test tuna move --cpuset integration (5 tests)
+-   - Test tuna isolate --cpuset integration (8 tests) - cpuset-based CPU isolation
++   - Test tuna isolate --cpuset integration (9 tests) - cpuset-based CPU isolation
++   - Test --housekeeping-isolated flag to override default partition=member for housekeeping
+    - Test tuna run --cpuset integration (5 tests) - running commands in cpusets
+    - All tests clean up created cpusets afterwards
  
- These tests require root to create/manipulate cgroups:
- 
-@@ -446,9 +462,9 @@ Ran 45 tests in 0.XXXs
+@@ -462,9 +465,9 @@ Ran 45 tests in 0.XXXs
  OK (skipped=102)
  ```
  
--### All Tests Including Root-Required (146 tests)
-+### All Tests Including Root-Required (158 tests)
+-### All Tests Including Root-Required (158 tests)
++### All Tests Including Root-Required (159 tests)
  
--Running with sudo will run all 146 tests:
-+Running with sudo will run all 158 tests:
+-Running with sudo will run all 158 tests:
++Running with sudo will run all 159 tests:
  
  ```bash
  $ sudo python3 -m unittest discover -s tests -p "test_*.py" -v
-@@ -463,7 +479,7 @@ test_sequential_naming (test_cpuset_cli.TestGetNextTunaCpusetName) ... ok
+@@ -474,12 +477,12 @@ test_cpuset_path (test_cpuset.TestCpusetsInit) ... ok
+ ... (32 cpuset module tests)
+ test_first_name_is_tuna0 (test_cpuset_cli.TestGetNextTunaCpusetName) ... ok
+ test_sequential_naming (test_cpuset_cli.TestGetNextTunaCpusetName) ... ok
+-... (50 cpuset CLI tests)
++... (51 cpuset CLI tests)
+ ... (6 show_threads --cpuset tests)
  ... (4 show_threads -G display tests)
  
  ----------------------------------------------------------------------
--Ran 146 tests in X.XXXs
-+Ran 158 tests in X.XXXs
+-Ran 158 tests in X.XXXs
++Ran 159 tests in X.XXXs
  
  OK
  ```
-@@ -480,12 +496,13 @@ The test suite includes:
- - **show_threads --cpuset help test**: CLI documentation verification (read-only)
- - **Cpuset name extraction tests**: Cgroup path parsing logic (pure function testing)
+diff --git a/tests/test_cpuset_cli.py b/tests/test_cpuset_cli.py
+index c95cea29b4a3..619c719094ac 100644
+--- a/tests/test_cpuset_cli.py
++++ b/tests/test_cpuset_cli.py
+@@ -1018,6 +1018,7 @@ class TestTunaIsolateCpusetCLI(unittest.TestCase):
+         try:
+             cpuset.cleanup_cpusets('tuna_*', force=True, recursive=False)
+             cpuset.cleanup_cpusets('my_*', force=True, recursive=False)
++            cpuset.cleanup_cpusets('test_*', force=True, recursive=False)
+         except:
+             pass
  
--### Integration Tests (102 tests - require root)
-+### Integration Tests (114 tests - require root)
- - **Process blocklist tests**: Test blocklist protection (2 root-required tests)
- - **Cpuset module tests**: Test interaction with cgroup v2 subsystem
- - **Cpuset CLI tests**: Test command-line interface integration
- - **show_threads --cpuset tests**: Test process filtering by cpuset membership
- - **show_threads -G display tests**: Test cpuset name display in cgroups output
-+- **Save/apply tests**: Test cpuset configuration save and restore functionality
+@@ -1027,6 +1028,7 @@ class TestTunaIsolateCpusetCLI(unittest.TestCase):
+         try:
+             cpuset.cleanup_cpusets('tuna_*', force=True, recursive=False)
+             cpuset.cleanup_cpusets('my_*', force=True, recursive=False)
++            cpuset.cleanup_cpusets('test_*', force=True, recursive=False)
+         except:
+             pass
  
- Future test categories might include:
- - **System tests** - Full end-to-end tests requiring CPU affinity operations
-@@ -510,7 +527,7 @@ python3 -m unittest discover -s tests -p "test_*.py" -v
+@@ -1114,7 +1116,7 @@ class TestTunaIsolateCpusetCLI(unittest.TestCase):
  
- ### Root-Required Tests (Optional for CI)
+         with open(f'{hk_path}/cpuset.cpus.partition') as f:
+             partition = f.read().strip()
+-            self.assertEqual(partition, 'isolated')
++            self.assertEqual(partition, 'member')
  
--The cpuset tests (102 tests) can run in CI with special setup:
-+The cpuset tests (114 tests) can run in CI with special setup:
- - Requires root access or privileged containers
- - Requires cgroup v2 support
- - May need dedicated test runners with appropriate permissions
-diff --git a/tests/test_save_apply.py b/tests/test_save_apply.py
-new file mode 100644
-index 000000000000..30630d2a0b92
---- /dev/null
-+++ b/tests/test_save_apply.py
-@@ -0,0 +1,300 @@
-+#!/usr/bin/python3
-+# -*- coding: utf-8 -*-
-+# SPDX-License-Identifier: GPL-2.0-only
-+"""
-+Test suite for tuna cpuset save/apply commands
-+
-+Tests the cpuset save and apply functionality:
-+- save: Saving cpuset configuration to YAML
-+- apply: Restoring cpuset configuration from YAML
-+- Round-trip: save → destroy → apply → verify
-+- Edge cases: existing cpusets, missing files, empty profiles, etc.
-+
-+All tests clean up created files and cpusets afterwards.
-+"""
-+
-+import unittest
-+import os
-+import sys
-+import tempfile
-+from pathlib import Path
-+
-+# Add tuna to path if running from tests directory
-+if Path(__file__).parent.name == 'tests':
-+    sys.path.insert(0, str(Path(__file__).parent.parent))
-+
-+from tuna import cpuset, profile
-+
-+
-+# Import the CLI functions from tuna-cmd.py
-+tuna_cmd_path = Path(__file__).parent.parent / 'tuna-cmd.py'
-+spec = __import__('importlib.util').util.spec_from_file_location("tuna_cmd", tuna_cmd_path)
-+tuna_cmd = __import__('importlib.util').util.module_from_spec(spec)
-+spec.loader.exec_module(tuna_cmd)
-+
-+# Import the functions we want to test
-+save_cpusets_cmd = tuna_cmd.save_cpusets_cmd
-+apply_cpusets_cmd = tuna_cmd.apply_cpusets_cmd
-+get_all_cpusets_info = tuna_cmd.get_all_cpusets_info
-+
-+
-+@unittest.skipUnless(os.geteuid() == 0, "Requires root permissions")
-+@unittest.skipUnless(cpuset.CpusetsInit().supported, "Requires cgroup v2 support")
-+class TestSaveApply(unittest.TestCase):
-+    """Test save and apply commands for cpuset configuration"""
-+
-+    def setUp(self):
-+        """Create temporary file and test cpusets before each test"""
-+        self.ci = cpuset.CpusetsInit()
-+
-+        # Create temporary YAML file
-+        self.temp_fd, self.temp_file = tempfile.mkstemp(suffix='.yaml', prefix='tuna-test-')
-+        os.close(self.temp_fd)  # Close fd, we'll use the filename
-+
-+        # Clean up any existing test cpusets (including from manual tests)
-+        for pattern in ['test_save_*', 'test_rt', 'test_housekeeping']:
-+            try:
-+                cpuset.cleanup_cpusets(pattern, force=True, recursive=False)
-+            except:
-+                pass
-+
-+    def tearDown(self):
-+        """Clean up test cpusets and temporary file after each test"""
-+        # Clean up test cpusets (including from manual tests)
-+        for pattern in ['test_save_*', 'test_rt', 'test_housekeeping']:
-+            try:
-+                cpuset.cleanup_cpusets(pattern, force=True, recursive=False)
-+            except:
-+                pass
-+
-+        # Remove temporary YAML file
-+        if os.path.exists(self.temp_file):
-+            os.unlink(self.temp_file)
-+
-+    def create_test_cpusets(self):
-+        """Helper: Create two test cpusets for testing"""
-+        # Create test_save_rt (isolated)
-+        cs_rt = cpuset.Cpuset('test_save_rt')
-+        cs_rt.write_memnode('0')
-+        cs_rt.assign_cpus('2-3')
-+        cs_rt.set_cpu_exclusive()
-+
-+        # Create test_save_hk (member)
-+        cs_hk = cpuset.Cpuset('test_save_hk')
-+        cs_hk.write_memnode('0')
-+        cs_hk.assign_cpus('0-1')
-+
-+        return cs_rt, cs_hk
-+
-+    def test_save_creates_yaml_file(self):
-+        """Test that save command creates a YAML file"""
-+        self.create_test_cpusets()
-+
-+        # Save cpusets
-+        save_cpusets_cmd(self.temp_file)
-+
-+        # Verify file exists and has content
-+        self.assertTrue(os.path.exists(self.temp_file))
-+        self.assertGreater(os.path.getsize(self.temp_file), 0)
-+
-+    def test_save_captures_all_cpusets(self):
-+        """Test that save captures all user cpusets"""
-+        self.create_test_cpusets()
-+
-+        # Save cpusets
-+        save_cpusets_cmd(self.temp_file)
-+
-+        # Read and verify YAML content
-+        from ruamel.yaml import YAML
-+        yaml = YAML()
-+        with open(self.temp_file, 'r') as f:
-+            data = yaml.load(f)
-+
-+        self.assertIn('cpusets', data)
-+        self.assertEqual(len(data['cpusets']), 2)
-+
-+        # Check cpuset names
-+        names = {cs['name'] for cs in data['cpusets']}
-+        self.assertEqual(names, {'test_save_rt', 'test_save_hk'})
-+
-+    def test_save_captures_partition_types(self):
-+        """Test that save preserves partition types (isolated vs member)"""
-+        self.create_test_cpusets()
-+
-+        # Save cpusets
-+        save_cpusets_cmd(self.temp_file)
-+
-+        # Read YAML
-+        from ruamel.yaml import YAML
-+        yaml = YAML()
-+        with open(self.temp_file, 'r') as f:
-+            data = yaml.load(f)
-+
-+        # Find each cpuset in saved data
-+        cpusets_by_name = {cs['name']: cs for cs in data['cpusets']}
-+
-+        self.assertEqual(cpusets_by_name['test_save_rt']['partition'], 'isolated')
-+        self.assertEqual(cpusets_by_name['test_save_hk']['partition'], 'member')
-+
-+    def test_save_captures_cpu_ranges(self):
-+        """Test that save captures CPU assignments correctly"""
-+        self.create_test_cpusets()
-+
-+        # Save cpusets
-+        save_cpusets_cmd(self.temp_file)
-+
-+        # Read YAML
-+        from ruamel.yaml import YAML
-+        yaml = YAML()
-+        with open(self.temp_file, 'r') as f:
-+            data = yaml.load(f)
-+
-+        # Find each cpuset in saved data
-+        cpusets_by_name = {cs['name']: cs for cs in data['cpusets']}
-+
-+        self.assertEqual(cpusets_by_name['test_save_rt']['cpus'], '2-3')
-+        self.assertEqual(cpusets_by_name['test_save_hk']['cpus'], '0-1')
-+
-+    def test_apply_recreates_cpusets(self):
-+        """Test that apply recreates cpusets from YAML"""
-+        # Create and save cpusets
-+        self.create_test_cpusets()
-+        save_cpusets_cmd(self.temp_file)
-+
-+        # Destroy cpusets
-+        cpuset.cleanup_cpusets('test_save_*', force=True, recursive=False)
-+
-+        # Verify they're gone
-+        remaining = cpuset.list_cpusets(pattern='test_save_*', recursive=False)
-+        self.assertEqual(len(remaining), 0)
-+
-+        # Apply profile to recreate
-+        apply_cpusets_cmd(self.temp_file, verbose=False)
-+
-+        # Verify cpusets were recreated
-+        recreated = cpuset.list_cpusets(pattern='test_save_*', recursive=False)
-+        self.assertEqual(len(recreated), 2)
-+        self.assertIn('test_save_rt', recreated)
-+        self.assertIn('test_save_hk', recreated)
-+
-+    def test_apply_preserves_partition_types(self):
-+        """Test that apply restores partition types correctly"""
-+        # Create, save, destroy, apply
-+        self.create_test_cpusets()
-+        save_cpusets_cmd(self.temp_file)
-+        cpuset.cleanup_cpusets('test_save_*', force=True, recursive=False)
-+        apply_cpusets_cmd(self.temp_file, verbose=False)
-+
-+        # Verify partition types
-+        cs_rt = cpuset.Cpuset('test_save_rt', existing_ok=True)
-+        cs_hk = cpuset.Cpuset('test_save_hk', existing_ok=True)
-+
-+        self.assertEqual(cs_rt.get_partition_type(), 'isolated')
-+        self.assertEqual(cs_hk.get_partition_type(), 'member')
-+
-+    def test_apply_preserves_cpu_assignments(self):
-+        """Test that apply restores CPU assignments correctly"""
-+        # Create, save, destroy, apply
-+        self.create_test_cpusets()
-+        save_cpusets_cmd(self.temp_file)
-+        cpuset.cleanup_cpusets('test_save_*', force=True, recursive=False)
-+        apply_cpusets_cmd(self.temp_file, verbose=False)
-+
-+        # Verify CPU assignments
-+        cs_rt = cpuset.Cpuset('test_save_rt', existing_ok=True)
-+        cs_hk = cpuset.Cpuset('test_save_hk', existing_ok=True)
-+
-+        self.assertEqual(cs_rt.get_cpus(), '2-3')
-+        self.assertEqual(cs_hk.get_cpus(), '0-1')
-+
-+    def test_apply_with_existing_cpusets_warns(self):
-+        """Test that apply warns when cpusets already exist"""
-+        # Create and save cpusets
-+        self.create_test_cpusets()
-+        save_cpusets_cmd(self.temp_file)
-+
-+        # Apply without destroying (cpusets already exist)
-+        # This should return warnings
-+        num_applied, num_warnings, num_errors = profile.apply_cpusets(
-+            self.temp_file, cpuset, verbose=False
-+        )
-+
-+        self.assertEqual(num_applied, 0)  # Nothing new created
-+        self.assertEqual(num_warnings, 2)  # Both cpusets already exist
-+        self.assertEqual(num_errors, 0)
-+
-+    def test_apply_missing_file_returns_error(self):
-+        """Test that apply returns error for missing file"""
-+        missing_file = '/tmp/nonexistent-tuna-test.yaml'
-+
-+        num_applied, num_warnings, num_errors = profile.apply_cpusets(
-+            missing_file, cpuset, verbose=False
-+        )
-+
-+        self.assertEqual(num_applied, 0)
-+        self.assertEqual(num_warnings, 0)
-+        self.assertEqual(num_errors, 1)
-+
-+    def test_roundtrip_preserves_configuration(self):
-+        """Test full round-trip: save → destroy → apply → verify"""
-+        # Step 1: Create test cpusets
-+        cs_rt, cs_hk = self.create_test_cpusets()
-+        original_rt_cpus = cs_rt.get_cpus()
-+        original_hk_cpus = cs_hk.get_cpus()
-+        original_rt_partition = cs_rt.get_partition_type()
-+        original_hk_partition = cs_hk.get_partition_type()
-+
-+        # Step 2: Save configuration
-+        save_cpusets_cmd(self.temp_file)
-+
-+        # Step 3: Destroy cpusets
-+        cpuset.cleanup_cpusets('test_save_*', force=True, recursive=False)
-+
-+        # Step 4: Apply configuration
-+        apply_cpusets_cmd(self.temp_file, verbose=False)
-+
-+        # Step 5: Verify configuration matches original
-+        cs_rt_restored = cpuset.Cpuset('test_save_rt', existing_ok=True)
-+        cs_hk_restored = cpuset.Cpuset('test_save_hk', existing_ok=True)
-+
-+        self.assertEqual(cs_rt_restored.get_cpus(), original_rt_cpus)
-+        self.assertEqual(cs_hk_restored.get_cpus(), original_hk_cpus)
-+        self.assertEqual(cs_rt_restored.get_partition_type(), original_rt_partition)
-+        self.assertEqual(cs_hk_restored.get_partition_type(), original_hk_partition)
-+
-+    def test_save_with_no_cpusets(self):
-+        """Test that save handles case with no cpusets gracefully"""
-+        # Don't create any cpusets
-+        # save_cpusets_cmd will print to stderr but shouldn't crash
-+
-+        # This should complete without error but save 0 cpusets
-+        num_saved = profile.save_cpusets(self.temp_file, get_all_cpusets_info)
-+        self.assertEqual(num_saved, 0)
-+
-+    def test_save_skips_system_cpusets(self):
-+        """Test that save automatically filters out system cpusets"""
-+        # Create one test cpuset
-+        cs = cpuset.Cpuset('test_save_single')
-+        cs.write_memnode('0')
-+        cs.assign_cpus('0')
-+
-+        # Save (should only save test_save_single, not any .slice/.scope/.service cpusets)
-+        save_cpusets_cmd(self.temp_file)
-+
-+        # Read YAML
-+        from ruamel.yaml import YAML
-+        yaml = YAML()
-+        with open(self.temp_file, 'r') as f:
-+            data = yaml.load(f)
-+
-+        # Verify only our test cpuset was saved (no system cpusets)
-+        saved_names = [cs['name'] for cs in data['cpusets']]
-+        for name in saved_names:
-+            self.assertFalse(name.endswith(('.slice', '.scope', '.mount', '.service')))
-+
-+        # Cleanup
-+        cpuset.destroy_cpuset('test_save_single', force=True)
-+
-+
-+if __name__ == '__main__':
-+    unittest.main()
+         # Verify processes were migrated to housekeeping
+         with open(f'{hk_path}/cgroup.procs') as f:
+@@ -1152,11 +1154,35 @@ class TestTunaIsolateCpusetCLI(unittest.TestCase):
+             self.assertIn('2', cpus)
+             self.assertIn('3', cpus)
+ 
+-        # Both should be isolated partitions
++        # Verify partition types: isolated cpuset should be 'isolated', housekeeping should be 'member'
+         with open('/sys/fs/cgroup/my_rt/cpuset.cpus.partition') as f:
+             self.assertEqual(f.read().strip(), 'isolated')
+ 
+         with open('/sys/fs/cgroup/my_hk/cpuset.cpus.partition') as f:
++            self.assertEqual(f.read().strip(), 'member')
++
++    def test_isolate_housekeeping_isolated_flag(self):
++        """Test --housekeeping-isolated flag makes housekeeping partition=isolated"""
++        result = subprocess.run([
++            sys.executable, './tuna-cmd.py', 'isolate',
++            '-c', '0-1', '--cpuset', 'test_iso',
++            '--cpuset-housekeeping', 'test_hk_iso', '2-3',
++            '--housekeeping-isolated'
++        ], capture_output=True, text=True)
++
++        self.assertEqual(result.returncode, 0, f"Command failed: {result.stderr}")
++        self.assertIn('test_iso', result.stdout)
++        self.assertIn('test_hk_iso', result.stdout)
++
++        # Verify both cpusets exist
++        self.assertTrue(os.path.exists('/sys/fs/cgroup/test_iso'))
++        self.assertTrue(os.path.exists('/sys/fs/cgroup/test_hk_iso'))
++
++        # Both should have partition=isolated when --housekeeping-isolated is used
++        with open('/sys/fs/cgroup/test_iso/cpuset.cpus.partition') as f:
++            self.assertEqual(f.read().strip(), 'isolated')
++
++        with open('/sys/fs/cgroup/test_hk_iso/cpuset.cpus.partition') as f:
+             self.assertEqual(f.read().strip(), 'isolated')
+ 
+     def test_isolate_housekeeping_without_cpuset_error(self):
+diff --git a/tuna-cmd.py b/tuna-cmd.py
+index 5e88ed252575..3d4414d93d0e 100755
+--- a/tuna-cmd.py
++++ b/tuna-cmd.py
+@@ -181,7 +181,9 @@ def gen_parser():
+                         metavar='NAME', default=None,
+                         help='Use cpusets for isolation with optional name (default: tuna_isolated, partition=isolated)')
+     isolate.add_argument('--cpuset-housekeeping', nargs='+', metavar='...',
+-                        help='Create housekeeping cpuset: [NAME] CPU-LIST (default name: tuna_housekeeping, partition=isolated)')
++                        help='Create housekeeping cpuset: [NAME] CPU-LIST (default name: tuna_housekeeping, partition=member)')
++    isolate.add_argument('--housekeeping-isolated', action='store_true',
++                        help='Make housekeeping cpuset use partition=isolated instead of member (requires --cpuset-housekeeping)')
+ 
+     include_group = include.add_mutually_exclusive_group(required=True)
+     include_group.add_argument('-c', '--cpus', **MODS['cpus'])
+@@ -1694,7 +1696,9 @@ def main():
+                     hk_cpuset = cpuset.Cpuset(housekeeping_name)
+                     hk_cpuset.write_memnode(hk_numa)
+                     hk_cpuset.assign_cpus(housekeeping_cpus)
+-                    hk_cpuset.write_cpu_exclusive(True)  # partition=isolated
++                    # Default to partition=member (False) unless --housekeeping-isolated specified
++                    hk_isolated = getattr(args, 'housekeeping_isolated', False)
++                    hk_cpuset.write_cpu_exclusive(hk_isolated)
+ 
+                     # Migrate processes from root to housekeeping
+                     print(f"Migrating processes to housekeeping cpuset...")
 -- 
 2.55.0
 
