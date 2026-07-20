@@ -1,257 +1,150 @@
-Received: from mail-qt1-f178.google.com (mail-qt1-f178.google.com [209.85.160.178])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from mail.sleepmap.de (sleepmap.de [85.10.206.218])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 954B5345CDD
-	for <linux-rt-users@vger.kernel.org>; Fri, 17 Jul 2026 22:59:54 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.160.178
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id C832D389E05
+	for <linux-rt-users@vger.kernel.org>; Mon, 20 Jul 2026 08:19:49 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=85.10.206.218
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1784329196; cv=none; b=GonvwlHxyNZOr+8m0p6xhqfv0GZO/cJfhrmbX68FJaVcAVkfY47CZk2GKpX4odz5m70PiSWyuNodJB/TpPfflMVxDcT3+h1GhTNZAOuSSwlDIF6sL9PNLtyqtyCgRPo+IwoVYMbovdtuGyPAYaydGBL9/u9P9qX19cIxQhxkkdc=
+	t=1784535591; cv=none; b=GpOlle83llC3PXb9MBl4jsZNAncmctNhesxjNEs0ExfojLnvmA8gCVBlxz57KnYEtLLdmnPaOvvjceV+HjRFSFbnyuyOzxF/1RkZxyJt5dTBOQBRYqqKTu7bPDI3PutwYoH1nYCJ+bTwx4Z2OaLtBywzjptvGSjw86c86LG3+Es=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1784329196; c=relaxed/simple;
-	bh=oYOt843yd2zObd4vQWWuiR34gBqCPx2NSTKge4HRriw=;
-	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=QmcpOV3GyYSqWHmDVPdowopxRhFPx9Tgam2DR31pKIFwFyh2lGf8Nf+IYyRMH7eIcPfUaM790paog/XOGaedY57KlDkXHA+nkrLMhh6iBJaYRAY+oVUf+HFxrxGXfjii0S9LnEu9Qz1t7EgvkO88IGaiPcOKAU4pkpV4pL7v2PI=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=fail (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=MtbbH49Z; arc=none smtp.client-ip=209.85.160.178
-Authentication-Results: smtp.subspace.kernel.org; dmarc=fail (p=quarantine dis=none) header.from=redhat.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
+	s=arc-20240116; t=1784535591; c=relaxed/simple;
+	bh=1TbgDM5VXyNQguZLFZRezxvduvgvJewKkA24GXf388U=;
+	h=Date:From:To:Subject:Message-ID:MIME-Version:Content-Type:
+	 Content-Disposition; b=dlk7AQTu+1sV3GylZgBPnUzJPXrAzRul1+Tq73MEYITWmE+wNPcBVY8u8SBU6xIqqduswKFFyfXQCDhpxrd/mOsshOY7ik/+kllGxTv52JbQX1PPPecSyd7WEURgi33XsnYQkLEuELIAD2MrlBLjfl3dKzayVkVLl/BkbviCOiE=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=sleepmap.de; spf=pass smtp.mailfrom=sleepmap.de; dkim=pass (1024-bit key) header.d=sleepmap.de header.i=@sleepmap.de header.b=FhsHwL/T; arc=none smtp.client-ip=85.10.206.218
+Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=sleepmap.de
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=sleepmap.de
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="MtbbH49Z"
-Received: by mail-qt1-f178.google.com with SMTP id d75a77b69052e-51c8e2e39easo77383631cf.0
-        for <linux-rt-users@vger.kernel.org>; Fri, 17 Jul 2026 15:59:54 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20251104; t=1784329193; x=1784933993; darn=vger.kernel.org;
-        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
-         :to:from:sender:from:to:cc:subject:date:message-id:reply-to
-         :content-type;
-        bh=uBgj2xq+UyLuHzh4C8/C4mG2ycDnUWvCu/IOOCMdzEI=;
-        b=MtbbH49Zd5lKauCHH2qckcz/1vtfy+xPhtfRyUZHGop0TeM4mUUSyLa1dkre3QTpH1
-         ggv0VfVnFMOxxCXIv41XYEhqKsrX12UVRDBHWVtG+PBh1JUjLxGDP5oKZWzGpux0Y3MC
-         6ImkATE2Lrh6eU9TbcmqS3fBCDqwBCcySMdUTFYjO6P4bNg0MziC/O2CSacdxAU2Gbuf
-         /Rr7w0+YJhp4c7b2G4R0urMklwz0Ob9mlV7Q+qbllMxN0s1POHfYlALBuLgHLKMGPUth
-         ZIkeiXQtq4NddIJBjex+ayTJp0n8gg5lQHSmc5DTPqxYEZhc7l937eRl8+Ao1xdzthRC
-         vPuA==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20251104; t=1784329193; x=1784933993;
-        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
-         :to:from:sender:x-gm-gg:x-gm-message-state:from:to:cc:subject:date
-         :message-id:reply-to:content-type;
-        bh=uBgj2xq+UyLuHzh4C8/C4mG2ycDnUWvCu/IOOCMdzEI=;
-        b=sI/i6nUcvaGDI07jDVw1eiNqiapif3YQj8tzQwe2oLdXtqRn561kPb0l7dEOhyyCg5
-         56Zucv4N+HoOLdfjDFUtHCFZwmCockmVderXLm578lG7oTFYPWhns3lpzm1mOQfqWOG5
-         Vlllxna9IfnKCWFKBn5CJZeG3xAiYuhaaspyXmeQiDmLmRurMoVOLeBFj62kGoG1BvO9
-         Zp7MpE+ZMDAyWRSFkLIFEGVfMcMNZaV67vDsWTmQm848Y2snIOwbs0onWlQdMro+EfDA
-         HHVTZhe4jzHqeRXMCAVbooSXpLowslplZj5bQCUgEfRrabT3CfLmjWO167JX02/uNgqk
-         I4Rw==
-X-Gm-Message-State: AOJu0YxtwIuofa3s17IrL3C2bYL7q8reEy867s+cTi7ogSfor0M9D1nt
-	Ympbh1f6dFxuHLqXIaR4ObYFIQRzJ6uf5QMcgIejQBsu1pxqmr5k/+abS/Jm6g==
-X-Gm-Gg: AfdE7cmoZpIeZLnyf1B6SXJ3g0O5bt6kfbv7v0dH/SldSltpsvN+0+nJnT16+E+tZiH
-	Rv95+l3U5jMhJP29xjsBQjobDWTjJBB/STPZGsuJq6ULcRS/4M7rRLnPdSWKSmXGECPmE2gpGnf
-	3DRHGUWw9Vzj4T89MngkDRVpiIJHm47BXHy2o3n7lU04S/PBNSgSOLa6U2AyWZwXpl35iU+rvkA
-	gOo0XRQxXJVrRY+dqM0QaZLVga29ycflKCziaDSjTqwa6ghZOFSlKY2SQlVExgV+QcbV9m+Mpda
-	crs4xEapC1yrSmwtVgtcPPRn0kgSik4+kxM5Dj3DMYZDdeL0zXvh2b1EovNlsULg4odR684/b0u
-	VlbtUskRZqENu7/tobGLrvAOw1DH3MmAD/kwFp1G+Zv+/cOcZF8Mp6qNiQtRC1EyrN0stWxZtEB
-	gT/7Z8YPiJ09QIxFkAurBNlZkZbxZy8qm/6LSlStOBffwe0uwKtWbbqZnLSNptfoL21ZjG
-X-Received: by 2002:a05:622a:155:b0:51c:1b22:b84c with SMTP id d75a77b69052e-5213ee77fa4mr46704761cf.60.1784329193344;
-        Fri, 17 Jul 2026 15:59:53 -0700 (PDT)
-Received: from Cumhall.redhat.com ([174.95.68.136])
-        by smtp.gmail.com with ESMTPSA id 6a1803df08f44-90778567f14sm28197836d6.14.2026.07.17.15.59.52
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Fri, 17 Jul 2026 15:59:52 -0700 (PDT)
-Sender: John Kacur <jkacur@gmail.com>
-From: John Kacur <jkacur@redhat.com>
+	dkim=pass (1024-bit key) header.d=sleepmap.de header.i=@sleepmap.de header.b="FhsHwL/T"
+DKIM-Signature: v=1; a=rsa-sha256; c=simple/simple; d=sleepmap.de;
+	s=RzV2MS86Cdvz; t=1784535259;
+	bh=1TbgDM5VXyNQguZLFZRezxvduvgvJewKkA24GXf388U=;
+	h=Date:From:To:Subject;
+	b=FhsHwL/TEGk5Ta1AHQtGiY06V7N/R0/090TnxrAurpTnYTUALil9tyOdvwR5JrlXR
+	 9OYTa47x9CMStbaZdZtJmz0nPEcoMUh/tQiGo5tHchUw/nSuSo1PCkFobTfBl0lv3a
+	 F9X61C4niUoHCWxcKKUwnMsZa3uZMffTzp1QTgtE=
+Date: Mon, 20 Jul 2026 10:14:02 +0200
+From: David Runge <dave@sleepmap.de>
 To: linux-rt-users@vger.kernel.org
-Cc: Clark Williams <williams@redhat.com>
-Subject: [PATCH] rteval: Fix measurement module cpuset migration and debug logging
-Date: Fri, 17 Jul 2026 18:59:37 -0400
-Message-ID: <20260717225937.728351-1-jkacur@redhat.com>
-X-Mailer: git-send-email 2.55.0
+Subject: Issues building RT patchset v6.18.13-rt4-rebase on top of v6.18.39
+Message-ID: <al3YymTiIicX2Vin@hmbx>
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
 List-Subscribe: <mailto:linux-rt-users+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
+Content-Type: multipart/signed; micalg=pgp-sha512;
+	protocol="application/pgp-signature"; boundary="XFKz5FOPetns2YGr"
+Content-Disposition: inline
 
-This commit fixes two issues:
+--XFKz5FOPetns2YGr
+Content-Type: text/plain; protected-headers=v1; charset=utf-8
+Content-Disposition: inline
+Content-Transfer-Encoding: quoted-printable
+Date: Mon, 20 Jul 2026 10:14:02 +0200
+From: David Runge <dave@sleepmap.de>
+To: linux-rt-users@vger.kernel.org
+Subject: Issues building RT patchset v6.18.13-rt4-rebase on top of v6.18.39
 
-1. Cpuset migration disrupting measurement module initialization
+Hi,
 
-Problem:
-When using --cpusets, measurement modules (timerlat/cyclictest) were
-launched in the root cgroup, then migrated to the measurement cpuset
-after a 0.5s delay. This mid-startup migration disrupted per-CPU
-thread initialization, causing some CPUs to fail initialization.
-Symptoms included missing CPUs in output and zero samples collected.
+on Arch Linux we have switched to a rebase workflow to offer the linux-rt [=
+1]
+and linux-rt-lts [2] kernels on latest kernels of the series, so that we can
+also apply security and regression fixes.
 
-Solution:
-- Pass the measurement cpuset path to measurement modules before Start()
-- Use subprocess preexec_fn to move child process into cpuset before exec
-- Both timerlat and cyclictest now launch inside the cpuset from the start
-- Fix is defensive: only activates when cpusets are configured
-- Works correctly both with and without --cpusets flag
+For linux-rt-lts and with rebasing v6.18.13-rt4-rebase [3] onto v6.18.39 (a=
+nd
+later on applying our own distribution patches) [4], we run into a build fa=
+ilure
+though.
+(The rebase applied cleanly).
 
-Files changed:
-- rteval/__init__.py: Pass cpuset path to measurement modules
-- rteval/modules/measurement/timerlat.py: Launch inside cpuset via preexec_fn
-- rteval/modules/measurement/cyclictest.py: Launch inside cpuset via preexec_fn
+```
+  CC [M]  drivers/misc/cardreader/rts5249.o
+drivers/tty/serial/8250/8250_port.c:3225:7: error: conflicting types for =
+=E2=80=98serial8250_fifo_wait_for_lsr_thre=E2=80=99; have =E2=80=98void(str=
+uct uart_8250_port *, struct nbcon_write_context *, unsigned int)=E2=80=99
+ 3225 |  void serial8250_fifo_wait_for_lsr_thre(struct uart_8250_port *up,
+      |       ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+In file included from drivers/tty/serial/8250/8250_port.c:40:
+drivers/tty/serial/8250/8250.h:189:6: note: previous declaration of =E2=80=
+=98serial8250_fifo_wait_for_lsr_thre=E2=80=99 with type =E2=80=98void(struc=
+t uart_8250_port *, unsigned int)=E2=80=99
+  189 | void serial8250_fifo_wait_for_lsr_thre(struct uart_8250_port *up, u=
+nsigned int count);
+      |      ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+In file included from ./include/linux/linkage.h:7,
+                 from ./include/linux/printk.h:8,
+                 from ./include/asm-generic/bug.h:22,
+                 from ./arch/x86/include/asm/bug.h:108,
+                 from ./arch/x86/include/asm/alternative.h:9,
+                 from ./arch/x86/include/asm/barrier.h:5,
+                 from ./include/linux/list.h:11,
+                 from ./include/linux/module.h:12,
+                 from drivers/tty/serial/8250/8250_port.c:14:
+drivers/tty/serial/8250/8250_port.c:3245:22: error: conflicting types for =
+=E2=80=98serial8250_fifo_wait_for_lsr_thre=E2=80=99; have =E2=80=98void(str=
+uct uart_8250_port *, struct nbcon_write_context *, unsigned int)=E2=80=99
+ 3245 | EXPORT_SYMBOL_NS_GPL(serial8250_fifo_wait_for_lsr_thre, "SERIAL_825=
+0");
+      |                      ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+=2E/include/linux/export.h:76:28: note: in definition of macro =E2=80=98__E=
+XPORT_SYMBOL=E2=80=99
+   76 |         extern typeof(sym) sym;                                 \
+      |                            ^~~
+drivers/tty/serial/8250/8250_port.c:3245:1: note: in expansion of macro =E2=
+=80=98EXPORT_SYMBOL_NS_GPL=E2=80=99
+ 3245 | EXPORT_SYMBOL_NS_GPL(serial8250_fifo_wait_for_lsr_thre, "SERIAL_825=
+0");
+      | ^~~~~~~~~~~~~~~~~~~~
+drivers/tty/serial/8250/8250.h:189:6: note: previous declaration of =E2=80=
+=98serial8250_fifo_wait_for_lsr_thre=E2=80=99 with type =E2=80=98void(struc=
+t uart_8250_port *, unsigned int)=E2=80=99
+  189 | void serial8250_fifo_wait_for_lsr_thre(struct uart_8250_port *up, u=
+nsigned int count);
+      |      ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+make[6]: *** [scripts/Makefile.build:287: drivers/tty/serial/8250/8250_port=
+=2Eo] Error 1
+make[5]: *** [scripts/Makefile.build:544: drivers/tty/serial/8250] Error 2
+make[4]: *** [scripts/Makefile.build:544: drivers/tty/serial] Error 2
+make[3]: *** [scripts/Makefile.build:544: drivers/tty] Error 2
+make[3]: *** Waiting for unfinished jobs....
+```
 
-2. Excessive debug logging from hackbench
+The culprit appears to be this commit:
+'Reapply "serial: 8250: Switch to nbcon console"' [5]
 
-Problem:
-hackbench logs at DEBUG level every time it restarts (continuous loop),
-flooding debug output with thousands of identical messages.
+I'm not sure who is currently working on the patchset for the 6.18 LTS bran=
+ch,
+but I guess it is worth exploring to drop/adjust the commit and release a n=
+ew
+patchset?
+Is the patch still needed?
 
-Solution:
-- Add 'initial' parameter to __starton() method
-- Only log at DEBUG level for first startup
-- Subsequent restarts don't spam debug log
+Best,
+David
 
-Files changed:
-- rteval/modules/loads/hackbench.py: Add initial parameter to reduce logging
+[1] https://archlinux.org/packages/extra/x86_64/linux-rt/
+[2] https://archlinux.org/packages/extra/x86_64/linux-rt-lts/
+[3] https://gitlab.archlinux.org/archlinux/packaging/upstream/linux-rt-lts/=
+-/commits/v6.18.13-rt4-rebase
+[4] https://gitlab.archlinux.org/archlinux/packaging/upstream/linux-rt-lts/=
+-/commits/v6.18.39-rt4-arch1
+[5] https://gitlab.archlinux.org/archlinux/packaging/upstream/linux-rt-lts/=
+-/commit/c5661d54576a9bf12c2fd0eaa2a54baf48e45d4a
+[6] https://wiki.linuxfoundation.org/realtime/start
 
-Tested with:
-- timerlat with cpusets (5 CPUs, 45M+ samples)
-- cyclictest with cpusets (5 CPUs, 15M+ samples)
-- timerlat without cpusets (16 CPUs, 142M+ samples)
+--XFKz5FOPetns2YGr
+Content-Type: application/pgp-signature; name=signature.asc
 
-Assisted-by: Claude:claude-sonnet-4-5
-Signed-off-by: John Kacur <jkacur@redhat.com>
----
- rteval/__init__.py                       | 14 ++++++++++++++
- rteval/modules/loads/hackbench.py        | 10 ++++++----
- rteval/modules/measurement/cyclictest.py | 17 ++++++++++++++++-
- rteval/modules/measurement/timerlat.py   | 17 ++++++++++++++++-
- 4 files changed, 52 insertions(+), 6 deletions(-)
+-----BEGIN PGP SIGNATURE-----
 
-diff --git a/rteval/__init__.py b/rteval/__init__.py
-index 6e49889a6d67..b6d3c39a4b6a 100644
---- a/rteval/__init__.py
-+++ b/rteval/__init__.py
-@@ -174,6 +174,20 @@ class RtEval(rtevalReport):
-                 print(f"started measurement threads on {onlinecpus} cores")
-             print(f"Run duration: {str(self.__rtevcfg.duration)} seconds")
- 
-+            # Pass cpuset path to measurement modules so they can launch inside the cpuset
-+            if self._cpuset_manager and self._cpuset_manager.measurement_cpuset:
-+                cpuset_path = self._cpuset_manager.measurement_cpuset._cpuset_path
-+                for (modname, mod) in self._measuremods._RtEvalModules__modules:
-+                    # Try to find the config attribute - modules use self.__cfg (name-mangled)
-+                    cfg = None
-+                    for attr in ['_cfg', f'_{mod.__class__.__name__}__cfg']:
-+                        if hasattr(mod, attr):
-+                            cfg = getattr(mod, attr)
-+                            break
-+                    if cfg:
-+                        cfg.cpuset_path = cpuset_path
-+                        self.__logger.log(Log.DEBUG, f"Set cpuset_path for {modname}: {cpuset_path}")
-+
-             self._measuremods.Start()
- 
-             # Unleash the loads and measurement threads
-diff --git a/rteval/modules/loads/hackbench.py b/rteval/modules/loads/hackbench.py
-index 946a2adc2e57..20ebbbc4617c 100644
---- a/rteval/modules/loads/hackbench.py
-+++ b/rteval/modules/loads/hackbench.py
-@@ -110,7 +110,7 @@ class Hackbench(CommandLineLoad):
- 
-         self.started = False
- 
--    def __starton(self, node):
-+    def __starton(self, node, initial=False):
-         if self.__multinodes or self.cpulist:
-             if self.__usenumactl:
-                 args = ['numactl', '--cpunodebind', str(node)] + self.args
-@@ -120,7 +120,9 @@ class Hackbench(CommandLineLoad):
-         else:
-             args = self.args
- 
--        self._log(Log.DEBUG, f"starting on node {node}: args = {args}")
-+        # Only log initial startup at DEBUG level to avoid spam
-+        if initial:
-+            self._log(Log.DEBUG, f"starting on node {node}: args = {args}")
-         p = subprocess.Popen(args,
-                              stdin=self.__nullfp,
-                              stdout=self.__out,
-@@ -137,7 +139,7 @@ class Hackbench(CommandLineLoad):
-         # just do this once
-         if not self.started:
-             for n in self.nodes:
--                self.tasks[n] = self.__starton(n)
-+                self.tasks[n] = self.__starton(n, initial=True)
-             self.started = True
-             return
- 
-@@ -145,7 +147,7 @@ class Hackbench(CommandLineLoad):
-             try:
-                 if self.tasks[n].poll() is not None:
-                     self.tasks[n].wait()
--                    self.tasks[n] = self.__starton(n)
-+                    self.tasks[n] = self.__starton(n, initial=False)
-             except OSError as e:
-                 if e.errno != errno.ENOMEM:
-                     raise e
-diff --git a/rteval/modules/measurement/cyclictest.py b/rteval/modules/measurement/cyclictest.py
-index a1bf0d2d7324..eee315d270f8 100644
---- a/rteval/modules/measurement/cyclictest.py
-+++ b/rteval/modules/measurement/cyclictest.py
-@@ -302,10 +302,25 @@ class Cyclictest(rtevalModulePrototype):
-         if not self._logging:
-             self.__cyclicoutput.seek(0)
- 
-+        # If cpuset is configured, launch process inside the cpuset
-+        # This is critical for cyclictest - migrating it mid-startup disrupts initialization
-+        preexec_fn = None
-+        if hasattr(self.__cfg, 'cpuset_path') and self.__cfg.cpuset_path:
-+            def move_to_cpuset():
-+                """Move child process into cpuset before exec"""
-+                try:
-+                    cpuset_procs = os.path.join(self.__cfg.cpuset_path, 'cgroup.procs')
-+                    with open(cpuset_procs, 'w') as f:
-+                        f.write(str(os.getpid()))
-+                except Exception:
-+                    pass  # Fail silently - parent will attempt migration as fallback
-+            preexec_fn = move_to_cpuset
-+
-         self.__cyclicprocess = subprocess.Popen(self.__cmd,
-                                                 stdout=self.__cyclicoutput,
-                                                 stderr=self.__nullfp,
--                                                stdin=self.__nullfp)
-+                                                stdin=self.__nullfp,
-+                                                preexec_fn=preexec_fn)
-         self.__started = True
- 
-     def WorkloadAlive(self):
-diff --git a/rteval/modules/measurement/timerlat.py b/rteval/modules/measurement/timerlat.py
-index 7f592ea697af..418f1ba151af 100644
---- a/rteval/modules/measurement/timerlat.py
-+++ b/rteval/modules/measurement/timerlat.py
-@@ -285,10 +285,25 @@ class Timerlat(rtevalModulePrototype):
-             self.__timerlat_out.seek(0)
-             self.__timerlat_err.seek(0)
- 
-+        # If cpuset is configured, launch process inside the cpuset
-+        # This is critical for timerlat - migrating it mid-startup disrupts initialization
-+        preexec_fn = None
-+        if hasattr(self.__cfg, 'cpuset_path') and self.__cfg.cpuset_path:
-+            def move_to_cpuset():
-+                """Move child process into cpuset before exec"""
-+                try:
-+                    cpuset_procs = os.path.join(self.__cfg.cpuset_path, 'cgroup.procs')
-+                    with open(cpuset_procs, 'w') as f:
-+                        f.write(str(os.getpid()))
-+                except Exception:
-+                    pass  # Fail silently - parent will attempt migration as fallback
-+            preexec_fn = move_to_cpuset
-+
-         self.__timerlat_process = subprocess.Popen(self.__cmd,
-                                                    stdout=self.__timerlat_out,
-                                                    stderr=self.__timerlat_err,
--                                                   stdin=None)
-+                                                   stdin=None,
-+                                                   preexec_fn=preexec_fn)
-         self.__started = True
- 
-     def WorkloadAlive(self):
--- 
-2.55.0
+iHUEABYKAB0WIQR8efy7g3Ll3lsX4JqQ1LlkHgkpcQUCal3YygAKCRCQ1LlkHgkp
+cdM0AP9i/2Ouw+nhN2hlFH+nyCz5lsmjEr6HebzE0V+GLF0BYQD/UnS2Da03x57z
+GcidV71UPgVtkP3S2PtvC/zNa/aFcwk=
+=TphY
+-----END PGP SIGNATURE-----
 
+--XFKz5FOPetns2YGr--
