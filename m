@@ -1,104 +1,108 @@
-Received: from mail.sleepmap.de (sleepmap.de [85.10.206.218])
+Received: from galois.linutronix.de (Galois.linutronix.de [193.142.43.55])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id B99B23C1413
-	for <linux-rt-users@vger.kernel.org>; Tue, 21 Jul 2026 09:10:20 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=85.10.206.218
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id E02B73BB9E0
+	for <linux-rt-users@vger.kernel.org>; Tue, 21 Jul 2026 10:47:16 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=193.142.43.55
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1784625022; cv=none; b=osUCvU6+N1UP6hRU4f1usoHZT/FffGipL5oG+S3BnfTPcLqj5lQcgfJaYkJWaQiBA5UJGaFtZukj3FFDbg9AkUUe3DrE5CIuQPNvb91P3eekDyMZa3IihFH4od6ZniPQ9Z8rzPZAL2rdgbo37/sLn66JY8EgAVRAFQafmGkedsU=
+	t=1784630844; cv=none; b=HGlTtGQnFDJ60SPbwkKlwWyP4q52ee2dZkilccY0POfEebIZSDAjzzi8MzwpO24u1785cO/mvYoXnEZ7DEc5ygci97oBeEuIBphJVxZcgL6JGiVfM8+gW1ILwKWZfCrzLZ51NhC5bViS/2UZOyzMdXnqZOUMBKd2x7ojT94Z2Xw=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1784625022; c=relaxed/simple;
-	bh=CwgGn4yaBSyqygZmlddmFoNL/Og8hqgBtU5S37gcenw=;
+	s=arc-20240116; t=1784630844; c=relaxed/simple;
+	bh=ZzwtnDOfwwKMWvL5PCL0DV/GUB8uosMdTvSaM3Sw0P4=;
 	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 Content-Type:Content-Disposition:In-Reply-To; b=G+HrQc7AZLSGuRM+wqB2H0C4l8d0y+4V7M7UqPRWXys7FggHZ6841SUSsV4lTs8DP4vhMb60uH9rcMLmXg1f1aGV80NGWa2fLkIbvD+voMmh28KlasScjLFWayAd1s5t9FGBKusyeHKkcSQRZFbHAGeL3fLW8JOrPjF6VuILxKk=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=sleepmap.de; spf=pass smtp.mailfrom=sleepmap.de; dkim=pass (1024-bit key) header.d=sleepmap.de header.i=@sleepmap.de header.b=LZRZYyiw; arc=none smtp.client-ip=85.10.206.218
-Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=sleepmap.de
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=sleepmap.de
+	 Content-Type:Content-Disposition:In-Reply-To; b=YoUlUMy3J+0uxav4oxQ2bVMssQxK9SczAKCM8t5/IZK/pFkYU6zT4hplSk7gYPkr/D+F5oCdQLIqDlbxoHZFOBlzyca/4okBg4uWIOFBIRGvecV1wTL8Eoy2qutyLGQJTGQht3MS27OEO6eCntc4bwqvynEPuvMYXFEQ3IOm7VM=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linutronix.de; spf=pass smtp.mailfrom=linutronix.de; dkim=pass (2048-bit key) header.d=linutronix.de header.i=@linutronix.de header.b=XK77qYyS; dkim=permerror (0-bit key) header.d=linutronix.de header.i=@linutronix.de header.b=nO7qTxDL; arc=none smtp.client-ip=193.142.43.55
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linutronix.de
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=linutronix.de
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=sleepmap.de header.i=@sleepmap.de header.b="LZRZYyiw"
-DKIM-Signature: v=1; a=rsa-sha256; c=simple/simple; d=sleepmap.de;
-	s=RzV2MS86Cdvz; t=1784625012;
-	bh=CwgGn4yaBSyqygZmlddmFoNL/Og8hqgBtU5S37gcenw=;
-	h=Date:From:To:Cc:Subject:References:In-Reply-To;
-	b=LZRZYyiwRJ5ce39RkTWZ5wlzr/Zy/XTgIs+sJzmV2w8PaJXnDi5zGoN42fLuPTr0Z
-	 1LaSP6TpXRnujIhGP/M89JJaLNKPF9qGG73TnmCuk8HQrViCWb4Loo3D1x1NOPcxoP
-	 5kotnuM6isMR89mpQSXSsDGk6UDZ471uhXIkKyWQ=
-Date: Tue, 21 Jul 2026 11:10:02 +0200
-From: David Runge <dave@sleepmap.de>
-To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+	dkim=pass (2048-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="XK77qYyS";
+	dkim=permerror (0-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="nO7qTxDL"
+Date: Tue, 21 Jul 2026 12:47:06 +0200
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
+	s=2020; t=1784630828;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references;
+	bh=xLj6FV9Jxrp8DvTwMMuXcd5j/P99v341bwMPCjaISns=;
+	b=XK77qYySiBmDo5j2U9cnTuS7eTFTFq6nvR2S0Gps9EVPU23OfBlAwLY31VQCRXMQgvVqUQ
+	Iy1CZ7g5Rbv9otBqDmEprqmW/R0YH+4NIxN5Qj2jQhOrtcifqGwgo/3eCZLy9P4HJjrchq
+	bRym27ESZitaezchVi6oADOdhxiiPFMHh7tUQ+kUbkSzFlhf2DROIOdKKnAGX3t3HU3opG
+	oMbRtFgjfQwYc5lg4PD3kVyiNK24B1MR7AZmZd2slBNzdLgoEsKJ229IN9akYr+1/EAziP
+	v5n+2rI44ueOY3XO2FbjofELbu1e9yX7REpVw7PuYS8PT9hY+6G7KNUUAEAiPw==
+DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
+	s=2020e; t=1784630828;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references;
+	bh=xLj6FV9Jxrp8DvTwMMuXcd5j/P99v341bwMPCjaISns=;
+	b=nO7qTxDLTYOVY4HmIz5Q+n0ivGSEGRf+75t2Rh8WMcColrEGzD2G9YiAScVllsj8mcE3FT
+	9IR7QkRn0JgHmoBQ==
+From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+To: David Runge <dave@sleepmap.de>
 Cc: linux-rt-users@vger.kernel.org
 Subject: Re: Issues building RT patchset v6.18.13-rt4-rebase on top of
  v6.18.39
-Message-ID: <al83asltX9snvqq1@hmbx>
+Message-ID: <20260721104706.qSVhG51k@linutronix.de>
 References: <al3YymTiIicX2Vin@hmbx>
  <20260720125805.wN3NFiBj@linutronix.de>
+ <al83asltX9snvqq1@hmbx>
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
 List-Subscribe: <mailto:linux-rt-users+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-Content-Type: multipart/signed; micalg=pgp-sha512;
-	protocol="application/pgp-signature"; boundary="QubuJ83SEyMb2IxQ"
-Content-Disposition: inline
-In-Reply-To: <20260720125805.wN3NFiBj@linutronix.de>
-
---QubuJ83SEyMb2IxQ
-Content-Type: text/plain; protected-headers=v1; charset=utf-8
+Content-Type: text/plain; charset=utf-8
 Content-Disposition: inline
 Content-Transfer-Encoding: quoted-printable
-Date: Tue, 21 Jul 2026 11:10:02 +0200
-From: David Runge <dave@sleepmap.de>
-To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Cc: linux-rt-users@vger.kernel.org
-Subject: Re: Issues building RT patchset v6.18.13-rt4-rebase on top of
- v6.18.39
+In-Reply-To: <al83asltX9snvqq1@hmbx>
 
-On 2026-07-20 14:58:05 (+0200), Sebastian Andrzej Siewior wrote:
-> It is there
->    https://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-rt-devel.git/=
-log/?h=3Dlinux-6.18.y-rt
->    https://www.kernel.org/pub/linux/kernel/projects/rt/6.18/patches-6.18.=
-37-rt6.tar.xz
+On 2026-07-21 11:10:02 [+0200], David Runge wrote:
+> On 2026-07-20 14:58:05 (+0200), Sebastian Andrzej Siewior wrote:
+> > It is there
+> >    https://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-rt-devel.gi=
+t/log/?h=3Dlinux-6.18.y-rt
+> >    https://www.kernel.org/pub/linux/kernel/projects/rt/6.18/patches-6.1=
+8.37-rt6.tar.xz
+> >=20
+> > the problem is probably that it is not in the stable tree=E2=80=A6
 >=20
-> the problem is probably that it is not in the stable tree=E2=80=A6
+> Hi Sebastian,
+Hi,
 
-Hi Sebastian,
-
-thanks for pointing me to the custom source tarballs and the relevant data =
-in
-the linux-rt-devel repository.
-
-To understand this better: Is the 6.18 release series (and future release s=
-eries
-=66rom then on) going to be developed in the linux-rt-devel repository, not=
+> thanks for pointing me to the custom source tarballs and the relevant dat=
+a in
+> the linux-rt-devel repository.
+>=20
+> To understand this better: Is the 6.18 release series (and future release=
+ series
+> from then on) going to be developed in the linux-rt-devel repository, not=
  the
-linux-stable-rt repository?
-As downstream package maintainer I am currently relying on the relevant git=
- tags
-to be available.
+> linux-stable-rt repository?
+> As downstream package maintainer I am currently relying on the relevant g=
+it tags
+> to be available.
 
-The linux-rt-devel repository seems to cover all new versions, but
-linux-stable-rt appears to lack behind the upstream advertised LTS release
-series.
+That is somehow odd. I just pushed to the stable-rt repository.
 
-In general, I would very much welcome a single repository, instead of the
-current situation with two repositories, in case that is feasible for you.
-Is there policy around when a specific release series is used in which
-repository?
+> The linux-rt-devel repository seems to cover all new versions, but
+> linux-stable-rt appears to lack behind the upstream advertised LTS release
+> series.
+>=20
+> In general, I would very much welcome a single repository, instead of the
+> current situation with two repositories, in case that is feasible for you.
+> Is there policy around when a specific release series is used in which
+> repository?
 
-Best,
-David
+This should have been handed over but it did not happen. So it remained
+in this state. I'm sorry.
 
---QubuJ83SEyMb2IxQ
-Content-Type: application/pgp-signature; name=signature.asc
+I will try to update it once it clashes or needs attention otherwise.
+Feel free to ping should I fall behind.
 
------BEGIN PGP SIGNATURE-----
+> Best,
+> David
 
-iHUEABYKAB0WIQR8efy7g3Ll3lsX4JqQ1LlkHgkpcQUCal83agAKCRCQ1LlkHgkp
-ca+4AQCPkHVxJnwRPth+QJ0SSfuV+PTSkHSQdxv+/J7MJPOdRQD8CBlFPCl6aK9d
-H73SF5+PZsFtCPN3KZ4cQK/z/F5LygI=
-=YWlb
------END PGP SIGNATURE-----
-
---QubuJ83SEyMb2IxQ--
+Sebastian
