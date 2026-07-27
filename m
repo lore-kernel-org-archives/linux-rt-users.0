@@ -1,201 +1,177 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+Received: from mail-qk1-f171.google.com (mail-qk1-f171.google.com [209.85.222.171])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id F1A5C21A95D
-	for <linux-rt-users@vger.kernel.org>; Mon, 27 Jul 2026 19:16:11 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id BA1503CB90A
+	for <linux-rt-users@vger.kernel.org>; Mon, 27 Jul 2026 19:28:28 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.222.171
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1785179773; cv=none; b=rqddhxEXb/iug6yTPCryMcCp8C1wAm33Ix2Vs7PlkO8sMvjQad9oISYlx/26X7/wENplJqpml/Fu+juDIB2bDTlShEBoQGLkAdUm7M1ACQ0mrhtU7n3lu+clHapgxtNDJ8cgJyced06VJumtyEYmr0ytFZA5Jqhx8dLIsVY2n6E=
+	t=1785180510; cv=none; b=txK46pXpv+p7n3dk+ipFCj4fRrrOr76v1iWqD6V+HNVc+yxGRnfb/s3qP1o11SluJLNkzLtr4uScM+yY3QlFWTQwIeCIpfKQnnXNtfVOApGOCk4dL05ZkCD+QqyPmuRdiFvowXHvLj+vTRhnqDsCrmKLY/K/fb/kbQ8p+hNHp2Q=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1785179773; c=relaxed/simple;
-	bh=7C8ElNzahPJsigIlK8eko85wKrct2q8DYBf3uUY9Ms0=;
-	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=YNd/jVUZ4bKagoCT4qIxXTAkWlEPiSBekrZZbqCYnNi5hyEm9gHaqLlL2HbvzVlabXdSohpfmwr2BcM/EwBZIE517ZFQ8wtmOKI5E0jF1DjnConsRro2N4NS3oYN01iV2wkrrvA82wpcs36AdCYm4Kcj7GCjIHWGlhVXD4nAeMo=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=i6PHdfVx; dkim=pass (2048-bit key) header.d=redhat.com header.i=@redhat.com header.b=RrEEnIKx; arc=none smtp.client-ip=170.10.129.124
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
+	s=arc-20240116; t=1785180510; c=relaxed/simple;
+	bh=nT2KvRleZbqRA2JGc7PHNhjl4paOpZRxeU0Ysv582zE=;
+	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version:Content-Type; b=s16bfVjumLU5bTGWyZcsz9t6PjFYyS6n8ElD+zMNY6V6xcFvMVREtqLWDcR9OHjh4qc7gT9WpEuor7hFNJNIYM1haBqhhoaSjS1VmCVcNVkZTfLFc2JfTA20GjfDhOZP05dztPgDcioBOepS+FAU+JiJgH25nplEtmZEmo3KYX0=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=fail (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=WMfvUCE4; arc=none smtp.client-ip=209.85.222.171
+Authentication-Results: smtp.subspace.kernel.org; dmarc=fail (p=quarantine dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="i6PHdfVx";
-	dkim=pass (2048-bit key) header.d=redhat.com header.i=@redhat.com header.b="RrEEnIKx"
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1785179771;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:
-	 content-transfer-encoding:content-transfer-encoding;
-	bh=FlySrKacyu1mGpErJOKweo3GX4pJbqWBE/G85xv/3Gw=;
-	b=i6PHdfVxjU9J6tZNg4EbY33AmjkniAK8E87YAJhDHA87z4U47VeK5HX/jrfnmF6/XBawk9
-	RFhTVhIjyucpPam/M5GZkLSFckYFDqb1jPD1LPpDZlrzb3Br1cYfMg29MMZ8X/9N2ee6dh
-	8fxhZfmXNbcxmo8udEDET8E5r2Th4nM=
-Received: from mail-wm1-f69.google.com (mail-wm1-f69.google.com
- [209.85.128.69]) by relay.mimecast.com with ESMTP with STARTTLS
- (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
- us-mta-193-f17yJidhMTGqBojV2KWEag-1; Mon, 27 Jul 2026 15:16:09 -0400
-X-MC-Unique: f17yJidhMTGqBojV2KWEag-1
-X-Mimecast-MFC-AGG-ID: f17yJidhMTGqBojV2KWEag_1785179768
-Received: by mail-wm1-f69.google.com with SMTP id 5b1f17b1804b1-4955ce558d8so28935245e9.3
-        for <linux-rt-users@vger.kernel.org>; Mon, 27 Jul 2026 12:16:09 -0700 (PDT)
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="WMfvUCE4"
+Received: by mail-qk1-f171.google.com with SMTP id af79cd13be357-92ed3993c1eso175390685a.1
+        for <linux-rt-users@vger.kernel.org>; Mon, 27 Jul 2026 12:28:28 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=redhat.com; s=google; t=1785179768; x=1785784568; darn=vger.kernel.org;
-        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
-         :to:from:from:to:cc:subject:date:message-id:reply-to:content-type;
-        bh=FlySrKacyu1mGpErJOKweo3GX4pJbqWBE/G85xv/3Gw=;
-        b=RrEEnIKxAyd9FvD4hMQH1KQ0QGR7glL2lnaSSdx+ijhLHAVS+0xH30D37XSW8I9C3z
-         uk1ZIF02fLgSCV81DX1fO3bweAlMElm36+rs24/iy7NzCaBtsx5mzaEqIWL9jLybXT6g
-         hQ/oGWgfqs8N8lJagQENqR8mi5J2Mq8gh0rY5is034bnb1WQ8unU9wFg3mVGYEmIN501
-         C6ElKdfd9Kn2jtYxc42D7lBXJYSCv4fZw2DYPCg/fXiQzHgHxjVHhdL03SrumfzSnNKW
-         XAjdLL6RhEaiIKyI9sUhW9inDIHVVpaVw7gkrLn9qlV9UFciW15fs1SyZqMBgkTAr+OS
-         Twgw==
+        d=gmail.com; s=20251104; t=1785180507; x=1785785307; darn=vger.kernel.org;
+        h=content-transfer-encoding:content-type:mime-version:message-id:date
+         :subject:cc:to:from:sender:from:to:cc:subject:date:message-id
+         :reply-to:content-type;
+        bh=b6HCE1pk0QhRpNN9/WuNsW0kYIjZE4iiMVpH6XtI0Fs=;
+        b=WMfvUCE4KhEyp4JJl9vMe8xuFuaHJYRmdwqMldZhNNvfaXIX89OhG6nZw//KMTPx4K
+         WIKPjpx350pYhKulvkWwdvvwAh84pgJyPXt3zZpbZhMfpK0YJXHD0dB36+3HpioDGWGy
+         cgyEqHjbtld6K39/MbeHvrv5jz/N7VAfXzFpFXM1S0l1xb1VxBakkr0zAymvIjn+UeMe
+         prwfc8JjSY+OwuJ6CdWF72E3seSojzugXia8+Sa17A2gDnRQgSmxg74pou3uQEYh8/z3
+         7e2n/6tK1n9T7NGd8cab3VPWhUvNt0bgSJt4qNe+349kbWlkllWbUQq/IAuSDO3xNt9e
+         91QQ==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20251104; t=1785179768; x=1785784568;
-        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
-         :to:from:x-gm-gg:x-gm-message-state:from:to:cc:subject:date
-         :message-id:reply-to:content-type;
-        bh=FlySrKacyu1mGpErJOKweo3GX4pJbqWBE/G85xv/3Gw=;
-        b=YWU2tDtsXIkMmhrtyeYHJ+8P9m+EA5/rtrZCGnGAQYoVkLpZFbZ8jnDncMT6jLurYF
-         snVlboLFGTLYrZL4OUMm+UMrhftSuaPyLc0AElcs6/lU+Im4ocI44dJW/RgMIUPvUBg/
-         A33D00SCmXaEnUT+GQW7PNjiTJVD+GgnT6wQP/d9nDgAgbUIhjxrGjdY6pOM6WmVLota
-         q76zTT4xOFhFAhUf4Fx/GYnXH2U8QmNkg5AFLq/9ZDF5byabX20XVYNN36HBeTh0fHHF
-         dyM/YqtaSsF4HS76CysNjublGmuZSieEmB2k/hyFVUCdYUlTaJaaYzwoEli3RXEdwNrk
-         ImHQ==
-X-Gm-Message-State: AOJu0YyraD+HdBkqL34OLT1KwWaT508JItSm3h9GbU20USizmBpCTTP1
-	vxBON4hv0do68ZzCxuU7a94e17OK/xahf6uYT6fqJInXkSyHyrCPpVPPfkGOMU67CQufvD4NQQf
-	0MMU8VXTjL4329UXWaVxE+zqnldMCYRTQ0E1ZMvy5vVLhTup5EurjYMkuWYlpGPbj+7qH
-X-Gm-Gg: AR+sD11DjoPRb1gsrvYPkRY6emKeZgfq88bPcb8DZ7iyP+X+vsZP3GdnPfrWAgb2N48
-	gpzKgkpn9PC7rITDtlz8QUIz3C+g8p+qtllzgI5IxtuWylSyUxKqqQaecSA42rj/PLjdvZypIzr
-	Nz3hdaPTlkni22H7Z8MyNH0TyF2zJJYUS+Em7LxQ2wzCSoDU+4xzfH3UXfD4jhcGCH1ycGGbPGX
-	uYAD1unsRs1vXIJZKMIcb/qtkttAILhBptiC07yFiVVepvn+TJhP1nTTBE8i5p7Kf31rvYnqWCq
-	048vI8mbvrqbRIw9eRJr215Xag2vTtoG8GYZS1a235zMGf4q88tUWiyM18FlAmPigE4YC9uIKRl
-	b+iaNU7Aam1q2NMR5
-X-Received: by 2002:a05:600c:3b22:b0:496:c3b1:2a91 with SMTP id 5b1f17b1804b1-496c3b12b4dmr24049925e9.27.1785179768226;
-        Mon, 27 Jul 2026 12:16:08 -0700 (PDT)
-X-Received: by 2002:a05:600c:3b22:b0:496:c3b1:2a91 with SMTP id 5b1f17b1804b1-496c3b12b4dmr24049625e9.27.1785179767790;
-        Mon, 27 Jul 2026 12:16:07 -0700 (PDT)
-Received: from costa-tp.redhat.com ([2a00:a041:e223:1b00:fe51:8bb:7986:c897])
-        by smtp.gmail.com with ESMTPSA id 5b1f17b1804b1-4957f9b8b67sm295414085e9.4.2026.07.27.12.16.04
+        d=1e100.net; s=20251104; t=1785180507; x=1785785307;
+        h=content-transfer-encoding:content-type:mime-version:message-id:date
+         :subject:cc:to:from:sender:x-gm-gg:x-gm-message-state:from:to:cc
+         :subject:date:message-id:reply-to:content-type;
+        bh=b6HCE1pk0QhRpNN9/WuNsW0kYIjZE4iiMVpH6XtI0Fs=;
+        b=OG3LbACUukDVcFIwTgC+ZmEyJzXscORWxQ0SJjayIzdSbbadOdxN/MkY7+BvxgbYgB
+         sjZppc/mDW0DGhjqw0VMNgICNvAnVz7OI5qkFFS/t/DqRyOE4y9sJRiycBjg7O1uGRos
+         hWH+mKhH9PrSqXg3myfTHewpP9GyYk+CuA4wKDp2CsNEXfTw0g0VjI++JRxCFglxHnSO
+         LECWRz53qB2hP+w3pycIn+Naip0FLodma1dndaKg6RMApZXBnv//gDxLiIoTttlfzS9T
+         J4dmM9xCXSX6i15i8vDmYW08WEhZaN3KUZNwRSEWMNRw0yPbbESxAyupOqoQL0Zi/T2O
+         GpTQ==
+X-Gm-Message-State: AOJu0YwgaTL/FTTka+7qdDHQN+yap9a+4+VcydrhVva50ufTKlGnCB0o
+	3oa/tu1d1ICoWlU9AbadzoF92VVUau6CG/uENlKSITFed+gzeKoh+MIs/WZ2EA==
+X-Gm-Gg: AR+sD12ebBpPdTMx3eox6HzI+8X4RyoVkPOnfqrHqXj2iukxoPCC3012o7mIUsJ6zqU
+	a09JRDePsJhnyojj5+mDHuakUiVFU52BDlhXDxS9gjA+j/InF7nEjIekpsl03EGxctIEbflj1Y/
+	hWkD+XsYqJckJInGNum2lhfu0f+LjcesskrGN1IVDIABKpo+zp+GgYsZrLIxZMwAH9hije0yntG
+	qL4b19hAM1NVrgCCtK00Ep/LRZzgop67gVo2wCBrt4E7LtuL5ZSR8ZNaiKgiZVcX9Qx6TQ1xrZR
+	YPawWiflcv7/Z1b8X2n+iPpl+YVg03dxlx309eTx/Iy4NB7BFFrnUJtSxHuFxnLTfuaIJBUVqBV
+	OrmNxE88+bkdPIVMbTHVsRB6u3BVrm6nLw6m1GSL91E1EXmFFcPt3DSdeBshb0RYUWcEYJXhwLB
+	8CaWG/m5vq6ErryL0deBjeTbi/mjtjJ+DL7xAxrg6N+aTOKZHkjugPnE0fqKSK/4tTWInhb1I46
+	ahEOcQnvhPvvcxNixCyYJYmT17x3U0RdfhK/ysAzb5ZMP/WIxKt19dN7puM
+X-Received: by 2002:a05:620a:1725:b0:92b:67e6:8ace with SMTP id af79cd13be357-932df724e68mr1026408385a.72.1785180507518;
+        Mon, 27 Jul 2026 12:28:27 -0700 (PDT)
+Received: from Cumhall.redhat.com (bras-base-rdwyon0604w-grc-09-174-95-68-136.dsl.bell.ca. [174.95.68.136])
+        by smtp.gmail.com with ESMTPSA id af79cd13be357-932de6729ebsm684224385a.42.2026.07.27.12.28.26
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Mon, 27 Jul 2026 12:16:05 -0700 (PDT)
-From: Costa Shulyupin <costa.shul@redhat.com>
-To: John Kacur <jkacur@redhat.com>,
-	"Ahmed S. Darwish" <darwi@linutronix.de>,
-	=?UTF-8?q?Thomas=20Wei=C3=9Fschuh=20=28Schneider=20Electric=29?= <thomas.weissschuh@linutronix.de>,
-	Lukas Beckmann <lbckmnn@mailbox.org>,
-	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-	Costa Shulyupin <costa.shul@redhat.com>,
-	Cheng-Yang Chou <yphbchou0911@gmail.com>
-Cc: linux-rt-users <linux-rt-users@vger.kernel.org>
-Subject: [PATCH v1] rt-tests: Exit with failure when breaktrace threshold is exceeded
-Date: Mon, 27 Jul 2026 22:15:45 +0300
-Message-ID: <20260727191545.3023834-1-costa.shul@redhat.com>
-X-Mailer: git-send-email 2.54.0
+        Mon, 27 Jul 2026 12:28:26 -0700 (PDT)
+Sender: John Kacur <jkacur@gmail.com>
+From: John Kacur <jkacur@redhat.com>
+To: linux-rt-users@vger.kernel.org
+Cc: Clark Williams <williams@redhat.com>,
+	linux-kernel@vger.kernel.org
+Subject: [ANNOUNCE] rteval-v3.12
+Date: Mon, 27 Jul 2026 15:28:10 -0400
+Message-ID: <20260727192810.166664-1-jkacur@redhat.com>
+X-Mailer: git-send-email 2.55.0
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
 List-Subscribe: <mailto:linux-rt-users+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit
 
-cyclictest and cyclicdeadline always exit 0 even when the latency
-threshold set by --breaktrace is exceeded, requiring test harnesses
-to parse output or json to detect a failed test.
+We are happy to announce the release of rteval-3.12
+rteval-3.12 focuses on robustness improvements and container support.
 
-Set ret to EXIT_FAILURE when break_thread_id is set, indicating the
-breaktrace threshold was hit.  The exit code enables shell expressions
-like "cyclictest ... && echo PASS" and seamless integration with testing
-frameworks.  Also pass ret to rt_write_json() in cyclicdeadline so the
-JSON output reflects the failure.
+New Features:
+* Container detection and warning - Detects when running in containers
+* Overflow bucket support - Handles extreme latencies exceeding histogram range
+* --housekeeping-isolated flag - Better CPU isolation control
 
-Assisted-by: Claude:claude-opus-4-6
----
- src/cyclictest/cyclictest.8         | 8 ++++++++
- src/cyclictest/cyclictest.c         | 1 +
- src/sched_deadline/cyclicdeadline.8 | 8 ++++++++
- src/sched_deadline/cyclicdeadline.c | 7 +++++--
- 4 files changed, 22 insertions(+), 2 deletions(-)
+Improvements:
+* Improved histogram parsing robustness for cyclictest and timerlat
+* Enhanced timerlat stoptrace trace analysis and XML capture
+* Process blocklist to prevent shutdown issues
+* Better cpuset migration and debug logging
 
-diff --git a/src/cyclictest/cyclictest.8 b/src/cyclictest/cyclictest.8
-index fc6121aa4d47..813c61653f61 100644
---- a/src/cyclictest/cyclictest.8
-+++ b/src/cyclictest/cyclictest.8
-@@ -311,6 +311,14 @@ in mind, below cyclictest example invocation can provide a good start:
-    --histfile=output.txt
- .fi
- .
-+.SH "Exit status"
-+.TP
-+.B 0
-+Success - all latencies were within the breaktrace threshold, or no threshold was set.
-+.TP
-+.B 1
-+Failure - a latency exceeding the breaktrace threshold was detected.
-+.
- .SH "See also"
- .MR numa 3 ,
- .MR numactl 8 ,
-diff --git a/src/cyclictest/cyclictest.c b/src/cyclictest/cyclictest.c
-index 71cf5cb25c22..88fc08347cba 100644
---- a/src/cyclictest/cyclictest.c
-+++ b/src/cyclictest/cyclictest.c
-@@ -2337,6 +2337,7 @@ int main(int argc, char **argv)
- 		if (break_thread_id) {
- 			printf("# Break thread: %d\n", break_thread_id);
- 			printf("# Break value: %llu\n", (unsigned long long)break_thread_value);
-+			ret = EXIT_FAILURE;
- 		}
- 	}
- 
-diff --git a/src/sched_deadline/cyclicdeadline.8 b/src/sched_deadline/cyclicdeadline.8
-index bfc6327c51da..cd7088629d97 100644
---- a/src/sched_deadline/cyclicdeadline.8
-+++ b/src/sched_deadline/cyclicdeadline.8
-@@ -58,6 +58,14 @@ Send break trace command when latency > USEC
- .B \-\-tracemark
- write a trace mark when \-b latency is exceeded.
- .br
-+.SH "Exit status"
-+.TP
-+.B 0
-+Success - all latencies were within the breaktrace threshold, or no threshold was set.
-+.TP
-+.B 1
-+Failure - a latency exceeding the breaktrace threshold was detected.
-+.
- .SH AUTHOR
- cyclicdeadline was written by Steven Rostedt <rostedt@goodmis.org>
- .PP
-diff --git a/src/sched_deadline/cyclicdeadline.c b/src/sched_deadline/cyclicdeadline.c
-index 0c6c96976010..1123de4f4cae 100644
---- a/src/sched_deadline/cyclicdeadline.c
-+++ b/src/sched_deadline/cyclicdeadline.c
-@@ -1315,10 +1315,13 @@ int main(int argc, char **argv)
- 
- 	loop(sched_data, nr_threads);
- 
-+	ret = EXIT_SUCCESS;
-+
- 	if (tracelimit) {
- 		if (break_thread_id) {
- 			printf("# Break thread: %d\n", break_thread_id);
- 			printf("# Break value: %llu\n", (unsigned long long)break_thread_value);
-+			ret = EXIT_FAILURE;
- 		}
- 	}
- 
-@@ -1334,7 +1337,7 @@ int main(int argc, char **argv)
- 	}
- 
- 	if (strlen(jsonfile) != 0)
--		rt_write_json(jsonfile, 0, write_stats, sched_data);
-+		rt_write_json(jsonfile, ret, write_stats, sched_data);
- 
- 	if (setcpu_buf)
- 		free(setcpu_buf);
-@@ -1344,5 +1347,5 @@ int main(int argc, char **argv)
- 		fclose(histfile);
- 	hset_destroy(&hset);
- 
--	return 0;
-+	return ret;
- }
+Bug Fixes:
+* Fix stressng --taskset argument parsing
+* Fix collapse_cpulist to handle duplicate CPU numbers
+* Make thread excepthook portable and support chaining
+
+Documentation:
+* Add AGENTS.md guide for AI coding assistants
+* License harmonization (GPL-2.0-only → GPL-2.0-or-later)
+
+To fetch
+
+Clone
+git://git.kernel.org/pub/scm/utils/rteval/rteval.git
+
+Branch: main
+Tag: v3.12
+
+Tarballs available here:
+https://kernel.org/pub/linux/utils/rteval
+
+Older version tarballs are available here:
+https://kernel.org/pub/linux/utils/rteval/older
+
+To accommodate distributions that require this, I have linked the last
+version v3.11 from the older directory to the current directory
+
+Bug reports, patches, etc are always welcome.
+
+Enjoy!
+
+Stats: 21 files changed, 1833 insertions, 48 deletions
+
+John Kacur (19):
+  rteval: cyclictest: Improve handling of truncated histogram output
+  rteval: timerlat: Improve handling of truncated histogram output
+  rteval: Add container detection module
+  rteval: Add container detection and warning
+  rteval: Add AGENTS.md guide for AI coding assistants
+  rteval: Fix collapse_cpulist to handle duplicate CPU numbers
+  rteval: Add process blocklist to prevent shutdown issues
+  rteval: Make thread excepthook portable and support chaining
+  rteval: Set measurement cpuset to partition=isolated for CPU isolation
+  rteval: Add --housekeeping-isolated flag
+  rteval: Fix measurement module cpuset migration and debug logging
+  rteval: Fix timerlat stoptrace trace analysis capture in XML
+  rteval: Change test file licenses from GPL-2.0-only to
+    GPL-2.0-or-later
+  rteval: Fix stressng --taskset argument parsing
+  cyclictest: Add overflow bucket to handle latencies exceeding
+    histogram range
+  rteval: Improve overflow bucket handling and add timerlat support
+  rteval: Refactor timerlat parsing and fix max line duplication bug
+  rteval: Reduce verbose debug logging in timerlat stoptrace parsing
+  rteval: Create rteval-3.12
+
+ AGENTS.md                                | 466 +++++++++++++++++++++++
+ Makefile                                 |  14 +-
+ README-tests                             |   6 +
+ rteval-cmd                               |  20 +-
+ rteval/__init__.py                       |  17 +-
+ rteval/cpulist_utils.py                  |   4 +-
+ rteval/cpuset.py                         |  41 ++
+ rteval/cpusetmanager.py                  |  11 +-
+ rteval/modules/loads/hackbench.py        |  10 +-
+ rteval/modules/loads/stressng.py         |   2 +-
+ rteval/modules/measurement/cyclictest.py | 102 ++++-
+ rteval/modules/measurement/timerlat.py   | 171 ++++++++-
+ rteval/rteval_text.xsl                   |  34 +-
+ rteval/sysinfo/__init__.py               |   5 +-
+ rteval/sysinfo/containercheck.py         |  92 +++++
+ rteval/version.py                        |   2 +-
+ tests/README.md                          | 322 ++++++++++++++++
+ tests/run_tests.sh                       |   5 +
+ tests/test_cpusetmanager.py              | 412 ++++++++++++++++++++
+ tests/test_process_blocklist.py          | 143 +++++++
+ tests/unittest-legacy.py                 |   2 +-
+ 21 files changed, 1833 insertions(+), 48 deletions(-)
+ create mode 100644 AGENTS.md
+ create mode 100644 rteval/sysinfo/containercheck.py
+ create mode 100644 tests/README.md
+ create mode 100644 tests/test_cpusetmanager.py
+ create mode 100644 tests/test_process_blocklist.py
+
 -- 
-2.54.0
+2.55.0
 
