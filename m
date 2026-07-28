@@ -1,70 +1,70 @@
-Received: from mail-vs1-f46.google.com (mail-vs1-f46.google.com [209.85.217.46])
+Received: from mail-qv1-f51.google.com (mail-qv1-f51.google.com [209.85.219.51])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 4AAC324CEEA
-	for <linux-rt-users@vger.kernel.org>; Tue, 28 Jul 2026 17:06:28 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.217.46
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 46A3539B944
+	for <linux-rt-users@vger.kernel.org>; Tue, 28 Jul 2026 17:06:29 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.219.51
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1785258389; cv=none; b=iwIArHKicOEPYT6k8lL99GROlwztrpkSWIrc5qzU7srmMEr0rEQ9ty6QrpKW5EScTAfJcfBENIXhluIOI9SMry0cWvGOmfj3HZDNrBs1ywJleMsOzcG3PvKzxe2CW6DZAM6m+x7ScE+3UAZYevOsO57+V8HU9JhcafZ7UHyWVJY=
+	t=1785258390; cv=none; b=AJwPkYp0EMqcc4EEk11tmiousSnWBx1kF7s3Dx8Djhm+KjPAaYgeyKVM/+NBMXj9sZLDlOoG9Jkkr4j6C7ty8GaQpv5UCLrvnZXYjXz3wbZDtuAiUix1JkrtTYc/PNB9OdnxbqcVpIkjrrRc3u69v6HWhIltWR+bBSQmfCkrWQA=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1785258389; c=relaxed/simple;
-	bh=nOx4MM3Ew5SQ4JEQFDlWDJi5Qe9d3mYZu4utLB2Y9MQ=;
+	s=arc-20240116; t=1785258390; c=relaxed/simple;
+	bh=Q9xSWpnxlu96jWduTYWpFJkIUgobYlW27bHb55fdYMw=;
 	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=BUMFRGia5Ym2T2TCD8is+QifVJegFoK+XXX653PvtoiarpWmRcpGwz31+7xtpCyg2jGwj9o23cy0Fijjzbc897NO00ezhyDFqX/9yX8SFpTp70h+rn6/MGYZti5dsB2dGEiZa7vmqB6/N417NQahP7YKhgmugy0XTLc+nXZcTNg=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=fail (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=j6DBng5s; arc=none smtp.client-ip=209.85.217.46
+	 MIME-Version; b=jAyxwx16gOkQXnwQbVuk9GSr6dwKMJRSGajky5Wk2DtY1ejVCHAadwTqdEUJ0BfmrdDPJ8yC1OPOSgvJIBHpPiDQSBKVZBoz38XMwqe09JsxLot9ya9wHWN6QSCERfzdzsnfTr1wLllXxsygkYmucXyz6qnikESVQxmhw4wnv00=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=fail (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=gicaU7CF; arc=none smtp.client-ip=209.85.219.51
 Authentication-Results: smtp.subspace.kernel.org; dmarc=fail (p=quarantine dis=none) header.from=redhat.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="j6DBng5s"
-Received: by mail-vs1-f46.google.com with SMTP id ada2fe7eead31-7389cff36bdso5574137.1
-        for <linux-rt-users@vger.kernel.org>; Tue, 28 Jul 2026 10:06:28 -0700 (PDT)
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="gicaU7CF"
+Received: by mail-qv1-f51.google.com with SMTP id 6a1803df08f44-9063b380982so267126d6.0
+        for <linux-rt-users@vger.kernel.org>; Tue, 28 Jul 2026 10:06:29 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20251104; t=1785258387; x=1785863187; darn=vger.kernel.org;
+        d=gmail.com; s=20251104; t=1785258388; x=1785863188; darn=vger.kernel.org;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:sender:from:to:cc:subject:date
          :message-id:reply-to:content-type;
-        bh=D3bi+h55pP+dcK6ujhvGNqNP+RaQwelR9q1drl/6KzM=;
-        b=j6DBng5sHGX+zxz/+pVNzHvbqYL2ypi9ixhf/+2kL7+LpRhr5R64Be9cgDZMStDJX6
-         9AXhUU0c0IFFVZEQaPRyr4OM1/8nItrn1F3JmmaZV+ZUQLxhQ7/gjQ8R9cWkJHFhT0B6
-         oJbjg3TIXcdcah2q2KN/jG90/pRGgnsn5pROUhInQj4OSc4APoGL+sfs2RE8/TWaH5pm
-         +68NJq20YVdncZ1O0CkX3X23Yy0IRM2jUnHQh+v/DGrn/DKTOvkjajjAB968KWPeQMS2
-         caRjpCwIZWyeIfUjwzGyL0nWlAbRGJRJMslaepplws++YoqPBymKEPFt67PJxkcmyn3i
-         eR3Q==
+        bh=J0BmIz/UnsS/llokNortPY+ZBVFjzhEZvCv1Z3e9k0E=;
+        b=gicaU7CFNt1o4dML02Ihs7o9DxxD8G98hLhMff99vONIwP02nnp7McrXyD6vGXWiB+
+         i/KlbfynBLhDh6ddmkGNQF1MFAeFC80tNWRWTGrDTZoeQo0uf33fp4Hr/WkdCRW7yA3T
+         VX+2BucvfNUu1XY1DGCBm99P5Q6/MeCTnhGWpeGBLrvu0g/TtByU8ZtJbQmHH0Z2K8CO
+         WghQf2ZLOZj9cPfvMKuGjixUSt4UP2STE1UzjF8BNCOO7NThay7u4Efv7cu+eqxWRqMu
+         6gVVII3MouICkh9JCnbFSGCs8zmLGwiJGrJ6mVzPRCi7ELnqnvr+DiyoainV4ZPpnEvf
+         Q5cA==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20251104; t=1785258387; x=1785863187;
+        d=1e100.net; s=20251104; t=1785258388; x=1785863188;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:sender:x-gm-gg
          :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to
          :content-type;
-        bh=D3bi+h55pP+dcK6ujhvGNqNP+RaQwelR9q1drl/6KzM=;
-        b=DJ669QBBPwMljm2XWaH4++SOSSxlBhK6UVnv8yU2lNjRhf99684A0uTkZpG9O32Ko7
-         dn4S+SR3hqUZSfk+9zcH7GWvG9An/PnqsGkQcklBRGKm3PkeXfYOJhXsp2ns7ZZ7S4x4
-         x+IFayLX4yeOiw5wGUF4EredXFHZLufxJ6qLhQqssI7IEBFRZCHQFG/062ZWNipjnMdf
-         xV7EYBAaW6T/ZkMyK3zzF0trAM7X2uB14e2bHkXuvQjCzx7Ya7GijTaq8D2QDtS2eBI7
-         1bLWH5CIXUV2UlyBd65tR8+PxI5dw0GQBb7k5Z88daZp7XFKPApZVYEZoiV2BnEkKjYg
-         j8ew==
-X-Gm-Message-State: AOJu0YxYS9nGcnfrJJzQO5YadQ+viVs2dUrh5XWq47ohqSv5WiP4Cy+n
-	+MN//nKxBi86JegqHGo9MNNoa/OFunZXXXMGUFgNPD4M9IzjwefT8wnxdomEJA==
-X-Gm-Gg: AR+sD11DkwqobAiTFCixdPrExDa6BhhBK5yFl3Ukd0zA2GSCHe+L+RUhpF61Xeiu0jV
-	aRxpIa/PUz9ZhQvQb9IOKSXS/tGDyfjbVadt2wQU/qbA7JVjvxcF6RpCA8wopVDb4Yx1RXDpQjP
-	ekxdcZ2ZA+FQBr8jERCubQLtTvk3tudkrzuoOwrELkpHxragiT3xXZLZ6thtTmYr88c4FXjVlgb
-	xmdnmsWcclcRrGcCHb2hL08SJ8AfY4Em5FAHXbg1s4oxX+oDemgJR5fY1NVx4GVskLyPfFFnVPi
-	0OEsYNtx4eNEFyYlJXPl1lbctbO917Flc6h/yfhsnUNKTO3Psv5ydIZ/qhu4IhQzblOq/lp78CF
-	WaDjrg4lLFFpJ/8my2O1/c5zf50HLFeFNqDwle9O8J0Or1CBUCI7QM8S68trP0h4/FworM08yK8
-	+5atB4J1BncsuPOJb+0ev55+wmpJBjlp5VZTOlp3s+BA4bgmMgzlybjbJ5iE0H+NNl5317
-X-Received: by 2002:a05:6102:4429:b0:740:2664:801b with SMTP id ada2fe7eead31-754a048032fmr1728508137.11.1785258386542;
-        Tue, 28 Jul 2026 10:06:26 -0700 (PDT)
+        bh=J0BmIz/UnsS/llokNortPY+ZBVFjzhEZvCv1Z3e9k0E=;
+        b=dKLt6Yb2G/bYjooa7Gtdz1vpnx/fYBqXrvxRpHhVHzQ0YU3kXKTsLlgTR+2D7xgZvy
+         zTRXktSZ0qE21KFdLRg/Cdv6iNfgMtOQMgPXZ60QUjrMTzpMsWFJxqfHfvqhbliIpDfg
+         xX3if//Z52O+D4kW3RCalCh+eeXUXgNr+x5z3px3/AM6fKpzL6bcCwtvPRAYWtd6Cy0u
+         ZdjBgTxONAAWyqC5dL4PcjU5E133uIsZMabWzSovLK1mUDQurEAJApp0kq2NxzskqrgR
+         Qll2xU+CsnKpTh7iAZ1ObdpzDq+SVcZxAxUubR/59ORfJKC08dPfluRd77qwR/4fmDiO
+         k5Gw==
+X-Gm-Message-State: AOJu0YyG8yTJ7Y0/Ydk8k8Dc0HbTjIIJgOQDlnM+3lgf4oDY6wBaE7w1
+	+W4p2UXbUvXf2dlnjFfinwPgpXDv3wdGit28hdkMRxJmO92R6NxMWHKmYome0Q==
+X-Gm-Gg: AR+sD10UM7oFLVs5OiX5hh+1psjantCT336775qSWnDhQp4paPsSRPVX0vY6GVlKNKo
+	0Elk52FyAuxU0LpipDog3krAqnkwal3eyUSgnNuquMHUYxM+S2k/AEecgs6N7kANUuQUXvj5cHg
+	o68iWhXsmTJCYyu53MOuw0+j8bwqi56wAcjlpvH0kJAdOo6N7/Koev53+Mw68tD3MNU+QlUDxoL
+	D9pyV1x6A2ax7M4sM3YjWegsfx4OnYDShB2i6vVrV1cT3ARKF+3q5slY8zmWRXu7/X2ktGkTHOE
+	WVZ9pqb4uyhUMUkpNSL4iAoaOPm/U/hnHE9Dn0KIN+9UGwuikR7Pn1+21WmkGhlHbVPN54MNCMx
+	HbKR5K3OK4IZZOXeSHzia9gTMzeNcXdwBPKMUYe7Vzxef41emiP8beBksMDPSsxD0S63oYr+RoR
+	Qcnx5J4C0XLoufzxOU3lb5sqYHLrNwyujjOn5OFhNc8zPq0VtUXzT+3SzBrmoUAemNDqGE
+X-Received: by 2002:a05:6214:5409:b0:907:5e3a:9369 with SMTP id 6a1803df08f44-90817355452mr39744166d6.57.1785258388100;
+        Tue, 28 Jul 2026 10:06:28 -0700 (PDT)
 Received: from Cumhall.redhat.com ([174.95.68.136])
-        by smtp.gmail.com with ESMTPSA id 6a1803df08f44-9081dd3aac2sm3229676d6.30.2026.07.28.10.06.25
+        by smtp.gmail.com with ESMTPSA id 6a1803df08f44-9081dd3aac2sm3229676d6.30.2026.07.28.10.06.26
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Tue, 28 Jul 2026 10:06:26 -0700 (PDT)
+        Tue, 28 Jul 2026 10:06:27 -0700 (PDT)
 Sender: John Kacur <jkacur@gmail.com>
 From: John Kacur <jkacur@redhat.com>
 To: linux-rt-users@vger.kernel.org
 Cc: Clark Williams <williams@redhat.com>
-Subject: [PATCH 4/5] tuna: Add intelligent path resolution for cpuset apply
-Date: Tue, 28 Jul 2026 13:06:06 -0400
-Message-ID: <20260728170607.176811-5-jkacur@redhat.com>
+Subject: [PATCH 5/5] tuna: Get the tuna version from a single source
+Date: Tue, 28 Jul 2026 13:06:07 -0400
+Message-ID: <20260728170607.176811-6-jkacur@redhat.com>
 X-Mailer: git-send-email 2.55.0
 In-Reply-To: <20260728170607.176811-1-jkacur@redhat.com>
 References: <20260728170607.176811-1-jkacur@redhat.com>
@@ -76,79 +76,110 @@ List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 
-When applying a cpuset profile, search for the file in standard
-locations if the user provides just a filename (not a full path).
+Create tuna/version.py with a TUNA_VERSION variable as the single source
+for the version number.
 
-Search order for relative paths:
-1. Current directory (./filename)
-2. /etc/tuna/filename
+Changes:
+- Add tuna/version.py with a TUNA_VERSION variable
+- Update setup.py to import version from tuna.version
+- Update tuna-cmd.py to import version from tuna.version
+- Update pyproject.toml to use dynamic versioning via setuptools
 
-Absolute paths are used as-is without searching.
+For future releases, only tuna/version.py needs to be updated.
+All other files (setup.py, tuna-cmd.py, pyproject.toml) automatically
+pick up the version from this single source.
 
-This allows users to run 'tuna cpuset apply my-config.yaml' from
-any directory and have it automatically find the file in /etc/tuna/
-if it's not in the current directory.
+Version updated from 0.20 to 0.21.
 
 Assisted-by: Claude:claude-sonnet-4-5
 Signed-off-by: John Kacur <jkacur@redhat.com>
 ---
- tuna-cmd.py | 35 ++++++++++++++++++++++++++++++++++-
- 1 file changed, 34 insertions(+), 1 deletion(-)
+ pyproject.toml  | 5 ++++-
+ setup.py        | 5 ++++-
+ tuna-cmd.py     | 3 ++-
+ tuna/version.py | 7 +++++++
+ 4 files changed, 17 insertions(+), 3 deletions(-)
+ create mode 100644 tuna/version.py
 
+diff --git a/pyproject.toml b/pyproject.toml
+index ca149c352df0..6f995cb4c0a8 100644
+--- a/pyproject.toml
++++ b/pyproject.toml
+@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
+ 
+ [project]
+ name = "tuna"
+-version = "0.20"
++dynamic = ["version"]
+ description = "Application tuning GUI"
+ license = "GPL-2.0-only"
+ authors = [
+@@ -37,5 +37,8 @@ Source = "https://git.kernel.org/pub/scm/utils/tuna/tuna.git/"
+ tuna = "tuna.tuna:main"
+ oscilloscope = "tuna.oscilloscope:main"
+ 
++[tool.setuptools.dynamic]
++version = {attr = "tuna.version.TUNA_VERSION"}
++
+ [tool.setuptools.packages.find]
+ include = ["tuna*"]
+diff --git a/setup.py b/setup.py
+index a40f29ef3817..8036a647f698 100755
+--- a/setup.py
++++ b/setup.py
+@@ -5,6 +5,9 @@ import sysconfig
+ from os.path import isfile, relpath
+ from setuptools import setup
+ 
++# Get the tuna version from a single source
++from tuna.version import TUNA_VERSION
++
+ if isfile("MANIFEST"):
+     os.unlink("MANIFEST")
+ 
+@@ -16,7 +19,7 @@ if SCHEME not in sysconfig.get_scheme_names():
+ PYTHONLIB = relpath(sysconfig.get_path('platlib', SCHEME), '/usr')
+ 
+ setup(name="tuna",
+-      version = "0.20",
++      version = TUNA_VERSION,
+       description = "Application tuning GUI",
+       author = "Arnaldo Carvalho de Melo, John Kacur",
+       author_email = "acme@redhat.com, jkacur@redhat.com",
 diff --git a/tuna-cmd.py b/tuna-cmd.py
-index cf33af13d5d3..25515d5ddd5a 100755
+index 25515d5ddd5a..62972cdd328a 100755
 --- a/tuna-cmd.py
 +++ b/tuna-cmd.py
-@@ -118,6 +118,36 @@ def get_default_cpuset_profile():
-     else:
-         return '/etc/tuna/cpuset-profile.yaml'
- 
-+def resolve_cpuset_profile_path(filename):
-+    """Resolve cpuset profile path by searching in standard locations.
+@@ -23,6 +23,7 @@ import tuna.tuna_sched as tuna_sched
+ import procfs
+ from tuna import tuna, sysfs, utils
+ from tuna import cpuset
++from tuna.version import TUNA_VERSION
+ import logging
+ import time
+ import shutil
+@@ -162,7 +163,7 @@ def gen_parser():
+     MODS = {
+             "logging": dict(dest='loglevel', metavar='LOG-LEVEL', type=get_loglevel, help="Log application details to file for given LOG-LEVEL"),
+             "debug" : dict(action='store_true', dest='debug', help='Print DEBUG level logging details to console'),
+-            "version": dict(action='version', version='0.20', help="show version"),
++            "version": dict(action='version', version=TUNA_VERSION, help="show version"),
+             "warn": dict(action='store_true', dest='warn', help='Warn when thread/IRQ patterns match nothing'),
+             "threads": dict(dest='thread_list', default='', metavar='THREAD-LIST', type=str, help="THREAD-LIST affected by commands"),
+             "irqs": dict(dest='irq_list', default='', metavar='IRQ-LIST', type=str, help="IRQ-LIST affect by commands"),
+diff --git a/tuna/version.py b/tuna/version.py
+new file mode 100644
+index 000000000000..23f503e6b1bc
+--- /dev/null
++++ b/tuna/version.py
+@@ -0,0 +1,7 @@
++# SPDX-License-Identifier: GPL-2.0-only
++#
++#   Copyright 2008 - 2009   Arnaldo Carvalho de Melo <acme@redhat.com>
++#   Copyright 2015 - 2026   John Kacur <jkacur@redhat.com>
++#
 +
-+    Args:
-+        filename: User-provided filename or path
-+
-+    Returns:
-+        str: Resolved absolute path if file exists, otherwise original filename
-+
-+    Search order for relative paths:
-+        1. Current directory (./filename)
-+        2. /etc/tuna/filename
-+    Absolute paths are returned as-is.
-+    """
-+    # If absolute path, use it directly
-+    if os.path.isabs(filename):
-+        return filename
-+
-+    # Try current directory first
-+    if os.path.exists(filename):
-+        return filename
-+
-+    # Try /etc/tuna/ as fallback
-+    etc_path = os.path.join('/etc/tuna', filename)
-+    if os.path.exists(etc_path):
-+        return etc_path
-+
-+    # Return original filename (will produce meaningful error if not found)
-+    return filename
-+
- def gen_parser():
- 
- 
-@@ -404,8 +434,11 @@ def apply_cpusets_cmd(filename, verbose=False):
-         print("Error: cgroup v2 cpusets not supported on this system", file=sys.stderr)
-         sys.exit(1)
- 
-+    # Resolve filename (search current dir, then /etc/tuna/)
-+    resolved_path = resolve_cpuset_profile_path(filename)
-+
-     # Apply cpusets using profile module (passes cpuset module for code reuse)
--    num_applied, num_warnings, num_errors = profile.apply_cpusets(filename, cpuset, verbose)
-+    num_applied, num_warnings, num_errors = profile.apply_cpusets(resolved_path, cpuset, verbose)
- 
-     # Print summary
-     if num_applied > 0:
++TUNA_VERSION = '0.21'
 -- 
 2.55.0
 
