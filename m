@@ -1,161 +1,81 @@
-Received: from mail-ej1-f54.google.com (mail-ej1-f54.google.com [209.85.218.54])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from mail.sleepmap.de (sleepmap.de [85.10.206.218])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 73AD527FD74
-	for <linux-rt-users@vger.kernel.org>; Wed, 29 Jul 2026 14:20:54 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.218.54
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 1C86122173D
+	for <linux-rt-users@vger.kernel.org>; Fri, 31 Jul 2026 09:47:21 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=85.10.206.218
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1785334855; cv=none; b=BS1Q4HbvAl3gsNczt7T61zvuLLiwi1Sa625uzXHy6OCfScVMwtPNqWFIpao6h4s6sI7FHH5W1EtSnGY9lelIqFOpGf3mKMl4r8/BTYlhpHspzzJfkR1LgzgyJGuDGCA+Tf+oz2OFDC0/3q4XmkhWUG2h2PhggpN+7ba/kDupDw0=
+	t=1785491243; cv=none; b=tRzbNEVJo81fLu5k3r6xlS5tic7ppdLTXoGfBIFqHD+/Lgu10H4t3+wKC7jUXZoEDp06u0FfMI5O2G7NckhXkIY3ciXJ8iAQrNNwY/0AkP71vSrzShG1ZCzsmy4WPdpkiRwvqG6MtocBD7Ey0Hjx2+Hk/NSIL6Yba9fNYWcJkYo=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1785334855; c=relaxed/simple;
-	bh=Uw8d1B4dsDdMYzoFfNuiaUs1JtXhroXh/jnwc8CZbnk=;
-	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=UT89Lr75p1T9bVfVxnBSPkdIgSDYEGj4d0tPTOZT1/bN5Rs5k508Z37U+kbzOn0mVONVHDm844Je+z6FKZPLqPZy5QM5Jqw7/ojsxtBDpBhIHB/jQNLPYw5RMxaaj4MYJ7aEq3YJauxaY062ilGSxoM2bVozS8KrUA/vv0zOdT4=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=fail (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=hUiKIaFB; arc=none smtp.client-ip=209.85.218.54
-Authentication-Results: smtp.subspace.kernel.org; dmarc=fail (p=quarantine dis=none) header.from=redhat.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
+	s=arc-20240116; t=1785491243; c=relaxed/simple;
+	bh=rYVVC3DjZYTR3sEqRI8l7oR6QM4f2j4QYVXRzaisd1w=;
+	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
+	 Content-Type:Content-Disposition:In-Reply-To; b=SDGZkxsdu80mdwu7h3+GNqfIpEh+ZT274HdPiNaD2jdtCkJl2eX095x5HjhEy1cjf/+5bewEHmMpcIJYYqkyxmeqgbr+S40oB6SkeBmoCs+t0I7ac67W4qLemiiYX6l2dFDvrbcmdNuNo/JAaaWRzhlBfDLylB6IST9+DM77BzM=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=sleepmap.de; spf=pass smtp.mailfrom=sleepmap.de; dkim=pass (1024-bit key) header.d=sleepmap.de header.i=@sleepmap.de header.b=QGgLsGh/; arc=none smtp.client-ip=85.10.206.218
+Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=sleepmap.de
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=sleepmap.de
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="hUiKIaFB"
-Received: by mail-ej1-f54.google.com with SMTP id a640c23a62f3a-c160420289bso147212166b.0
-        for <linux-rt-users@vger.kernel.org>; Wed, 29 Jul 2026 07:20:54 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20251104; t=1785334853; x=1785939653; darn=vger.kernel.org;
-        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
-         :to:from:sender:from:to:cc:subject:date:message-id:reply-to
-         :content-type;
-        bh=Xv/Yq7gl9gdrKbO1FMT2QzFuUW1z4siUwldsc+iZxmk=;
-        b=hUiKIaFBU+iUASpmdwIAxkF66ADVlAp8+pY4rocZSPwA1r9TxyVdSNy0AEoUqnUfKa
-         6ScoJb8i079wOO52l75NWdzfb94pRpzc/J8Uv7zwhpc2Sif9jzqT7ndxGXv6Vd7ETqMy
-         b7uqP0SAkn9gtHsGOl7xhQLtaWb/Oz97dGDjYUNhbta6dY3HLD24q/g+MMgmK7hHbNbo
-         mtgm4iv2eDyPM2Nwp8dJejk1XE6NwRZA4Ylq6axq6cPikrFNgNEFGmQ76xEoozKr0Pkr
-         2syRGtvxRATSGQLTjyXk4h9OiQNsOunBOF2do4c8rIzyVQIC36ezhrBeLoAzE4hYjIph
-         3gEw==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20251104; t=1785334853; x=1785939653;
-        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
-         :to:from:sender:x-gm-gg:x-gm-message-state:from:to:cc:subject:date
-         :message-id:reply-to:content-type;
-        bh=Xv/Yq7gl9gdrKbO1FMT2QzFuUW1z4siUwldsc+iZxmk=;
-        b=lbM98wnTvNsCBQaUQwdCUOHcNwHqU7eUCKu71tZGCHArNpZ8owlf+L90hAHvFrPqqw
-         UqdaYERmJB3ocx8UM7TQZhoR13nJaK4ALU5jC4iVEmEyLG8SNtEen2Qf637u0slDsucQ
-         FbI2dGW7wnYg//+YhaBABiWT2VV9tPlftzxO66CsoF6dpLtvgILriVH3XWa3wWNWXD2M
-         d4RovPw5Y8fVPUaf6N13MBKIHZ3HwTJgXMjUFtg90xPerDBnCNOOJvEHFrGeME8dtt9F
-         HqwnUWrChdeV9StkiiUfljcbLZHRC3EUnqdeKfIYGLW9Y6bryPZb5DCOLPPJHpTJhtGz
-         MOyA==
-X-Gm-Message-State: AOJu0Yydz04/D0O5QPcrmoPBKw3voMpShGf3+u2EpaZQDpl8GDvmWVok
-	S2x/pHTHZnSYLtpb8zPOEDVuauCVaMGSTfe7mtDSC+WfKFPS5/sRPfiQFvUfoQ==
-X-Gm-Gg: AR+sD10iOpBcc9C8kxsqLq1VDCVwsHRntVDgUmWOQtZb5pFrMsxVn8noyZRwnAB+82M
-	Bdv1StD/N6RUp5JNz05tiI5Pt7nm+Mx3rHJsnQkMw0jHuilxGCAseOfc+OYhYU6v+wDoHBOzi5P
-	2P5VFz2wtD/bfMBlXMqrqLsFKRmyLs2otQChYlPqmxgmlxyF0SK3kHXy0NFaFivz2O+hz07NJpH
-	ecKGwqF3idi7N2YknyJFmb4j4Lh3Qs07/GyfEcdjbzxz8a+cP4jM2SQDpR2w4gxbL+9PuTxM23o
-	cms19pLebm2CLOMkb3O3c6wKVueRHAWtE0lZ5FRmuB9Ve8dSt9hp/D0rJg4jQxFWYQbmfEKWdiv
-	XuRCbjXev25BaL+82gigst2ApSDk0MG6Qk2jqWQqwyT/TyiloTrbxM6ffAexZ3NZwPQceu12p5u
-	gNKLLcAvEFUovIy225gcYKSFhtHBQ7ujSjQqmAdmbtDwL7LJmC+QO/y27AFoAk1nJfw8jrJ6mtS
-	Tjmq4dhmtHfMlW44BhWyWPTltEBcgOKTSlQWW++EFsGD8dssc9z2s8=
-X-Received: by 2002:a17:907:94d5:b0:c12:86a5:3ada with SMTP id a640c23a62f3a-c1f72142f16mr426005566b.36.1785334852390;
-        Wed, 29 Jul 2026 07:20:52 -0700 (PDT)
-Received: from Cumhall.redhat.com ([174.95.68.136])
-        by smtp.gmail.com with ESMTPSA id a640c23a62f3a-c1f84022981sm124138066b.62.2026.07.29.07.20.51
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Wed, 29 Jul 2026 07:20:52 -0700 (PDT)
-Sender: John Kacur <jkacur@gmail.com>
-From: John Kacur <jkacur@redhat.com>
-To: linux-rt-users@vger.kernel.org
-Cc: Clark Williams <williams@redhat.com>
-Subject: [PATCH] tuna: Add error handling to cpuset profile save function
-Date: Wed, 29 Jul 2026 10:20:36 -0400
-Message-ID: <20260729142036.27868-1-jkacur@redhat.com>
-X-Mailer: git-send-email 2.55.0
+	dkim=pass (1024-bit key) header.d=sleepmap.de header.i=@sleepmap.de header.b="QGgLsGh/"
+DKIM-Signature: v=1; a=rsa-sha256; c=simple/simple; d=sleepmap.de;
+	s=RzV2MS86Cdvz; t=1785490820;
+	bh=rYVVC3DjZYTR3sEqRI8l7oR6QM4f2j4QYVXRzaisd1w=;
+	h=Date:From:To:Cc:Subject:References:In-Reply-To;
+	b=QGgLsGh/kG9d99FCaYM5Wo4DQjRiJT3I/WYalvlESMnEMtLKfc2mJQQc0QTsSWyWh
+	 v/IDunzvwXt/iiLF0kOkGATioMkUYr2AaTBOr4uRPOzsp/VERqFNrOOPpr4NcsNjZP
+	 ay2ZcfB+FK6ge2oA9NKUh+eOW8a4lp7CrBeJkGhk=
+Date: Fri, 31 Jul 2026 11:40:12 +0200
+From: David Runge <dave@sleepmap.de>
+To: John Kacur <jkacur@redhat.com>
+Cc: linux-rt-users@vger.kernel.org, Clark Williams <williams@redhat.com>
+Subject: Re: [ANNOUNCE] tuna v0.21 released
+Message-ID: <amxtfI7-b5L_5Grd@hmbx>
+References: <20260728213631.285648-1-jkacur@redhat.com>
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
 List-Subscribe: <mailto:linux-rt-users+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
+Content-Type: multipart/signed; micalg=pgp-sha512;
+	protocol="application/pgp-signature"; boundary="fyrfiHYIZiJgSA45"
+Content-Disposition: inline
+In-Reply-To: <20260728213631.285648-1-jkacur@redhat.com>
 
-The save_cpusets() function would crash with an unhandled exception
-if the parent directory of the target file didn't exist. This is
-problematic when users try to save to /etc/tuna/config.yaml and
-the /etc/tuna directory hasn't been created yet.
+--fyrfiHYIZiJgSA45
+Content-Type: text/plain; protected-headers=v1; charset=utf-8
+Content-Disposition: inline
+Date: Fri, 31 Jul 2026 11:40:12 +0200
+From: David Runge <dave@sleepmap.de>
+To: John Kacur <jkacur@redhat.com>
+Cc: linux-rt-users@vger.kernel.org, Clark Williams <williams@redhat.com>
+Subject: Re: [ANNOUNCE] tuna v0.21 released
 
-This commit adds proper error handling:
-- Automatically creates parent directories if they don't exist
-  using os.makedirs() with exist_ok=True
-- Catches PermissionError and OSError exceptions
-- Returns 0 and prints clear error messages instead of crashing
+On 2026-07-28 17:36:31 (-0400), John Kacur wrote:
+> Tag: v0.20
 
-Also moves the os import to the top of the file for cleaner code
-and removes a duplicate import from within apply_cpusets().
+Hi John,
 
-This matches the error handling already present in apply_cpusets()
-and provides a better user experience.
+congrats on the new release!
 
-Assisted-by: Claude:claude-sonnet-4-5
-Signed-off-by: John Kacur <jkacur@redhat.com>
----
- tuna/profile.py | 35 ++++++++++++++++++++++++-----------
- 1 file changed, 24 insertions(+), 11 deletions(-)
+As tag v0.20 is from nine months ago, I guess you meant v0.21?
+However, this tag does not exist yet. Did you forget to push it?
 
-diff --git a/tuna/profile.py b/tuna/profile.py
-index 8372d081546f..fc1a64188c7e 100644
---- a/tuna/profile.py
-+++ b/tuna/profile.py
-@@ -9,6 +9,7 @@ including cpuset definitions.
- """
- 
- import datetime
-+import os
- import sys
- from ruamel.yaml import YAML
- 
-@@ -64,16 +65,29 @@ def save_cpusets(filename, get_cpusets_info_func):
-     yaml.default_flow_style = False
-     yaml.width = 4096  # Avoid line wrapping
- 
--    with open(filename, 'w') as f:
--        # Write header comments
--        f.write("# Tuna RT System Profile - Cpuset Configuration\n")
--        f.write(f"# Generated: {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
--        f.write("#\n")
--        f.write("# This file can be applied with: tuna cpuset apply <filename>\n")
--        f.write("#\n\n")
--
--        # Write YAML structure
--        yaml.dump(profile, f)
-+    try:
-+        # Create parent directories if they don't exist
-+        parent_dir = os.path.dirname(filename)
-+        if parent_dir:  # Only if filename has a directory component
-+            os.makedirs(parent_dir, exist_ok=True)
-+
-+        with open(filename, 'w') as f:
-+            # Write header comments
-+            f.write("# Tuna RT System Profile - Cpuset Configuration\n")
-+            f.write(f"# Generated: {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
-+            f.write("#\n")
-+            f.write("# This file can be applied with: tuna cpuset apply <filename>\n")
-+            f.write("#\n\n")
-+
-+            # Write YAML structure
-+            yaml.dump(profile, f)
-+
-+    except PermissionError:
-+        print(f"Error: Permission denied writing to '{filename}'", file=sys.stderr)
-+        return 0
-+    except OSError as e:
-+        print(f"Error writing profile to '{filename}': {e}", file=sys.stderr)
-+        return 0
- 
-     return len(cpuset_entries)
- 
-@@ -144,7 +158,6 @@ def apply_cpusets(filename, cpuset_module, verbose=False):
- 
-         try:
-             # Check if cpuset already exists
--            import os
-             cpuset_path = os.path.join('/sys/fs/cgroup', name)
-             if os.path.exists(cpuset_path):
-                 print(f"Warning: Cpuset '{name}' already exists, skipping", file=sys.stderr)
--- 
-2.55.0
+FWIW: On Arch Linux we are using the tags of the tuna repository to be informed
+of new versions of the project and the auto-generated tarballs, made available
+via the cgit interface to build from.
 
+Best,
+David
+
+--fyrfiHYIZiJgSA45
+Content-Type: application/pgp-signature; name=signature.asc
+
+-----BEGIN PGP SIGNATURE-----
+
+iHUEABYKAB0WIQR8efy7g3Ll3lsX4JqQ1LlkHgkpcQUCamxtfAAKCRCQ1LlkHgkp
+cZt9AP44XTrMpiYZxd557uUvvWD1BxZJPDOSl5bw54BKWoDX/AD+JXCiO+lEblX7
+qQXzPv6Z3NBHwsEEE6Vk5Ca3o3DXNAs=
+=dbxK
+-----END PGP SIGNATURE-----
+
+--fyrfiHYIZiJgSA45--
