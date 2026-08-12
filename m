@@ -1,154 +1,124 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+Received: from mail-qv1-f46.google.com (mail-qv1-f46.google.com [209.85.219.46])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 6098A382397
-	for <linux-rt-users@vger.kernel.org>; Wed, 12 Aug 2026 19:54:24 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 6A8CA395AFE
+	for <linux-rt-users@vger.kernel.org>; Wed, 12 Aug 2026 21:14:37 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.219.46
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1786564465; cv=none; b=eM50rNDFvELkJmTOPCBmrlGNID24Kmr7QbHirLxm8JVLEMLuk2RL6CjgCmb7zSBeBYcWHD57s2na1K2H1rZBnoPpM1Ku3m+csNG32uZvI0WSrUUDwlIXBTMcmayJOmjXshgOU7qHCPShLBX/N/3euy1KZG/TUU8xrk4bGY9IRfM=
+	t=1786569278; cv=none; b=LR59ITevtfOK+Ak1UP3k5EXGJcwToose7ldnavu3Tln49gFRCT6OLGveif9MKuE6WuMjv2ZZhvWeVs33o/mxqjmlYKBnM7SfPyQ0WMwA3zd1b3HtSChr83fPesfrNZJy7GGxvhCp/42xgeagvU+BFKUQHo/94jQLvxSo78mUJTA=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1786564465; c=relaxed/simple;
-	bh=bian4c/7chKD1E1Sq13XNMYsMh4i4Jr4yclKiTCv+Pc=;
-	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=aq7CEq3U5/FcbxWj1095gpHIFoFazd3a8aGDqDIdvAz0E5wMau2bTvxk5TDAlA2ug3QS/YOxIlRyhBTPAuZ5SaQW2lyaOp/s2vl8hFG9PO14IF174+5Ovi4Kwt7dKnfUUSAAJCzT6ykJGEnOaMErEWk5XBNJ7mWVGJVmZ+lMwws=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=CT412gqq; arc=none smtp.client-ip=170.10.133.124
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
+	s=arc-20240116; t=1786569278; c=relaxed/simple;
+	bh=lTUr9BZ/UyxY/wwslLhJ5K2hVdguFjeiODZhMLy3Usk=;
+	h=From:To:Subject:Date:Message-ID:In-Reply-To:References:
+	 MIME-Version:Content-Type; b=RI2luSAVjQZChjPlePieGnkRYdC7N6IA1szM2sfX3+lxXGPguDCU3EeumH1PtyAtSPs1ey3y6V8R7vSJLT55aZqBvl0fySUv29brk3CMB5skXg8c3IWDIYTKVOEMRqU0likjbUGUwJEzJRyimZuDoQA7ZYSmAyaLMh5ox7YXmrQ=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=fail (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=MLOY3Lry; arc=none smtp.client-ip=209.85.219.46
+Authentication-Results: smtp.subspace.kernel.org; dmarc=fail (p=quarantine dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="CT412gqq"
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1786564463;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:
-	 content-transfer-encoding:content-transfer-encoding;
-	bh=JVwAjzHJm4KlMQp3rfSP5R2uLU2/WdYI7xOe5CspWiE=;
-	b=CT412gqqwfyPawxka+1HgkI0GloN2Kp0Nv63aYBNqLqmCHCuJMMEPRyreoF9mVZ77XleTO
-	k855IuD0rw3yL6sayYc52kENCuIm1p9YmGEkZ3R86Por4XleTHWIS/y0SFAFDDwtCHMbqT
-	n5mwYJicPC47oG5bXIdsFQTCEKM69mU=
-Received: from mx-prod-mc-01.mail-002.prod.us-west-2.aws.redhat.com
- (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
- relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-460-lMVbCEX-OMK74n4WnV6ypQ-1; Wed,
- 12 Aug 2026 15:54:12 -0400
-X-MC-Unique: lMVbCEX-OMK74n4WnV6ypQ-1
-X-Mimecast-MFC-AGG-ID: lMVbCEX-OMK74n4WnV6ypQ_1786564451
-Received: from mx-prod-int-10.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-10.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.95])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
-	(No client certificate requested)
-	by mx-prod-mc-01.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 5BB0A1955F5A
-	for <linux-rt-users@vger.kernel.org>; Wed, 12 Aug 2026 19:54:11 +0000 (UTC)
-Received: from fedora.redhat.com (unknown [10.2.16.119])
-	by mx-prod-int-10.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 36F4F422;
-	Wed, 12 Aug 2026 19:54:11 +0000 (UTC)
-Received: from fedora.redhat.com (localhost [127.0.0.1])
-	by fedora.redhat.com (Postfix) with ESMTPS id E68F62CF0DE;
-	Wed, 12 Aug 2026 15:54:09 -0400 (EDT)
-Received: (from sanasharma@localhost)
-	by fedora.redhat.com (8.18.1/8.18.1/Submit) id 67CJs9me378372;
-	Wed, 12 Aug 2026 15:54:09 -0400
-From: Sana Sharma <sansshar@redhat.com>
-To: linux-rt-users@vger.kernel.org
-Cc: Sana Sharma <sansshar@redhat.com>
-Subject: [PATCH] rteval: Updated parameter names
-Date: Wed, 12 Aug 2026 15:52:57 -0400
-Message-ID: <20260812195257.378272-1-sansshar@redhat.com>
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="MLOY3Lry"
+Received: by mail-qv1-f46.google.com with SMTP id 6a1803df08f44-8edda5d56a5so662296d6.3
+        for <linux-rt-users@vger.kernel.org>; Wed, 12 Aug 2026 14:14:37 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20251104; t=1786569276; x=1787174076; darn=vger.kernel.org;
+        h=content-transfer-encoding:content-type:mime-version:references
+         :in-reply-to:message-id:date:subject:to:from:sender:from:to:cc
+         :subject:date:message-id:reply-to:content-type;
+        bh=plmh1l3/Y0w3EfFM3o97kpu0+lTn+MpJijiQxQiqnak=;
+        b=MLOY3LrytCiCldm9/Q6WgcI4JSodj61wZRR7qRHsGmu6wgPoTSsp3KNDSY8OsseNcD
+         o+UIjgzmvhqbC3BWsg5F4i/rsf4I/mcuzewHx2Bg+JmIqasKuDO2nADzAJZ9/b4wTXQl
+         2F1Od+k99hR/P2xFVMTuTNo+x5QoCY0j+7fVP+JbYeNJxiio4Ug1TT3jNIHIqbt38aOi
+         lxIshl3IQAo7gMWuhPMzkQMsjoqtfBdqU+38mjsaaAxkRsvt7wvVXyafD+jnq1rbrYTO
+         eN6lF1i6cA9QWSP8wIDcwITta9YNnzs5Yh9nZr80R3OCZDOt/yhq76f0URW+eXO9w+Pi
+         gEcw==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20251104; t=1786569276; x=1787174076;
+        h=content-transfer-encoding:content-type:mime-version:references
+         :in-reply-to:message-id:date:subject:to:from:sender:x-gm-gg
+         :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to
+         :content-type;
+        bh=plmh1l3/Y0w3EfFM3o97kpu0+lTn+MpJijiQxQiqnak=;
+        b=Agz3DTjTciy5lWo0qVwVtMA0oWiBEa5vblSxNW1fKaiit8BxWwpv1UQS+KV0oCLRSw
+         NCmI37+bwDIr+usnGDR9IHIOzVjjtOmabIiSsOR8dRgD+TVmx0IjNtTsSCCyHuhd2J9o
+         eb60EaFAdUd9hO9Lih67MYr4dgmvbQ/S7AkhJx/vbWvCn0s8hGk6YJSA4JCFU+LeiLR9
+         yADKtY5YgC+uj5kA63yF8w+UcEzlYzS+xzKKU2UBySKeDbuzdCcehHp7wdV5jrSfQkuk
+         ZeEujVfbeaxCgI8bsNyDOLt4AmeJp1IvXD/EhDqwXBMaCCAf6Jt+qFSAIVZhgdZcnaJ/
+         ayhw==
+X-Gm-Message-State: AOJu0YzeHLsWNtkGYzLJwSFsWaf+qmvrCw4rDXwVcpPJvw8R1Zso1leP
+	xWrwptfFKP84mnkR0qR1Rcsw1LYzejaDvDL3cNuNJWKEOXF1T20alpmWW9ltkQ==
+X-Gm-Gg: AR+sD11Xkx+4o0T+mq3SoDlLCw6pZhxLd5ZPbPLTe12DuD4kluJMDbD9u2zjh2BvqVk
+	5gjA9Odl9hvqKZ01j3+a5TTTBNjykM2tNvjqDOLItQwcZJeJWpZ2xnF9m58FiI5jD5d9fQssnZD
+	5hH/KynMotTsJlYbMZxYM8J0CD/atFfhHDeBPhK5eeXAT8XhYVYni5HcjMsygkGqT7asamisbch
+	rd4baOCejBkSvWkrZ41CInD5vz3WnDt8NrPOpXqEd9mr9tCl/thRrPY6GuZqYtAXtxubCz3p632
+	O76zSK3QQP11dlOYEzwmy23+uyL3+TwpRITejLoLiboRJvncQQIC1PUvtdQhsKFZTQ8vOEQZJcT
+	SWqKEuZF0qfTcUnLzpHC4r1+OjSbjHelQ22kqmk6PwxYQoh6y0p6v1OxQsbh7NguOLjXST/z3eF
+	XKOctL27IBIR1R3JVnftoI+Wf3x1iI7FrRshb+nhuc/YdnjC+82ooJPIgt1alPbwTAPbUFSFYHb
+	McC8wY8s96CUd4tm0kgrAb61eHmfp8KichGXAX1HhMkjJOayOrwJeU=
+X-Received: by 2002:a05:6214:3a06:b0:8f2:940e:2423 with SMTP id 6a1803df08f44-90a80b5b50dmr7818296d6.11.1786569276175;
+        Wed, 12 Aug 2026 14:14:36 -0700 (PDT)
+Received: from Cumhall.redhat.com ([174.95.68.136])
+        by smtp.gmail.com with ESMTPSA id 6a1803df08f44-90a81a9e489sm454116d6.35.2026.08.12.14.14.35
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Wed, 12 Aug 2026 14:14:35 -0700 (PDT)
+Sender: John Kacur <jkacur@gmail.com>
+From: John Kacur <jkacur@redhat.com>
+To: linux-rt-users@vger.kernel.org,
+	Sana Sharma <sansshar@redhat.com>
+Subject: Re: [PATCH] rteval: Updated parameter names
+Date: Wed, 12 Aug 2026 17:14:16 -0400
+Message-ID: <20260812211420.203625-1-jkacur@redhat.com>
+X-Mailer: git-send-email 2.55.0
+In-Reply-To: <20260812195257.378272-1-sansshar@redhat.com>
+References: <20260812195257.378272-1-sansshar@redhat.com>
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
 List-Subscribe: <mailto:linux-rt-users+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit
-X-Scanned-By: MIMEDefang 3.6 on 10.30.177.95
 
-Updated ModuleParameters, init and WorkloadPrepare with new parameter names.
-- option is now named stressor, and
-- arg is now named workers
-to promote clarity.
+Hi Sana,
 
-Unit tests have also been changed to reflect this parameter renaming
+Thanks for the patch! I've tested it and it works correctly:
 
-Signed-off-by: Sana Sharma <sansshar@redhat.com>
----
- rteval/modules/loads/stressng.py | 25 +++++++++++++------------
- tests/e2e/loads.t                |  6 +++---
- 2 files changed, 16 insertions(+), 15 deletions(-)
+```
+rteval --onlyload -D -d 1 --stressng-stressor cpu --stressng-workers 1
+[DEBUG] [stressng] starting with stress-ng --cpu 1 --taskset 0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15
+```
 
-diff --git a/rteval/modules/loads/stressng.py b/rteval/modules/loads/stressng.py
-index 03fe842..32e2dbd 100644
---- a/rteval/modules/loads/stressng.py
-+++ b/rteval/modules/loads/stressng.py
-@@ -23,8 +23,8 @@ class Stressng(CommandLineLoad):
-         self.__err = None
-         self.__nullfp = None
-         self.args = None
--        " Only run this module if the user specifies an option "
--        if self.cfg.option is not None:
-+        " Only run this module if the user specifies an stressor "
-+        if self.cfg.stressor is not None:
-             self._donotrun = False
-         else:
-             self._donotrun = True
-@@ -49,11 +49,11 @@ class Stressng(CommandLineLoad):
-         else:
-             self.__out = self.__err = self.__nullfp
- 
--        # stress-ng is only run if the user specifies an option
-+        # stress-ng is only run if the user specifies an stressor
-         self.args = ['stress-ng']
--        self.args.append(f'--{str(self.cfg.option)}')
--        if self.cfg.arg is not None:
--            self.args.append(self.cfg.arg)
-+        self.args.append(f'--{str(self.cfg.stressor)}')
-+        if self.cfg.workers is not None:
-+            self.args.append(self.cfg.workers) #default is 0
-         if self.cfg.timeout is not None:
-             self.args.append('--timeout')
-             self.args.append(self.cfg.timeout)
-@@ -135,13 +135,14 @@ def create(config, logger):
- def ModuleParameters():
-     """ Commandline options for Stress-ng """
-     return {
--        "option": {
--            "descr": "stressor specific option",
--            "metavar": "OPTION"
-+        "stressor": {
-+            "descr": "stressor name (eg. vm, cpu)",
-+            "metavar": "STRESSOR"
-         },
--        "arg": {
--            "descr": "stressor specific arg",
--            "metavar" : "ARG"
-+        "workers": {
-+            "descr": "number of workers(default: 0 = one per CPU)",
-+            "default": "0",
-+            "metavar" : "N"
-         },
-         "timeout": {
-             "descr": "timeout after T seconds",
-diff --git a/tests/e2e/loads.t b/tests/e2e/loads.t
-index c367c46..b49002c 100644
---- a/tests/e2e/loads.t
-+++ b/tests/e2e/loads.t
-@@ -20,15 +20,15 @@ check "stress-ng debug" \
-     "--onlyload -D -d 1" 0 '\[DEBUG\]'
- 
- check "stress-ng command" \
--    "--onlyload -D -d 1 --stressng-option procfs --stressng-arg 1" 0 \
-+    "--onlyload -D -d 1 --stressng-stressor procfs --stressng-workers 1" 0 \
-     'starting with stress-ng --procfs 1 --taskset'
- 
- check "stress-ng command, with --loads-cpulist" \
--    "--onlyload -D -d 1 --loads-cpulist=0-2 --stressng-option procfs --stressng-arg 1" 0 \
-+    "--onlyload -D -d 1 --loads-cpulist=0-2 --stressng-stressor procfs --stressng-workers 1" 0 \
-     'starting with stress-ng --procfs 1 --taskset 0,1,2'
- 
- check "stress-ng command, with --stressng-timeout" \
--    "--onlyload -D -d 1 --stressng-option procfs --stressng-arg 1 --stressng-timeout 2" 0 \
-+    "--onlyload -D -d 1 --stressng-stressor procfs --stressng-workers 1 --stressng-timeout 2" 0 \
-     'starting with stress-ng --procfs 1 --timeout 2'
- 
- # hackbench checks
--- 
-2.54.0
+The code changes look good and I'll apply this patch. However, the commit
+message could be more descriptive. Instead of just saying "to promote
+clarity", it would help reviewers to explain:
 
+1. **What problem does this solve?** (the old names were ambiguous/generic)
+2. **Why are the new names better?** (they clearly indicate purpose)
+3. **What's the user-visible impact?** (command-line option changes)
+
+For example:
+
+```
+rteval: Rename stress-ng module parameters for clarity
+
+The stress-ng module used generic parameter names "option" and "arg"
+which were ambiguous and didn't clearly indicate their purpose.
+
+Rename for better clarity:
+- "option" → "stressor": Better reflects that this specifies which
+  stress-ng stressor to run (cpu, vm, etc.)
+- "arg" → "workers": More accurately describes the parameter as the
+  number of worker processes (default: 0 = one per CPU)
+
+This changes the command-line options:
+  --stressng-option → --stressng-stressor
+  --stressng-arg → --stressng-workers
+
+Update unit tests to reflect the new parameter names.
+```
+
+Good commit messages help future maintainers understand the reasoning
+behind changes.
+
+Thanks again for the patch!
+
+Signed-off-by: John Kacur <jkacur@redhat.com>
