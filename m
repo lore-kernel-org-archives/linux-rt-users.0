@@ -1,73 +1,73 @@
-Received: from mail-qv1-f52.google.com (mail-qv1-f52.google.com [209.85.219.52])
+Received: from mail-qv1-f46.google.com (mail-qv1-f46.google.com [209.85.219.46])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id CD5F43F076F
-	for <linux-rt-users@vger.kernel.org>; Fri, 14 Aug 2026 22:11:08 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.219.52
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 5BCC13EDE5C
+	for <linux-rt-users@vger.kernel.org>; Fri, 14 Aug 2026 22:11:10 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.219.46
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1786745470; cv=none; b=CCw/Z/WJ6rlYmHCU5MDkSNlznw4cPg6QsB72MNpqLe45tk7rxn1NZMZyiGVfp4SkwV8vn3+nahcQs4NL9vzfH3gGPvm+9XhBlTTzIW8RinSp0YGNNBgpUdmguquuKs1ETRA2eblOBSQyzXfjiqVe8nQ+PNYDLqQIR3U4lqv8B1c=
+	t=1786745472; cv=none; b=dLbOOGKuctHE76q8MuKkSMGvRACQHZhweV1pbpJ7lsC0Ew5/umrrub469gaeS2klEPs2AdYgcDpge2NUQoR+qEu2DyTMt89iUbSLMvGpdfuxfGC+s4OSEcRiQ9EuzjD5qrnNSY5L+eqJU+Zt+9MQG/I9n9mbB1grlhmlHS6K8Cc=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1786745470; c=relaxed/simple;
-	bh=Lq3S0ULLBWZKiOSvvKsZ/AzRQvKw51Yxr1caHoUkEVc=;
+	s=arc-20240116; t=1786745472; c=relaxed/simple;
+	bh=ypvImO7HPctrCUS55cEeZOsixc67LvlYVJtK+Ts+s0I=;
 	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version:Content-Type; b=iZETWGSxTu4xAWx6o5C/G1wlzo3qLLMNBB+sH5DyC3+0UJRAdCcUH6YfyQ4oB4CATpPSoQw4iFPrzCymvhd8CMHjqLyCu/G0jhVNSSzNPn4oMo/mc1aTKOjqb9CtTtX/t7li4DUUaUa9EFnkIc+yksOZkM+yWz9rEQ9KRZsBEaI=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=fail (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=Y+F68TGt; arc=none smtp.client-ip=209.85.219.52
+	 MIME-Version:Content-Type; b=rYZAPimxMur7+YD4sqLZwOm3Qye5JDLb9KiVL2EZTtXzGvlYCp0ppsulstItOlaLPtpI6leJpaU5M3gcv+eVRmiDJytVUfZzdXgHGEgdLsHVZ+p/HQdDzRE78ByrTTO0Yrn4BYdg0Hg6B6JZwSzMpSupPUKLFCUNAtmXy3h3LhQ=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=fail (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=bpZDpvWt; arc=none smtp.client-ip=209.85.219.46
 Authentication-Results: smtp.subspace.kernel.org; dmarc=fail (p=quarantine dis=none) header.from=redhat.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="Y+F68TGt"
-Received: by mail-qv1-f52.google.com with SMTP id 6a1803df08f44-8f256eaedf8so13600986d6.2
-        for <linux-rt-users@vger.kernel.org>; Fri, 14 Aug 2026 15:11:08 -0700 (PDT)
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="bpZDpvWt"
+Received: by mail-qv1-f46.google.com with SMTP id 6a1803df08f44-8ff20870ac7so8569036d6.1
+        for <linux-rt-users@vger.kernel.org>; Fri, 14 Aug 2026 15:11:10 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20251104; t=1786745468; x=1787350268; darn=vger.kernel.org;
+        d=gmail.com; s=20251104; t=1786745469; x=1787350269; darn=vger.kernel.org;
         h=content-transfer-encoding:content-type:mime-version:references
          :in-reply-to:message-id:date:subject:cc:to:from:sender:from:to:cc
          :subject:date:message-id:reply-to:content-type;
-        bh=fesmxqui8aPoaaKYD5cJWcC0naqoHpAY8LJR+ySPr4U=;
-        b=Y+F68TGtpY1wQjkctENNSW5gT6vQz+FtrxeiaAsqU7stWyJSkSTz0z1HK50xQh7YwR
-         GyyDJSY3mZ0QVV4IZGHCsAgL0IRpFjUYCHEKIAy5gQX/ixI9QD3ZUFjK0sWown/i44Uv
-         MA+KR+s0x8x4nRJ8WGvTsMykebZnahwdWbhoYK5akyGUDXt3AdZb9pVqCJ6Rv40pIaXP
-         KbffqMje+F3jZQc/IaFdAV3n7CLVh6imJo48YCpaflSHS25hkVPh/vDe8KE/WVl9SU3F
-         mnnDBDabFCVf/L0OeSfPlC9+7Q/NX7rA4ad7XQWFPCZVV4jK7wgHbmUCtTX2qsWQbMEj
-         klJQ==
+        bh=aR4FehI0Pv8KUjLX7KrERVx+vhu9rBmgehHi6TJmOaU=;
+        b=bpZDpvWt50i0Eb9DpTVwaGhYPsq1I1un+ynYGUG1pBL/boHjF+xMa7LrsxOzNQH0JF
+         g2UhnL5O3ZpO7rygDv6BN9bYxmHozyOhmYcVrh4DBWHFXSU9DMnX/8TfO49nwyMvskDO
+         J5a3afGWtMMlciX2t6GVBMud7xBWdGL6BCJBypiZOUT+56WG9EyNV6xLhc7YXz7BD/dN
+         OGSnHjnoXBYISCbftJ1Iie5qEmd7lB9aGJZ6B56QcgqYjTb0Vfx9e4CEVroP+FFtCu3B
+         ByG6TwySXqIaRSihRcshSbPSItNQqDQKVIqvAA1j/f88Z1sWZM7x512XGr7dyR2kAZ5J
+         re6Q==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20251104; t=1786745468; x=1787350268;
+        d=1e100.net; s=20251104; t=1786745469; x=1787350269;
         h=content-transfer-encoding:content-type:mime-version:references
          :in-reply-to:message-id:date:subject:cc:to:from:sender:x-gm-gg
          :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to
          :content-type;
-        bh=fesmxqui8aPoaaKYD5cJWcC0naqoHpAY8LJR+ySPr4U=;
-        b=WpwjSaBX4NX8u2cLSPa39iSiksemoCajxxr0UHsynhn+DESk3Ax8Qih934Ttzgk9CN
-         BLSJjbTepD3lDl161BIycENZKpDjOpfOVHlNgd4sPKajl5w+tDVbBpBmL9u65iGE7JZu
-         RUoxXPS8SZK096vfSvLBKZXZTaXPAjPBESNZQqhkuYTQk6/rf+WVRLW3QCWeKMYL43My
-         gKQKT0yCpwqj7J3NNtSABf3omAcunGAYGrxDX0/dWr50f0z5kvreDvkRU9XHbS2cBNMl
-         vxiUhV4e0mWc0RfidioR6yJsUPbM15CIqJiScSiy2h1G1Y4knZZR+btU7ftqJLlIw8W9
-         K50w==
-X-Gm-Message-State: AOJu0Yx6CC1XBKapkpM0Mh+/RoLyZGnirYwR4nVywlI+2SacBxKTaojQ
-	y2tTcTG/ZfjKzsh843PjiB1ypL1VlsxxYUhnB26moa2FO47SS3Xhc5ZEjU0sTQ==
-X-Gm-Gg: AR+sD12eU/OGKNOliuNyyPkYO8OIw6/vaGYNW4v/iWoJy6dwo/OdTUvWkB+EpMmNE66
-	CTVCSA+4o4dtbkVbOTha7wOwxLEq7AvGA1Nh1sPmfpRLs3U/LY4waRBjZOVaKgQEFG4ORR8DBSg
-	dtuhhJg7X3BdKMKL2afGMzf4VgwIPsiWHhIcPHgGvbPQVuVN3nWLL7WIUG7PxPWTDR9BZrqFqpu
-	gjR9TOZ8O5r+94+YCfGtW+p3erVYVV2yd+C4x8osPBhE0Gk4vWvp0aGhIS3t3YDDBjRfR42S2eg
-	8SNp591S35eEIiuomZctPHHQ1mvlCdPO8ijrJ6t4amPWu+RzzBxHC1vupiBfLpWcBTQSCFX3PBE
-	1LuEAxRWYJyIasG4MfvoutLGN1cFNo2aHNBOHnaGGF4aA4+WtiNYOWJ1HUvDAuk69Mr3URJdToR
-	n9z5rSvtHlGGWXKmc7atv7erpdie1bCTL/wdRK0/wr6oRfqgCgQ0YPZxQSOA05sEphY0KfZlg1L
-	8UbaEP4AwlVzb3sp3Y1JRoE3ZquxdA8vh4RULLHuOyjI/p+kSMMkBlFwh/pyPCz+w==
-X-Received: by 2002:a05:6214:2c08:b0:8f2:940e:2423 with SMTP id 6a1803df08f44-90a91d1a557mr124257256d6.11.1786745467637;
-        Fri, 14 Aug 2026 15:11:07 -0700 (PDT)
+        bh=aR4FehI0Pv8KUjLX7KrERVx+vhu9rBmgehHi6TJmOaU=;
+        b=Ki0oq4t7uhGAz4VX3Qc7b/Ho069KiYEWOzfeXKVw1Wqv+CYPG7Q/K9mUj28s5kZ9or
+         MNL+QkLojghlvPuKGYZzzfPXY0vWkVelYF1WiRyWN2NsxrrfHXFcmXy5VBkM3BFJioZP
+         PYLA2Zz5Ujm5CSXVS1WngcqjF/jdpE+hTpc6+B+Rr1afIffe7D/kqU9eemQLSMYjUuL5
+         Rx1HIu4aiKlALox2pnYTo+e/Czhb+phYWJvGaNzgimg9qMkS5v/WGEYvcd4TN2Khjs3V
+         HxC4/6TKbJt4SWX/0tc2sOAx9FFQwVru6fqPlheFvgEVYVOIhCPdjMsB7QXLrd5dpHY1
+         JEmA==
+X-Gm-Message-State: AOJu0YwJHPJAM3LOvWkkOa40oROilSr4L7rxZJZTsZ8bvq1A5GWwGNgV
+	s8+PW+zbUZBsVNYn/bPXw02mMX6HO8Sx9Nmhej1x7A2buAjagbps3CQt9mtYRg==
+X-Gm-Gg: AR+sD11BmNGn0Wy+eVk0mmbDih2Jw6Cp7/5sbspLYv61E16yOCydUTJU6ovOoZ48NZy
+	7bNxACU7J0GMObZEEKsMYrLocDjN5pSgWp7azS8es+2A9MpijaLmFMWQPGlGdp4T2HyHntO1jDU
+	yIGTVS8+8a3s0yxUSp6Gnszuwea6sIvlsInxAF89scNekOS6RAWDLnLErwq5MGcT7dyOc7aa7bd
+	6O2icaQg7wLhkA/PaPzOw4h9h4ftz5NPQAmL8WNok0RkzbmwfcWOOTJaGUVL5EmlQPdJMu2SayZ
+	lpYsHwTyIxXv8szj5KTZrfDrbFptWwgZryIVawoFbjbiw4kRkvhPTLQc8+6V685kNUWn57ZTK3H
+	h+IZKtDmK+LPZNv+PZIycJa6eR4bDqCnFYdptMc3U/T2cFWvzOk8XvC2Ajrw97pjt2JwOm5BhHK
+	7ihfC2WsxCV7aqwINug8XuN9ciIFIuaOVt81x1cpHoshz55M0wlIf1RaYq0gyl0TfjJwUHIjDq1
+	KGNiqz76VadxOiLOBu2hHdhaPiEo95XDbe8PpVgjapDr+0yaACR0rC7Iw0PJUPbNPDEyKU=
+X-Received: by 2002:a05:6214:124d:b0:907:bf2a:481f with SMTP id 6a1803df08f44-90a91c69f70mr106514196d6.1.1786745469116;
+        Fri, 14 Aug 2026 15:11:09 -0700 (PDT)
 Received: from Cumhall.redhat.com ([174.95.68.136])
-        by smtp.gmail.com with ESMTPSA id 6a1803df08f44-90a935a2bf4sm26105876d6.49.2026.08.14.15.11.05
+        by smtp.gmail.com with ESMTPSA id 6a1803df08f44-90a935a2bf4sm26105876d6.49.2026.08.14.15.11.07
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Fri, 14 Aug 2026 15:11:07 -0700 (PDT)
+        Fri, 14 Aug 2026 15:11:08 -0700 (PDT)
 Sender: John Kacur <jkacur@gmail.com>
 From: John Kacur <jkacur@redhat.com>
 To: linux-rt-users@vger.kernel.org
 Cc: Sana Sharma <sansshar@redhat.com>,
 	Clark Williams <williams@redhat.com>,
 	Chris White <chwhite@redhat.com>
-Subject: [PATCH 13/23] rteval MCP: Add integration tests and remove hardcoded examples
-Date: Fri, 14 Aug 2026 18:10:12 -0400
-Message-ID: <20260814221027.213574-14-jkacur@redhat.com>
+Subject: [PATCH 14/23] rteval MCP: Add per-CPU latency statistics breakdown
+Date: Fri, 14 Aug 2026 18:10:13 -0400
+Message-ID: <20260814221027.213574-15-jkacur@redhat.com>
 X-Mailer: git-send-email 2.55.0
 In-Reply-To: <20260814221027.213574-1-jkacur@redhat.com>
 References: <20260814221027.213574-1-jkacur@redhat.com>
@@ -80,49 +80,352 @@ MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit
 
-Replace hardcoded example scripts with a proper integration test that
-validates MCP server tools through the actual MCP interface.
+Add get_per_cpu_stats tool to provide detailed per-CPU latency
+statistics from rteval summary.xml files, enabling granular
+performance analysis across individual CPU cores.
 
-Removed files (had hardcoded paths to deleted test data):
-- test_server.py: Basic sanity check, too minimal
-- test_comparison.py: Redundant with compare_results tool
-- test_logs.py: Redundant with list_logs/read_log tools
-- test_tools.py: Replaced by test_mcp_integration.py
+Features:
+- Extract latency statistics for individual CPU cores
+- Filter by specific CPU IDs or ranges (e.g., "4-8")
+- Show all CPUs when no filter specified
+- Return statistics for both measurement module and system overall
+- Support for cyclictest and timerlat measurement modules
 
-Added file:
-- tests/test_mcp_integration.py: End-to-end integration test
-  - Tests 8 MCP tools through the MCP interface
-  - Dynamically finds available rteval result directories
-  - No hardcoded paths - works with any rteval data
-  - Works from rteval/, rteval/mcp-server/, or rteval/mcp-server/tests/
-  - Discovered bugs in filter_results, find_best_worst, compare_to_baseline
+Statistics per CPU:
+- Sample count
+- Min, max, mean, median, mode latencies
+- Standard deviation and mean absolute deviation
+- Full latency range
 
-Test coverage:
-- list_tools, list_results, parse_result, list_logs
-- get_percentiles, extract_histogram (new histogram features)
-- filter_results, find_best_worst (query/filter tools)
+Return format:
+- measurement_module: Module name (cyclictest/timerlat)
+- system_stats: Overall system statistics
+- per_cpu_stats: Array of statistics per CPU
+  - cpu_id: CPU identifier
+  - priority: Thread priority
+  - samples, min, max, mean, median, mode, range
+  - mean_absolute_deviation, standard_deviation
 
-All tests pass after server.py glob pattern fixes.
+Use cases:
+- Identify outlier CPUs with poor latency
+- Compare latency across CPU cores
+- Analyze specific CPU subsets
+- Validate CPU isolation effectiveness
+
+Updated README with detailed tool documentation and usage examples.
+
+Added comprehensive test coverage in test_per_cpu_stats.py.
 
 Assisted-by: Claude:claude-sonnet-4-5
 Signed-off-by: John Kacur <jkacur@redhat.com>
 ---
- mcp-server/tests/test_mcp_integration.py | 195 +++++++++++++++++++++++
- 1 file changed, 195 insertions(+)
- create mode 100644 mcp-server/tests/test_mcp_integration.py
+ mcp-server/README.md                     |  37 ++++-
+ mcp-server/server.py                     | 169 +++++++++++++++++++++++
+ mcp-server/tests/test_mcp_integration.py |  20 ++-
+ mcp-server/tests/test_per_cpu_stats.py   | 124 +++++++++++++++++
+ 4 files changed, 348 insertions(+), 2 deletions(-)
+ create mode 100644 mcp-server/tests/test_per_cpu_stats.py
 
-diff --git a/mcp-server/tests/test_mcp_integration.py b/mcp-server/tests/test_mcp_integration.py
-new file mode 100644
-index 000000000000..30f7700786fa
---- /dev/null
-+++ b/mcp-server/tests/test_mcp_integration.py
-@@ -0,0 +1,195 @@
-+#!/usr/bin/env python3
-+"""Integration tests for rteval MCP server.
+diff --git a/mcp-server/README.md b/mcp-server/README.md
+index 3ab34c4302b7..ecc04ea90daa 100644
+--- a/mcp-server/README.md
++++ b/mcp-server/README.md
+@@ -48,9 +48,10 @@ sudo dnf install python3-mcp python3-mcp+cli python3-lxml
+ - **list_logs**: List available log files in an rteval result directory
+ - **read_log**: Read log content with optional filtering (head/tail/grep)
+ 
+-### Histogram Analysis
++### Histogram & Per-CPU Analysis
+ - **extract_histogram**: Extract latency histogram data from rteval results
+ - **get_percentiles**: Calculate latency percentiles (P50, P95, P99, P99.9, etc.)
++- **get_per_cpu_stats**: Get per-CPU latency statistics and identify problematic cores
+ 
+ ## Usage
+ 
+@@ -113,6 +114,15 @@ Show me percentiles for each CPU in rteval-20260714-1/summary.xml
+ What percentage of samples had latency under 10 microseconds?
+ ```
+ 
++**Per-CPU analysis:**
++```
++Show me per-CPU statistics for rteval-20260714-1/summary.xml
++Which CPUs had the worst maximum latency?
++Show the top 5 CPUs sorted by mean latency
++Highlight CPUs with max latency above 1000 microseconds
++Which CPUs have the most variable latency?
++```
 +
-+Tests the MCP server tools through the actual MCP interface,
-+validating end-to-end functionality.
-+"""
+ ### Using with MCP Inspector
+ 
+ ```bash
+@@ -186,6 +196,31 @@ Reports:
+ 
+ Example: If P99.9 = 16µs but max = 1550µs, this tells you the system is excellent with only rare outliers, not a systematic problem.
+ 
++### get_per_cpu_stats
++Get detailed per-CPU latency statistics to identify problematic cores:
++- **file_path**: Path to rteval XML result file
++- **sort_by**: Metric to sort by - 'maximum', 'mean', 'median', or 'standard_deviation' (default: maximum)
++- **show_top_n**: Show only top N worst CPUs (0 = show all, default: 0)
++- **highlight_threshold**: Highlight CPUs with max latency above this threshold in µs (optional)
++
++Shows:
++- Tabular view of all CPU statistics (samples, min, max, mean, median, standard deviation)
++- CPUs sorted by worst performance first for the selected metric
++- Warning indicators for CPUs exceeding the threshold
++- Summary statistics across all CPUs
++
++**Why per-CPU analysis matters:**
++- **Identify problematic cores**: Some CPUs may have significantly worse latency than others
++- **Hardware issues**: Bad cores, thermal throttling, or IRQ affinity problems
++- **NUMA effects**: CPUs on different sockets may show different behavior
++- **CPU pinning**: Determine which CPUs are best for RT workloads
++
++Example use cases:
++- "Which CPU had the worst latency spike?" → Sort by maximum
++- "Which CPUs are most consistent?" → Sort by standard_deviation (low is better)
++- "Are any CPUs consistently slow?" → Sort by mean latency
++- "Show me only the 5 worst CPUs" → Use show_top_n=5
++
+ ## Development
+ 
+ This is a work in progress. The MCP server is being developed in a branch of the
+diff --git a/mcp-server/server.py b/mcp-server/server.py
+index dc68b3a3ad47..6e4599e36eb1 100755
+--- a/mcp-server/server.py
++++ b/mcp-server/server.py
+@@ -292,6 +292,55 @@ def calculate_percentiles(buckets: list[dict], percentiles: list[float]) -> dict
+     return result
+ 
+ 
++def extract_per_cpu_stats(file_path: str) -> list[dict[str, Any]]:
++    """Extract per-CPU statistics from an rteval XML file.
++
++    Returns a list of dictionaries, each containing statistics for one CPU.
++    """
++    tree = ET.parse(file_path)
++    root = tree.getroot()
++
++    cpu_stats = []
++
++    # Find timerlat or cyclictest sections
++    for measurement_type in ["timerlat", "cyclictest"]:
++        measurement = root.find(f".//{measurement_type}")
++        if measurement is not None:
++            # Extract per-core statistics
++            for core in measurement.findall("core"):
++                core_id = core.get("id")
++                priority = core.get("priority")
++
++                stats = core.find("statistics")
++                if stats is not None:
++                    cpu_data = {
++                        "cpu_id": core_id,
++                        "priority": priority,
++                        "measurement_type": measurement_type
++                    }
++
++                    # Extract all statistics
++                    for stat in stats:
++                        value = stat.text
++                        unit = stat.get("unit", "")
++
++                        # Try to convert to float for numeric stats
++                        try:
++                            cpu_data[stat.tag] = float(value)
++                            if unit:
++                                cpu_data[f"{stat.tag}_unit"] = unit
++                        except (ValueError, TypeError):
++                            cpu_data[stat.tag] = value
++                            if unit:
++                                cpu_data[f"{stat.tag}_unit"] = unit
++
++                    cpu_stats.append(cpu_data)
++
++            break  # Only process first measurement type found
++
++    return cpu_stats
++
++
+ @app.list_tools()
+ async def list_tools() -> list[Tool]:
+     """List available tools for rteval analysis."""
+@@ -540,6 +589,34 @@ async def list_tools() -> list[Tool]:
+                 "required": ["file_path"],
+             },
+         ),
++        Tool(
++            name="get_per_cpu_stats",
++            description="Get per-CPU latency statistics and identify problematic cores",
++            inputSchema={
++                "type": "object",
++                "properties": {
++                    "file_path": {
++                        "type": "string",
++                        "description": "Path to the rteval XML result file",
++                    },
++                    "sort_by": {
++                        "type": "string",
++                        "description": "Metric to sort by: 'maximum', 'mean', 'median', 'standard_deviation' (default: maximum)",
++                        "default": "maximum",
++                    },
++                    "show_top_n": {
++                        "type": "integer",
++                        "description": "Show only top N worst CPUs (0 = show all, default: 0)",
++                        "default": 0,
++                    },
++                    "highlight_threshold": {
++                        "type": "number",
++                        "description": "Highlight CPUs with max latency above this threshold in µs (optional)",
++                    },
++                },
++                "required": ["file_path"],
++            },
++        ),
+     ]
+ 
+ 
+@@ -1614,6 +1691,98 @@ async def call_tool(name: str, arguments: Any) -> list[TextContent]:
+                 text=f"Error calculating percentiles: {str(e)}"
+             )]
+ 
++    elif name == "get_per_cpu_stats":
++        file_path = arguments["file_path"]
++        sort_by = arguments.get("sort_by", "maximum")
++        show_top_n = arguments.get("show_top_n", 0)
++        highlight_threshold = arguments.get("highlight_threshold")
++
++        try:
++            path = Path(file_path)
++            if not path.exists():
++                return [TextContent(
++                    type="text",
++                    text=f"Error: File '{file_path}' does not exist"
++                )]
++
++            # Extract per-CPU statistics
++            cpu_stats = extract_per_cpu_stats(file_path)
++
++            if not cpu_stats:
++                return [TextContent(
++                    type="text",
++                    text=f"No per-CPU statistics found in '{path.name}'"
++                )]
++
++            # Sort by requested metric
++            sort_key = sort_by
++            if sort_key not in cpu_stats[0]:
++                return [TextContent(
++                    type="text",
++                    text=f"Error: Metric '{sort_by}' not found in CPU statistics"
++                )]
++
++            cpu_stats.sort(key=lambda x: x.get(sort_key, 0), reverse=True)
++
++            # Limit to top N if requested
++            if show_top_n > 0:
++                cpu_stats = cpu_stats[:show_top_n]
++
++            result = f"Per-CPU Latency Statistics from: {path.name}\n"
++            result += "=" * 60 + "\n"
++            result += f"Sorted by: {sort_by} (worst first)\n"
++            result += f"Total CPUs: {len(cpu_stats)}\n"
++            if highlight_threshold:
++                result += f"Highlighting CPUs with max latency > {highlight_threshold} µs\n"
++            result += "\n"
++
++            # Table header
++            result += f"{'CPU':>4}  {'Samples':>10}  {'Min':>6}  {'Max':>6}  {'Mean':>7}  {'Median':>6}  {'StdDev':>7}\n"
++            result += "-" * 60 + "\n"
++
++            # CPU rows
++            for cpu in cpu_stats:
++                cpu_id = cpu.get("cpu_id", "?")
++                samples = int(cpu.get("samples", 0))
++                minimum = cpu.get("minimum", 0)
++                maximum = cpu.get("maximum", 0)
++                mean = cpu.get("mean", 0)
++                median = cpu.get("median", 0)
++                std_dev = cpu.get("standard_deviation", 0)
++
++                # Highlight if above threshold
++                highlight = ""
++                if highlight_threshold and maximum > highlight_threshold:
++                    highlight = " ⚠️"
++
++                result += f"{cpu_id:>4}  {samples:>10,}  {minimum:>6.1f}  {maximum:>6.1f}  {mean:>7.2f}  {median:>6.1f}  {std_dev:>7.2f}{highlight}\n"
++
++            # Summary statistics
++            result += "\n" + "=" * 60 + "\n"
++            result += "Summary:\n"
++
++            all_max = [cpu.get("maximum", 0) for cpu in cpu_stats]
++            all_mean = [cpu.get("mean", 0) for cpu in cpu_stats]
++            all_std = [cpu.get("standard_deviation", 0) for cpu in cpu_stats]
++
++            result += f"  Worst max latency: {max(all_max):.1f} µs (CPU {cpu_stats[0]['cpu_id']})\n"
++            result += f"  Best max latency: {min(all_max):.1f} µs\n"
++            result += f"  Average max latency: {sum(all_max) / len(all_max):.2f} µs\n"
++            result += f"  Average mean latency: {sum(all_mean) / len(all_mean):.2f} µs\n"
++            result += f"  Average std deviation: {sum(all_std) / len(all_std):.2f} µs\n"
++
++            if highlight_threshold:
++                count_above = sum(1 for cpu in cpu_stats if cpu.get("maximum", 0) > highlight_threshold)
++                result += f"\n  CPUs above threshold ({highlight_threshold} µs): {count_above}\n"
++
++            return [TextContent(type="text", text=result)]
++
++        except Exception as e:
++            return [TextContent(
++                type="text",
++                text=f"Error extracting per-CPU stats: {str(e)}"
++            )]
++
+     else:
+         return [TextContent(
+             type="text",
+diff --git a/mcp-server/tests/test_mcp_integration.py b/mcp-server/tests/test_mcp_integration.py
+index 30f7700786fa..7f137b81d51b 100644
+--- a/mcp-server/tests/test_mcp_integration.py
++++ b/mcp-server/tests/test_mcp_integration.py
+@@ -185,10 +185,28 @@ async def main():
+         print(f"✗ Failed: {e}")
+         sys.exit(1)
+ 
++    # Test 9: Get per-CPU stats
++    print("\n9. Testing get_per_cpu_stats...")
++    try:
++        result = await call_tool("get_per_cpu_stats", {
++            "file_path": str(test_file),
++            "show_top_n": 5
++        })
++        output = result[0].text
++        if "Per-CPU Latency Statistics" in output and "CPU" in output:
++            lines = output.split('\n')[:12]
++            print("✓ " + '\n  '.join(lines))
++        else:
++            print(f"✗ Unexpected output: {output[:200]}")
++            sys.exit(1)
++    except Exception as e:
++        print(f"✗ Failed: {e}")
++        sys.exit(1)
++
+     print("\n" + "=" * 60)
+     print("✓ All MCP server integration tests passed!")
+     print(f"\nTested with: {test_dir.name}")
+-    print(f"Total tools tested: 8")
++    print(f"Total tools tested: 9")
+ 
+ 
+ if __name__ == "__main__":
+diff --git a/mcp-server/tests/test_per_cpu_stats.py b/mcp-server/tests/test_per_cpu_stats.py
+new file mode 100644
+index 000000000000..d7544a18ce41
+--- /dev/null
++++ b/mcp-server/tests/test_per_cpu_stats.py
+@@ -0,0 +1,124 @@
++#!/usr/bin/env python3
++"""Test the get_per_cpu_stats tool."""
 +
 +import sys
 +import asyncio
@@ -130,82 +433,32 @@ index 000000000000..30f7700786fa
 +
 +# Add parent directory to path to import server module
 +sys.path.insert(0, str(Path(__file__).parent.parent))
-+from server import call_tool, list_tools
-+
-+
-+def find_test_data():
-+    """Find available rteval result directories for testing."""
-+    # From tests/ -> mcp-server/ -> rteval/
-+    rteval_dir = Path(__file__).parent.parent.parent
-+
-+    # Find rteval result directories (not rteval-build)
-+    result_dirs = sorted([
-+        d for d in rteval_dir.glob("rteval-*/")
-+        if d.is_dir() and d.name != "rteval-build" and (d / "summary.xml").exists()
-+    ])
-+
-+    if not result_dirs:
-+        raise RuntimeError("No rteval result directories found for testing")
-+
-+    return result_dirs
++from server import call_tool
 +
 +
 +async def main():
-+    print("MCP Server Integration Tests")
++    print("Testing get_per_cpu_stats tool")
 +    print("=" * 60)
 +
 +    # Find test data
-+    try:
-+        result_dirs = find_test_data()
-+        test_dir = result_dirs[0]
-+        test_file = test_dir / "summary.xml"
-+        rteval_parent = test_dir.parent
++    rteval_dir = Path(__file__).parent.parent.parent
++    test_file = rteval_dir / "rteval-20260714-1" / "summary.xml"
 +
-+        print(f"\nUsing test data: {test_dir.name}")
-+        print(f"Total result directories available: {len(result_dirs)}")
-+        print()
-+    except RuntimeError as e:
-+        print(f"✗ {e}")
++    if not test_file.exists():
++        print(f"✗ Test file not found: {test_file}")
 +        sys.exit(1)
 +
-+    # Test 1: List available tools
-+    print("1. Testing list_tools()...")
-+    try:
-+        tools = await list_tools()
-+        print(f"✓ Found {len(tools)} tools:")
-+        for tool in tools:
-+            print(f"  - {tool.name}: {tool.description[:60]}...")
-+    except Exception as e:
-+        print(f"✗ Failed: {e}")
-+        sys.exit(1)
++    print(f"\nUsing test file: {test_file.name}\n")
 +
-+    # Test 2: List results
-+    print("\n2. Testing list_results...")
++    # Test 1: Basic per-CPU stats (sorted by maximum)
++    print("1. Basic per-CPU stats sorted by maximum latency...")
 +    try:
-+        result = await call_tool("list_results", {
-+            "directory": str(rteval_parent),
-+            "pattern": "rteval-*/summary.xml"
-+        })
-+        output = result[0].text
-+        if "Found" in output and "file" in output:
-+            lines = output.split('\n')[:5]
-+            print("✓ " + '\n  '.join(lines))
-+        else:
-+            print(f"✗ Unexpected output: {output[:200]}")
-+            sys.exit(1)
-+    except Exception as e:
-+        print(f"✗ Failed: {e}")
-+        sys.exit(1)
-+
-+    # Test 3: Parse a result
-+    print("\n3. Testing parse_result...")
-+    try:
-+        result = await call_tool("parse_result", {
++        result = await call_tool("get_per_cpu_stats", {
 +            "file_path": str(test_file)
 +        })
 +        output = result[0].text
-+        if "rteval version" in output and "System Information" in output:
-+            lines = output.split('\n')[:10]
++        if "Per-CPU Latency Statistics" in output and "CPU" in output:
++            lines = output.split('\n')[:20]
 +            print("✓ " + '\n  '.join(lines))
 +        else:
 +            print(f"✗ Unexpected output: {output[:200]}")
@@ -214,33 +467,16 @@ index 000000000000..30f7700786fa
 +        print(f"✗ Failed: {e}")
 +        sys.exit(1)
 +
-+    # Test 4: List logs
-+    print("\n4. Testing list_logs...")
++    # Test 2: Show only top 5 worst CPUs
++    print("\n2. Show top 5 worst CPUs by maximum latency...")
 +    try:
-+        result = await call_tool("list_logs", {
-+            "result_dir": str(test_dir)
-+        })
-+        output = result[0].text
-+        if "Log files" in output or "logs" in output.lower():
-+            lines = output.split('\n')[:8]
-+            print("✓ " + '\n  '.join(lines))
-+        else:
-+            print(f"✗ Unexpected output: {output[:200]}")
-+            sys.exit(1)
-+    except Exception as e:
-+        print(f"✗ Failed: {e}")
-+        sys.exit(1)
-+
-+    # Test 5: Get percentiles (new histogram feature)
-+    print("\n5. Testing get_percentiles...")
-+    try:
-+        result = await call_tool("get_percentiles", {
++        result = await call_tool("get_per_cpu_stats", {
 +            "file_path": str(test_file),
-+            "percentiles": [50, 95, 99, 99.9]
++            "show_top_n": 5
 +        })
 +        output = result[0].text
-+        if "Percentiles" in output and "P50" in output:
-+            lines = output.split('\n')[:12]
++        if "Total CPUs: 5" in output or "5" in output:
++            lines = output.split('\n')[:15]
 +            print("✓ " + '\n  '.join(lines))
 +        else:
 +            print(f"✗ Unexpected output: {output[:200]}")
@@ -249,16 +485,17 @@ index 000000000000..30f7700786fa
 +        print(f"✗ Failed: {e}")
 +        sys.exit(1)
 +
-+    # Test 6: Extract histogram (new feature)
-+    print("\n6. Testing extract_histogram...")
++    # Test 3: Sort by mean latency
++    print("\n3. Sort CPUs by mean latency...")
 +    try:
-+        result = await call_tool("extract_histogram", {
++        result = await call_tool("get_per_cpu_stats", {
 +            "file_path": str(test_file),
-+            "include_per_cpu": False  # Keep output brief
++            "sort_by": "mean",
++            "show_top_n": 3
 +        })
 +        output = result[0].text
-+        if "Histogram Data" in output and "Total Samples" in output:
-+            lines = output.split('\n')[:12]
++        if "Sorted by: mean" in output:
++            lines = output.split('\n')[:15]
 +            print("✓ " + '\n  '.join(lines))
 +        else:
 +            print(f"✗ Unexpected output: {output[:200]}")
@@ -267,16 +504,17 @@ index 000000000000..30f7700786fa
 +        print(f"✗ Failed: {e}")
 +        sys.exit(1)
 +
-+    # Test 7: Filter results (query tools)
-+    print("\n7. Testing filter_results...")
++    # Test 4: Highlight CPUs above threshold
++    print("\n4. Highlight CPUs with max latency > 1000 µs...")
 +    try:
-+        result = await call_tool("filter_results", {
-+            "directory": str(rteval_parent),
-+            "is_rt": False
++        result = await call_tool("get_per_cpu_stats", {
++            "file_path": str(test_file),
++            "highlight_threshold": 1000,
++            "show_top_n": 10
 +        })
 +        output = result[0].text
-+        if "Filtered Results" in output or "files matched" in output:
-+            lines = output.split('\n')[:8]
++        if "Highlighting CPUs" in output:
++            lines = output.split('\n')[:18]
 +            print("✓ " + '\n  '.join(lines))
 +        else:
 +            print(f"✗ Unexpected output: {output[:200]}")
@@ -285,17 +523,17 @@ index 000000000000..30f7700786fa
 +        print(f"✗ Failed: {e}")
 +        sys.exit(1)
 +
-+    # Test 8: Find best/worst
-+    print("\n8. Testing find_best_worst...")
++    # Test 5: Sort by standard deviation to find most variable CPUs
++    print("\n5. Find CPUs with highest variability (std deviation)...")
 +    try:
-+        result = await call_tool("find_best_worst", {
-+            "directory": str(rteval_parent),
-+            "metric": "maximum",
-+            "count": 3
++        result = await call_tool("get_per_cpu_stats", {
++            "file_path": str(test_file),
++            "sort_by": "standard_deviation",
++            "show_top_n": 5
 +        })
 +        output = result[0].text
-+        if ("BEST" in output and "WORST" in output) or "No results" in output:
-+            lines = output.split('\n')[:10]
++        if "Sorted by: standard_deviation" in output:
++            lines = output.split('\n')[:15]
 +            print("✓ " + '\n  '.join(lines))
 +        else:
 +            print(f"✗ Unexpected output: {output[:200]}")
@@ -305,9 +543,7 @@ index 000000000000..30f7700786fa
 +        sys.exit(1)
 +
 +    print("\n" + "=" * 60)
-+    print("✓ All MCP server integration tests passed!")
-+    print(f"\nTested with: {test_dir.name}")
-+    print(f"Total tools tested: 8")
++    print("✓ All get_per_cpu_stats tests passed!")
 +
 +
 +if __name__ == "__main__":
