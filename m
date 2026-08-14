@@ -1,148 +1,182 @@
-Received: from mail-lf1-f54.google.com (mail-lf1-f54.google.com [209.85.167.54])
+Received: from mail-qv1-f51.google.com (mail-qv1-f51.google.com [209.85.219.51])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id DF42E3E16B9
-	for <linux-rt-users@vger.kernel.org>; Fri, 14 Aug 2026 21:12:49 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=pass smtp.client-ip=209.85.167.54
-ARC-Seal:i=2; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1786741972; cv=pass; b=aQ2pAkidYXt4Esy9yAvGmKGHWn0oXe0H2wPjTKcIR8nO+gjJGsLvLKe2pNRFPpaE0HOfcN/lxTo5dxPspUQrvKKmhQjSQGjCqiFgmzcZHHIpwyCluX9xw24oEpwhZDuNEV/4TOMo1WiijxR0ritZgBgIuT2fpa4rY0hAozXBXFc=
-ARC-Message-Signature:i=2; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1786741972; c=relaxed/simple;
-	bh=DRei2+deSPVy+InZVMN1mkoYxthiUeHYLiILPMCQGwE=;
-	h=MIME-Version:From:Date:Message-ID:Subject:To:Cc:Content-Type; b=Zw/g/KArNNqYJtSyrbRE/EpwFeYiqNpNQQ9VaQrdVv1fTPaXk88SBeBfljGNEQMs23c7HiOKrYb/w0DX/8jyC9XDs+kAxDrFz0WhUr7L+WkPXt7q9I1Ps3eal1WtZ9kX+b4jWMb/PGuyKXstczjAaSkDnVBOVQCN3oc7+OXjykc=
-ARC-Authentication-Results:i=2; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=HUW/Ynmh; arc=pass smtp.client-ip=209.85.167.54
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 8661033AD9C
+	for <linux-rt-users@vger.kernel.org>; Fri, 14 Aug 2026 22:10:48 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.219.51
+ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
+	t=1786745450; cv=none; b=qc+pILdWZSmCtEIG2lyvUe40WXkil5ok4+4NlEEWm3IrcFVWZy30wTQDR6hEm0FyfTw4IctpS12fiwU7PMqiV21j1dhWCnSEOBIRkWiGa1XDAmoSE1CWATR/6ti9zd+9KZ6/XcFacbLNPf/OXB1vEm9rvEbcyZUGHxEBEFc6KiE=
+ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
+	s=arc-20240116; t=1786745450; c=relaxed/simple;
+	bh=2uyWVzZGuLDxIYPCHYBUJxsAO+90Ug1aAJlbz6vUaFQ=;
+	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version:Content-Type; b=rRUdZufaqgPF3gTzl32nVSrSQYro58CD9xHR7AAY5KUWurMoZcXKRhnAtOw5zUPzaX79bUu2Fx2mRSuN3ohDJaSdGgHLpQCpZ4aG0VeT29FKFHfdQbRV0yHXR6hk7gcTy9YF/ka5uR7PgWGmR0981tmPrPy5/AqQKob0Rjtx8oM=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=fail (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=Z/NvKKN2; arc=none smtp.client-ip=209.85.219.51
+Authentication-Results: smtp.subspace.kernel.org; dmarc=fail (p=quarantine dis=none) header.from=redhat.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="HUW/Ynmh"
-Received: by mail-lf1-f54.google.com with SMTP id 2adb3069b0e04-5b0f19bea2fso1635101e87.1
-        for <linux-rt-users@vger.kernel.org>; Fri, 14 Aug 2026 14:12:49 -0700 (PDT)
-ARC-Seal: i=1; a=rsa-sha256; t=1786741968; cv=none;
-        d=google.com; s=arc-20260327;
-        b=ok9HzWy7rRdvl3hfqtJdvCVMdAX8fsS9qycYMECJwUGM9k7lr8EFuR6T4BVH3/OCBS
-         iAWwT61wqfjecKqRlTf4RyiSlIVdVPOXe2FMkZgN+lfKGSltTr3D7XQ/y25naDXlvMv2
-         pakB7yIyBJCrhHedEE1ItBPZfO4D+WdAwwW69ome6u0bMrq/zHBJVYqFbuu6vLO5MaK7
-         85w4gjSeNOlT/9cDh7LitsXWvg6avmjOdu90BS0R5UsCnKLz626KylnYAhigeLOPxNfm
-         p33X7DwcPOOihXq4mK5kTSMWwQFzFMXxdsD/cHX4vPREJJhhxr2TJjMDsEbJpwWpXfN1
-         lgLQ==
-ARC-Message-Signature: i=1; a=rsa-sha256; c=relaxed/relaxed; d=google.com; s=arc-20260327;
-        h=cc:to:subject:message-id:date:from:mime-version:dkim-signature;
-        bh=suChiBpI2zM7Kh/sweI6ufJ0V5/AtIy5NrlliylEVCA=;
-        fh=dQax5PCB0//cXR0W+OBI6Jv3LqSuRaCmQGTPAq2FlDU=;
-        b=eVSfWwhtX9XTywT+ySOypYiwoKMFEOtjJ9mphB9420GlOG+Xa5e3ityhspqbJV0XbG
-         nBoEEycbfGWuX7uC8bMP8Ch/Wfqhb+UX4yDUe+GU9K8bZvCuu9tzeBnjLJ6OetURhtKw
-         uac2ImArIlDM3p310xRDHwnHK/wmyZEVNy8sxxolGGgi6Oa/2lgI6lVQB+4OMMZ+/raD
-         NBZhuoZiF/GhBlanKIf81hyuq5N60RBzstbkRgTJrMO1OzVjaE2aayD98yBsphc084gQ
-         EtGYfRKPh0ebfDfyTnxfwyTgIfgaG0ta1oaOL3fnvKdRhok3XTIg8kCzL0ZLDfRQ4XNx
-         /vzg==;
-        darn=vger.kernel.org
-ARC-Authentication-Results: i=1; mx.google.com; arc=none
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="Z/NvKKN2"
+Received: by mail-qv1-f51.google.com with SMTP id 6a1803df08f44-8efb708b1a0so10956336d6.3
+        for <linux-rt-users@vger.kernel.org>; Fri, 14 Aug 2026 15:10:48 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20251104; t=1786741968; x=1787346768; darn=vger.kernel.org;
-        h=content-type:cc:to:subject:message-id:date:from:mime-version:from
-         :to:cc:subject:date:message-id:reply-to:content-type;
-        bh=suChiBpI2zM7Kh/sweI6ufJ0V5/AtIy5NrlliylEVCA=;
-        b=HUW/YnmheoEkrIDj2Y5pUFa3UI7EYOkGfcbBI3SJdCVN6nZgTujgMmReUdvSyLua3h
-         L8qdGP7/1E7JuVrtlzMVgd94N68foYdY0CABkzBepI3TOwpLfhAchD0kxIQyRci7+3+6
-         P2RIzZ2V8MP3iRGFgS6MBJdWdzeQjGDH0iBGB9XkEMp9+iPGia2tbrpy8Jl+elwkY8bT
-         4YFJzsOGkJFrPrr3gG5Fgiuacxf0sPoOw+5YKp3jizOOLN7c3a71Tx1H+NiPnNa/ABa1
-         yBcYE2cghuoVQZK+ANTX36lLdJP77e5Crhs9qYQs8OJzzjU/9+doDhaU/IOjSN4mwtW/
-         hAIw==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20251104; t=1786741968; x=1787346768;
-        h=content-type:cc:to:subject:message-id:date:from:mime-version
-         :x-gm-gg:x-gm-message-state:from:to:cc:subject:date:message-id
+        d=gmail.com; s=20251104; t=1786745447; x=1787350247; darn=vger.kernel.org;
+        h=content-transfer-encoding:content-type:mime-version:message-id:date
+         :subject:cc:to:from:sender:from:to:cc:subject:date:message-id
          :reply-to:content-type;
-        bh=suChiBpI2zM7Kh/sweI6ufJ0V5/AtIy5NrlliylEVCA=;
-        b=pmcoaNWcBRffUKiHDIoiup6cqTrAVLDVvWpTGbqyynu+uehm+4L+djASPAhj+QlbIR
-         s1i7R3w+zl+LulELnEaj0DbmAGU32jGSc3M1b+Ak9jXo28e6ZHIRhAkQz6wH73EjPtxK
-         c77Oiv8l4FuOAiWb+SwvUlf1/wTqxIsJ//H4gRIGsPlBDGek2nRaE6VmK9lb+WeeoTeR
-         9hhpN/43uCW84CwyjuqLN9vNncG9+mPk2T7InN4Fpbk7LSmhzMccnEHV0lZFxSmtiZjL
-         A1iva69F/NaygYunFVp2ofDCkRYELukdhtt/WmN0Cs1TNsf5nA6IBoARNHzX/9aiR2Ez
-         ea/w==
-X-Forwarded-Encrypted: i=1; AHgh+RoxhisaKu0iDC+81rKM7NhlvW3b8FqUcXaa+fLR+SnZfklUdC4iBVvH6Pe5vwdFMoJl8NawWWmp7pLu8Vr7dA==@vger.kernel.org
-X-Gm-Message-State: AOJu0YzkJvLUwvuphEoZ712VSSUMBjbrhAsSqIDgP+my1B68QiF3o6yQ
-	+Yxglh4tYXPV/lfRYe89amwhxIIdkgvYIquZZAQI3OoXe8r2oux8RXWkOfP1PEVPYTQ4Zi9p2W+
-	+PDjTgPRAluwnVegyfd4ERN6un7/MjNk=
-X-Gm-Gg: AR+sD111Mdo7tyoqcNs7aanu/cRCsdjlaI3fMOoe2FeHmyQ5qlhTsml4z5B9M0kcyD9
-	UxVAy36SQOWZBcfyzmsrwYvRa6aBIc0oUbZNpM+tv746bZQR62lq1v+xlzuIH99RuAbbnfGwMkK
-	S24egOPQmzBYLU7pnqYwwwHMoJnaVYC+CT5C23mW3Je5T0NxHou3fM+bWxQr8Mx7ijyzJt5d1P7
-	bBtiPbgaTj4+2HL8fCioGGW+eVnHn/YjVVCO2df986O2wTEmH91lwFCbhaahLhpGxGHMtlqicz5
-	gZRlmhYnJ6xhpbQeONTmZSggIKR35Sz2DLkDIY02gakj
-X-Received: by 2002:a05:6512:6681:20b0:5b3:f69:fef7 with SMTP id
- 2adb3069b0e04-5b459154ac0mr885241e87.4.1786741967554; Fri, 14 Aug 2026
- 14:12:47 -0700 (PDT)
+        bh=ErxegcYOPd+7+xkFFE/kq7mJfIccXH2ahvmKBMgW0ME=;
+        b=Z/NvKKN2i4I0IQ8u/7M/wdjtdKpxerMZFPwaIf3mDloq5xmbhegOuFi6LnbiLiazb1
+         s5ZMfNzsORWmwOjsjfGzj0W/Aa958MNDMCoI/+l1SmGcORuP/ylP4Lcv7NEqnA5VS0XP
+         Bg+Oj0wUG2Jx2ck/+ckquPJKHriYBbkUc0f3Z2n0GEAkqTOQqAqFCpeqjWVbS0QjxlSy
+         DyEsy8DCjYodNBlmM2Ck+kKx0EAlkW5gjoPIOnXbI/4mV9c9Kqou7oeoGhi1UOLhS6Qo
+         gBw7VLfLF8gUkZcVY5IZOkebGe0ADa345gD94HHmdZqn56TAkkVHcrwj+uwNtGSIytu+
+         nFLQ==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20251104; t=1786745447; x=1787350247;
+        h=content-transfer-encoding:content-type:mime-version:message-id:date
+         :subject:cc:to:from:sender:x-gm-gg:x-gm-message-state:from:to:cc
+         :subject:date:message-id:reply-to:content-type;
+        bh=ErxegcYOPd+7+xkFFE/kq7mJfIccXH2ahvmKBMgW0ME=;
+        b=gqpS93SkYH+GLgGA3jqIgoRkGr8ly5ggH0fPFTL8FgDtuHuWuVjGkuWo9bsKDhBkZY
+         AnSWc/tly4XQ3wYqHd12yhnUIBzba3/oiMmKtmQvLGVFz34zjzaXSjB3Nmthi0NMA6Eo
+         Mg+BKWtYnZCUEHd/Di5BpBiL4cltRMpo6ELbD37tWtVyd4TR3LqJ9FDalQbtQGK99tHh
+         XefBexkKElcZLrwj1GgBVlX45CQ2RA/Aeh/3DM08F2GTuGOtBDtCCOXh8TV7y1KKlLgm
+         lvN0Gn/19Ef3lGbyD1HnILxfJV7FYWVUiaopNQFDTMY4nUPQWzWLqhF69sxYlnWxe8aQ
+         PDEw==
+X-Gm-Message-State: AOJu0YwyY23LKPbNz95fdbAMVu+PO84oeMbq+49YY5gehYtSwcsbzROG
+	Qca82GRap9XkEZzNRoWtXaEivx8dRCrti9WyQGjvUZDKGTOEOJmeXEUIYyK2Wg==
+X-Gm-Gg: AR+sD11AzSJERulL0yvdfJ22vwTmWU5XHmbA+cyFsTQZMdBvyTfD/lA1MLnUrmGtUhs
+	Sjnc4iUdB8OXVn5bKhSaG6XurRHD5Wb3eJfCs0SddjDOne5NuMyIqMIpdXpkFMSGN0aI3OgoA0k
+	bucB5yffe2HyIL6B6OIlzWaUy80z1LfZJ6w3oyFed/UherGtKqFCL08vq0HLYvoDaanx4az6wLE
+	egsXaK5WyVK/2RpfMDqWg7TB8XPnsEhDk+5LhbuxuXuAOZswN3oizS9RpwqHcioA599dg2UfQ6X
+	5GE46Ohh+SxplLFZxO9Vz3hhi48Fa3V+88QfCUn3PNiz6XEIVdkj8/nuUe+mW3vSeSVM4wDePEA
+	zjl1lmLZZWv/dOXdAAKHF4XPuQHV65JExdOrNi06m4DXfaLhS3706L6VT7BVKCUe024gBBiJm/H
+	bn+eXdwydnEx3PWR6ra41ucB/TrIAZcFcmh6CVXZW4HdTAg6eSCBhEEcNPtS38Ytos+11iwLTAB
+	jftJ/2sBCIz2KY8aNivmxoq3Ku8+23j3xvXK9sZGvbDUS2Y5Fs/Dd0=
+X-Received: by 2002:a05:6214:501e:b0:907:840e:bf11 with SMTP id 6a1803df08f44-90a91cad1damr87899026d6.10.1786745447468;
+        Fri, 14 Aug 2026 15:10:47 -0700 (PDT)
+Received: from Cumhall.redhat.com ([174.95.68.136])
+        by smtp.gmail.com with ESMTPSA id 6a1803df08f44-90a935a2bf4sm26105876d6.49.2026.08.14.15.10.46
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Fri, 14 Aug 2026 15:10:46 -0700 (PDT)
+Sender: John Kacur <jkacur@gmail.com>
+From: John Kacur <jkacur@redhat.com>
+To: linux-rt-users@vger.kernel.org
+Cc: Sana Sharma <sansshar@redhat.com>,
+	Clark Williams <williams@redhat.com>,
+	Chris White <chwhite@redhat.com>
+Subject: [PATCH 00/23] rteval: Add MCP server for result analysis
+Date: Fri, 14 Aug 2026 18:09:59 -0400
+Message-ID: <20260814221027.213574-1-jkacur@redhat.com>
+X-Mailer: git-send-email 2.55.0
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
 List-Subscribe: <mailto:linux-rt-users+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-From: Martin King <martin3kx@gmail.com>
-Date: Fri, 14 Aug 2026 16:12:35 -0500
-X-Gm-Features: AUfX_mwPwIqgYkjCpI0inF8DAyhP-Non2hPQrAzUm6egGv1-qM_6abxz0-6x9l8
-Message-ID: <CAEB5A_91hob8ddOhW=PrO1=O7GrFmSxY3r1-_Ard6x8KHHuJGA@mail.gmail.com>
-Subject: [REGRESSION] sched/rt: NO_RT_PUSH_IPI causes multi-second PI-boost
- starvation in pro-audio workloads (dd29c017aed6)
-To: Steven Rostedt <rostedt@goodmis.org>, Peter Zijlstra <peterz@infradead.org>
-Cc: regressions@lists.linux.dev, linux-kernel@vger.kernel.org, 
-	stable@vger.kernel.org, linux-rt-users@vger.kernel.org
-Content-Type: text/plain; charset="UTF-8"
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
 
-Commit dd29c017aed6 ("sched/rt: Have RT_PUSH_IPI be default off for non
-PREEMPT_RT") causes reproducible multi-second audio dropouts on an ordinary
-non-PREEMPT_RT desktop running a DAW.
+This patch series adds an MCP (Model Context Protocol) server for querying
+and analyzing rteval test results. The server enables AI assistants and other
+MCP clients to programmatically access rteval data for multi-run analysis,
+regression detection, and performance trend analysis.
 
-Symptom
--------
-Audio cuts to silence for 0.2-3.5s at irregular intervals (roughly one per
-2-3 minutes of use) while the machine is otherwise idle and responsive.
+The MCP server provides tools to:
+- List and parse rteval XML result files
+- Compare multiple test runs side-by-side
+- Filter results by kernel version, date range, and latency thresholds
+- Extract histogram data and calculate latency percentiles
+- Analyze per-CPU latency statistics to identify problematic cores
+- Access log files with grep/head/tail filtering
+- Compare results against baselines and detect regressions
 
-Mechanism (as measured, not inferred)
--------------------------------------
-REAPER runs one SCHED_RR prio 20 audio thread plus ~15 SCHED_OTHER "livefx"
-worker threads. During a stall:
+Target users:
+- System administrators running rteval for real-time kernel validation
+- QE engineers performing performance regression testing
+- CI/CD pipelines requiring automated rteval result analysis
+- Developers analyzing system behavior under load
 
-  - the RT audio thread is blocked in rt_mutex_schedule() on a PI mutex
-  - exactly ONE livefx worker holds that mutex, has been PI-boosted to RT,
-    and is enqueued but never scheduled
-  - its schedstat shows run_ns ~0 with wait_ns tracking the entire stall:
+Key features:
+- Standards-based MCP protocol implementation
+- Comprehensive test suite with integration tests
+- Support for both cyclictest and timerlat histogram formats
+- Handles overflow buckets and varying histogram sizes
+- GPL-2.0-or-later licensed
 
-        reaper/livefx tid=43910  run=0.0ms  wait=3406.6ms  slices=2
-        (during a 3403ms dropout)
+Dependencies:
+- python3-mcp (Fedora package available)
+- python3-lxml (standard XML parsing)
 
-  - meanwhile ~17 sibling threads run normally with wait_ns = 0, and no
-    thread does meaningful work (largest run was 7.2ms across 3.4s)
-  - the machine stays responsive throughout; unrelated SCHED_OTHER work
-    proceeds at 84-94% of normal rate with 0-1ms runqueue wait
-  - all 16 cores keep taking timer interrupts at normal rates
+Testing:
+All tests pass via 'make test' in rteval_mcp/ directory. The server has
+been tested with Claude Code as an MCP client.
 
-So a single PI-boosted RT task sits on a runqueue, unmigrated, while other
-cores idle. With push disabled nothing hands it to an idle CPU.
+Installation:
+The server can be run from git checkout (./rteval_mcp/rteval-mcp-server)
+or installed system-wide. An example MCP configuration file is provided
+in mcp.json.example for packagers.
 
-Evidence
---------------------------------
-  kernel  RT_PUSH_IPI  playing   dropouts >=25ms          xruns
-  7.1.8   off (default)  19 min   8  (191ms - 3471ms)   bursts
-23/265/434 per min
-  7.1.3   on             39 min   0                     0
-  7.1.8   on             42 min   0                     0
+John Kacur (23):
+  rteval: Add prototype MCP server for result analysis
+  rteval: Implement compare_results functionality in MCP server
+  rteval: Add log file access tools to MCP server
+  rteval: mcp-server: Add Claude Code plugin configuration
+  rteval: Add .mcp.json for project-level MCP server configuration
+  rteval: mcp-server: Add rtla command line parser
+  rteval: mcp-server: Add batch analysis tool
+  rteval: mcp-server: Add query and filter capabilities
+  rteval MCP: Add histogram extraction and percentile analysis
+  rteval MCP: Reorganize tests into tests/ subdirectory
+  rteval MCP: Fix test_new_tools.py to find rteval result files
+  rteval MCP: Fix glob patterns to find rteval result files
+  rteval MCP: Add integration tests and remove hardcoded examples
+  rteval MCP: Add per-CPU latency statistics breakdown
+  mcp-server: Add overflow bucket support and cyclictest compatibility
+  mcp-server: Make tests generic and add Makefile integration
+  mcp-server: Add load information extraction and filtering
+  mcp-server: Rename server from rteval to rteval-mcp
+  mcp-server: Add GPL-2.0-or-later license headers to all files
+  mcp-server: Add Makefile for running tests
+  mcp-server: Add demo guide with example queries
+  mcp-server: Restructure as Python package with dynamic paths
+  mcp-server: Use relative path in .mcp.json and add example for
+    installation
 
-The third row differs from the first ONLY in the sched feature: Identical
-kernel, toolchain, GPU driver, project and audio configuration. At the
-observed broken rate ~13 dropouts were expected in that window; zero were
-seen, at both 25ms and 10ms detection thresholds (10ms is ~2 missed audio
-cycles at quantum 256 / 48kHz).
+ .mcp.json                                |    7 +
+ Makefile                                 |   10 +-
+ mcp.json.example                         |   11 +
+ rteval_mcp/.claude-plugin/plugin.json    |   18 +
+ rteval_mcp/DEMO.md                       |  462 +++++
+ rteval_mcp/DEPENDENCIES.md               |   33 +
+ rteval_mcp/Makefile                      |   51 +
+ rteval_mcp/README.md                     |  490 ++++++
+ rteval_mcp/__init__.py                   |   13 +
+ rteval_mcp/__main__.py                   |   33 +
+ rteval_mcp/manifest.json                 |   18 +
+ rteval_mcp/rteval-mcp-server             |   21 +
+ rteval_mcp/rteval_server.py              | 2019 ++++++++++++++++++++++
+ rteval_mcp/tests/test_histogram.py       |   82 +
+ rteval_mcp/tests/test_mcp_integration.py |  220 +++
+ rteval_mcp/tests/test_new_tools.py       |  142 ++
+ rteval_mcp/tests/test_per_cpu_stats.py   |  134 ++
+ 17 files changed, 3763 insertions(+), 1 deletion(-)
+ create mode 100644 .mcp.json
+ create mode 100644 mcp.json.example
+ create mode 100644 rteval_mcp/.claude-plugin/plugin.json
+ create mode 100644 rteval_mcp/DEMO.md
+ create mode 100644 rteval_mcp/DEPENDENCIES.md
+ create mode 100644 rteval_mcp/Makefile
+ create mode 100644 rteval_mcp/README.md
+ create mode 100644 rteval_mcp/__init__.py
+ create mode 100644 rteval_mcp/__main__.py
+ create mode 100644 rteval_mcp/manifest.json
+ create mode 100755 rteval_mcp/rteval-mcp-server
+ create mode 100755 rteval_mcp/rteval_server.py
+ create mode 100644 rteval_mcp/tests/test_histogram.py
+ create mode 100644 rteval_mcp/tests/test_mcp_integration.py
+ create mode 100644 rteval_mcp/tests/test_new_tools.py
+ create mode 100644 rteval_mcp/tests/test_per_cpu_stats.py
 
-Workaround
-----------
-  echo RT_PUSH_IPI > /sys/kernel/debug/sched/features
+-- 
+2.55.0
 
-Applied at boot via a systemd unit.
-
-System
-------
-  AMD Ryzen 7 5800X (8c/16t), Arch Linux
-  kernel 7.1.8-arch1-3 (and 7.1.5, 7.1.6 - all affected; 7.1.3 is clean)
-  PipeWire 1.6.8 + pipewire-jack, Focusrite Scarlett 18i20, quantum 256 @ 48kHz
-  CONFIG_PREEMPT_RT not set
