@@ -1,73 +1,73 @@
-Received: from mail-qt1-f172.google.com (mail-qt1-f172.google.com [209.85.160.172])
+Received: from mail-qv1-f47.google.com (mail-qv1-f47.google.com [209.85.219.47])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 4C94F3DAAAA
-	for <linux-rt-users@vger.kernel.org>; Fri, 14 Aug 2026 22:11:01 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.160.172
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id DB0D33E3C53
+	for <linux-rt-users@vger.kernel.org>; Fri, 14 Aug 2026 22:11:02 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.219.47
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1786745463; cv=none; b=U2ryc+jYa2fJ3yk0+dNuXDyQaiqsuaivJHKYjrGcb+HRHr9+/6XZZHtnnBMDZrN0zxwkslg6TLt6wcKWozf71zDQwT4DxNFW5AdMMalXq0Vs0BP7lJRPJTKsiiUTXxtPzX7EyHE30T5ZEERSmlYLEq9YC8TGopZtZK4i+SINM+s=
+	t=1786745464; cv=none; b=PNbkzRPUY9JhadkdeWGldmvPZLEqj+oykgeq6VdJVMMYKlyf0LdF7J0PbShqT/GHIi5iPyZoSN5bbTJ40rxxZjEgGzGtT/llLBnR+WbVwjwl2Vq7xxuYaOC9dOaOSGvU0xJoebKVghY3tANDAS+0hyjgtwdNsl4uESanyMI086Q=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1786745463; c=relaxed/simple;
-	bh=vYVs+jNAhOdDNkrEe1Q25LxGiYq4MPNnCI+5DP4/A6o=;
+	s=arc-20240116; t=1786745464; c=relaxed/simple;
+	bh=D624IfakZetNm+O187lTA87YIAAgPskPojHQtuLpJOk=;
 	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version:Content-Type; b=PTReGIKMo/tEEx0bUr10nBbsHNMEqj73nXT6WfvjNmXhoXzswnUDe2OlK/nyMRI62e6Csqgqu6LUcQDc8k1rOValVkaR0sb5+nadCiV3Tw3Otx0tn15nyZtgZCF0wWyFw9KOkog+aWKLC74Cz8G5XuUKRT47pm5HVPeyxXQfceU=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=fail (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=HCIa+Hzm; arc=none smtp.client-ip=209.85.160.172
+	 MIME-Version:Content-Type; b=DZAOIYJHYi/Ih1Cy+2ukxJ5A+23L7sLMiWqvH+ioAzCgvYIHOu/kCF65ApOqJIqAxt7vdsAYw8AsOXOMMvAT70oXRD49ivSkNJQYzVTwLoecirj/jYQL3NK8Mkc3TtaP3p90td5iZ6auKUU/I0XDzcCF8YxKPHrXbjhPmippH8E=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=fail (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=Xby52OaB; arc=none smtp.client-ip=209.85.219.47
 Authentication-Results: smtp.subspace.kernel.org; dmarc=fail (p=quarantine dis=none) header.from=redhat.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="HCIa+Hzm"
-Received: by mail-qt1-f172.google.com with SMTP id d75a77b69052e-52d58d7aad6so8424361cf.2
-        for <linux-rt-users@vger.kernel.org>; Fri, 14 Aug 2026 15:11:01 -0700 (PDT)
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="Xby52OaB"
+Received: by mail-qv1-f47.google.com with SMTP id 6a1803df08f44-90a80860d35so13404756d6.2
+        for <linux-rt-users@vger.kernel.org>; Fri, 14 Aug 2026 15:11:02 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20251104; t=1786745460; x=1787350260; darn=vger.kernel.org;
+        d=gmail.com; s=20251104; t=1786745462; x=1787350262; darn=vger.kernel.org;
         h=content-transfer-encoding:content-type:mime-version:references
          :in-reply-to:message-id:date:subject:cc:to:from:sender:from:to:cc
          :subject:date:message-id:reply-to:content-type;
-        bh=QIrMpHHfkEIHZmJtsjSITIB91UD/n1wK06uleVh524Y=;
-        b=HCIa+HzmZP0cRwTeEfo0FXeY7bC/f9QRsPkMUDrDmwKUJhnxDB3zHafH9UlNchT/cg
-         X4u5D0o+QrV+qThk8Mi2HZ7MDlEvKKRRXsatvKrcoJX3M1GHgxFn6WQSSuAnx1BWWEni
-         pjw8AHUlGWuddiPoZXJ7aOfALAEfInDRuQ2uLOf42m/1EhMyQ1pOCvk9iFP/nEy/s+n7
-         GDi7btJ8/6Zz+NTB5L/RXAdCI+8Il1OpDn+13sGWRBzysGtbLSzxJFNk2R+2FKKcRRrb
-         x09LteP9bxVNPARfywdpc1vOvxQJZKznJgXALY+3CZ+32oiWqYS0f1bqgprVQux31hQL
-         P2dg==
+        bh=safdF6xGou5cjA07n5tuFRU9svJ2JNo/g0TqPzGHt/0=;
+        b=Xby52OaBLb20IWhH6zPMdwJlXGrEKxiRDiXvvPcQQOFG7mQKln52XfMzbDbYitxwEy
+         JMcGqEUbNdn7Nnc1xwGOSkLCcWTwFJNPNvVPNJRMShId5qFoW9LQZB+PQO8kb+/5dRbR
+         xL+AWmPZ8gKPIQVtawg7Ud9w1yjhPGjQeKIpQUK/zqh1qGCbTK9B3PgfUXU9tFamQaql
+         X04R3Ki1QEZrgpDFAdkJL2rIQt6+58KxNB7qlMxADi6/uz62Gqp0vlGfBUWBI9LP7pyb
+         H4FzI0GxdfQV56wRFyAb7b2nO6ue/jX7qw4Cwbux6mes2EvUr/36+lkUefWUXBc4/fML
+         +nmw==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20251104; t=1786745460; x=1787350260;
+        d=1e100.net; s=20251104; t=1786745462; x=1787350262;
         h=content-transfer-encoding:content-type:mime-version:references
          :in-reply-to:message-id:date:subject:cc:to:from:sender:x-gm-gg
          :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to
          :content-type;
-        bh=QIrMpHHfkEIHZmJtsjSITIB91UD/n1wK06uleVh524Y=;
-        b=HurkiJUleXPcOqaxsAWvo+ss9M4ltH9bJEdVxBhIyGT4ngtIQOz63iJJXWABYzgPH6
-         aSe6IfQwHFpTGkmfxVw33ZJ7bqS24xqvEo4lcVq3mVGkaIhT10aU3SfhgVJTb0DjrAR+
-         h4yhhTlq+QcrAcQBpm/hxUi580jo0ug7MEYp8mfvd+Kr5QRYmTYDy/NxzglPqXDH3XY5
-         4FWqUkgEfi13cSDJ1pI6qVkmsJqn/w1Drg45VDeOBr/T/vX4yJAZcLtw5dCf7nVB+qH1
-         hkcS4JjX5gYyu/Msetfk45zGqQ56BfCQlDLHB09lmE044u6Jw3He6nuaQIXpKVjX0k38
-         nc3Q==
-X-Gm-Message-State: AOJu0Yx7RmERCQXCkUH9+5Lqr0YafpKeJ68dRyeIcoTmCRqlqLyvjtFf
-	xhOTKl9kg38RjpIBE5oQkGKh1a9Sae0vYBRSG7T/o6+LDgSfIFLWP/q08sSaKA==
-X-Gm-Gg: AR+sD13gmzb9Oso3aAkBws9/lKydZS4x6e0PUpZxUPuSeh957UumFaRoMqlESxwY+6V
-	gqqeVOHRcVMAk5KAnlvuTLQdQIOZnyNBQ9t3dZfsMHkKWhL9u+uMaSwm5hC7A7N8AeTIQWQwnWp
-	Y2aDBjzGHHSsFcZC8dXoRYwpJnAsrh+2RV5cqIzzCYhm8c2KRrh5ftkIWYkcCcrvRANGMzF5uaA
-	4EfKAUX5iXGwukeAwhk9drlF+9GnnClr0gz8VXQnESAGffrJdVJa6Jh49YqS2DSATJ5rBuwH9Ji
-	Ylt++K5Dv5gex1DYUFwVIyIQwEn+HOiek9O0apW6Im+EKNtVgcfwRF+vGx8TOyw/JJU33QncL/c
-	wK9C1nggxx+3Sk4NU+dt6PDjtB/3lseN5zQovseKvIHt3/fBWOxBjnUu13lE3xB9QbowGwAmjbd
-	Yo/PzUqIg/wzYrJ3FFnaRubFReSnorCB+Gc1MtiySFC+UI6dMgxbj3G99WPvo6lKaQSKjEQ7K/i
-	/fo6J5ctxF1qyhrqhi9NZpzcgpMr6CYpNTJcTupR8neQy6sTFXsgKc=
-X-Received: by 2002:ac8:594c:0:b0:516:d955:ea6 with SMTP id d75a77b69052e-52d8534140cmr102881021cf.14.1786745459948;
-        Fri, 14 Aug 2026 15:10:59 -0700 (PDT)
+        bh=safdF6xGou5cjA07n5tuFRU9svJ2JNo/g0TqPzGHt/0=;
+        b=a6LiK3KDnspsRuz8KpwGFxkELC6GI+R6FHmDnaL8PfZFVFEx1Puw/whMlCbrlwI8zw
+         gT5IK/3je58wQWyD9z9I2ZIBkLNWdmAngVeBrC6FktIAC11h8eUDU3fNRDV1391j/qAt
+         VR1L3wlUwzVpqkJDmp/jewFR8zTHZ79gFF5ne3Bc86iP+hRlqzoHJpi/WXGTFJPinpRO
+         cqoWE96kELSu1FfW/ao40BU/fVjuohGCJNH6vXOvUluCFFEv+QL349Fl5tk0tPmp4Puj
+         UD73j7XXn7Kei9IyDiEH+PCzleKXvVKgowjwoh07vDCRUi0A7xqCEe+3F/9Lmc6JBmI4
+         63Ow==
+X-Gm-Message-State: AOJu0Yx7Yw6rcIUXEzWwezExoamM1Dgzlt28w8Xl/a5Ca9yPio8xOg86
+	4b7dwMoct22FlsBgX6Lhm7RPRvySEjBUQdpaThqAjX16lvvIRLbRKyLWFAaZJA==
+X-Gm-Gg: AR+sD110DVKqhLS9RLPoW8BKoi0Jf5k4/8YMPDzvlgtUgvS3bC0va2wZopmf2B1DLu8
+	JtqvbEIJwRxU14NmNvmnmbBkLEd5lFDJpOgDZizunABdWC3sX7pS496vpWIs1Ahqk4+7UNkggqD
+	jdJb1hnnr37KjWQivIoDQxXxRtBVXi1VjDOWGLKoXq0yFA6fHNtuN/v6UEpdeLFZg062TdGcHUz
+	Ml/fTQeBc9dawhAxeGQNSpd5c0pv4qd2osDSQL3HP4ycdsgmAKdB6ADi8eKc63VWN7DoBGROXcm
+	OlOtpF8SRHhwqOwIA1UlSmU2ZQBBeNV//pYcvbOxN9VSgtj+L4elPfncfEOtnCCoBZcdFIshV8Q
+	EPE81rPtR/fkWc3M0QIVAqe6aCfJSdYJ8fTmpuNf3K6MNQfQDrbsF2iOBcd5pf12szLWdIacjNs
+	Imx5GPm9Zc8jQHoPeuwEq+Jofp4fLghbm5hx5G8BjfJ097fOEctrT1qXrKFV196rmUR0CWeL1rN
+	zwok7McK2A45zcIOWaFzg0fCtQpg+0RfMSlL2LayCKV9xh3peDVOcI=
+X-Received: by 2002:a05:6214:528f:b0:90a:4361:9c4f with SMTP id 6a1803df08f44-90a91c8f670mr87867816d6.1.1786745461756;
+        Fri, 14 Aug 2026 15:11:01 -0700 (PDT)
 Received: from Cumhall.redhat.com ([174.95.68.136])
-        by smtp.gmail.com with ESMTPSA id 6a1803df08f44-90a935a2bf4sm26105876d6.49.2026.08.14.15.10.59
+        by smtp.gmail.com with ESMTPSA id 6a1803df08f44-90a935a2bf4sm26105876d6.49.2026.08.14.15.11.00
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Fri, 14 Aug 2026 15:10:59 -0700 (PDT)
+        Fri, 14 Aug 2026 15:11:01 -0700 (PDT)
 Sender: John Kacur <jkacur@gmail.com>
 From: John Kacur <jkacur@redhat.com>
 To: linux-rt-users@vger.kernel.org
 Cc: Sana Sharma <sansshar@redhat.com>,
 	Clark Williams <williams@redhat.com>,
 	Chris White <chwhite@redhat.com>
-Subject: [PATCH 08/23] rteval: mcp-server: Add query and filter capabilities
-Date: Fri, 14 Aug 2026 18:10:07 -0400
-Message-ID: <20260814221027.213574-9-jkacur@redhat.com>
+Subject: [PATCH 09/23] rteval MCP: Add histogram extraction and percentile analysis
+Date: Fri, 14 Aug 2026 18:10:08 -0400
+Message-ID: <20260814221027.213574-10-jkacur@redhat.com>
 X-Mailer: git-send-email 2.55.0
 In-Reply-To: <20260814221027.213574-1-jkacur@redhat.com>
 References: <20260814221027.213574-1-jkacur@redhat.com>
@@ -80,611 +80,479 @@ MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit
 
-Add three new tools to the MCP server for advanced result analysis:
+Implement feature #3 from future-features.md: latency histogram
+extraction and percentile calculation.
 
-filter_results - Filter rteval results by multiple criteria including
-kernel version pattern, RT kernel status, date range, minimum test
-duration, and maximum latency threshold. Enables targeted analysis
-of specific test configurations.
+New tools:
+- extract_histogram: Extract raw histogram data from rteval XML
+  - System-wide and per-CPU histogram summaries
+  - Top latency values by sample count
+  - Total samples and latency range
 
-find_best_worst - Identify optimal and poorest performing runs based
-on configurable latency metrics (maximum, mean, or median). Returns
-ranked results with kernel version, date, and latency information.
+- get_percentiles: Calculate latency percentiles (P50, P90, P95, P99, P99.9, P99.99)
+  - System-wide percentile analysis
+  - Optional per-CPU percentile breakdown
+  - Reveals latency distribution beyond max/mean/median
 
-compare_to_baseline - Regression detection by comparing multiple
-results against a baseline file. Detects and reports regressions
-above a configurable threshold percentage (default 10%), showing
-detailed percentage changes for all metrics.
+Why this matters:
+- Max latency alone is misleading (one spike vs systematic issues)
+- P99.9 tells you 99.9% of samples were below this value
+- Percentiles distinguish rare outliers from regular tail latency
+- Per-CPU percentiles identify hardware-specific problems
 
-Updated README with tool descriptions, usage examples, and detailed
-feature documentation to help users understand the new capabilities.
+Implementation:
+- extract_histogram_data(): Parse histogram buckets from XML
+- calculate_percentiles(): Compute percentiles from bucket counts
+- Fixed XPath to find system-wide histogram under <system> tag
+- Handles both system-wide and per-CPU histogram data
+
+Testing:
+- test_histogram.py validates extraction and calculation
+- Tested with rteval-20260714-1 (28.6M samples, 16 CPUs)
+- System P99.9 = 16µs, max = 1550µs (excellent with rare outliers)
+
+Documentation:
+- Updated README with usage examples
+- Added detailed feature descriptions
+- Explained why percentiles matter for RT analysis
 
 Assisted-by: Claude:claude-sonnet-4-5
 Signed-off-by: John Kacur <jkacur@redhat.com>
 ---
- mcp-server/README.md |  81 +++++++-
- mcp-server/server.py | 450 +++++++++++++++++++++++++++++++++++++++++++
- 2 files changed, 530 insertions(+), 1 deletion(-)
+ mcp-server/README.md         |  40 +++++
+ mcp-server/server.py         | 275 +++++++++++++++++++++++++++++++++++
+ mcp-server/test_histogram.py |  57 ++++++++
+ 3 files changed, 372 insertions(+)
+ create mode 100644 mcp-server/test_histogram.py
 
 diff --git a/mcp-server/README.md b/mcp-server/README.md
-index 1e09bd63775c..7ce028b512f5 100644
+index 7ce028b512f5..3ab34c4302b7 100644
 --- a/mcp-server/README.md
 +++ b/mcp-server/README.md
-@@ -33,9 +33,18 @@ sudo dnf install python3-mcp python3-mcp+cli python3-lxml
- 
- ## Available Tools
- 
-+### Basic Analysis
- - **list_results**: List rteval result files in a directory
- - **parse_result**: Parse an rteval XML result file and extract key metrics
- - **compare_results**: Compare two rteval result files side-by-side
-+- **batch_analysis**: Analyze multiple rteval result files and aggregate statistics
-+
-+### Query & Filter
-+- **filter_results**: Filter rteval results by kernel version, date range, test duration, and latency thresholds
-+- **find_best_worst**: Find best and worst rteval runs based on latency metrics (maximum, mean, or median)
-+- **compare_to_baseline**: Compare multiple results against a baseline file and detect regressions
-+
-+### Log Access
+@@ -48,6 +48,10 @@ sudo dnf install python3-mcp python3-mcp+cli python3-lxml
  - **list_logs**: List available log files in an rteval result directory
  - **read_log**: Read log content with optional filtering (head/tail/grep)
  
-@@ -56,9 +65,40 @@ The server is configured as a Claude Code plugin. After installation:
- 3. Restart Claude Code to load the plugin
- 4. Tools will be available with the prefix: `mcp__plugin_rteval-mcp_rteval__`
++### Histogram Analysis
++- **extract_histogram**: Extract latency histogram data from rteval results
++- **get_percentiles**: Calculate latency percentiles (P50, P95, P99, P99.9, etc.)
++
+ ## Usage
  
--Example:
-+Example queries:
- ```
- list rteval results in ~/src/rteval
-+find the best and worst rteval runs
-+show me rteval results with kernel 7.0
-+compare rteval results to a baseline
-+```
-+
-+### Query & Filter Examples
-+
-+**Find best and worst runs:**
-+```
-+Find the 3 best and worst rteval runs by maximum latency
-+Which rteval runs had the lowest mean latency?
-+```
-+
-+**Filter by criteria:**
-+```
-+Show me rteval results with kernel version 7.0
-+Find rteval results from June 2026
-+Show results with max latency under 3500 microseconds
-+Filter rteval results by RT kernel
-+```
-+
-+**Baseline comparison:**
-+```
-+Compare all rteval results to rteval-20260605-1/summary.xml
-+Check for regressions against the baseline with 5% threshold
-+```
-+
-+**Batch analysis:**
-+```
-+Analyze all rteval results and show aggregate statistics
-+What's the average max latency across all runs?
+ ### Testing the Server Directly
+@@ -101,6 +105,14 @@ Analyze all rteval results and show aggregate statistics
+ What's the average max latency across all runs?
  ```
  
++**Histogram and percentiles:**
++```
++Extract histogram data from rteval-20260714-1/summary.xml
++Calculate P99 and P99.9 percentiles for rteval-20260714-1/summary.xml
++Show me percentiles for each CPU in rteval-20260714-1/summary.xml
++What percentage of samples had latency under 10 microseconds?
++```
++
  ### Using with MCP Inspector
-@@ -67,6 +107,45 @@ list rteval results in ~/src/rteval
- mcp dev server.py
- ```
  
-+## Features in Detail
+ ```bash
+@@ -146,6 +158,34 @@ Aggregate statistics across multiple runs:
+ 
+ Useful for understanding performance trends over time.
+ 
++### extract_histogram
++Extract raw histogram data from rteval results:
++- **file_path**: Path to rteval XML result file
++- **include_per_cpu**: Include per-CPU histogram data (default: true)
 +
-+### filter_results
-+Filter rteval results by multiple criteria:
-+- **kernel_pattern**: Match kernel version (e.g., "7.0", "rt", "6.17")
-+- **is_rt**: Filter by RT kernel (true/false)
-+- **date_from/date_to**: Date range filter (YYYY-MM-DD format)
-+- **min_duration_minutes**: Minimum test duration
-+- **max_latency_threshold**: Maximum acceptable latency in µs
++Shows:
++- System-wide histogram summary with total samples and latency range
++- Top latency values by sample count with percentages
++- Per-CPU histogram summaries with individual max latencies
 +
-+Example: Find all RT kernel runs from June 2026 with max latency under 4000 µs
-+
-+### find_best_worst
-+Identify optimal and poorest performing runs:
-+- **metric**: Choose maximum, mean, or median latency
-+- **count**: Number of best/worst results to return (default: 5)
-+
-+Shows ranked results with kernel version, date, and latency metrics.
-+
-+### compare_to_baseline
-+Regression detection against a baseline result:
-+- **baseline_file**: Reference rteval XML file
-+- **directory**: Directory containing results to compare
-+- **threshold_percent**: Alert threshold for regressions (default: 10%)
++### get_percentiles
++Calculate latency percentiles for detailed distribution analysis:
++- **file_path**: Path to rteval XML result file
++- **percentiles**: List of percentiles to calculate (default: [50, 90, 95, 99, 99.9, 99.99])
++- **per_cpu**: Calculate percentiles per CPU (default: false)
 +
 +Reports:
-+- Regressions (results exceeding threshold)
-+- Passes (results within threshold)
-+- Detailed percentage changes for all metrics
++- System-wide percentiles showing latency distribution
++- Per-CPU percentiles when requested for fine-grained analysis
 +
-+### batch_analysis
-+Aggregate statistics across multiple runs:
-+- Total files analyzed
-+- Date range coverage
-+- Min/max/average latencies across all runs
-+- Individual result summaries
++**Why percentiles matter:**
++- **Max latency** alone can be misleading (one outlier vs. systematic issues)
++- **P99.9** tells you that 99.9% of samples were below this value
++- **Percentiles** reveal whether high latencies are rare spikes or regular occurrences
++- **Per-CPU percentiles** help identify hardware-specific issues or IRQ affinity problems
 +
-+Useful for understanding performance trends over time.
++Example: If P99.9 = 16µs but max = 1550µs, this tells you the system is excellent with only rare outliers, not a systematic problem.
 +
  ## Development
  
  This is a work in progress. The MCP server is being developed in a branch of the
 diff --git a/mcp-server/server.py b/mcp-server/server.py
-index aa8cfe1102d9..8dbcd9c62fd1 100755
+index 8dbcd9c62fd1..48474df56fab 100755
 --- a/mcp-server/server.py
 +++ b/mcp-server/server.py
-@@ -297,6 +297,91 @@ async def list_tools() -> list[Tool]:
-                 "required": [],
+@@ -178,6 +178,120 @@ def extract_rteval_data(file_path: str) -> dict[str, Any]:
+     return data
+ 
+ 
++def extract_histogram_data(file_path: str) -> dict[str, Any]:
++    """Extract histogram data from an rteval XML file.
++
++    Returns a dictionary with system-wide and per-CPU histogram data,
++    including bucket counts and percentile calculations.
++    """
++    tree = ET.parse(file_path)
++    root = tree.getroot()
++
++    result = {
++        "file": file_path,
++        "system_histogram": None,
++        "per_cpu_histograms": []
++    }
++
++    # Extract system-wide histogram
++    timerlat = root.find(".//timerlat")
++    if timerlat is not None:
++        # System-wide histogram is under <system> tag
++        system_elem = timerlat.find("system")
++        system_histogram = None
++        if system_elem is not None:
++            system_histogram = system_elem.find("histogram")
++
++        if system_histogram is not None:
++            nbuckets = int(system_histogram.get("nbuckets", "0"))
++            buckets = []
++
++            for bucket in system_histogram.findall("bucket"):
++                index = int(bucket.get("index"))
++                count = int(bucket.get("value"))
++                buckets.append({"latency_us": index, "count": count})
++
++            result["system_histogram"] = {
++                "nbuckets": nbuckets,
++                "buckets": buckets,
++                "total_samples": sum(b["count"] for b in buckets)
++            }
++
++        # Extract per-CPU histograms
++        for core in timerlat.findall("core"):
++            core_id = core.get("id")
++            priority = core.get("priority")
++            histogram = core.find("histogram")
++
++            if histogram is not None:
++                nbuckets = int(histogram.get("nbuckets", "0"))
++                buckets = []
++
++                for bucket in histogram.findall("bucket"):
++                    index = int(bucket.get("index"))
++                    count = int(bucket.get("value"))
++                    buckets.append({"latency_us": index, "count": count})
++
++                result["per_cpu_histograms"].append({
++                    "cpu_id": core_id,
++                    "priority": priority,
++                    "nbuckets": nbuckets,
++                    "buckets": buckets,
++                    "total_samples": sum(b["count"] for b in buckets)
++                })
++
++    return result
++
++
++def calculate_percentiles(buckets: list[dict], percentiles: list[float]) -> dict[str, float]:
++    """Calculate percentiles from histogram bucket data.
++
++    Args:
++        buckets: List of dicts with 'latency_us' and 'count' keys
++        percentiles: List of percentile values (e.g., [50, 95, 99, 99.9])
++
++    Returns:
++        Dictionary mapping percentile labels to latency values in microseconds
++    """
++    if not buckets:
++        return {}
++
++    # Calculate total samples
++    total_samples = sum(b["count"] for b in buckets)
++    if total_samples == 0:
++        return {}
++
++    # Sort buckets by latency
++    sorted_buckets = sorted(buckets, key=lambda b: b["latency_us"])
++
++    # Calculate cumulative counts
++    cumulative = []
++    running_count = 0
++    for bucket in sorted_buckets:
++        running_count += bucket["count"]
++        cumulative.append({
++            "latency_us": bucket["latency_us"],
++            "cumulative_count": running_count,
++            "cumulative_percent": (running_count / total_samples) * 100
++        })
++
++    # Find percentile values
++    result = {}
++    for p in percentiles:
++        target_count = (p / 100.0) * total_samples
++
++        # Find the first bucket where cumulative count >= target
++        for i, cum in enumerate(cumulative):
++            if cum["cumulative_count"] >= target_count:
++                result[f"P{p}"] = cum["latency_us"]
++                break
++        else:
++            # If no bucket found, use the maximum
++            result[f"P{p}"] = cumulative[-1]["latency_us"]
++
++    return result
++
++
+ @app.list_tools()
+ async def list_tools() -> list[Tool]:
+     """List available tools for rteval analysis."""
+@@ -382,6 +496,50 @@ async def list_tools() -> list[Tool]:
+                 "required": ["baseline_file"],
              },
          ),
 +        Tool(
-+            name="filter_results",
-+            description="Filter rteval results by kernel version, date range, and test parameters",
++            name="extract_histogram",
++            description="Extract latency histogram data from an rteval result file",
 +            inputSchema={
 +                "type": "object",
 +                "properties": {
-+                    "directory": {
++                    "file_path": {
 +                        "type": "string",
-+                        "description": "Directory to search (default: current directory)",
++                        "description": "Path to the rteval XML result file",
 +                    },
-+                    "kernel_pattern": {
-+                        "type": "string",
-+                        "description": "Filter by kernel version pattern (e.g., '6.17', 'rt', '7.0')",
-+                    },
-+                    "is_rt": {
++                    "include_per_cpu": {
 +                        "type": "boolean",
-+                        "description": "Filter by RT kernel (true/false)",
-+                    },
-+                    "date_from": {
-+                        "type": "string",
-+                        "description": "Start date (YYYY-MM-DD)",
-+                    },
-+                    "date_to": {
-+                        "type": "string",
-+                        "description": "End date (YYYY-MM-DD)",
-+                    },
-+                    "min_duration_minutes": {
-+                        "type": "integer",
-+                        "description": "Minimum test duration in minutes",
-+                    },
-+                    "max_latency_threshold": {
-+                        "type": "number",
-+                        "description": "Filter results with max latency below this threshold (µs)",
++                        "description": "Include per-CPU histogram data (default: true)",
++                        "default": True,
 +                    },
 +                },
-+                "required": [],
++                "required": ["file_path"],
 +            },
 +        ),
 +        Tool(
-+            name="find_best_worst",
-+            description="Find best and worst rteval runs based on latency metrics",
++            name="get_percentiles",
++            description="Calculate latency percentiles from an rteval result file",
 +            inputSchema={
 +                "type": "object",
 +                "properties": {
-+                    "directory": {
++                    "file_path": {
 +                        "type": "string",
-+                        "description": "Directory to search (default: current directory)",
++                        "description": "Path to the rteval XML result file",
 +                    },
-+                    "metric": {
-+                        "type": "string",
-+                        "description": "Metric to evaluate: 'maximum', 'mean', or 'median' (default: maximum)",
-+                        "default": "maximum",
++                    "percentiles": {
++                        "type": "array",
++                        "description": "List of percentiles to calculate (default: [50, 90, 95, 99, 99.9, 99.99])",
++                        "items": {"type": "number"},
++                        "default": [50, 90, 95, 99, 99.9, 99.99],
 +                    },
-+                    "count": {
-+                        "type": "integer",
-+                        "description": "Number of best/worst results to return (default: 5)",
-+                        "default": 5,
++                    "per_cpu": {
++                        "type": "boolean",
++                        "description": "Calculate percentiles per CPU (default: false)",
++                        "default": False,
 +                    },
 +                },
-+                "required": [],
-+            },
-+        ),
-+        Tool(
-+            name="compare_to_baseline",
-+            description="Compare multiple rteval results against a baseline result",
-+            inputSchema={
-+                "type": "object",
-+                "properties": {
-+                    "baseline_file": {
-+                        "type": "string",
-+                        "description": "Path to baseline rteval XML file",
-+                    },
-+                    "directory": {
-+                        "type": "string",
-+                        "description": "Directory containing results to compare (default: current directory)",
-+                    },
-+                    "threshold_percent": {
-+                        "type": "number",
-+                        "description": "Alert if results exceed baseline by this percentage (default: 10)",
-+                        "default": 10,
-+                    },
-+                },
-+                "required": ["baseline_file"],
++                "required": ["file_path"],
 +            },
 +        ),
      ]
  
  
-@@ -889,6 +974,371 @@ async def call_tool(name: str, arguments: Any) -> list[TextContent]:
-                 text=f"Error in batch analysis: {str(e)}"
+@@ -1339,6 +1497,123 @@ async def call_tool(name: str, arguments: Any) -> list[TextContent]:
+                 text=f"Error comparing to baseline: {str(e)}"
              )]
  
-+    elif name == "filter_results":
-+        directory = arguments.get("directory", ".")
-+        kernel_pattern = arguments.get("kernel_pattern")
-+        is_rt = arguments.get("is_rt")
-+        date_from = arguments.get("date_from")
-+        date_to = arguments.get("date_to")
-+        min_duration = arguments.get("min_duration_minutes")
-+        max_threshold = arguments.get("max_latency_threshold")
++    elif name == "extract_histogram":
++        file_path = arguments["file_path"]
++        include_per_cpu = arguments.get("include_per_cpu", True)
 +
 +        try:
-+            path = Path(directory)
++            path = Path(file_path)
 +            if not path.exists():
 +                return [TextContent(
 +                    type="text",
-+                    text=f"Error: Directory '{directory}' does not exist"
++                    text=f"Error: File '{file_path}' does not exist"
 +                )]
 +
-+            # Find all XML files
-+            files = list(path.glob("*.xml"))
-+            if not files:
++            # Extract histogram data
++            histogram_data = extract_histogram_data(file_path)
++
++            if histogram_data["system_histogram"] is None:
 +                return [TextContent(
 +                    type="text",
-+                    text=f"No XML files found in '{directory}'"
++                    text=f"No histogram data found in '{path.name}'"
 +                )]
 +
-+            # Parse and filter
-+            filtered = []
-+            for file_path in files:
-+                try:
-+                    data = extract_rteval_data(str(file_path))
-+
-+                    # Apply filters
-+                    if kernel_pattern and kernel_pattern.lower() not in data["system_info"].get("kernel", "").lower():
-+                        continue
-+
-+                    if is_rt is not None and data["system_info"].get("is_RT") != is_rt:
-+                        continue
-+
-+                    # Date filtering
-+                    if date_from or date_to:
-+                        run_date = data["run_info"].get("date")
-+                        if run_date:
-+                            if date_from and run_date < date_from:
-+                                continue
-+                            if date_to and run_date > date_to:
-+                                continue
-+
-+                    # Duration filtering
-+                    if min_duration:
-+                        ri = data["run_info"]
-+                        total_minutes = (ri.get("days", 0) * 24 * 60 +
-+                                       ri.get("hours", 0) * 60 +
-+                                       ri.get("minutes", 0))
-+                        if total_minutes < min_duration:
-+                            continue
-+
-+                    # Max latency threshold
-+                    if max_threshold:
-+                        max_lat = None
-+                        for mtype in ["timerlat", "cyclictest"]:
-+                            if mtype in data["measurements"]:
-+                                max_val = data["measurements"][mtype].get("maximum", {}).get("value")
-+                                if max_val:
-+                                    try:
-+                                        max_lat = float(max_val)
-+                                        break
-+                                    except ValueError:
-+                                        pass
-+
-+                        if max_lat is None or max_lat > max_threshold:
-+                            continue
-+
-+                    filtered.append(data)
-+
-+                except Exception:
-+                    continue
-+
-+            if not filtered:
-+                return [TextContent(
-+                    type="text",
-+                    text="No results matched the filter criteria"
-+                )]
-+
-+            # Build output
-+            result = f"Filtered Results ({len(filtered)} of {len(files)} files matched):\n"
++            result = f"Histogram Data from: {path.name}\n"
 +            result += "=" * 60 + "\n\n"
 +
-+            for data in filtered:
-+                result += f"{Path(data['file']).name}:\n"
-+                if "date" in data["run_info"]:
-+                    result += f"  Date: {data['run_info']['date']}\n"
-+                if "kernel" in data["system_info"]:
-+                    result += f"  Kernel: {data['system_info']['kernel']}"
-+                    if "is_RT" in data["system_info"]:
-+                        result += f" (RT: {'Yes' if data['system_info']['is_RT'] else 'No'})"
-+                    result += "\n"
++            # System-wide histogram summary
++            sys_hist = histogram_data["system_histogram"]
++            result += "System-Wide Histogram:\n"
++            result += f"  Total Buckets: {sys_hist['nbuckets']}\n"
++            result += f"  Total Samples: {sys_hist['total_samples']:,}\n"
++            result += f"  Latency Range: {sys_hist['buckets'][0]['latency_us']} - {sys_hist['buckets'][-1]['latency_us']} µs\n\n"
 +
-+                # Show key metrics
-+                for mtype in ["timerlat", "cyclictest"]:
-+                    if mtype in data["measurements"]:
-+                        meas = data["measurements"][mtype]
-+                        if "maximum" in meas:
-+                            result += f"  Max latency: {meas['maximum']['value']} {meas['maximum']['unit']}\n"
-+                        if "mean" in meas:
-+                            result += f"  Mean latency: {meas['mean']['value']} {meas['mean']['unit']}\n"
-+                        break
++            # Show top 10 buckets by count
++            top_buckets = sorted(sys_hist['buckets'], key=lambda b: b['count'], reverse=True)[:10]
++            result += "Top 10 Latency Values by Sample Count:\n"
++            for i, bucket in enumerate(top_buckets, 1):
++                pct = (bucket['count'] / sys_hist['total_samples']) * 100
++                result += f"  {i}. {bucket['latency_us']:3d} µs: {bucket['count']:>12,} samples ({pct:5.2f}%)\n"
++            result += "\n"
 +
-+                result += "\n"
++            # Per-CPU summary
++            if include_per_cpu and histogram_data["per_cpu_histograms"]:
++                result += f"Per-CPU Histograms ({len(histogram_data['per_cpu_histograms'])} CPUs):\n"
++                for cpu_hist in histogram_data["per_cpu_histograms"]:
++                    cpu_id = cpu_hist["cpu_id"]
++                    total = cpu_hist["total_samples"]
++                    max_lat = cpu_hist["buckets"][-1]["latency_us"] if cpu_hist["buckets"] else 0
++                    result += f"  CPU {cpu_id}: {total:>12,} samples, max latency {max_lat} µs\n"
 +
 +            return [TextContent(type="text", text=result)]
 +
 +        except Exception as e:
 +            return [TextContent(
 +                type="text",
-+                text=f"Error filtering results: {str(e)}"
++                text=f"Error extracting histogram: {str(e)}"
 +            )]
 +
-+    elif name == "find_best_worst":
-+        directory = arguments.get("directory", ".")
-+        metric = arguments.get("metric", "maximum")
-+        count = arguments.get("count", 5)
++    elif name == "get_percentiles":
++        file_path = arguments["file_path"]
++        percentiles = arguments.get("percentiles", [50, 90, 95, 99, 99.9, 99.99])
++        per_cpu = arguments.get("per_cpu", False)
 +
 +        try:
-+            path = Path(directory)
++            path = Path(file_path)
 +            if not path.exists():
 +                return [TextContent(
 +                    type="text",
-+                    text=f"Error: Directory '{directory}' does not exist"
++                    text=f"Error: File '{file_path}' does not exist"
 +                )]
 +
-+            # Find all XML files
-+            files = list(path.glob("*.xml"))
-+            if not files:
++            # Extract histogram data
++            histogram_data = extract_histogram_data(file_path)
++
++            if histogram_data["system_histogram"] is None:
 +                return [TextContent(
 +                    type="text",
-+                    text=f"No XML files found in '{directory}'"
++                    text=f"No histogram data found in '{path.name}'"
 +                )]
 +
-+            # Parse and collect metrics
-+            results_with_metrics = []
-+            for file_path in files:
-+                try:
-+                    data = extract_rteval_data(str(file_path))
-+
-+                    # Extract the requested metric
-+                    metric_value = None
-+                    for mtype in ["timerlat", "cyclictest"]:
-+                        if mtype in data["measurements"]:
-+                            metric_data = data["measurements"][mtype].get(metric)
-+                            if metric_data:
-+                                try:
-+                                    metric_value = float(metric_data["value"])
-+                                    break
-+                                except ValueError:
-+                                    pass
-+
-+                    if metric_value is not None:
-+                        results_with_metrics.append((data, metric_value))
-+
-+                except Exception:
-+                    continue
-+
-+            if not results_with_metrics:
-+                return [TextContent(
-+                    type="text",
-+                    text=f"No results found with {metric} metric"
-+                )]
-+
-+            # Sort by metric value
-+            results_with_metrics.sort(key=lambda x: x[1])
-+
-+            # Build output
-+            result = f"Best and Worst Results (by {metric} latency):\n"
++            result = f"Latency Percentiles from: {path.name}\n"
 +            result += "=" * 60 + "\n\n"
 +
-+            # Best results (lowest latency)
-+            result += f"BEST {min(count, len(results_with_metrics))} Results (lowest {metric}):\n"
-+            result += "-" * 60 + "\n"
-+            for i, (data, metric_val) in enumerate(results_with_metrics[:count], 1):
-+                result += f"\n{i}. {Path(data['file']).name}\n"
-+                result += f"   {metric.capitalize()}: {metric_val:.2f} µs\n"
-+                if "kernel" in data["system_info"]:
-+                    result += f"   Kernel: {data['system_info']['kernel']}\n"
-+                if "date" in data["run_info"]:
-+                    result += f"   Date: {data['run_info']['date']}\n"
++            # System-wide percentiles
++            sys_hist = histogram_data["system_histogram"]
++            sys_percentiles = calculate_percentiles(sys_hist["buckets"], percentiles)
 +
-+            # Worst results (highest latency)
-+            result += f"\nWORST {min(count, len(results_with_metrics))} Results (highest {metric}):\n"
-+            result += "-" * 60 + "\n"
-+            for i, (data, metric_val) in enumerate(reversed(results_with_metrics[-count:]), 1):
-+                result += f"\n{i}. {Path(data['file']).name}\n"
-+                result += f"   {metric.capitalize()}: {metric_val:.2f} µs\n"
-+                if "kernel" in data["system_info"]:
-+                    result += f"   Kernel: {data['system_info']['kernel']}\n"
-+                if "date" in data["run_info"]:
-+                    result += f"   Date: {data['run_info']['date']}\n"
++            result += "System-Wide Percentiles:\n"
++            result += f"  Total Samples: {sys_hist['total_samples']:,}\n\n"
 +
-+            return [TextContent(type="text", text=result)]
++            for p in percentiles:
++                key = f"P{p}"
++                if key in sys_percentiles:
++                    result += f"  {key:>7}: {sys_percentiles[key]:>6} µs\n"
 +
-+        except Exception as e:
-+            return [TextContent(
-+                type="text",
-+                text=f"Error finding best/worst results: {str(e)}"
-+            )]
++            # Per-CPU percentiles
++            if per_cpu and histogram_data["per_cpu_histograms"]:
++                result += "\n" + "=" * 60 + "\n"
++                result += "Per-CPU Percentiles:\n\n"
 +
-+    elif name == "compare_to_baseline":
-+        baseline_file = arguments["baseline_file"]
-+        directory = arguments.get("directory", ".")
-+        threshold_percent = arguments.get("threshold_percent", 10)
++                for cpu_hist in histogram_data["per_cpu_histograms"]:
++                    cpu_id = cpu_hist["cpu_id"]
++                    cpu_percentiles = calculate_percentiles(cpu_hist["buckets"], percentiles)
 +
-+        try:
-+            # Load baseline
-+            if not Path(baseline_file).exists():
-+                return [TextContent(
-+                    type="text",
-+                    text=f"Error: Baseline file '{baseline_file}' does not exist"
-+                )]
-+
-+            baseline_data = extract_rteval_data(baseline_file)
-+
-+            # Get baseline metrics
-+            baseline_metrics = {}
-+            for mtype in ["timerlat", "cyclictest"]:
-+                if mtype in baseline_data["measurements"]:
-+                    for metric in ["maximum", "mean", "median"]:
-+                        if metric in baseline_data["measurements"][mtype]:
-+                            try:
-+                                baseline_metrics[metric] = float(
-+                                    baseline_data["measurements"][mtype][metric]["value"]
-+                                )
-+                            except ValueError:
-+                                pass
-+                    break
-+
-+            if not baseline_metrics:
-+                return [TextContent(
-+                    type="text",
-+                    text="Could not extract metrics from baseline file"
-+                )]
-+
-+            # Find files to compare
-+            path = Path(directory)
-+            if not path.exists():
-+                return [TextContent(
-+                    type="text",
-+                    text=f"Error: Directory '{directory}' does not exist"
-+                )]
-+
-+            files = list(path.glob("*.xml"))
-+            if not files:
-+                return [TextContent(
-+                    type="text",
-+                    text=f"No XML files found in '{directory}'"
-+                )]
-+
-+            # Build comparison report
-+            result = f"Baseline Comparison Report\n"
-+            result += "=" * 60 + "\n\n"
-+            result += f"Baseline: {Path(baseline_file).name}\n"
-+            result += f"Baseline Metrics:\n"
-+            for metric, value in baseline_metrics.items():
-+                result += f"  {metric}: {value:.2f} µs\n"
-+            result += f"\nThreshold: {threshold_percent}% above baseline\n"
-+            result += "=" * 60 + "\n\n"
-+
-+            regressions = []
-+            passes = []
-+
-+            for file_path in files:
-+                # Skip baseline file itself
-+                if str(file_path) == str(Path(baseline_file).resolve()):
-+                    continue
-+
-+                try:
-+                    data = extract_rteval_data(str(file_path))
-+
-+                    # Extract metrics
-+                    test_metrics = {}
-+                    for mtype in ["timerlat", "cyclictest"]:
-+                        if mtype in data["measurements"]:
-+                            for metric in ["maximum", "mean", "median"]:
-+                                if metric in data["measurements"][mtype]:
-+                                    try:
-+                                        test_metrics[metric] = float(
-+                                            data["measurements"][mtype][metric]["value"]
-+                                        )
-+                                    except ValueError:
-+                                        pass
-+                            break
-+
-+                    if not test_metrics:
-+                        continue
-+
-+                    # Check for regressions
-+                    has_regression = False
-+                    comparison = {
-+                        "file": Path(file_path).name,
-+                        "kernel": data["system_info"].get("kernel", "unknown"),
-+                        "date": data["run_info"].get("date", "unknown"),
-+                        "metrics": {}
-+                    }
-+
-+                    for metric in baseline_metrics:
-+                        if metric in test_metrics:
-+                            baseline_val = baseline_metrics[metric]
-+                            test_val = test_metrics[metric]
-+                            diff = test_val - baseline_val
-+                            pct_change = (diff / baseline_val) * 100 if baseline_val != 0 else 0
-+
-+                            comparison["metrics"][metric] = {
-+                                "baseline": baseline_val,
-+                                "test": test_val,
-+                                "diff": diff,
-+                                "pct_change": pct_change
-+                            }
-+
-+                            if pct_change > threshold_percent:
-+                                has_regression = True
-+
-+                    if has_regression:
-+                        regressions.append(comparison)
-+                    else:
-+                        passes.append(comparison)
-+
-+                except Exception:
-+                    continue
-+
-+            # Report regressions
-+            if regressions:
-+                result += f"REGRESSIONS DETECTED ({len(regressions)} files):\n"
-+                result += "-" * 60 + "\n\n"
-+                for comp in regressions:
-+                    result += f"{comp['file']}:\n"
-+                    result += f"  Kernel: {comp['kernel']}\n"
-+                    result += f"  Date: {comp['date']}\n"
-+                    for metric, values in comp["metrics"].items():
-+                        result += f"  {metric}:\n"
-+                        result += f"    Baseline: {values['baseline']:.2f} µs\n"
-+                        result += f"    Test: {values['test']:.2f} µs\n"
-+                        result += f"    Change: {values['pct_change']:+.2f}%"
-+                        if values['pct_change'] > threshold_percent:
-+                            result += " ⚠️  REGRESSION"
-+                        result += "\n"
++                    result += f"CPU {cpu_id}:\n"
++                    for p in percentiles:
++                        key = f"P{p}"
++                        if key in cpu_percentiles:
++                            result += f"  {key:>7}: {cpu_percentiles[key]:>6} µs\n"
 +                    result += "\n"
 +
-+            # Report passes
-+            if passes:
-+                result += f"\nPASSED COMPARISON ({len(passes)} files):\n"
-+                result += "-" * 60 + "\n\n"
-+                for comp in passes:
-+                    result += f"{comp['file']}: "
-+                    max_pct = max(m['pct_change'] for m in comp['metrics'].values())
-+                    result += f"Max change: {max_pct:+.2f}% ✓\n"
-+
-+            if not regressions and not passes:
-+                result += "No comparable results found\n"
-+
 +            return [TextContent(type="text", text=result)]
 +
 +        except Exception as e:
 +            return [TextContent(
 +                type="text",
-+                text=f"Error comparing to baseline: {str(e)}"
++                text=f"Error calculating percentiles: {str(e)}"
 +            )]
 +
      else:
          return [TextContent(
              type="text",
+diff --git a/mcp-server/test_histogram.py b/mcp-server/test_histogram.py
+new file mode 100644
+index 000000000000..e11dfb0413a4
+--- /dev/null
++++ b/mcp-server/test_histogram.py
+@@ -0,0 +1,57 @@
++#!/usr/bin/env python3
++"""
++Test script for histogram extraction and percentile calculation.
++"""
++
++from server import extract_histogram_data, calculate_percentiles
++
++# Test with the sample file
++test_file = "../rteval-20260714-1/summary.xml"
++
++print("Testing histogram extraction...")
++print("=" * 60)
++
++# Extract histogram data
++histogram_data = extract_histogram_data(test_file)
++
++# Check system histogram
++if histogram_data["system_histogram"]:
++    sys_hist = histogram_data["system_histogram"]
++    print(f"\nSystem-Wide Histogram:")
++    print(f"  Total Buckets: {sys_hist['nbuckets']}")
++    print(f"  Total Samples: {sys_hist['total_samples']:,}")
++    print(f"  Latency Range: {sys_hist['buckets'][0]['latency_us']} - {sys_hist['buckets'][-1]['latency_us']} µs")
++
++    # Calculate percentiles
++    percentiles = [50, 90, 95, 99, 99.9, 99.99]
++    result = calculate_percentiles(sys_hist["buckets"], percentiles)
++
++    print(f"\nSystem-Wide Percentiles:")
++    for p in percentiles:
++        key = f"P{p}"
++        if key in result:
++            print(f"  {key:>7}: {result[key]:>6} µs")
++
++# Check per-CPU histograms
++if histogram_data["per_cpu_histograms"]:
++    print(f"\nPer-CPU Histograms ({len(histogram_data['per_cpu_histograms'])} CPUs):")
++
++    # Show first 3 CPUs in detail
++    for cpu_hist in histogram_data["per_cpu_histograms"][:3]:
++        cpu_id = cpu_hist["cpu_id"]
++        total = cpu_hist["total_samples"]
++        max_lat = cpu_hist["buckets"][-1]["latency_us"] if cpu_hist["buckets"] else 0
++
++        print(f"\n  CPU {cpu_id}:")
++        print(f"    Total Samples: {total:,}")
++        print(f"    Max Latency: {max_lat} µs")
++
++        # Calculate per-CPU percentiles
++        cpu_percentiles = calculate_percentiles(cpu_hist["buckets"], [50, 95, 99, 99.9])
++        for p in [50, 95, 99, 99.9]:
++            key = f"P{p}"
++            if key in cpu_percentiles:
++                print(f"    {key:>6}: {cpu_percentiles[key]:>6} µs")
++
++print("\n" + "=" * 60)
++print("Test completed successfully!")
 -- 
 2.55.0
 
