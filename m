@@ -1,114 +1,115 @@
-Received: from mail-qk1-f173.google.com (mail-qk1-f173.google.com [209.85.222.173])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from galois.linutronix.de (Galois.linutronix.de [193.142.43.55])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 9F2022AE7A
-	for <linux-rt-users@vger.kernel.org>; Tue, 18 Aug 2026 23:16:06 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.222.173
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 3EA5747B42F;
+	Wed, 19 Aug 2026 15:06:16 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=193.142.43.55
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1787094967; cv=none; b=nUCeiwYxFptjOTG2dlMxxVN2KKk9oJPnmfmLNgjuZmCiGwd8yPRloibUOn5n7Th8t4Vrszsv70mgFiRxLtlnWgiWyQuHNh0sVkgpqbqKQBwHORt6b2zwl4oL69YWdUXr+MNsUJP/ybTdMt6Oa3KAwj6UVKWPx+NkqqlO4HXi73w=
+	t=1787151978; cv=none; b=F6kte+eaPj5YXu8bpb6J07lbsEgOJfSSnXggjN/9Q/ONIvocQabrjwJZqUHU0PpLRoecbT8lyOGefIGlkFDkCdxcSz8+Ka63gBHYhhOFJgn8vySPq0+CaY3lTKnD6SglBE6KS0+GsA/2XFHB2CGEqZUQq6S23NZGznWxYVy3pZA=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1787094967; c=relaxed/simple;
-	bh=hfOmlYUJ1Xg6K2uADrH9tewW5pr2uYYhxPZq0othhT0=;
-	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version:Content-Type; b=CqjS6Ln99sa+bDocSKWsY4l1Mdt16hOrJAI+C0LHtq/7b+PCR8uUXR5VBjletUo+C5YcWszsffUrdrLcPZYaolgN9GWV+G6aB2fARtWExDmq3ckham5pLhijHxe/kidu5zERdsH7OZ6b1aQZ/G0NJWkSg2q1e64s3wiBeEsi0FE=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=fail (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=VE45zYFt; arc=none smtp.client-ip=209.85.222.173
-Authentication-Results: smtp.subspace.kernel.org; dmarc=fail (p=quarantine dis=none) header.from=redhat.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
+	s=arc-20240116; t=1787151978; c=relaxed/simple;
+	bh=PYnYBPFh488OMrSekS787vgFxrdT53ki3zlpK1c28EM=;
+	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
+	 Content-Type:Content-Disposition:In-Reply-To; b=VujJ4mQ5NO6u08VkNTL3Gyy4VvyYgb+UQDsixMT2D+NUOLSDma+BIUDoOSaBiNRbQxYnLrnyaua1yLGBXuFHAQYowZHE+rMJqY0fjG4nLmuI85g+PmDOVhoy2A6bK4ROAlXymy7giLa2dz9MBcA7AT/29Cl5EJSQ+TlduixGwXY=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linutronix.de; spf=pass smtp.mailfrom=linutronix.de; dkim=pass (2048-bit key) header.d=linutronix.de header.i=@linutronix.de header.b=Vc/cLOiH; dkim=permerror (0-bit key) header.d=linutronix.de header.i=@linutronix.de header.b=SoonRtoK; arc=none smtp.client-ip=193.142.43.55
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linutronix.de
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=linutronix.de
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="VE45zYFt"
-Received: by mail-qk1-f173.google.com with SMTP id af79cd13be357-936dfd009d1so123290785a.1
-        for <linux-rt-users@vger.kernel.org>; Tue, 18 Aug 2026 16:16:06 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20251104; t=1787094965; x=1787699765; darn=vger.kernel.org;
-        h=content-transfer-encoding:content-type:mime-version:references
-         :in-reply-to:message-id:date:subject:cc:to:from:sender:from:to:cc
-         :subject:date:message-id:reply-to:content-type;
-        bh=uX6nr0JIzcLE+NcVJ27kUF2rAzFYy7RAX55+HUnzOQo=;
-        b=VE45zYFt/WQGqXLJnX3jKRgox/MHfx1NvmM6dAeiXuqBX4i+qTCnhq1vg6grHaEqvD
-         dCgPM7utxgvNdc1+/e0MKwNGmPV0dOfj0PL/M8jJFTacRQBDjb08kmRd8TBDrItbNlBf
-         Nzxd8HTAIUqNkVnTIIYNR8SEXRCicKtzaMDV/Fw8KXySoV3x9NAtlZp9NVyGG1s+t4Ii
-         InzpKGc+3lvrwzxR3geKpDZsRxHWPZVgCATW3eB81CRGLHO7Qa/0in+HFhVcKDVsowrH
-         mRqYqWAMTsPEytQjBPlcdXM8Wq34R90g7VF8MOs5WjTp2oYLsFa5q1q74bXQpcI3sCNS
-         TkMA==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20251104; t=1787094965; x=1787699765;
-        h=content-transfer-encoding:content-type:mime-version:references
-         :in-reply-to:message-id:date:subject:cc:to:from:sender:x-gm-gg
-         :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to
-         :content-type;
-        bh=uX6nr0JIzcLE+NcVJ27kUF2rAzFYy7RAX55+HUnzOQo=;
-        b=j871mGTqng8JiJsfZXF1f8/mSWjHAeFxyANLM8Yk9zLCdhFoGJDajZQ/lwDtKZf14e
-         YWdv5lhFpwGipGyohtd3Lg589ACSqZcqipQmj6z0vntm9xf05NP6ifZOzl4e34/mvY5n
-         bHInV5udTWaYChEdBizlkgb8DYInKSPXk6OQ6AngbHGJM1POpaSI8nkEJW58EsvmeDgn
-         13QHiKOzc82v5r/N2R5Nldg9RgkFCPx8EsvYe2cg63Yqzl02gz6mPOxeUMuSnFbHClZF
-         4X4fbWEKVkuuUA4ZGmhgVX7LLBAOlDsDWSwo40KT70DwrBOEhsfPbCQvdnbtDzKxPoYh
-         Wy8g==
-X-Gm-Message-State: AOJu0YxdrRDlY3REivB/+8WPlZn52gzaKh3s/ns2bTqKwUVcA+O+R9/Y
-	OZkm/PsD3PW2I/Coa567aJW1lnKGI5wFz+1HKycYj6/hiIDRpCmWo8MX
-X-Gm-Gg: AR+sD114dZJdWIx1r85q+geDBQs8qn4WNkKEBv41F39tusz+UJDVm1FNQXUmzAnjWg3
-	QJlKqafqlsBn+VDbFS7CDdafhL2Hbz3Kb+14H2zHRiXUcrQf1P2VgcW8LGQjSo+TEjZ9eDj5tKj
-	1E/lAA3lsoIem6Q20ablnWpwz5t7/qNF9lh9jg4/QjJ2apv79vvIL4QWMliJa0yyTGarJbPPiCs
-	38VO0o0ZKuNGRvKdNLfWdSLzuiIoExgz1bdO+/xGakKmragDY1OOw4Q/83ayWUpMSX1xNSPx7y2
-	TsPXpr01+ioxi35biXXo6+IHBLg3+aUPfwDw5kBP5LgoDW9U9ZfH4Uk5Cq2HAy6UEXPX9kJPojJ
-	qx70WXDIZAJxPE4Lp+bDG1WiemUVtzPXjadiYiwAV4apXglw+5Ixl7RIDDnkzCF1X5daiBhSaAn
-	xXxemNRNmKmtoOg3GuXP5rkxhnqpGBv2lHS/m802hlWn+76WCDt4CN+GzDn0Pf4+Rv+DhBlRjh2
-	r0MQuMxETTm8kVWdX/6WaXWkAeuc/EGjmd1JeqWvl1dU0FHYLHrMgg=
-X-Received: by 2002:a05:620a:6ccb:b0:915:5216:e5bf with SMTP id af79cd13be357-9371e74b030mr84474985a.22.1787094965291;
-        Tue, 18 Aug 2026 16:16:05 -0700 (PDT)
-Received: from Cumhall.redhat.com ([174.95.68.136])
-        by smtp.gmail.com with ESMTPSA id af79cd13be357-93720493eeasm8110685a.3.2026.08.18.16.16.04
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Tue, 18 Aug 2026 16:16:04 -0700 (PDT)
-Sender: John Kacur <jkacur@gmail.com>
-From: John Kacur <jkacur@redhat.com>
-To: Sana Sharma <sansshar@redhat.com>
-Cc: linux-rt-users@vger.kernel.org
-Subject: Re: [PATCH] Adding stressor validation for stress-ng
-Date: Tue, 18 Aug 2026 19:15:49 -0400
-Message-ID: <20260818231549.224764-1-jkacur@redhat.com>
-X-Mailer: git-send-email 2.55.0
-In-Reply-To: <20260818175923.315976-1-sansshar@redhat.com>
-References: 
+	dkim=pass (2048-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="Vc/cLOiH";
+	dkim=permerror (0-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="SoonRtoK"
+Date: Wed, 19 Aug 2026 17:06:11 +0200
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
+	s=2020; t=1787151972;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 in-reply-to:in-reply-to:references:references;
+	bh=6hIHIO3L/iVx2Wjl3NYNyAoTXNNROo4v4ePBeHe5Jgg=;
+	b=Vc/cLOiHgZe8tYSeMrFcyoV8v9Bgzm+2efKsiYrNkaWA4un9OHTfpPVSHKgvaRA1GIGmgD
+	QW4kY19FnLi0zo9b/BNFECQtYgdubbjw5soDvm9MyiU9nbW2VSqzqXGdnvW+HxYO52NDjJ
+	kAReisCbZvx+U4nXfFV/O7aIGtgDgJRRyt/TM3yzbqSmRkIfEEbIWwofbZ0PHVcQm5i1dP
+	Bfl2UC0TMGfTh6SaKhAS9WtHW31yEQvzMydjIcUedv2hL6a8ad45b7snJSjc/Kb5C/EQ61
+	KL3Vn/ptWEzCmawGKzAQKATjIh+/izXDiVdCsV7QHdFpk5WSX6pJle8/WCHeXg==
+DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
+	s=2020e; t=1787151972;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 in-reply-to:in-reply-to:references:references;
+	bh=6hIHIO3L/iVx2Wjl3NYNyAoTXNNROo4v4ePBeHe5Jgg=;
+	b=SoonRtoKA7rYx12RTVEnn9zaHk3/9QQERU4e2pU6VVsgGKTOBVJUGm6BtQw5pgzuELg2/C
+	bOmijE48UiGjkiDg==
+From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+To: Mike Schanne <mschanne@kns.com>,
+	Chris Packham <chris.packham@alliedtelesis.co.nz>
+Cc: "gregkh@linuxfoundation.org" <gregkh@linuxfoundation.org>,
+	LKML <linux-kernel@vger.kernel.org>,
+	"linux-rt-devel@lists.linux.dev" <linux-rt-devel@lists.linux.dev>,
+	linux-rt-users <linux-rt-users@vger.kernel.org>,
+	Thomas Gleixner <tglx@linutronix.de>,
+	Steven Rostedt <rostedt@goodmis.org>,
+	"chris.packham@alliedtelesis.co.nz" <chris.packham@alliedtelesis.co.nz>,
+	Todd Leitzel <tleitzel@kns.com>
+Subject: Re: [PATCH] uio: eliminate extraneous irq thread under
+ CONFIG_PREEMPT_RT
+Message-ID: <20260819150611.xWELTqJ-@linutronix.de>
+References: <TY0PR0101MB48672132B8525B7B39565EE4D2A52@TY0PR0101MB4867.apcprd01.prod.exchangelabs.com>
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
 List-Subscribe: <mailto:linux-rt-users+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: 8bit
+Content-Type: text/plain; charset=utf-8
+Content-Disposition: inline
+In-Reply-To: <TY0PR0101MB48672132B8525B7B39565EE4D2A52@TY0PR0101MB4867.apcprd01.prod.exchangelabs.com>
 
-Hi Sana,
+Chris, what was the use case to split this?
 
-Thanks for the patch! The validation logic looks good and the error messages are helpful.
+On 2026-08-19 15:01:00 [+0000], Mike Schanne wrote:
+> Commit f8a27dfa4b82d442af1c0645a5acc70cc97c67f6 ("uio: use threaded
+> interrupts") makes all uio interrupts threaded by default.  However
+> under CONFIG_PREEMPT_RT, all interrupts are already threaded.  This
+> results in 2 irq threads per uio instance, adding an unnecessary
+> extra context switch per interrupt.
+> 
+> Do not request a threaded interrupt for uio under CONFIG_PREEMPT_RT
+> 
+> Signed-off-by: Michael Schanne mschanne@kns.com<mailto:mschanne@kns.com>
+> ---
+> drivers/uio/uio.c | 17 +++++++++++++----
+> 1 file changed, 13 insertions(+), 4 deletions(-)
+> 
+> diff --git a/drivers/uio/uio.c b/drivers/uio/uio.c
+> index 004a549c6..4e28777ac 100644
+> --- a/drivers/uio/uio.c
+> +++ b/drivers/uio/uio.c
+> @@ -448,8 +448,12 @@ static irqreturn_t uio_interrupt_handler(int irq, void *dev_id)
+>                irqreturn_t ret;
+>                 ret = idev->info->handler(irq, idev->info);
+> -              if (ret == IRQ_HANDLED)
+> -                              ret = IRQ_WAKE_THREAD;
+> +             if (ret == IRQ_HANDLED) {
+> +                             if (IS_ENABLED(CONFIG_PREEMPT_RT))
+> +                                             uio_event_notify(idev->info);
+> +                             else
+> +                                             ret = IRQ_WAKE_THREAD;
+> +             }
+>                 return ret;
+> }
+> @@ -1038,8 +1042,13 @@ int __uio_register_device(struct module *owner,
+>                                 * FDs at the time of unregister and therefore may not be
+>                                 * freed until they are released.
+>                                 */
+> -                              ret = request_threaded_irq(info->irq, uio_interrupt_handler, uio_interrupt_thread,
+> -                                                                                 info->irq_flags, info->name, idev);
+> +                             if (IS_ENABLED(CONFIG_PREEMPT_RT)) {
+> +                                             ret = request_irq(info->irq, uio_interrupt_handler,
+> +                                                             info->irq_flags, info->name, idev);
+> +                             } else {
+> +                                             ret = request_threaded_irq(info->irq, uio_interrupt_handler, uio_interrupt_thread,
+> +                                                             info->irq_flags, info->name, idev);
+> +                             }
+>                                if (ret) {
+>                                                info->uio_dev = NULL;
+>                                                goto err_request_irq;
 
-One request: could you move `get_valid_stressors()` and `validate_stressor()`
-out of the class and make them module-level functions? They don't need access to
-the class instance, and module-level functions are easier to unit test and can be
-imported directly.
-
-Place them after the imports and before the class definition:
-
-def get_valid_stressors():
-    """Query stress-ng for list of valid stressor names."""
-    try:
-        result = subprocess.run(['stress-ng', '--stressors'],
-                              capture_output=True, text=True, check=True)
-        return result.stdout.strip().split()
-    except (subprocess.CalledProcessError, FileNotFoundError):
-        return []
-
-def validate_stressor(stressor_name):
-    """Validate a single stressor name against stress-ng's available stressors."""
-    valid = get_valid_stressors()
-    if not valid:
-        return
-
-    if stressor_name not in valid:
-        raise ValueError(f"Invalid stress-ng stressor: '{stressor_name}'. "
-                        f"Run 'stress-ng --stressors' to see valid options.")
-
-Then call it in _WorkloadPrepare() as: validate_stressor(self.cfg.stressor)
-
-Thanks!
-John
+Sebastian
