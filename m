@@ -1,128 +1,173 @@
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 5455C4734E5
-	for <linux-rt-users@vger.kernel.org>; Thu, 10 Sep 2026 11:21:04 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id B475434F255
+	for <linux-rt-users@vger.kernel.org>; Thu, 10 Sep 2026 15:19:52 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1789039266; cv=none; b=A620MHwtXZoofBxxpWI4Am4HaiQumUyV4W2InNS0wbPBEcamucytHb3t7EUWox9DKlNUDIwVgspZRPhprbg4n9T7pD7255jtkRe95+OGvJRY8dZU1hNbFNC57E79hDhRC2NBVAoBDWId5fCpiEwyZt8fmGOnXwdLI6yK7NsoLcM=
+	t=1789053598; cv=none; b=XBeU5BrT9LN3cIn/wRjcJfZmx2/UwUgNu3xW4QLzIBA/yEhc7P/XEh0pwfyOQ+dEP4wfq/fxcwhijAAK2GD4FLbS44Eysbtf+XDz/IwNCvSunO+e7WtztQn7SgOSJWuNF08RNeqow//JX0Lfp7bjpsiV79bjVC8m7ozN++b4SiU=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1789039266; c=relaxed/simple;
-	bh=Rk5gzu02mMN1ex0R9ghKDgovASZtezgwgipuRD20OCQ=;
-	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=cse2jrMNmkbNgu3erqKXfsGCeiYQ4p/icI2l+RSxIdjXAsEiqBNXAJXtu/iKoMQko9BHkECHLO3ow2qDhSgHf5B3C/pvyep6XX/HAmuNOkw1gI4YmUDQOb5iJlM9sbFdti4YfcdgfsT6V4KCu043GdG5hl1lBg1u3Hl84D1LJV0=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=bFK5u8vJ; arc=none smtp.client-ip=170.10.133.124
+	s=arc-20240116; t=1789053598; c=relaxed/simple;
+	bh=EwIUycKhrfXkx8BVFLI2CtfSetYx0yAU5AGYO72HP3I=;
+	h=Date:From:To:Cc:Subject:Message-ID:MIME-Version:Content-Type:
+	 Content-Disposition; b=LeQXSXmsfm39zh9uTMgyERoAl0f91PS8AZcE6vkBOrzRFZEbkbPkruhowRKJfgSPXv4C5QrEPHeR1h6YAFnXRA5upsv7T8JmTRI6FcEHdsxhkB69cB0Kgu1xt4lMrXDptM98pyUDHAmG+8CnQS2a6wLSKBQQbW6bIxh1AJg+ius=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=VQIvxbQA; dkim=pass (2048-bit key) header.d=redhat.com header.i=@redhat.com header.b=C5EcMzdS; arc=none smtp.client-ip=170.10.133.124
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="bFK5u8vJ"
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="VQIvxbQA";
+	dkim=pass (2048-bit key) header.d=redhat.com header.i=@redhat.com header.b="C5EcMzdS"
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1789039263;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:
-	 content-transfer-encoding:content-transfer-encoding;
-	bh=VWvTT7WLBo2FKTT3UrkjXZwn71kr+uy0hWU60tUyHr4=;
-	b=bFK5u8vJ/gJiOZB0WJVzssoWHsMUta3Ww7oiNu9oOhzeVnnDgxcyGTePbjaKiQzOkNmT3O
-	9wxR0htca8o+8XYrL/BHt14JkCHIEBSw2Lqay8YguAc8WJqS8TyZpAx4iWu34+pr+nF0LQ
-	dqnr1RCa1FkZJNUZUttNpXB5UbPiNqM=
-Received: from mx-prod-mc-03.mail-002.prod.us-west-2.aws.redhat.com
- (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
- relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-554-PmaNBSeIOo6Zagz0_fOByA-1; Thu,
- 10 Sep 2026 07:21:02 -0400
-X-MC-Unique: PmaNBSeIOo6Zagz0_fOByA-1
-X-Mimecast-MFC-AGG-ID: PmaNBSeIOo6Zagz0_fOByA_1789039261
-Received: from mx-prod-int-08.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-08.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.111])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
-	(No client certificate requested)
-	by mx-prod-mc-03.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 2D11E1955DC5
-	for <linux-rt-users@vger.kernel.org>; Thu, 10 Sep 2026 11:21:01 +0000 (UTC)
-Received: from tglozar-thinkpadt14gen5.tpbc.csb (headnet04.pony-001.prod.iad2.dc.redhat.com [10.2.32.116])
-	by mx-prod-int-08.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTP id DD89D18002A6;
-	Thu, 10 Sep 2026 11:20:59 +0000 (UTC)
-From: Tomas Glozar <tglozar@redhat.com>
-To: John Kacur <jkacur@redhat.com>,
-	Clark Williams <williams@redhat.com>
-Cc: Linux RT Users <linux-rt-users@vger.kernel.org>,
-	Tomas Glozar <tglozar@redhat.com>
-Subject: [PATCH] rteval: Update E2E tests to cover multiple recent changes
-Date: Thu, 10 Sep 2026 13:20:48 +0200
-Message-ID: <20260910112048.310474-1-tglozar@redhat.com>
+	s=mimecast20190719; t=1789053590;
+	h=from:from:reply-to:reply-to:subject:subject:date:date:
+	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
+	 content-type:content-type; bh=u/yHhWjCq2rrwP6P2z6DAVbxUtWCyNjj9uN5UZUtQGo=;
+	b=VQIvxbQA2z+EL7dMMEhrWK30y3jI9tv0HwP+ZqjGB/aTw3M5BYc/xjUJFu1k1BlDgBAVJ2
+	twYP351FSWgn31Z4h7xISUOw/NdcrKzIyTkhQiWDGIDOdvyG2bMuxhklaN7xVlHDfDMHgG
+	V7spCEY/vl3pb5cwJWyK25e7iuxVSpw=
+Received: from mail-qt1-f199.google.com (mail-qt1-f199.google.com
+ [209.85.160.199]) by relay.mimecast.com with ESMTP with STARTTLS
+ (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
+ us-mta-564-1YBhT-UpNB2zbq2K1Bu7dw-1; Thu, 10 Sep 2026 11:19:48 -0400
+X-MC-Unique: 1YBhT-UpNB2zbq2K1Bu7dw-1
+X-Mimecast-MFC-AGG-ID: 1YBhT-UpNB2zbq2K1Bu7dw_1789053588
+Received: by mail-qt1-f199.google.com with SMTP id d75a77b69052e-5308a3825deso79836911cf.2
+        for <linux-rt-users@vger.kernel.org>; Thu, 10 Sep 2026 08:19:48 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=redhat.com; s=google; t=1789053588; x=1789658388; darn=vger.kernel.org;
+        h=content-disposition:content-type:mime-version:reply-to:message-id
+         :subject:cc:to:from:date:from:to:cc:subject:date:message-id:reply-to
+         :content-type;
+        bh=u/yHhWjCq2rrwP6P2z6DAVbxUtWCyNjj9uN5UZUtQGo=;
+        b=C5EcMzdSMtD4cizDBB23myFjZ0Cr3k2iyugQ5blakB172gRRiHOr8NgF30ZuW22RZK
+         xZC9E7mGzQL6oyPkyKfBs3nuQSGakfq2W1XwCPy/QZqIni3NojbpAkVXQAg2T88lEr0x
+         VOfkK7PP/QbAP4/vkoAje6H/0nXqx3kvHKb3TJifr89Iz/UaSKnpe/SW7kn0Kjz52zcu
+         CXDLnDBNxTvDCPdV/dIQ/nWsn+5B3ZA7slZfYOueYnrJBeh/nBUBLfI2XUBW2q0EpemQ
+         lHgHjaUbEpWVw9aQaydtvxYUr8V9zTj4AjqbizGS0alUIEDtQDLMbMiz5leLVTnRiJKr
+         JjIQ==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20251104; t=1789053588; x=1789658388;
+        h=content-disposition:content-type:mime-version:reply-to:message-id
+         :subject:cc:to:from:date:x-gm-gg:x-gm-message-state:from:to:cc
+         :subject:date:message-id:reply-to:content-type;
+        bh=u/yHhWjCq2rrwP6P2z6DAVbxUtWCyNjj9uN5UZUtQGo=;
+        b=l421ModTvqr7u8hEC0vDC1hTUNNm7r6E/l5yJUuIjY+9sXlbvuTcy+uqfYK6cycYcs
+         RmNveKmxuvvoyu9fKwR+K92/ibhJlaoME6/U0HnQbWBvEwjeiL+jyuDnhp2vQhPzipq7
+         PgyuutKb5Ob9KHmhLsrYb8irhtCXEtUxLQQ7ya4sJdfZI013DMk6ld+0Cj08BszNjLq3
+         zI+rsFpA/21K9FbbZUZsiA3Hi9SJFaIoylbscaiR59gkwU3xHNjGvcI9kLHEnTrhVdrZ
+         SZ3GcKF2HKdjOzXZkq/JnrPD5VWNXMJaBwvcsCkJtWTclM0WyGNg1NaOzbnpRKKMrGmo
+         T3VA==
+X-Gm-Message-State: AFuF++me3MLXPgx8L500KJDHqZiLlYob1ll9Bon5aBrbeCSMIzkll7Gg
+	TsO+fbGadBmXX0XR3hStJHYYNbVWewGf4oG7vnicyvDmJfKm/pjZ1eqaEgYP4yKWtDAhSGG3YOW
+	35t7AkWpBtSc9RE/DwQPnUOCyVVWUq9116Tsg5tTTH+Twty720bKeh+blctZ5lS13tdDlGOU1QX
+	V2Foxgy5yRwY9UXVmZyRhlVaSPrdQ2xs7hPsrmgdK3bZICh16nj8OS
+X-Gm-Gg: AYBFou1sUmr365T5qCsGCDSmliowqRptGSEFuOqWQnBcOND+SEQatHVLe0dTp0Neec8
+	wXWqEFlBZuUms9eAOgz7Qs3JpG2hYOXt2XClxlV3gwXK9UR+AVrBSYSD55fkCQSacqgapiGBodA
+	dqrMeydQbGbE7jsLf3a1jVHa6bG6HnJKbMAXBEqhduDpSzDtWQzeBKTmFdKC7XvsscTX7YHeoGD
+	K+bmZ3LZVfcsS08vJ1bI60y6ao+O2v65IH5ftzmiuPmQn7NPyHdUzUzrudZMWdXKIyXGcYYTMlt
+	FMfIi45Uvw0O+WEZzEhu3//aXyMc2BwV1xepFnkcrsjTbZ/AjgYyKHyRKpf9qBupHvQc5PDXj7f
+	IHiZtW29vsD/NvqVA3lPMQdoxtadit8Cgds0=
+X-Received: by 2002:a05:622a:8c15:b0:530:b2e2:2f9 with SMTP id d75a77b69052e-530b2e237fbmr90887421cf.59.1789053588108;
+        Thu, 10 Sep 2026 08:19:48 -0700 (PDT)
+X-Received: by 2002:a05:622a:8c15:b0:530:b2e2:2f9 with SMTP id d75a77b69052e-530b2e237fbmr90886731cf.59.1789053587612;
+        Thu, 10 Sep 2026 08:19:47 -0700 (PDT)
+Received: from localhost (c-71-234-51-224.hsd1.ma.comcast.net. [71.234.51.224])
+        by smtp.gmail.com with ESMTPSA id d75a77b69052e-530a2fdcf8esm57318061cf.8.2026.09.10.08.19.47
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Thu, 10 Sep 2026 08:19:47 -0700 (PDT)
+Date: Thu, 10 Sep 2026 11:19:46 -0400
+From: Sana Sharma <sansshar@redhat.com>
+To: linux-rt-users@vger.kernel.org
+Cc: jkacur@redhat.com
+Subject: [PATCH v1] rteval: Added unit tests for stress-ng validation
+ functions
+Message-ID: <aqLKkrKSpkUt2OQ3@fedora>
+Reply-To: sansshar@redhat.com
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
 List-Subscribe: <mailto:linux-rt-users+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
-X-Scanned-By: MIMEDefang 3.4.1 on 10.30.177.111
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
 
-There have been multiple changes to the command line passed by rteval to
-rtla:
+Used the python unittest capability to add tests that check the
+code paths added in commit aecc7c6e47d4b6b47108fabcf79be75a86ababe8
+which added stressor validation to the stress-ng load.
 
-- Commit f2c619a7ca08 ("rteval: Fix timerlat module for rtla short
-  option parsing bug") changed the format of rteval's short options from
-  "-o<arg>" and "-o=<arg>" to "-o <arg>".
-
-- Commit 5153f0e854cf ("rteval: Refactor timerlat parsing and fix max
-  line duplication bug") commented out "--no-summary" to get more
-  information out of rtla.
-
-- Commit daf3e54bae7c ("rteval: Fix timerlat stoptrace trace analysis
-  capture in XML") makes rteval not pass "--no-aa" in runs with
-  --timerlat-stoptrace.
-
-Reflect the changes in E2E tests to make them pass again. Note that
-some partial matches were extended with more arguments in the process
-for the purpose of more clarity.
-
-Signed-off-by: Tomas Glozar <tglozar@redhat.com>
+Signed-off-by: Sana Sharma <sansshar@redhat.com
 ---
- tests/e2e/measurement.t | 14 +++++++-------
- 1 file changed, 7 insertions(+), 7 deletions(-)
+ Makefile                     |  6 +++++-
+ tests/loads/test_stressng.py | 39 ++++++++++++++++++++++++++++++++++++
+ 2 files changed, 44 insertions(+), 1 deletion(-)
+ create mode 100644 tests/loads/test_stressng.py
 
-diff --git a/tests/e2e/measurement.t b/tests/e2e/measurement.t
-index 9d1f438..62c39eb 100644
---- a/tests/e2e/measurement.t
-+++ b/tests/e2e/measurement.t
-@@ -72,30 +72,30 @@ check "timerlat duration" \
- 
- check "timerlat command, with --measurement-cpulist" \
-   "--noload -d 1 --measurement-cpulist=0-1" 0 \
--  'Command: rtla timerlat hist -p100 -P f:95 -u -c0-1'
-+  'Command: rtla timerlat hist -p 100 -P f:95 -u -c 0-1 -E 3500 --no-aa --dma-latency=0'
- 
- check "timerlat command, with --measurement-run-on-isolcpus" \
-   "--noload -d 1 --measurement-run-on-isolcpus" 0 \
--  'Command: rtla timerlat hist -p100 -P f:95 -u'
-+  'Command: rtla timerlat hist -p 100 -P f:95 -u -c [0-9|-]+ -E 3500 --no-aa --dma-latency=0'
- 
- check "timerlat command, with --timerlat-interval" \
-   "--noload -d 1 --timerlat-interval 2000" 0 \
--  'Command: rtla timerlat hist -p2000 -P f:95'
-+  'Command: rtla timerlat hist -p 2000 -P f:95 -u -c [0-9|-]+ -E 3500 --no-aa --dma-latency=0'
- 
- check "timerlat command, with --timerlat-priority" \
-   "--noload -d 1 --timerlat-priority 80" 0 \
--  'Command: rtla timerlat hist -p100 -P f:80 -u'
-+  'Command: rtla timerlat hist -p 100 -P f:80 -u -c [0-9|-]+ -E 3500 --no-aa --dma-latency=0'
- 
- check "timerlat command, with --timerlat-buckets" \
-   "--noload -d 1 --timerlat-buckets 4000" 0 \
--  'Command: rtla timerlat hist -p100 -P f:95 -u -c[0-9|-]+ -E4000'
-+  'Command: rtla timerlat hist -p 100 -P f:95 -u -c [0-9|-]+ -E 4000 --no-aa --dma-latency=0'
- 
- check "timerlat command, with --timerlat-stoptrace" \
-   "--noload -d 1 --timerlat-stoptrace 1" any \
--  'Command: rtla timerlat hist -p100 -P f:95 -u -c[0-9|-]+ -E3500 --no-summary --no-aa --dma-latency=0 -T1'
-+  'Command: rtla timerlat hist -p 100 -P f:95 -u -c [0-9|-]+ -E 3500 --dma-latency=0 -T 1'
- 
- check "timerlat command, with --timerlat-trace" \
-   "--noload -d 1 --timerlat-stoptrace 1 --timerlat-trace trace.txt" any \
--  'Command: rtla timerlat hist -p100 -P f:95 -u -c[0-9|-]+ -E3500 --no-summary --no-aa --dma-latency=0 -T1 -t=trace.txt'
-+  'Command: rtla timerlat hist -p 100 -P f:95 -u -c [0-9|-]+ -E 3500 --dma-latency=0 -T 1 -t trace.txt'
- 
- test_end
+diff --git a/Makefile b/Makefile
+index 869d42d..3612fc0 100644
+--- a/Makefile
++++ b/Makefile
+@@ -59,7 +59,11 @@ sysreport:
+ unit-tests:
+ 	@echo "Running unit tests..."
+ 	./tests/run_tests.sh
+
++stressng-unit-tests:	
++	@echo "Running stress-ng unit tests..."
++	$(PYTHON) -m unittest tests/loads/test_stressng.py
++	
+ mcp-tests:
+ 	@echo "Running MCP server tests..."
+ 	@echo "These tests require rteval result files to be present"
+diff --git a/tests/loads/test_stressng.py b/tests/loads/test_stressng.py
+new file mode 100644
+index 0000000..6072c37
+--- /dev/null
++++ b/tests/loads/test_stressng.py
+@@ -0,0 +1,39 @@
++import sys, os, subprocess, unittest
++from unittest.mock import patch, MagicMock
++#sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
++from rteval.modules.loads import stressng
++
++class TestGetValidStressors(unittest.TestCase):
++    @patch('rteval.modules.loads.stressng.subprocess.run')
++    def test_parses_stressor_list(self, mock_run):
++        mock_run.return_value = MagicMock(stdout="cpu vm matrix\n")
++        self.assertEqual(stressng.get_valid_stressors(), ['cpu', 'vm', 'matrix'])
++
++    @patch('rteval.modules.loads.stressng.subprocess.run',
++           side_effect=FileNotFoundError)
++    def test_not_installed_exits(self, _):
++        with self.assertRaises(SystemExit) as cm:
++            stressng.get_valid_stressors()
++        self.assertEqual(cm.exception.code, 1)
++
++    @patch('rteval.modules.loads.stressng.subprocess.run',
++           side_effect=subprocess.CalledProcessError(1, 'stress-ng'))
++    def test_query_failure_exits(self, _):
++        with self.assertRaises(SystemExit):
++            stressng.get_valid_stressors()
++
++class TestValidateStressor(unittest.TestCase):
++    @patch('rteval.modules.loads.stressng.get_valid_stressors',
++           return_value=['cpu', 'vm'])
++    def test_valid_passes(self, _):
++        stressng.validate_stressor('cpu')   # should not raise
++
++    @patch('rteval.modules.loads.stressng.get_valid_stressors',
++           return_value=['cpu', 'vm'])
++    def test_invalid_exits(self, _):
++        with self.assertRaises(SystemExit) as cm:
++            stressng.validate_stressor('bogus')
++        self.assertEqual(cm.exception.code, 1)
++
++if __name__ == '__main__':
++    unittest.main()
 -- 
-2.55.0
+2.54.0
+
+
+-- 
+Sana Sharma <sansshar@redhat.com>
 
