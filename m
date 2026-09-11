@@ -1,167 +1,107 @@
 Received: from mail-qk2-f13.google.com (mail-qk2-f13.google.com [74.125.230.205])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id D1F2E40963A
-	for <linux-rt-users@vger.kernel.org>; Fri, 11 Sep 2026 18:56:21 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id C33D241D112
+	for <linux-rt-users@vger.kernel.org>; Fri, 11 Sep 2026 19:06:21 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=74.125.230.205
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1789152988; cv=none; b=bphrTkl9tV0JxZBAJI6eeUaXgNACq3NdTuQ8aLxNRFdbITx74PkU6+fTKSPlqpidZwxhWKD6lzb27D1PuvdxUouSdq9dMu9wF2Gav8pzhCXtPwNripQC3JXNCy7tKS8ox99dIfcYlHiXW+mujmXOrOPswPktOXL++PEVlXjujjw=
+	t=1789153586; cv=none; b=OJk81prl5l1t3gTJEF83BqdnYZeiKt5OU70NJ6ZHboziCUIjpipv6+JkGw+noGPNtNQ9m7NWgle7atjbTQAF5jDhOi5Ihdo+NXkcA3q9YYZENFcHinMAfZ0uaimDs3iUuQ7FOp6MCc/fiWIau7uou69WKTMeAroetWl/nJP2v28=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1789152988; c=relaxed/simple;
-	bh=xXYbvfSPQ+XxvCxCduG02SPiZvlVH52Dv4/33XN/pXA=;
-	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=n9ytq/DoMUMRsJIR0FqY+D9FvbRgWf9+clOY+Qv4m6+pKijgS+HSS0m8mvaKCgaBH3ZXGJLBgoqBieZbX908U8koR/6VwOETbv3TEEFVD3HDTo+sIVW1oSXIWvrs9ikqEekJRCRjyhUBrZx/C71LbPNP8xfH0MvbO9kHBboseiM=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=fail (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=gfwTc/UR; arc=none smtp.client-ip=74.125.230.205
-Authentication-Results: smtp.subspace.kernel.org; dmarc=fail (p=quarantine dis=none) header.from=redhat.com
+	s=arc-20240116; t=1789153586; c=relaxed/simple;
+	bh=LA88UizRcWuIVJ0mTcAACCHG3bS0sCkIIywLoZHxZKc=;
+	h=Date:From:To:cc:Subject:In-Reply-To:Message-ID:References:
+	 MIME-Version:Content-Type; b=drdidYyhVV0cf4WlmAZ497sDkabVjepWUTg4eBQltoz4O30TQwx7ResYtnZj8PsYmQa8VkoOks5hJh06CcRqmCd7/v4m4U7JtyJ19HFE2Or8eg1ybAOLickD2qdQlanZ2eVzZ8Dc/s9NpECwsu7QH8ny768jjw03Q9zSXjlKDy4=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=P7x7q30o; arc=none smtp.client-ip=74.125.230.205
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="gfwTc/UR"
-Received: by mail-qk2-f13.google.com with SMTP id d75a77b69052e-52fb766bfd8so2373701cf.3
-        for <linux-rt-users@vger.kernel.org>; Fri, 11 Sep 2026 11:56:20 -0700 (PDT)
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="P7x7q30o"
+Received: by mail-qk2-f13.google.com with SMTP id af79cd13be357-93910cadeb4so36192385a.1
+        for <linux-rt-users@vger.kernel.org>; Fri, 11 Sep 2026 12:06:20 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20251104; t=1789152978; x=1789757778; darn=vger.kernel.org;
-        h=content-transfer-encoding:mime-version:references:in-reply-to
-         :message-id:date:subject:cc:to:from:sender:from:to:cc:subject:date
-         :message-id:reply-to:content-type;
-        bh=4JFktsHHldFHx6v5cDJv00J/aeEWDtTdxKqGIy746l4=;
-        b=gfwTc/URQ37uMPBVugkd9zGc1GDQqMZ7P4458ZLF7kRJu2dn4FONNuv70IWV1iHplb
-         U7viz5JxbZVWCvY+CnVjnhDYWLBFTVeBg6BpPgNB9WwPYDgoy8P35WlNo3Oy2h6e4AiC
-         y/+ish5SwgF7dgeUQKivrwu8+r8kLyop7VUXgGg3ueW1qwVDcAjlKDb4Ex4mEtCI9dzw
-         I0JI91hJmZePzyM0Ow7glGE8h30OgGNgUK70t+D3pFYUWTjilnSdcn9coIPXUKw+GNIe
-         hoEtrZvAy/7RYuzfRcnKIEI2GeJ/QmFmMnVCtcV/fIQsIBCioAfM89GjWMo0wrIY/Is6
-         Bg+Q==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20251104; t=1789152978; x=1789757778;
-        h=content-transfer-encoding:mime-version:references:in-reply-to
-         :message-id:date:subject:cc:to:from:sender:x-gm-gg
-         :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to
+        d=gmail.com; s=20251104; t=1789153579; x=1789758379; darn=vger.kernel.org;
+        h=content-type:mime-version:references:message-id:in-reply-to:subject
+         :cc:to:from:date:from:to:cc:subject:date:message-id:reply-to
          :content-type;
-        bh=4JFktsHHldFHx6v5cDJv00J/aeEWDtTdxKqGIy746l4=;
-        b=R0g2OvhAZH4sMS3j+C6Lg7+xptgebC0Q1chTilJbTMfhaO0tUct6V0oI4n4Ee2ZdI5
-         9U5YSdDzNWMLFFhbJtO1kDmWq9njs2aSpmLl8ubhbAgdVvB3d/jQRvBP0jQ+5dAMezYT
-         sLvvPOJtOtsbh8vWrST23xfz9md7oIS8pJggZobkdyb9TwuIIGniOZ9RX3PzzjG1NoYs
-         vfJRj7xt5Af2dgbbHDl9SRkz5MJfqFpKUA3rnMRsHpHCJ44e1SUoAqatIWzJwmmNKty8
-         H0o4tjJ6w3K7upW751Zuv/0pJjc0dQEcjJXFO2Vz444O1IfkQX40Oq1IlNZSqvOTrLnm
-         gHQg==
-X-Gm-Message-State: AFuF++n5DsaVGsvORB/CFOkQmOrWRc07+24F7FLVey3VaPBBW+c71J27
-	am3UxQbhWXoOH/TrxvoTVC6iQbLXSQoVqwa+a4NQDpaWf6LlGhHA7QNKLjCkww==
-X-Gm-Gg: AYBFou0LS9Y5k510B4eGIhCjF7w3zE9I++iAVf98U+e62HP2Bu3DmXvD2nLjSR7U6EH
-	+UF1oDT9B0+qf1kEGtOoYA9KuV0M62pCk5TMvBzdVbcOMJ25ZodMUEKmBeP9d+M97Q82QpFg7Vu
-	SKcFcHDh0lkB+xXztPzLj8JRQ2dnTLvJ9wEZ7fvO7aChxwLemBDSbFiGC+7XfCKPRTdsqLpxHCl
-	JrKXszHbw8uNfKXH5yHXDoD9b9o/BsR0jep/4QH358PR+/xBcx4XsYStZYs2tcDTHkcafbzImg3
-	+v4rr/PGCWy6I1pQn5zfc+ilb7rTw1+GdrxudtsbkNxN+Vo4PwjbwUW22pNyuLZrcxdeTVo9zgs
-	GSE7/ftDUt4sY2BpTubw7zuFF1stk8X0w4rPLkRbh/Mwq+1fMOYRUWGCrCVdiVYNwRDtJe0qEMj
-	Loa93wxIM2N4gJqwlBt3fuKmhjhsh8tEHsBevmIVZ2MT/kOtrGfXHtZ8MIENWbqWWZgfrBe3ps4
-	cY9D+SFB6a6VBHcMFW6S08kqltzMCyjVvk/e47j+YD/9dJjQZzl5fNEn7GgTB1q
-X-Received: by 2002:a05:622a:4d08:b0:52d:953b:2c25 with SMTP id d75a77b69052e-530c8722951mr105813451cf.38.1789152973704;
-        Fri, 11 Sep 2026 11:56:13 -0700 (PDT)
-Received: from Cumhall.redhat.corp ([70.53.55.174])
-        by smtp.gmail.com with ESMTPSA id 6a1803df08f44-9120f4920c5sm27254726d6.32.2026.09.11.11.56.12
+        bh=r5e82iwGF5twCcfEfmsg0K1TTifcFwfy0TLUMFCyRJc=;
+        b=P7x7q30oLgk7Qdh9IsReQTA1mrrb4teNH1GUYKXjTsBwKyis+vOBaYhvsvap2m9OA8
+         1/jms2WLpBBZDGVfZgKjfUK6lOVUiA5EMGQ04HDfO8ceUeUdii+OEv0RjPmv1jaAEPCZ
+         7NvG6FI5whvtBFj4656j92qEWMBkYS25L2lU/JtSRWnMM7ulLfmlMi1I1/Jtg1UW/L/E
+         RzkLhuTPvvlMVOwB/bl+o8Qrw8oF8TVWGDlHjwpYjFr9eqMdLlHcL/8ylWBtfxFPkHm3
+         7z/XMSVdm3XlHoXnt5DdcWgZgJHoBWF68hswLOqTysEc08Rvl6kQ/ukxc1b0v82/Rp1t
+         Lh3g==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20251104; t=1789153579; x=1789758379;
+        h=content-type:mime-version:references:message-id:in-reply-to:subject
+         :cc:to:from:date:x-gm-gg:x-gm-message-state:from:to:cc:subject:date
+         :message-id:reply-to:content-type;
+        bh=r5e82iwGF5twCcfEfmsg0K1TTifcFwfy0TLUMFCyRJc=;
+        b=dbOoaRogvO9M+88EMGNm1aKwsElkJ5HbvkaOCQ54hzaBjJbb2ILvWoutwhfJ8DsxL/
+         WvSFspk4d44+arCSNRJqxQ5mFLcISIBBygLgjqS/+wXqiX6Dj+pHUjsPNNQx7Ck6Xt8s
+         Hz3AAOUgmtGJEkgKFNa2cWRHsPxSZJk4sJPgpF0xISD0MHaGvfaA/GSky0L6OAkROCOx
+         cihLorUl2Z4sPFXSMu0yuWwN7e4dNlnCiRxqAmqpHmg+3J23FTqZhYLd6xAYlSLiQN3/
+         l6pLtKsMYr71Z7CPQ11q5OKFBdfO1IZ4brl8z58U2IFY3017QcZmuoQUfUDusUQFsRYc
+         CHhA==
+X-Gm-Message-State: AFuF++kF7HWyXrgxZtjp/PdLDuWeWyyOYeLHQTaINHGWuXZHI1vlhQpH
+	RouUyFBCyYZ9TWs8AfpiRnhWe+k3oF/Seg5EbPGA9xTnrhLRgu7XrFwh
+X-Gm-Gg: AYBFou3g3hRXu7Ocs2rprTTwo7X3RU93up+ZDKlufbTpAt8gwDrdpRyvJTNdsXFmzyo
+	30KuwZ/s6vaqkYFkkYibHlwgDlhIYHVG5DW/th4x7QbY5EaF8JiPYOCWhFvz1uGXDF7BOpBkmA6
+	9qDjxTLZyYsc0sI5kJzsm7wkMfvT01e9G1GV0Wy5+TvNogdXbcu59RhmNlV/ejAphwWvztG0IxD
+	mvAQIOhul5RY/H4kVlVlbWRlb0fF+9suz6UPcJ9CpoKCgTkmA0oGdmdK9yZo5oVVsP9a7bB4YGz
+	D/inSTz8YBm4o1zMfzgdezERlkOw8T40Ec7BJddxY8GwWKLpzIxsrhAcP2vnsasjAWJUj8yXmod
+	GIIyrZl2nbRFyi305J05kzAqQmjcp40eYhDgUClg+OkgoG/TJHiMq2qW/lkLqZM26Pk+wGnA8zO
+	yF6NQiZNlB08oIj829PuLsl5BSMwR3DgyO5wIYPfTnnrfnUI/ZYA/KCj19B8vaE+uzCJh+ig2d9
+	FR2nhEnWIEYF0YtGYFNhg0fwsPvSpQBhi6A7xp6I9b7VIE=
+X-Received: by 2002:a05:620a:448e:b0:939:b482:d474 with SMTP id af79cd13be357-939ea1ab007mr876402685a.35.1789153578808;
+        Fri, 11 Sep 2026 12:06:18 -0700 (PDT)
+Received: from Cumhall ([70.53.55.174])
+        by smtp.gmail.com with ESMTPSA id af79cd13be357-939e809fd0bsm306217785a.33.2026.09.11.12.06.17
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Fri, 11 Sep 2026 11:56:13 -0700 (PDT)
-Sender: John Kacur <jkacur@gmail.com>
-From: John Kacur <jkacur@redhat.com>
-To: linux-rt-users@vger.kernel.org
-Cc: Tomas Glozar <tglozar@redhat.com>,
-	Sana Sharma <sansshar@redhat.com>,
-	Clark Williams <williams@redhat.com>
-Subject: [PATCH 09/10] rteval: Temporarily skip cpuset tests pending isolated-partition decision
-Date: Fri, 11 Sep 2026 14:55:42 -0400
-Message-ID: <20260911185549.604199-10-jkacur@redhat.com>
-X-Mailer: git-send-email 2.55.0
-In-Reply-To: <20260911185549.604199-1-jkacur@redhat.com>
-References: <20260911185549.604199-1-jkacur@redhat.com>
+        Fri, 11 Sep 2026 12:06:18 -0700 (PDT)
+Date: Fri, 11 Sep 2026 15:06:07 -0400 (EDT)
+From: John Kacur <jkacur@gmail.com>
+To: Suneeth D <Suneeth.D@amd.com>
+cc: linux-rt-users@vger.kernel.org, williams@redhat.com, jkacur@redhat.com, 
+    bigeasy@linutronix.de
+Subject: Re: [PATCH v3] cyclictest: Fix BUILD failure for GCC_VER < 15
+In-Reply-To: <20260911053216.2601-1-Suneeth.D@amd.com>
+Message-ID: <218ceea9-abd5-8dfe-1e0c-85c1e81f8e50@gmail.com>
+References: <20260911053216.2601-1-Suneeth.D@amd.com>
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
 List-Subscribe: <mailto:linux-rt-users+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
+Content-Type: text/plain; charset=US-ASCII
 
-Tests 2 (same CPUs, no housekeeping), 5 (housekeeping without isolcpus)
-and 8 (measurement-run-on-isolcpus) all exercise the same unresolved
-behavior: the measurement cpuset is created as an isolated partition,
-which removes its CPUs from the root cgroup. When the load CPUs overlap
-the measurement CPUs (the default when no disjoint --loads-cpulist is
-given), the taskset-bound loads can no longer run there, kcompile fails
-and rteval exits non-zero.
 
-Test 5 fails outright. Test 2 only appears to pass because it never
-checks rteval's exit code. Test 8 is normally skipped for lack of
-isolcpus but would hit the same issue on an isolated host.
 
-Skip all three with an explanatory TODO until the design decision on the
-measurement cpuset partition type / load CPU placement is made. Test 10
-(explicit disjoint measurement and load CPUs) is unaffected and left as
-is.
+On Fri, 11 Sep 2026, Suneeth D wrote:
 
-Assisted-by: Claude:claude-opus-4-8
-Signed-off-by: John Kacur <jkacur@redhat.com>
----
- tests/cpusets/test-cpusets.sh | 35 +++++++++++++++++++++++++++++++++++
- 1 file changed, 35 insertions(+)
+> timerthread() uses bool, true, and false. Those are keywords in C23,
+> which became GCC's default in GCC 15 (-std=gnu23), so the file compiles
+> there without stdbool.h. With GCC 14 and earlier the default is gnu17,
+> where they are provided by <stdbool.h>, and the build fails without it.
+> 
+> Fixes: 98fcd661ac59 (cyclictest: Acquire a lock before invoking pthread_cond_signal())
+> Closes: https://lore.kernel.org/linux-rt-users/4ce24139-5f7e-4180-a290-bcc15fb4f559@amd.com/
+> Signed-off-by: Suneeth D <Suneeth.D@amd.com>
+> Signed-off-by: John Kacur <jkacur@redhat.com>
+> Reviewed-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+> ---
+> 
+> Please ignore the previously sent v2. Sorry for the noise.
+> 
+> Changes since v2 ---> v3:
+> 
+>  * Add Signed-off tag by John Kacur
+> 
 
-diff --git a/tests/cpusets/test-cpusets.sh b/tests/cpusets/test-cpusets.sh
-index fe0d26e7320c..18b6af543bc5 100755
---- a/tests/cpusets/test-cpusets.sh
-+++ b/tests/cpusets/test-cpusets.sh
-@@ -206,6 +206,19 @@ test_same_cpus_no_housekeeping() {
- 
-     cleanup_cpusets
- 
-+    # TODO: Temporarily skipped pending a design decision (see below).
-+    # This runs measurement and loads on the SAME CPUs. The measurement cpuset
-+    # is created as an isolated partition, which removes those CPUs from the root
-+    # cgroup; the taskset-bound loads then cannot run there and kcompile fails,
-+    # so rteval exits non-zero. (This test currently does not check rteval's exit
-+    # code, so it silently "passes" today.) The fix - the measurement cpuset
-+    # partition type / load CPU placement when measurement and loads overlap -
-+    # is still under discussion. Re-enable (and add an rteval exit-code check)
-+    # once that is resolved.
-+    print_info "SKIPPED: pending design decision on measurement cpuset partition/overlap behavior"
-+    ((TESTS_PASSED++)) || true
-+    return 0
-+
-     local cpus=$(get_test_cpus)
-     local msr_cpus=$(echo $cpus | awk '{print $2}')
- 
-@@ -420,6 +433,18 @@ test_housekeeping_without_isolcpus() {
- 
-     cleanup_cpusets
- 
-+    # TODO: Temporarily skipped pending a design decision.
-+    # With '--cpusets --housekeeping' and no explicit --measurement-cpulist,
-+    # the measurement cpuset defaults to all non-housekeeping CPUs as an
-+    # isolated partition, which removes them from the root cgroup. The
-+    # taskset-bound loads then have nowhere to run and kcompile fails, so
-+    # rteval exits non-zero. The fix (measurement cpuset partition type /
-+    # load CPU placement when measurement and loads overlap) is still under
-+    # discussion. Re-enable this test once that is resolved.
-+    print_info "SKIPPED: pending design decision on measurement cpuset partition/overlap behavior"
-+    ((TESTS_PASSED++)) || true
-+    return 0
-+
-     # Check if system has isolcpus
-     local isolated=$(cat /sys/devices/system/cpu/isolated 2>/dev/null || echo "")
-     print_info "System isolated CPUs: ${isolated:-none}"
-@@ -518,6 +543,16 @@ test_measurement_run_on_isolcpus() {
- 
-     cleanup_cpusets
- 
-+    # TODO: Temporarily skipped pending a design decision.
-+    # On hosts WITH isolcpus this shares the same unresolved issue as tests 2
-+    # and 5: the isolated measurement cpuset (affinity + isolcpus) removes its
-+    # CPUs from the root cgroup, so taskset-bound loads on the affinity subset
-+    # fail and rteval exits non-zero. Re-enable once the measurement cpuset
-+    # partition type / load CPU placement (overlap) design decision is made.
-+    print_info "SKIPPED: pending design decision on measurement cpuset partition/overlap behavior"
-+    ((TESTS_PASSED++)) || true
-+    return 0
-+
-     # Check if system has isolcpus
-     local isolated=$(cat /sys/devices/system/cpu/isolated 2>/dev/null || echo "")
-     if [ -z "$isolated" ]; then
--- 
-2.55.0
+You don't need to create a third patch version just to include my 
+sign-off. That's just my acknowledgement that I've accepted the patch into 
+my repo
 
+Cheers
+
+John Kacur
