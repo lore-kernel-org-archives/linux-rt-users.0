@@ -1,67 +1,76 @@
-Received: from PH7PR06CU001.outbound.protection.outlook.com (mail-westus3azon11010043.outbound.protection.outlook.com [52.101.201.43])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+Received: from mail-qv1-f44.google.com (mail-qv1-f44.google.com [209.85.219.44])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id BBDCB35F180
-	for <linux-rt-users@vger.kernel.org>; Fri, 11 Sep 2026 05:32:30 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=fail smtp.client-ip=52.101.201.43
-ARC-Seal:i=2; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1789104752; cv=fail; b=Q58fv7caZmZfa5HAVxCvDbPsvkLWKd966kYi6QtLCMfWxgQ1b2k0qbKlNRLP6TSzIDcA9j3qrm317wJ2+ChrMOjc5V30hue56BD/tfWkGZ5/qXaiHS5pcUpM5/Uk/oiKw6uvIgPjRTydEZ0avs2NdoXek1x+2A0woOiBq1jvXMQ=
-ARC-Message-Signature:i=2; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1789104752; c=relaxed/simple;
-	bh=bwNBKfI8p90+8xURaDUvGzEw4LyJQhDchVfTrYX6ekQ=;
-	h=From:To:CC:Subject:Date:Message-ID:MIME-Version:Content-Type; b=Wj1lUdsuB4tcV8iLs/8mnaG6QxsEv3u9nZGikQMcWkRt3idYrQxxarNt4UJDpTyl8sBgqCLTlTYOehZ06UAJLEL3urqcRcwsRTu0D1BSwTb2MpZx6YgxeAoGNknLU50ux8jNgOk9GqslP3tyrtEgV3ECbtzHMg7AvJO+eXiUV+E=
-ARC-Authentication-Results:i=2; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=amd.com; spf=fail smtp.mailfrom=amd.com; dkim=pass (1024-bit key) header.d=amd.com header.i=@amd.com header.b=HIQLQoX4; arc=fail smtp.client-ip=52.101.201.43
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=amd.com
-Authentication-Results: smtp.subspace.kernel.org; spf=fail smtp.mailfrom=amd.com
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 13C01403EA1
+	for <linux-rt-users@vger.kernel.org>; Fri, 11 Sep 2026 18:56:10 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.219.44
+ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
+	t=1789152975; cv=none; b=opYNgTOlGib1OtFlwlXybK0cMsstQWGQDHShnhfv+VEVuK7YjWLi3br9uFFHg/xvJlhqi/Gr22vTMOC4U4E9ZsTy6tOMv9FESYAbMoJri+ILUZuVuQ55VXyD4d7Zx4Fy07N6bdhN0jtLe1yA4LOJGfNlQxn/i1uRoHIQc+qMPAg=
+ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
+	s=arc-20240116; t=1789152975; c=relaxed/simple;
+	bh=tkIIAiYKIAQyADhbxVMP2VejaGWBqGzACObGGbiJAP4=;
+	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
+	 MIME-Version; b=RxUWfNrDqb7TzAsqbw2m7OdUdQQmMmTqRZMweTKuXHoIoEaJik5FkyT8NyDtcVQSTTqbIzGZ5PO4MbyQk91vl+xRrPFpw/QYRF0UX/P6wSaT7UbCxg+g+POlf9YMqT2LyXTs7t1ck338Br1Df1gFla7h31wFNGYIvcjfjqou/1s=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=fail (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=nboO9sml; arc=none smtp.client-ip=209.85.219.44
+Authentication-Results: smtp.subspace.kernel.org; dmarc=fail (p=quarantine dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=amd.com header.i=@amd.com header.b="HIQLQoX4"
-ARC-Seal: i=1; a=rsa-sha256; s=arcselector10001; d=microsoft.com; cv=none;
- b=zPw9DN0GoPVoEKBdr1oQOfcxMZXDCZNSKLjhQ/VRKfhKPlCBNcBKcVcxz9Cutc38T52iC7AOgZn2r6eesCAVbkb6lH9K+CfiLM7ZEWXlJhFWnUCgXvP45/7GrFNbcq51+HdFhjxGniDFCVTZYHkO4urawK70EvYtxcDWE44pC1NzVxpz+VzAAjRgLAHYhIbnV+S5rsSaiNkME6+MbJdU0saXEC4dgRaLvH3xKFXNb3sWvVsbQqIn7ODLQsr1eYcgn/2fDvk3lAyd0MmZr/c4APx/z/Gm8R4+yu0WDpusuGj/f8PeiZvX5B2qCFiJ5skV8LZTd4fjfHNCmjIg/qFykw==
-ARC-Message-Signature: i=1; a=rsa-sha256; c=relaxed/relaxed; d=microsoft.com;
- s=arcselector10001;
- h=From:Date:Subject:Message-ID:Content-Type:MIME-Version:X-MS-Exchange-AntiSpam-MessageData-ChunkCount:X-MS-Exchange-AntiSpam-MessageData-0:X-MS-Exchange-AntiSpam-MessageData-1;
- bh=64NIM+jc3/dsk5lW9pFbpeNDyoC4zvV3epPkfMYxsVo=;
- b=m1mF3a7UIdwzzIkY3Ua9JMS0EyTR4+YKuhzASoFa8oFqvBqxCjJbQLCLQ3cvX17595eTBktWEWdLhsLeBXQQfiuqXyjITfiuQRlJOXbLWDnRYz3ViI0zdj/Tn07Qxgbwe3LIgk7ZEwRqiAqoTodFMI8G5sNiMRzdoTzgf0oaVPwqw3Y0uawbNc4CY5mIXyfHFn9+AaJZ63Ft7nG3HIg8R/LkdUmmTuboFWA06i87/w1/CUITB+AGMseMVZfX24j/QXwwxltmkdYy4UetgL2EO+byRGjYTbvqNEyMuqPA1EMjy1LGqp6X/0LYU9SmmgbRMd2YyA4ZkUuwcZlTSo/qEA==
-ARC-Authentication-Results: i=1; mx.microsoft.com 1; spf=pass (sender ip is
- 165.204.84.17) smtp.rcpttodomain=vger.kernel.org smtp.mailfrom=amd.com;
- dmarc=pass (p=quarantine sp=quarantine pct=100) action=none
- header.from=amd.com; dkim=none (message not signed); arc=none (0)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=amd.com; s=selector1;
- h=From:Date:Subject:Message-ID:Content-Type:MIME-Version:X-MS-Exchange-SenderADCheck;
- bh=64NIM+jc3/dsk5lW9pFbpeNDyoC4zvV3epPkfMYxsVo=;
- b=HIQLQoX4aLuWwn1QBkTXcv6XfhrzNhVckU4Z/7Nl/8FYFlnyeWLnyXCN0cJNrjUtY8Fb834OWtlUfNDcbAssIbWXiEOPgursnOvdEJJuvR0U+Qg5xMXpi+L3uyllNuFsqIteNrfRwG2fwWD1tYplW4rxQ0SPBlkVdzYQm9CLcAQ=
-Received: from PH0PR07CA0095.namprd07.prod.outlook.com (2603:10b6:510:4::10)
- by SN7PR12MB7884.namprd12.prod.outlook.com (2603:10b6:806:343::18) with
- Microsoft SMTP Server (version=TLS1_2,
- cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.21.406.7; Fri, 11 Sep
- 2026 05:32:27 +0000
-Received: from SN1PEPF00036F3C.namprd05.prod.outlook.com
- (2603:10b6:510:4:cafe::c) by PH0PR07CA0095.outlook.office365.com
- (2603:10b6:510:4::10) with Microsoft SMTP Server (version=TLS1_3,
- cipher=TLS_AES_256_GCM_SHA384) id 15.21.406.9 via Frontend Transport; Fri, 11
- Sep 2026 05:32:27 +0000
-X-MS-Exchange-Authentication-Results: spf=pass (sender IP is 165.204.84.17)
- smtp.mailfrom=amd.com; dkim=none (message not signed)
- header.d=none;dmarc=pass action=none header.from=amd.com;
-Received-SPF: Pass (protection.outlook.com: domain of amd.com designates
- 165.204.84.17 as permitted sender) receiver=protection.outlook.com;
- client-ip=165.204.84.17; helo=satlexmb07.amd.com; pr=C
-Received: from satlexmb07.amd.com (165.204.84.17) by
- SN1PEPF00036F3C.mail.protection.outlook.com (10.167.248.20) with Microsoft
- SMTP Server (version=TLS1_2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- 15.21.406.5 via Frontend Transport; Fri, 11 Sep 2026 05:32:27 +0000
-Received: from BLRSUNEETHD2.amd.com (10.180.168.240) by satlexmb07.amd.com
- (10.181.42.216) with Microsoft SMTP Server (version=TLS1_2,
- cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.2.2562.46; Fri, 11 Sep
- 2026 00:32:25 -0500
-From: Suneeth D <Suneeth.D@amd.com>
-To: <linux-rt-users@vger.kernel.org>
-CC: <williams@redhat.com>, <jkacur@redhat.com>, <bigeasy@linutronix.de>,
-	Suneeth D <Suneeth.D@amd.com>
-Subject: [PATCH v3] cyclictest: Fix BUILD failure for GCC_VER < 15
-Date: Fri, 11 Sep 2026 05:32:16 +0000
-Message-ID: <20260911053216.2601-1-Suneeth.D@amd.com>
-X-Mailer: git-send-email 2.43.0
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="nboO9sml"
+Received: by mail-qv1-f44.google.com with SMTP id 6a1803df08f44-90e7c71f86eso9899666d6.1
+        for <linux-rt-users@vger.kernel.org>; Fri, 11 Sep 2026 11:56:09 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20251104; t=1789152967; x=1789757767; darn=vger.kernel.org;
+        h=content-transfer-encoding:mime-version:references:in-reply-to
+         :message-id:date:subject:cc:to:from:sender:from:to:cc:subject:date
+         :message-id:reply-to:content-type;
+        bh=tZBosJrRFcMFa5V4qsdwDcVA33Oe7Ah8EzmsZ2FOvus=;
+        b=nboO9sml0pyouxktSaJzZ5bGyqRfjYUdU/IbQ+/ZaJi4lg5YCmDs9imrpj2jQOo9MU
+         5z5Ec5SxZkluIFmNyZqNtp1kjJCTFw3sJAAwaY//R6po60NV1NFqOEA46ZAj3H2gyqad
+         zoN0Dy/kV4Ja09xl1A+m7WHzUR3Oqbc8+EYKTXVMnIpIply/hikGdAF3XMOdNCIpuMk/
+         ed0EzjW4FVIAMB3RARDoWcp6punXDsnYku2/vAPd3aFJEBXQ1lTweBvMZICwvGQ+KL8b
+         gGCPTnXu/nGAu6pFVAEGOmhFfalJjBaCQ/X/+eWWEBEvI37UFzkt+JeuPGyj+RVlIat+
+         0RDg==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20251104; t=1789152967; x=1789757767;
+        h=content-transfer-encoding:mime-version:references:in-reply-to
+         :message-id:date:subject:cc:to:from:sender:x-gm-gg
+         :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to
+         :content-type;
+        bh=tZBosJrRFcMFa5V4qsdwDcVA33Oe7Ah8EzmsZ2FOvus=;
+        b=C4TMUoEGcbwldGhIiO3UHZV0aJ/8SqmQ+3/GRso2qLkwyG8oYrAPRNcLhudsoiC1Br
+         anP2qjGA2bbMJPWqQhGCjw9EUFXsjfvCsEVeYpcOYYJrOU7FTkAVOjmd5veYiZE2SAtc
+         02wESbLue1COFEFQHzT39zh00UgoOpmV9ditSDiJDQk/mzbamVlO5LhZTM5MxBBRf0r7
+         pjTfftU0b/GEt1Yun5sAT8t/s4lI8PlktatLEIwifJv5AzcF5Y2VkPDsdS/xnFUGHz1X
+         wf+3t4zqqe7JWqcu/7C9Q4prX9T+5+oyBV8x4N9czchDsVOfZjD7evD4vYBdoUDG12t4
+         xvZQ==
+X-Gm-Message-State: AFuF++lZuHSqYtrSBQbNSNaJPD7MYcN7ACOHFo/znKMgTow739r+mhXd
+	BvTPYjICsarYfHQcsoTnaiFnPal9cO4Rc94+Qcz2sfpJ/1qjR4mJBih9K3ue8A==
+X-Gm-Gg: AYBFou0lF3U3PgY0HLSlTiCd5wex+/PSIHfn2Pv411by6EO6j7vgKXmv5Gf4LEfawns
+	BmFWTmRXjSAcxkPMquGW3HYBP+fvCBawrHBB19CHJ7pRTjY6ulIaaUlT4c0OGqfxhVsou5SAyUo
+	rpUyIjnxLLGEsVv+vJ1mh5I0ez+QqKUN07KYfg2r4/MXwg6PgmGEdmgtuh0RMS8Ed6HLFZoE03g
+	0sk4cCupBa2+kBj0oMxPBI3q2Faa6ErMsXz4miM50Rn61VgiEtM0VA1ROgNGBYItIqrj5xDluuS
+	anVeohxhPKOFBNBZMstOt0TjzLpoVsRZ+KpuKg3Utr8klfUByYLtbwxqWZyNR9ZoZycO8Bv3Zum
+	f2fN2xqvkqnZWlaXc8vpveCOgKd0LDCjDNmmRbAHvtVtQR//RFibGjKqLbB/+6wpHQNiOSb++dK
+	TmK04NWdi4bXoTxQbsMDnRIuYOL3f1tEzXXK5wy/bEYrc6U0+YpG7nctu9+m0ihICmc+sZeBi9K
+	clWCot8iPsA/PXite/4sWmxRHClbaJnzxiAWY4esRz+17uu98YXVFRLMxXoZq1B
+X-Received: by 2002:a05:6214:2301:b0:910:6f24:2816 with SMTP id 6a1803df08f44-912120d76d0mr75078966d6.18.1789152967298;
+        Fri, 11 Sep 2026 11:56:07 -0700 (PDT)
+Received: from Cumhall.redhat.corp ([70.53.55.174])
+        by smtp.gmail.com with ESMTPSA id 6a1803df08f44-9120f4920c5sm27254726d6.32.2026.09.11.11.56.06
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Fri, 11 Sep 2026 11:56:06 -0700 (PDT)
+Sender: John Kacur <jkacur@gmail.com>
+From: John Kacur <jkacur@redhat.com>
+To: linux-rt-users@vger.kernel.org
+Cc: Tomas Glozar <tglozar@redhat.com>,
+	Sana Sharma <sansshar@redhat.com>,
+	Clark Williams <williams@redhat.com>
+Subject: [PATCH 02/10] rteval: Default make to help and make test-all run every test suite
+Date: Fri, 11 Sep 2026 14:55:35 -0400
+Message-ID: <20260911185549.604199-3-jkacur@redhat.com>
+X-Mailer: git-send-email 2.55.0
+In-Reply-To: <20260911185549.604199-1-jkacur@redhat.com>
+References: <20260911185549.604199-1-jkacur@redhat.com>
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
@@ -69,76 +78,127 @@ List-Subscribe: <mailto:linux-rt-users+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
-Content-Type: text/plain
-X-ClientProxiedBy: satlexmb07.amd.com (10.181.42.216) To satlexmb07.amd.com
- (10.181.42.216)
-X-EOPAttributedMessage: 0
-X-MS-PublicTrafficType: Email
-X-MS-TrafficTypeDiagnostic: SN1PEPF00036F3C:EE_|SN7PR12MB7884:EE_
-X-MS-Office365-Filtering-Correlation-Id: 41a0772d-7478-4906-d6ae-08df0fc610ef
-X-MS-Exchange-SenderADCheck: 1
-X-MS-Exchange-AntiSpam-Relay: 0
-X-Microsoft-Antispam:
-	BCL:0;ARA:13230040|36860700016|23010399003|376014|82310400026|1800799024|11063799006|10067099003|18002099003|56012099006|13003099007;
-X-Microsoft-Antispam-Message-Info:
-	Bmby1hM1Ae7VJaxUdsRYsTVKNO+ZDJojDC4tj1CqkQUVTvI3znQ0C6PCaLV14obSbPdMA29Ix5hAGsY56mGUTuwOxXicoZoGrBsCH42TBVGZBn9IxR/5TJIV4vGOCOoJ09DohhwW4Z4wNdsKL4NXEFg+rpGxcYEq8uWHomRU1ayxlUCQ00Dn6s/8WwyGsjE4kDGZsPh7GW+H/EYSN9dBLb2/rI4oYyWKvOJdHHvn5vh+7ti68NZXk8ugHWWD5Wdx7c/neTvXaS5pgf8dw8a4l7mtf3VLKGCkPSDk/kgggxwo7w2/KP91WgKPOMLwWmX8hLBSh4F0NLZAld1RFUFr7xbmPH3pWha1Em57fAf97pjLCU3CYvu0ZBhzd3sEskGckC2Vy29MkDcVkYuZMAnsw7ToB4X+A9o8tK+SEUl+q0d/ClgVdMc61CIUdBy5SS6gf0xe5/Nr27NhWuH8O7T++shMDSeJ2jkz9Zxiz/75XrOz7ISaHHzHLUTZ0zlj2GNMpJ+1hoWEwIAJH3UXyCMwOg++5hGdunGk+KlLIfs8Eb3PZgF4lhh8A6fTBqMJenYKDTuTxS2ZT7TXTQDa6rFKvVgJkzUJO+BPZG9nVu6HP516b/TuzbV3Fc4zllmescCH7oWvp9cBiw6zxKDSxyt2XBt8a54TnpJCXwJA7Bugc/W5YD7Z5GsCF+x19f6S+gZwssyEEAm35g/RY0E28enMqw==
-X-Forefront-Antispam-Report:
-	CIP:165.204.84.17;CTRY:US;LANG:en;SCL:1;SRV:;IPV:NLI;SFV:NSPM;H:satlexmb07.amd.com;PTR:InfoDomainNonexistent;CAT:NONE;SFS:(13230040)(36860700016)(23010399003)(376014)(82310400026)(1800799024)(11063799006)(10067099003)(18002099003)(56012099006)(13003099007);DIR:OUT;SFP:1101;
-X-MS-Exchange-AntiSpam-MessageData-ChunkCount: 1
-X-MS-Exchange-AntiSpam-MessageData-0:
-	nqeKXTDbAvbPz7VE7UEQ20/xS+IY8lW204IDkWFMxUpAGgfpFdLTdhWpMH98OQVEE1NpDyEpo8IsVbCrOw2T2fyUi5z+p080zkXRinC3oF4M4UN6N1AHEEUcYLBOs3x2w8tNJyHUHT6suppKv0ZXQZXIkI/MGUUdSUjgfTEsUxdOImhUcvdkcVRuSfWR9nqmeoRynl48QNwdQXKYJepadWyq6LgABVI3BEcWTUQic7uqd1iJ/+DIbCqcrjfaux5uPkMuGBXFW7uw7sSr2mszCVmIPBrYrhQ5HM5jo+UVQl6eNV6vn7b5VpUM0oZU8f1hRvqLWU9cjWp8Be1Ot9ZLFlLYPnFiopAC0teCpR5rjdkVRTynac5zjHGpYXN7YqS09HDxBAjrHBysgZ+4eSS1uJyynVBtRqTPJhuRotnw9fHX6cLtZBt83x4SP3HqYIeH
-X-OriginatorOrg: amd.com
-X-MS-Exchange-CrossTenant-OriginalArrivalTime: 11 Sep 2026 05:32:27.1625
- (UTC)
-X-MS-Exchange-CrossTenant-Network-Message-Id: 41a0772d-7478-4906-d6ae-08df0fc610ef
-X-MS-Exchange-CrossTenant-Id: 3dd8961f-e488-4e60-8e11-a82d994e183d
-X-MS-Exchange-CrossTenant-OriginalAttributedTenantConnectingIp: TenantId=3dd8961f-e488-4e60-8e11-a82d994e183d;Ip=[165.204.84.17];Helo=[satlexmb07.amd.com]
-X-MS-Exchange-CrossTenant-AuthSource:
-	SN1PEPF00036F3C.namprd05.prod.outlook.com
-X-MS-Exchange-CrossTenant-AuthAs: Anonymous
-X-MS-Exchange-CrossTenant-FromEntityHeader: HybridOnPrem
-X-MS-Exchange-Transport-CrossTenantHeadersStamped: SN7PR12MB7884
 
-timerthread() uses bool, true, and false. Those are keywords in C23,
-which became GCC's default in GCC 15 (-std=gnu23), so the file compiles
-there without stdbool.h. With GCC 14 and earlier the default is gnu17,
-where they are provided by <stdbool.h>, and the build fails without it.
+Running "make" with no target ran the first target in the Makefile
+(e2e-tests), which unexpectedly launched the root-requiring end-to-end
+suite. Set .DEFAULT_GOAL to help so a bare "make" prints the list of
+targets instead, and update the help text to mark help as the default.
 
-Fixes: 98fcd661ac59 (cyclictest: Acquire a lock before invoking pthread_cond_signal())
-Closes: https://lore.kernel.org/linux-rt-users/4ce24139-5f7e-4180-a290-bcc15fb4f559@amd.com/
-Signed-off-by: Suneeth D <Suneeth.D@amd.com>
+Rework the test-all target so it genuinely runs every test suite -
+unit, e2e, regression and cpuset - via recursive make, with the
+root-privilege check performed first. Previously test-all only ran
+unittest discovery and silently skipped the e2e, regression and cpuset
+tests, making its name misleading.
+
+Replace the hardcoded, stale test list in tests/run_tests.sh (which
+referenced a nonexistent test_another_feature.py and omitted several
+real tests) with dynamic discovery of tests/test_*.py and
+tests/unittest-legacy.py, so unit-tests picks up test files
+automatically instead of missing them.
+
+Assisted-by: Claude:claude-opus-4-8
 Signed-off-by: John Kacur <jkacur@redhat.com>
-Reviewed-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 ---
+ Makefile           | 17 +++++++++++------
+ tests/run_tests.sh | 32 ++++++++++++--------------------
+ 2 files changed, 23 insertions(+), 26 deletions(-)
 
-Please ignore the previously sent v2. Sorry for the noise.
-
-Changes since v2 ---> v3:
-
- * Add Signed-off tag by John Kacur
-
-Changes since v1 ---> v2:
-
- * Modify commit message to include Tomas Glozar's note on default
-   changes happened since GCC 15.
-
-based on: fd45df830803dd7f26d2ca8bdcf05fd7e0d62ae8 (rt-tests/main)
-
- src/cyclictest/cyclictest.c | 1 +
- 1 file changed, 1 insertion(+)
-
-diff --git a/src/cyclictest/cyclictest.c b/src/cyclictest/cyclictest.c
-index 99194378f946..58b56bcede0f 100644
---- a/src/cyclictest/cyclictest.c
-+++ b/src/cyclictest/cyclictest.c
-@@ -15,6 +15,7 @@
- #include <stdlib.h>
- #include <stdint.h>
- #include <stdarg.h>
-+#include <stdbool.h>
- #include <unistd.h>
- #include <fcntl.h>
- #include <getopt.h>
+diff --git a/Makefile b/Makefile
+index 869d42d7eb11..ae033e7d73d1 100644
+--- a/Makefile
++++ b/Makefile
+@@ -18,6 +18,8 @@ KLOAD	:=	$(LOADDIR)/linux-6.17.7.tar.xz
+ BLOAD	:=	$(LOADDIR)/dbench-4.0.tar.gz
+ LOADS	:=	$(KLOAD) $(BLOAD)
+ 
++.DEFAULT_GOAL := help
++
+ e2e-tests: rteval-cmd
+ 	PYTHON="$(PYTHON)" RTEVAL="$(HERE)/rteval-cmd" RTEVAL_PKG="$(HERE)" prove -o -f -v tests/e2e/
+ 
+@@ -70,15 +72,17 @@ mcp-tests:
+ tests: unit-tests
+ 
+ test-all:
+-	@echo "Running ALL tests (including root-required tests)..."
+-	@echo ""
+ 	@if [ "$$(id -u)" != "0" ]; then \
+ 		echo "ERROR: test-all must be run as root"; \
+ 		echo "Usage: sudo make test-all"; \
+ 		exit 1; \
+ 	fi
+-	@echo "Running unit tests (including root-required)..."
+-	$(PYTHON) -m unittest discover -s tests -p "test_*.py" -v
++	@echo "Running ALL tests (unit + e2e + regression + cpuset)..."
++	@echo ""
++	$(MAKE) unit-tests
++	$(MAKE) e2e-tests
++	$(MAKE) regression-tests
++	$(MAKE) cpuset-tests
+ 
+ clean:
+ 	rm -f *~ rteval/*~ rteval/*.py[co] *.tar.bz2 *.tar.gz doc/*~
+@@ -139,7 +143,8 @@ help:
+ 	@echo ""
+ 	@echo "rteval Makefile targets:"
+ 	@echo ""
+-	@echo "        runit:            do a short testrun locally [default]"
++	@echo "        help:             show this help message [default]"
++	@echo "        runit:            do a short testrun locally"
+ 	@echo "        tests:            run unit tests (alias for unit-tests)"
+ 	@echo "        unit-tests:       run unit tests"
+ 	@echo "        mcp-tests:        run MCP server tests (requires rteval result files)"
+@@ -165,4 +170,4 @@ tags:
+ cleantags:
+ 	rm -f tags
+ 
+-.PHONY: tests unit-tests mcp-tests test-all e2e-tests regression-tests cpuset-tests uninstall
++.PHONY: help tests unit-tests mcp-tests test-all e2e-tests regression-tests cpuset-tests uninstall
+diff --git a/tests/run_tests.sh b/tests/run_tests.sh
+index d61616070cec..2dbf9f9effb6 100755
+--- a/tests/run_tests.sh
++++ b/tests/run_tests.sh
+@@ -50,28 +50,20 @@ run_test() {
+     echo ""
+ }
+ 
+-# Find and run all test files in tests/
++# Find and run all Python test files in tests/
++# Discovered dynamically so new test files are picked up automatically:
++#   - tests/test_*.py          (unittest-based and script-style tests)
++#   - tests/unittest-legacy.py (legacy custom harness, does not match test_*.py)
+ if [ -d "tests" ]; then
+-    # Run test_measurement_module_selection.py
+-    if [ -f "tests/test_measurement_module_selection.py" ]; then
+-        run_test "tests/test_measurement_module_selection.py"
++    shopt -s nullglob
++    test_files=(tests/test_*.py tests/unittest-legacy.py)
++    if [ ${#test_files[@]} -eq 0 ]; then
++        echo -e "${RED}Error: no test files found in tests/${NC}"
++        exit 1
+     fi
+-
+-    # Run test_core_sharing_validation.py
+-    if [ -f "tests/test_core_sharing_validation.py" ]; then
+-        run_test "tests/test_core_sharing_validation.py"
+-    fi
+-
+-    # Run test_cpusetmanager.py (non-root tests only)
+-    if [ -f "tests/test_cpusetmanager.py" ]; then
+-        run_test "tests/test_cpusetmanager.py"
+-    fi
+-
+-    # Add more tests here as they are created
+-    # Example:
+-    # if [ -f "tests/test_another_feature.py" ]; then
+-    #     run_test "tests/test_another_feature.py"
+-    # fi
++    for test_file in "${test_files[@]}"; do
++        run_test "$test_file"
++    done
+ else
+     echo -e "${RED}Error: tests/ directory not found${NC}"
+     exit 1
 -- 
-2.43.0
+2.55.0
 
