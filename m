@@ -1,73 +1,73 @@
-Received: from mail-qk2-f13.google.com (mail-qk2-f13.google.com [74.125.230.205])
+Received: from mail-qk2-f12.google.com (mail-qk2-f12.google.com [74.125.230.204])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id E90683DDAFB
-	for <linux-rt-users@vger.kernel.org>; Fri, 11 Sep 2026 18:56:16 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=74.125.230.205
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 6BA4D35C6A4
+	for <linux-rt-users@vger.kernel.org>; Fri, 11 Sep 2026 18:56:17 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=74.125.230.204
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1789152982; cv=none; b=ED6XrNFj8BeR49L41tklRQgxa92XvWAtmSi8kR/zyp46ofvNvRN8hK830jqLMROwxCw4/33E5xYBcrGoCeD1Wof5Wizl06aBsMUlnGVbabm/W8wDrNqLwuuYEq61XMu7pJet3Up4VZgQ59lIdhoRsdEJe5aTQm+raP5xUuZdyqQ=
+	t=1789152981; cv=none; b=Xjq21Ji5AJN1BgrxuIa5IDTb4T4+cE6E6UYFgK7r1r2dr+uDYPxXGeGGOEY334C+Mnqxx6bAaRaIHmslBWAZRhT9QPri8RPpudU1a/s01YdnUqzGUe/jh9mPD+pKCAkSB1b/jZSY4JC94oBRn2XT0LsRV7m0UmtxlV3mjK+NRZM=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1789152982; c=relaxed/simple;
-	bh=/NqUOFVpt0OyEqBmiXpobRrHgyfn/QCow8RrbN4Ua9w=;
+	s=arc-20240116; t=1789152981; c=relaxed/simple;
+	bh=O8Z3iJv9sr7s8mkdYO8rKX1RJKFRU0k8yuuXJmvG8dk=;
 	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=UO9jjWNCVl84izIG5LWxYoMguTBfGipYIhakk1hLAKfUCZq922soyLCqU+BUoH+oiyojj18ahuy2yUvcx5ZqShV9d3GEG8Uwrx9Ktou4qbJzOkwW1pWCyVStrLjvaSZK3e+vS9HEYhmeM71f+A9pC1f70jA2kG5W+dEj747sJdk=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=fail (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=NcWuAzsV; arc=none smtp.client-ip=74.125.230.205
+	 MIME-Version; b=V8lGallbC/oNcZGwigMBtCU1CV/oVhNrfSABVhtx4G2piw+DKk9+AUWE9kpmBkTetPPilzFN8rpgPgpkKHqKyfwx9sP6lUlh0OI/HNV9iNOmjWZed5JS8BvbYdAyj37bamOQfm/EfeL/P5sQOWmdfq/LvaenlGmVBNf1zFrj5h8=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=fail (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=O0hG5+48; arc=none smtp.client-ip=74.125.230.204
 Authentication-Results: smtp.subspace.kernel.org; dmarc=fail (p=quarantine dis=none) header.from=redhat.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="NcWuAzsV"
-Received: by mail-qk2-f13.google.com with SMTP id d75a77b69052e-52fb766bfd3so2542581cf.0
-        for <linux-rt-users@vger.kernel.org>; Fri, 11 Sep 2026 11:56:15 -0700 (PDT)
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="O0hG5+48"
+Received: by mail-qk2-f12.google.com with SMTP id af79cd13be357-939109fafd6so9221685a.3
+        for <linux-rt-users@vger.kernel.org>; Fri, 11 Sep 2026 11:56:17 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20251104; t=1789152971; x=1789757771; darn=vger.kernel.org;
+        d=gmail.com; s=20251104; t=1789152975; x=1789757775; darn=vger.kernel.org;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:sender:from:to:cc:subject:date
          :message-id:reply-to:content-type;
-        bh=o/72uAXaTsVr7uPmyAJWc84sqjae8zX2aydobF64zbo=;
-        b=NcWuAzsVQTn75hM2Mv45REGfF9fGy1QY/Qp3HpqT0zGSYZaWT1JwcgD8nkLxV15867
-         Wkja9ZMluutypHQGPSpM8dUy4q8DVmGlwdGuNeXtKg1bziXwvhljmWloizftqX6rbQCK
-         kZ7vcvT61OSJcEE6YVxaMLlllu7OWsbnKBLI2cp3dFhSswjR0xrZkVMkATtOJjuP1YVq
-         9hwp3NndqY6hlpfi4mZ0B61w1z0va5yVSsPeZBDMLj2zJ0P7wztARGVw0YJtFxj/h+vH
-         S/VC/1jrSp/CqnuYmkGvrkVRL4KQWEOEYzOV93BcYgnODEIOPVtWjgkqQ91k3eL7zppn
-         v3AQ==
+        bh=kWt4tkD7rUIqr9Qapy2gFj3vtm2RfDjhjS1Cr8I8O+4=;
+        b=O0hG5+48ZNzuWd3GNGhcUKEYsZ1ndWGOitOomrYKJm4mzo4q6wchW+0/vEDbQBJT6B
+         VK2Xx9oRtr+AQHx/xFG15NTo8usAJWgQ9PPJw01ofdZwLa4IrYzFuLo9rSBAAfZiFhBP
+         rDxopJQo0CCvDbfuKAjy0BQoQO+xSdu0rXDm2eb0EmViTtL/nlbp1EfBqm5rxN62L0K0
+         IPbkUrNtCPeJK/QBGgkdxxftUd4mayyxTiEdcolQPsVG3fQHQHtqvF/Y0aoLno39eanQ
+         zwatdDutHNp3h24RIvNjWH6fQzULrVJ3ILImP7zlh9P52hJuJU9WAYPAPPhN21crJCSE
+         /1pg==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20251104; t=1789152971; x=1789757771;
+        d=1e100.net; s=20251104; t=1789152975; x=1789757775;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:sender:x-gm-gg
          :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to
          :content-type;
-        bh=o/72uAXaTsVr7uPmyAJWc84sqjae8zX2aydobF64zbo=;
-        b=BZHXHMZECHH2Hjv1X4HA55+/+BxgrkfmsAcmvezEch+Mcspg/uOx/N6gJi2ieo8NDV
-         /TYxYmixvS1x1+144MG8QBYMxbGfvIHYjpX9o3Bqg9T0nivorHBbXzN7u/8h85xh/fRf
-         yThdJ80UZAGkK+G54FIwU85LOU5hv72PprZbB4PK/okjIuSxhf/PmKWVxxn+tRdXZgyV
-         qOy9DOXR7z5pv9fNgTQ58SpidNFs9cr182+27AliEn0unxxML6hv/I/1O5UWxcbjkVFA
-         +uoVufn4Mxqe6TCh1b2LLKIXiepoSMHdinW/wrh6CgXs7i/kysxhrvgJxuuJwfWOEG9X
-         lcMQ==
-X-Gm-Message-State: AFuF++n0hoFd6Czz4KCWevsZ4hVwieGrlAAuttvQ4KQnfVz/JxtdrTsB
-	LJBA7egpEuMu5XHbdeVvZ2jSEUtyqzzk3GMZdTUkVb2NfEvQLw9lWfW0M7GJgQ==
-X-Gm-Gg: AYBFou3Olg4vlXS8yGrRX7gp1OelIpWC5lpwB3duW/bBcI297mizC0qwheVmAppa7EM
-	CWYLBZp1FC31nIR4//+QUVXDzaAfA4yDENKZWuzXKZWna9I+gzYMaKITsamX44w8OTSdkH8ulYy
-	H4WmN48Y97++/K/kn+liiM1LCzKcg009gBFguP36awKd1hwbUzxHUF8Ajshf+kxMbDrvqtoam2o
-	9zIRoAs3xZmNeEox56nXE3hBVSeYx7TqbXN+vkj7DKARlrb6dSwkxGIJbizuugBw4D5MGf9yxFK
-	XwkvbMTSha50xTNQ+JtwCeR8UWJaztrYtUryHVcOTqndTcSIIROPTbEZwcN8bUDpDaFJc4rxoFp
-	K/7thzUxsJgrRIwYiUJRYX+ES8Thc6tfCpMIuuw5DQrYS7gKoQ+jWBUTt/Z+3BUndVbJuFpfo3V
-	96Y4ahyAlA1GOihgQn0cNGVhNmwwG9PSBAce4mwtyksSBLioZYjdHaQYvtzrKyFdZjb6rQMzWg/
-	eTNll7wqzH50DZfFHhvDCzANuq9vSUHBsdjcznfjabBY8Qs3qyuy7us+WR5k25+5A==
-X-Received: by 2002:ac8:6112:0:b0:530:5152:75f0 with SMTP id d75a77b69052e-530c8598ec0mr105793181cf.22.1789152966357;
-        Fri, 11 Sep 2026 11:56:06 -0700 (PDT)
+        bh=kWt4tkD7rUIqr9Qapy2gFj3vtm2RfDjhjS1Cr8I8O+4=;
+        b=DCKoxuE6wOHuxhq2SMMRQZUS2V0eWDZc2DEeFmVZyvtD8ZBEWfFVQWjeQjBzzsZqDM
+         NwZdcZXAR9qseRyIqiwl1paPY4dCRPKmoL2PwNPhpSXrab+gXh1wdGTRBKm4pLrBUow2
+         YGJT+fAc7HV2Rjsc6Nc3G14UR+oGmQHEc4A02km+Xy7xo/PTF8uGW+N/UBUwcjKbe/WT
+         84buswDHizSiE0orrhAneU81iShcWcggxISarVNFRjPZAceaTknnWWXbIpaSM5WPecsc
+         LoYqON3++S7JEOD76zsS/IJGNInmdUvcQlT7ivX2LW/Qz9/L2mFdFc+6iOBOakwg+4GK
+         f3Ow==
+X-Gm-Message-State: AFuF++mbqM0MfmkdSIs/xACMwc+CJh8Gf5r5VrpnhA0oPK8RQUN5yHZS
+	sYmS2FjjK8u/yDsJU+LlPR6sr54/6d21LWF+HpXKKtq91vyouTWvn7ZEEY5Y6g==
+X-Gm-Gg: AYBFou2rZiIIbTS11w2vMxmwubOumCIhh/3T+iDiyLl2BSbWYRVefH9mACgKIzo7AAK
+	y3GAXXol1xrNuq2rucgKzDoYdA3FWIcZ4lfSc8BtqJ0doO1waR2TL2V/cLzDyikBQWYQJtIkxLN
+	3+DGAc1TYKU7RVZxM+7zRZlNTm5LgGBYhO8hbINQDLnVKLcjFVTW36ml7fguf7+RaIb26h28zoa
+	yOWe2rqh7AYSBAiugc+ds2NJ8Jct/jD68en/xrZdV37A6/2j9QoFToWCXS/3Clooq3poAwtt49T
+	NjGSI4HmtarnO7Hj7dCEWBSLsEQElDnmQg7AUKHhki1cssXY+ACMcqxYTl5IQDxfjSf4srIGvVd
+	jSKJY67tuUki/ijnVmNFO0dIgdJBXVuBSHrtrjDHFM4DLcVDb1pD/qzbADSRnxm6Rvi9ctanzVm
+	j/U112qNLo8dYAZdMC7pHaFbfgfvhN/hDY4zVji1NCtAO2EWz4NtNZ5LhAISp7MtdiYbsoJ6/yF
+	f4tFoll42+rgx0IeGlMSD8woB5pTbDThglQ5JGnxj9FcLW5sEFwLOEIR/TRVaXe
+X-Received: by 2002:a05:620a:90cf:10b0:939:ac74:1bbf with SMTP id af79cd13be357-939ea049212mr539815185a.4.1789152974579;
+        Fri, 11 Sep 2026 11:56:14 -0700 (PDT)
 Received: from Cumhall.redhat.corp ([70.53.55.174])
-        by smtp.gmail.com with ESMTPSA id 6a1803df08f44-9120f4920c5sm27254726d6.32.2026.09.11.11.56.05
+        by smtp.gmail.com with ESMTPSA id 6a1803df08f44-9120f4920c5sm27254726d6.32.2026.09.11.11.56.13
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Fri, 11 Sep 2026 11:56:06 -0700 (PDT)
+        Fri, 11 Sep 2026 11:56:14 -0700 (PDT)
 Sender: John Kacur <jkacur@gmail.com>
 From: John Kacur <jkacur@redhat.com>
 To: linux-rt-users@vger.kernel.org
 Cc: Tomas Glozar <tglozar@redhat.com>,
 	Sana Sharma <sansshar@redhat.com>,
 	Clark Williams <williams@redhat.com>
-Subject: [PATCH 01/10] rteval: Update E2E tests to cover multiple recent changes
-Date: Fri, 11 Sep 2026 14:55:34 -0400
-Message-ID: <20260911185549.604199-2-jkacur@redhat.com>
+Subject: [PATCH 10/10] rteval: Write test artifacts to tests/logs/ instead of the repo root
+Date: Fri, 11 Sep 2026 14:55:43 -0400
+Message-ID: <20260911185549.604199-11-jkacur@redhat.com>
 X-Mailer: git-send-email 2.55.0
 In-Reply-To: <20260911185549.604199-1-jkacur@redhat.com>
 References: <20260911185549.604199-1-jkacur@redhat.com>
@@ -79,75 +79,140 @@ List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 
-From: Tomas Glozar <tglozar@redhat.com>
+The cpuset and regression test suites created their log files (and, for
+the regression tests, the rteval work directories) in the current working
+directory, which is the repository root when the tests are launched via
+the Makefile. This littered the top of the tree with test-cpusets-*.log,
+test-cyclictest-*, test-timerlat-* and their .log files.
 
-There have been multiple changes to the command line passed by rteval to
-rtla:
+Route all of these under tests/logs/ instead, gitignore that directory,
+and add a 'test-clean' target that removes it (with 'clean' reusing it).
+A run now leaves the repo root untouched and the artifacts are easy to
+clean up afterwards.
 
-- Commit f2c619a7ca08 ("rteval: Fix timerlat module for rtla short
-  option parsing bug") changed the format of rteval's short options from
-  "-o<arg>" and "-o=<arg>" to "-o <arg>".
-
-- Commit 5153f0e854cf ("rteval: Refactor timerlat parsing and fix max
-  line duplication bug") commented out "--no-summary" to get more
-  information out of rtla.
-
-- Commit daf3e54bae7c ("rteval: Fix timerlat stoptrace trace analysis
-  capture in XML") makes rteval not pass "--no-aa" in runs with
-  --timerlat-stoptrace.
-
-Reflect the changes in E2E tests to make them pass again. Note that
-some partial matches were extended with more arguments in the process
-for the purpose of more clarity.
-
-Signed-off-by: Tomas Glozar <tglozar@redhat.com>
+Assisted-by: Claude:claude-opus-4-8
 Signed-off-by: John Kacur <jkacur@redhat.com>
 ---
- tests/e2e/measurement.t | 14 +++++++-------
- 1 file changed, 7 insertions(+), 7 deletions(-)
+ .gitignore                                         | 1 +
+ Makefile                                           | 8 ++++++--
+ tests/cpusets/test-cpusets.sh                      | 7 +++++--
+ tests/regression/test-cyclictest-error-handling.sh | 7 ++++++-
+ tests/regression/test-timerlat-error-handling.sh   | 7 ++++++-
+ 5 files changed, 24 insertions(+), 6 deletions(-)
 
-diff --git a/tests/e2e/measurement.t b/tests/e2e/measurement.t
-index 9d1f4380e94c..62c39eb6e0e2 100644
---- a/tests/e2e/measurement.t
-+++ b/tests/e2e/measurement.t
-@@ -72,30 +72,30 @@ check "timerlat duration" \
+diff --git a/.gitignore b/.gitignore
+index d00862cdeb0c..9b9b0850874e 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -11,6 +11,7 @@ tarball
+ *.rpt
+ *.xml
+ *.log
++tests/logs/
+ *.o
+ *.swp
+ Makefile.in
+diff --git a/Makefile b/Makefile
+index fd2f68cbda5f..83fad0ccd48e 100644
+--- a/Makefile
++++ b/Makefile
+@@ -84,10 +84,13 @@ test-all:
+ 	$(MAKE) regression-tests
+ 	$(MAKE) cpuset-tests
  
- check "timerlat command, with --measurement-cpulist" \
-   "--noload -d 1 --measurement-cpulist=0-1" 0 \
--  'Command: rtla timerlat hist -p100 -P f:95 -u -c0-1'
-+  'Command: rtla timerlat hist -p 100 -P f:95 -u -c 0-1 -E 3500 --no-aa --dma-latency=0'
+-clean:
++clean: test-clean
+ 	rm -f *~ rteval/*~ rteval/*.py[co] *.tar.bz2 *.tar.gz doc/*~
+ 	rm -rf rteval-[0-9]*-[0-9]*
  
- check "timerlat command, with --measurement-run-on-isolcpus" \
-   "--noload -d 1 --measurement-run-on-isolcpus" 0 \
--  'Command: rtla timerlat hist -p100 -P f:95 -u'
-+  'Command: rtla timerlat hist -p 100 -P f:95 -u -c [0-9|-]+ -E 3500 --no-aa --dma-latency=0'
++test-clean:
++	rm -rf tests/logs
++
+ realclean: clean
+ 	rm -rf run
  
- check "timerlat command, with --timerlat-interval" \
-   "--noload -d 1 --timerlat-interval 2000" 0 \
--  'Command: rtla timerlat hist -p2000 -P f:95'
-+  'Command: rtla timerlat hist -p 2000 -P f:95 -u -c [0-9|-]+ -E 3500 --no-aa --dma-latency=0'
+@@ -156,6 +159,7 @@ help:
+ 	@echo "        install:          install rteval locally"
+ 	@echo "        uninstall:        uninstall rteval"
+ 	@echo "        clean:            cleanup generated files"
++	@echo "        test-clean:       remove test artifacts under tests/logs"
+ 	@echo "        realclean:        Same as clean plus directory run"
+ 	@echo "        sysreport:        do a short testrun and generate sysreport data"
+ 	@echo "        tags:             generate a ctags file"
+@@ -170,4 +174,4 @@ tags:
+ cleantags:
+ 	rm -f tags
  
- check "timerlat command, with --timerlat-priority" \
-   "--noload -d 1 --timerlat-priority 80" 0 \
--  'Command: rtla timerlat hist -p100 -P f:80 -u'
-+  'Command: rtla timerlat hist -p 100 -P f:80 -u -c [0-9|-]+ -E 3500 --no-aa --dma-latency=0'
+-.PHONY: help tests unit-tests mcp-tests test-all e2e-tests regression-tests cpuset-tests uninstall
++.PHONY: help tests unit-tests mcp-tests test-all e2e-tests regression-tests cpuset-tests test-clean clean realclean uninstall
+diff --git a/tests/cpusets/test-cpusets.sh b/tests/cpusets/test-cpusets.sh
+index 18b6af543bc5..bc7fd90e0e37 100755
+--- a/tests/cpusets/test-cpusets.sh
++++ b/tests/cpusets/test-cpusets.sh
+@@ -37,8 +37,11 @@ TESTS_FAILED=0
+ # Test duration (short for quick testing)
+ TEST_DURATION="10s"
  
- check "timerlat command, with --timerlat-buckets" \
-   "--noload -d 1 --timerlat-buckets 4000" 0 \
--  'Command: rtla timerlat hist -p100 -P f:95 -u -c[0-9|-]+ -E4000'
-+  'Command: rtla timerlat hist -p 100 -P f:95 -u -c [0-9|-]+ -E 4000 --no-aa --dma-latency=0'
+-# Log file
+-LOG_FILE="test-cpusets-$(date +%Y%m%d-%H%M%S).log"
++# Log file - keep test artifacts under tests/logs/ (this script lives in
++# tests/cpusets/) so they are out of the repo root and easy to clean up.
++LOG_DIR="$SCRIPT_DIR/../logs"
++mkdir -p "$LOG_DIR"
++LOG_FILE="$LOG_DIR/test-cpusets-$(date +%Y%m%d-%H%M%S).log"
  
- check "timerlat command, with --timerlat-stoptrace" \
-   "--noload -d 1 --timerlat-stoptrace 1" any \
--  'Command: rtla timerlat hist -p100 -P f:95 -u -c[0-9|-]+ -E3500 --no-summary --no-aa --dma-latency=0 -T1'
-+  'Command: rtla timerlat hist -p 100 -P f:95 -u -c [0-9|-]+ -E 3500 --dma-latency=0 -T 1'
+ # Helper functions
+ print_header() {
+diff --git a/tests/regression/test-cyclictest-error-handling.sh b/tests/regression/test-cyclictest-error-handling.sh
+index 436264111bdf..861e74480054 100755
+--- a/tests/regression/test-cyclictest-error-handling.sh
++++ b/tests/regression/test-cyclictest-error-handling.sh
+@@ -9,6 +9,11 @@ set -e
+ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+ REPO_ROOT="$(cd "${SCRIPT_DIR}/../.." && pwd)"
+ MOCK_CYCLICTEST="${SCRIPT_DIR}/mock-cyclictest-partial-output.py"
++
++# Keep test artifacts (work dirs and logs) under tests/logs/ so they stay out
++# of the repo root and are easy to clean up (this script is in tests/regression/).
++LOG_DIR="${SCRIPT_DIR}/../logs"
++mkdir -p "$LOG_DIR"
+ RTEVAL_MODULE="${REPO_ROOT}/rteval/modules/measurement/cyclictest.py"
  
- check "timerlat command, with --timerlat-trace" \
-   "--noload -d 1 --timerlat-stoptrace 1 --timerlat-trace trace.txt" any \
--  'Command: rtla timerlat hist -p100 -P f:95 -u -c[0-9|-]+ -E3500 --no-summary --no-aa --dma-latency=0 -T1 -t=trace.txt'
-+  'Command: rtla timerlat hist -p 100 -P f:95 -u -c [0-9|-]+ -E 3500 --dma-latency=0 -T 1 -t trace.txt'
+ # Colors for output
+@@ -97,7 +102,7 @@ EOF
+     sudo chmod +x /usr/bin/cyclictest
  
- test_end
+     # Run rteval and capture output
+-    local workdir="test-cyclictest-${scenario}-$$"
++    local workdir="${LOG_DIR}/test-cyclictest-${scenario}-$$"
+     local log_file="${workdir}.log"
+ 
+     # Create workdir (rteval requires it to exist)
+diff --git a/tests/regression/test-timerlat-error-handling.sh b/tests/regression/test-timerlat-error-handling.sh
+index 9883608669bf..7f2c99069e96 100755
+--- a/tests/regression/test-timerlat-error-handling.sh
++++ b/tests/regression/test-timerlat-error-handling.sh
+@@ -8,6 +8,11 @@ set -e
+ 
+ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+ REPO_ROOT="$(cd "${SCRIPT_DIR}/../.." && pwd)"
++
++# Keep test artifacts (work dirs and logs) under tests/logs/ so they stay out
++# of the repo root and are easy to clean up (this script is in tests/regression/).
++LOG_DIR="${SCRIPT_DIR}/../logs"
++mkdir -p "$LOG_DIR"
+ MOCK_RTLA="${SCRIPT_DIR}/mock-rtla-timerlat-partial-output.py"
+ RTEVAL_MODULE="${REPO_ROOT}/rteval/modules/measurement/timerlat.py"
+ 
+@@ -101,7 +106,7 @@ EOF
+     sudo chmod +x /usr/bin/rtla
+ 
+     # Run rteval and capture output
+-    local workdir="test-timerlat-${scenario}-$$"
++    local workdir="${LOG_DIR}/test-timerlat-${scenario}-$$"
+     local log_file="${workdir}.log"
+ 
+     # Create workdir (rteval requires it to exist)
 -- 
 2.55.0
 
