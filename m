@@ -1,73 +1,73 @@
-Received: from mail-qk2-f12.google.com (mail-qk2-f12.google.com [74.125.230.204])
+Received: from mail-qv1-f51.google.com (mail-qv1-f51.google.com [209.85.219.51])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 24A6340B6F9
-	for <linux-rt-users@vger.kernel.org>; Fri, 11 Sep 2026 18:56:17 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=74.125.230.204
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 82FA43FB05A
+	for <linux-rt-users@vger.kernel.org>; Fri, 11 Sep 2026 18:56:20 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.219.51
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1789152983; cv=none; b=OEktstHJEsdcpS4dJtLmLjEQFcceP3lnyNzK+946dNgc4xs+1fwvk8Vz0mH1pL9Syd0hkkGweRWzUb7MEjKluO53mSyuSiZJBtm2olR5Y+C06JQa/9xx8VIQ4Qx2vJ/lAfJNewQ58EBg305IsjBqkg8bOsaK7qVrxO52PVp94WI=
+	t=1789152985; cv=none; b=fWHW34MlYOxJ0zeJ9f78fmJtOCwqMz41NpELR2CcVLMH5LKxZV6NIOEQr3c+esWlnpEX5CPXjAJVfjWxVEhK9gRfB9UKsIs54mJwIfQlSqoL6yaAf9wPn/hLd/LRBh5JAqXQidVTjruN64m9Fx9fsphVBKOuQVsqtQEQ96nFLSM=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1789152983; c=relaxed/simple;
-	bh=ctNgsR1cROD1FrHV5/d0Up1WQ0ZcEf3tdFZkhLoT1us=;
+	s=arc-20240116; t=1789152985; c=relaxed/simple;
+	bh=GacAw08DSS5oaKGgTk7p0CXwO0aK8D/Gb2rZSFMl1bU=;
 	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=u+8arTPDA604OiQHnBUnx0TZYEhapuU5Y5XbvB+SbGv4nFQw89bhg8rgLSGtjq29AEN8mzaPProvrjNAWaN6d1qvXWklBSmECEtURLVjV//Oignef0iePGc91ZIn3X4p19MvftUb3AUioltgRxlzsBhOhTTTjddceDXxBdxv5ZQ=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=fail (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=eoXm8lf/; arc=none smtp.client-ip=74.125.230.204
+	 MIME-Version; b=JMd4HuGTchy9HZfIopUmw3Tz8piqTX1gPwdcz7VQaNITMNluTRjEcYPacZEnTYz9UzR2S/bHxyaGCrLy/Vu2zmSQOgWotvZB2owdJQalQwQiVFF4Tij/IfD0GzARG7yUeFzU2yh8GEqiMdk/lKoMTbjbpiFQO4rhPEtMcBXZ+QQ=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=fail (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=kYqATdqE; arc=none smtp.client-ip=209.85.219.51
 Authentication-Results: smtp.subspace.kernel.org; dmarc=fail (p=quarantine dis=none) header.from=redhat.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="eoXm8lf/"
-Received: by mail-qk2-f12.google.com with SMTP id d75a77b69052e-530de452c33so2498521cf.1
-        for <linux-rt-users@vger.kernel.org>; Fri, 11 Sep 2026 11:56:17 -0700 (PDT)
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="kYqATdqE"
+Received: by mail-qv1-f51.google.com with SMTP id 6a1803df08f44-90e970f710cso12950126d6.3
+        for <linux-rt-users@vger.kernel.org>; Fri, 11 Sep 2026 11:56:19 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20251104; t=1789152975; x=1789757775; darn=vger.kernel.org;
+        d=gmail.com; s=20251104; t=1789152977; x=1789757777; darn=vger.kernel.org;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:sender:from:to:cc:subject:date
          :message-id:reply-to:content-type;
-        bh=+zX4tLAgNE5Ra4IrQ+jPKzCCHlBp3BBOjDmDlC0ArtY=;
-        b=eoXm8lf/yiUVRjrClTvRWzeXvK3Q4oy56gb25I8/Mhm/E4ZwzbraXTWnQ9MEpGVS3n
-         E/cTReAcEeMMc5Vju3AsY0CC37aI6ZovezWvTrJOltmp6Rc+kqPMao9EuM5MxjtYLmcA
-         HXfSAmdS6aSIWJU/97JdMzkegpFDaz9ni0ljiJjmxSnT+MjvZKO90YB6xZTw14jQfZc5
-         D8qv9v9wxhv9siPyokJHO4yx4sFBAe1dz6bJcuJxxXHgK+t9ThLQuCE8yy14oLSSrg/7
-         7l022Amv4mMEqDIc4fEzmx2A31VmejabnFLVTBaua5ArVRyKzh+i2Rg2c3CcqoJB0gET
-         2HlQ==
+        bh=TkUh0mJjCPQQEnTMMKYLEfLpqNaEGVxqNIr8YLU8U34=;
+        b=kYqATdqEfULv9b0qlCnPkZPcPi2VV2kXHoO72jC1qCdyLDWesObRGsUz+EdVz1QC81
+         MckFf0l/5gLOBVLczHGJIPID9+e4qZO204Ud9o94ws/Wg6Ed1JERLU1m257scka2RCjw
+         ogETptjeOf5M8oKD65ln9kPLt+Rjl+URCzRHYwtJzkuYuITqOxKGTJVSEZwtc5LFgJlN
+         BFUrHMuBiJEvtTJFUkS2kk7zlxY+vWnJEUty7uORahdbHDdcPWQr/nbxUcriL6lSuECO
+         pl0dNY0fSBlGl4YTsKA7dfZdVwMikubAcpM8zv2gpk3qo2ZiMOG0lqk0vsrpt3XmoNy7
+         ADGw==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20251104; t=1789152975; x=1789757775;
+        d=1e100.net; s=20251104; t=1789152977; x=1789757777;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:sender:x-gm-gg
          :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to
          :content-type;
-        bh=+zX4tLAgNE5Ra4IrQ+jPKzCCHlBp3BBOjDmDlC0ArtY=;
-        b=Q3lxD6egUQ7gvqNqj+rF6frM46x37QMJhV4LD56lxpqk/HYN10opZRbxASRdjx+2Br
-         Xr5Vv/oMEPsYdE7STJ6760IXs8LFGzHXegFCVrQ1mF/H04+CNyIdqkS7ypjKx9fsBSTe
-         vIOnlCMAkzFKFXnfHeaFFKL7jTLEsIeI1uO6ZbdYcZEwVyVGGniBufF7bTc8nLjWZ9bD
-         VLGj2IH/7LR0Q6t97TMW+CaRTy1vu0eiMXHHYwrJMlh5/bZi2iBDtWh2mN76+1GBp8ks
-         gDCk1HL7Jq9aThlWyMipmzaI5KE35zh56rOQz7dLzeLc/egbJltKQ6zM41isP9m18AE+
-         Es8g==
-X-Gm-Message-State: AFuF++lF5naeF8ocIEmtakE1VkJS2eVWjfEpLTi4sxwkPEhTJ27BC8TH
-	8CtNcfTOqNVtdEywntPwfs8UTJYuyz8TGlpN/JtkV7FtCf3HV/gK81KC/gw2dw==
-X-Gm-Gg: AYBFou1wnCBALZSA082rwNSiCxnhMV+eNlk1jMbUS1GquNah6GSZXQf12VoewfVm4dm
-	tAqcerzgXzTjf+jxe4woykbnv9PM0kww161Oulyr1JZ2ASLT+lWGWra31rfwLi4GCdiw89j8mAi
-	t94kSRUX6//GknxjV4M++X0gCXUtEO60CYu3cw3SU1MIUYfGaqGnSszwQE8j6jXzrsa7tNk+PcZ
-	FNJAGLGX/txtcgHEu2AoszbsXuJNRj8CBFYH1Fs8++FPDeDU4ZZrWZ5jWsYqjmoQbwyWuIsPmow
-	Dw6SZmoassmu/bHofk1PEjQnkrdQgSeXS5GoGXzt4erelJnIAyusBHOPViij/0ToHMkexv2LITG
-	2oiA0gnoJsGBX+fXuakcXrNNH5ydcHdYzcIjIIu3cfNsQUL/W+kgPai6+oT31ImX6n0dM0FWlH1
-	cUmbZ2oz/bgFJJ2BTpZcpNQIwfAdolG1uIqgNeYDxWF8iNgbhwmdPBAElAvrHJvwDA6gKsDbhp2
-	y+3G1YifctOOmc9/2U/He4xsSoINO7DA49Rxe3YX5bOXaJUxRt89aL6x1JsoMzluxbG7Hb2QZk=
-X-Received: by 2002:a05:622a:606:b0:530:4310:5398 with SMTP id d75a77b69052e-530c876f4f2mr81150081cf.48.1789152972862;
-        Fri, 11 Sep 2026 11:56:12 -0700 (PDT)
+        bh=TkUh0mJjCPQQEnTMMKYLEfLpqNaEGVxqNIr8YLU8U34=;
+        b=B1Xjc/eViGr+RiyprmbHfxK4piNuCbMzjobQb6PNx+uS/76mHTpKzVwHMm6SYgkynD
+         +3DgkA1QzXPm37kZpwI+AKVKrPa8KQOkRxdBrEqblCnxkxfgBAEd6c3AfgLcjOaoPEDg
+         2UhpKrYfw6Fr/LGDvYmiYNjDfFBGmhBb9NDoM/SufWWGmxkLd9S2UYVbnk1PIwQzZyCH
+         D1rn1UcE9ljIEIw3WCj3EmyWwJryzU0T8m5Q4H4+81vWwbPxDvC4xxrnP28XJt7n6eVP
+         9aIDeUPCJctHnpF7AGTFLwbfEfNuv6bzmHDtfznXbNsW8l1QCJxHSbUBIYEzP4TuSFPN
+         rZjw==
+X-Gm-Message-State: AFuF++m47KJaMvd1304lhzUjSuP8m8R67gjL8EKgUEAIN7WPz30bLOl+
+	ruI810ifOoRpiUUfTSQqt9pyj6z3WjaGJMjyx3VHVRMFDaxWwXAF4BOlpAi77A==
+X-Gm-Gg: AYBFou0Vx14lx55f+bpN3wTfnc0X2rbiG+tV1yDKVHVhnYhapYgiLoYTbrcOF8axmLo
+	GnOW9gSljdAXyuIGKpyW3JzQnqFakEbOZJMvarvCr8q95GUUwN4zhtZpCcAeKPfA586L2kW5+6G
+	u9l5xY0IL7wOer26hFer6snIJsKbbVIcRIeWUuvuYLtpQ9D21sS5+8ospIF29Es+hblVAXRdHgi
+	KCnKKJGBt2MHO9mwo/oNVyQlJmpS0cnTF7FuX7zQseJhINdEfJ3+U0dz8q9WD3Grhv5O/UHDtZx
+	VaPTxs1E/3nxJ8SlZcqsqVvI1sw7mIk4/xj1h57nCypCH45pARuTJUV07Q0G86u9pqgMBtRYfP4
+	AQVl19ahDYowEO3vgdbimWRLmi3w7X30bsIr8M3zskQLGvHxofF9fFy+D6fweqP69pNis++csq0
+	aDiHfb8X/sfjH7cPBs6OaEUY4CcG4bQx0mRPy+2Y6OpN9UxfzyfHp9MxImMw20g7ZVFr+788Cwn
+	mdMgZkzG96rCc+Q7a3wr+1x4Mi7DznjlYcRZ4a4ptHEpUNMRkQXm9dPM1F4EBzb
+X-Received: by 2002:a05:6214:310d:b0:8f2:5a3e:c619 with SMTP id 6a1803df08f44-9121207d6ddmr70119036d6.4.1789152971972;
+        Fri, 11 Sep 2026 11:56:11 -0700 (PDT)
 Received: from Cumhall.redhat.corp ([70.53.55.174])
-        by smtp.gmail.com with ESMTPSA id 6a1803df08f44-9120f4920c5sm27254726d6.32.2026.09.11.11.56.12
+        by smtp.gmail.com with ESMTPSA id 6a1803df08f44-9120f4920c5sm27254726d6.32.2026.09.11.11.56.11
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Fri, 11 Sep 2026 11:56:12 -0700 (PDT)
+        Fri, 11 Sep 2026 11:56:11 -0700 (PDT)
 Sender: John Kacur <jkacur@gmail.com>
 From: John Kacur <jkacur@redhat.com>
 To: linux-rt-users@vger.kernel.org
 Cc: Tomas Glozar <tglozar@redhat.com>,
 	Sana Sharma <sansshar@redhat.com>,
 	Clark Williams <williams@redhat.com>
-Subject: [PATCH 08/10] rteval: Do not use set -e in the cpuset test suite
-Date: Fri, 11 Sep 2026 14:55:41 -0400
-Message-ID: <20260911185549.604199-9-jkacur@redhat.com>
+Subject: [PATCH 07/10] rteval: Fix expected partition type in cpuset tests
+Date: Fri, 11 Sep 2026 14:55:40 -0400
+Message-ID: <20260911185549.604199-8-jkacur@redhat.com>
 X-Mailer: git-send-email 2.55.0
 In-Reply-To: <20260911185549.604199-1-jkacur@redhat.com>
 References: <20260911185549.604199-1-jkacur@redhat.com>
@@ -79,39 +79,53 @@ List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 
-The cpuset test suite tracks results via the TESTS_FAILED counter and
-decides its own exit code in main(). It also deliberately runs commands
-that are expected to fail (the isolcpus validation tests) and calls
-'wait' on backgrounded rteval processes that may legitimately exit
-non-zero. Under 'set -e' any of those would abort the entire run before
-the summary is printed, masking the real per-test results.
+The no-housekeeping cpuset tests checked that the measurement cpuset
+had a partition type of 'member', but the measurement cpuset is always
+created with partition=isolated in cpusetmanager.py:
 
-Remove 'set -e' and document why it must stay out.
+    self.measurement_cpuset.write_cpu_exclusive(True)  # partition=isolated
+
+Update test_same_cpus_no_housekeeping and test_different_cpus_no_housekeeping
+to expect 'isolated' so the checks match rteval's actual behavior.
 
 Assisted-by: Claude:claude-opus-4-8
 Signed-off-by: John Kacur <jkacur@redhat.com>
 ---
- tests/cpusets/test-cpusets.sh | 8 ++++++--
- 1 file changed, 6 insertions(+), 2 deletions(-)
+ tests/cpusets/test-cpusets.sh | 12 ++++++------
+ 1 file changed, 6 insertions(+), 6 deletions(-)
 
 diff --git a/tests/cpusets/test-cpusets.sh b/tests/cpusets/test-cpusets.sh
-index 79a319cd09ff..fe0d26e7320c 100755
+index e624086e6277..79a319cd09ff 100755
 --- a/tests/cpusets/test-cpusets.sh
 +++ b/tests/cpusets/test-cpusets.sh
-@@ -1,7 +1,11 @@
- #!/bin/bash
- # test-cpusets.sh - Automated testing for rteval cpuset integration
--
--set -e
-+#
-+# Note: 'set -e' is intentionally NOT used here. This suite tracks results
-+# via the TESTS_FAILED counter and decides its exit code in main(). It also
-+# runs commands that are expected to fail (e.g. the isolcpus validation
-+# tests) and calls 'wait' on backgrounded rteval processes that may exit
-+# non-zero; under 'set -e' any of those would abort the whole run.
+@@ -238,10 +238,10 @@ test_same_cpus_no_housekeeping() {
+         all_good=false
+     fi
  
- # Detect rteval-cmd location. This script lives in tests/cpusets/, so the
- # repository root is two levels up, but also handle being run from the repo
+-    if check_cpuset_partition "rteval_measurement" "member"; then
+-        print_info "Partition type is 'member': OK"
++    if check_cpuset_partition "rteval_measurement" "isolated"; then
++        print_info "Partition type is 'isolated': OK"
+     else
+-        print_fail "Partition type is not 'member'"
++        print_fail "Partition type is not 'isolated'"
+         all_good=false
+     fi
+ 
+@@ -305,10 +305,10 @@ test_different_cpus_no_housekeeping() {
+         all_good=false
+     fi
+ 
+-    if check_cpuset_partition "rteval_measurement" "member"; then
+-        print_info "Partition type is 'member': OK"
++    if check_cpuset_partition "rteval_measurement" "isolated"; then
++        print_info "Partition type is 'isolated': OK"
+     else
+-        print_fail "Partition type is not 'member'"
++        print_fail "Partition type is not 'isolated'"
+         all_good=false
+     fi
+ 
 -- 
 2.55.0
 
