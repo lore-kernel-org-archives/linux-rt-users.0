@@ -1,73 +1,73 @@
-Received: from mail-qv1-f53.google.com (mail-qv1-f53.google.com [209.85.219.53])
+Received: from mail-qk2-f13.google.com (mail-qk2-f13.google.com [74.125.230.205])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 41C013F1AB4
-	for <linux-rt-users@vger.kernel.org>; Fri, 11 Sep 2026 18:56:15 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.219.53
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id E90683DDAFB
+	for <linux-rt-users@vger.kernel.org>; Fri, 11 Sep 2026 18:56:16 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=74.125.230.205
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1789152980; cv=none; b=MXpJblL8cSTEb1tozzCrqApXM0Ro0a0EHXp77A3HlAk+GH0JHgYOFeaLcvVbT3pXIsFhFqWVbj6JAZm1eYSdYS21bsHGagSoMHXF4IZ/c9uqqK0CkwcCEWYmwHW4JX021PZT8p7a6A7dTqz8l77hTKrBjPUXmYn9MKWjDdBtAiw=
+	t=1789152982; cv=none; b=ED6XrNFj8BeR49L41tklRQgxa92XvWAtmSi8kR/zyp46ofvNvRN8hK830jqLMROwxCw4/33E5xYBcrGoCeD1Wof5Wizl06aBsMUlnGVbabm/W8wDrNqLwuuYEq61XMu7pJet3Up4VZgQ59lIdhoRsdEJe5aTQm+raP5xUuZdyqQ=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1789152980; c=relaxed/simple;
-	bh=uru9kGIgNZR3cNt6CDitvp1/WeKSP7PrE0G975akCao=;
+	s=arc-20240116; t=1789152982; c=relaxed/simple;
+	bh=/NqUOFVpt0OyEqBmiXpobRrHgyfn/QCow8RrbN4Ua9w=;
 	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version:Content-Type; b=fZVlxGEBR4BGxig0anMFC8uX+r8CixNKN4Bz6LK9BppQCWAhcTkl7phYXlD/raQRrJ+ZTXD5jVwNOljGKUmoPWRXih96GsiaGOrcmAm7YQmjQO+y7zKZFtMtOfOBbXMbIhBCF0OkmIlfafsqgUppBdgSJ3Vev9+9dN0VAnoXc60=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=fail (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=jH3iEluR; arc=none smtp.client-ip=209.85.219.53
+	 MIME-Version; b=UO9jjWNCVl84izIG5LWxYoMguTBfGipYIhakk1hLAKfUCZq922soyLCqU+BUoH+oiyojj18ahuy2yUvcx5ZqShV9d3GEG8Uwrx9Ktou4qbJzOkwW1pWCyVStrLjvaSZK3e+vS9HEYhmeM71f+A9pC1f70jA2kG5W+dEj747sJdk=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=fail (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=NcWuAzsV; arc=none smtp.client-ip=74.125.230.205
 Authentication-Results: smtp.subspace.kernel.org; dmarc=fail (p=quarantine dis=none) header.from=redhat.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="jH3iEluR"
-Received: by mail-qv1-f53.google.com with SMTP id 6a1803df08f44-90e92b99ab9so8782006d6.2
-        for <linux-rt-users@vger.kernel.org>; Fri, 11 Sep 2026 11:56:14 -0700 (PDT)
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="NcWuAzsV"
+Received: by mail-qk2-f13.google.com with SMTP id d75a77b69052e-52fb766bfd3so2542581cf.0
+        for <linux-rt-users@vger.kernel.org>; Fri, 11 Sep 2026 11:56:15 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20251104; t=1789152969; x=1789757769; darn=vger.kernel.org;
-        h=content-transfer-encoding:content-type:mime-version:references
-         :in-reply-to:message-id:date:subject:cc:to:from:sender:from:to:cc
-         :subject:date:message-id:reply-to:content-type;
-        bh=sEFiawXxHuKCKwDfYbHHPtZrl1SpYgTo9H6HX/SNxps=;
-        b=jH3iEluRwynhdeuEx9LVEPXY6xfIh/FGkLLbPzgv5IL+4GX1tpU5l4VjIAw3R2W9fX
-         3anr1JbZSvySX1f8xYV7ADB7C1wsR00XrWEcgJAPPnBX/cRx2EhPSVLg4yvu9/jcaSrj
-         FAqkjSkABgf4naVj5WfPQpc89mfkO/L6TlxorIAOVb83if5kMgypZxlfIFXLL7hyosSr
-         GINZFXwXD5LeF8DIKTnUnM3T5ZB4PusXnaGbLgn3yt7JZ0oLj1LVWh/wKHiLqLSC3b99
-         kCuPusYC1HgMPOqSmjTyZICRQ7F65Kmjtvu6MRD7o2rXtS/v7mYvzrh1nyx5gIFFhtIU
-         tkpw==
+        d=gmail.com; s=20251104; t=1789152971; x=1789757771; darn=vger.kernel.org;
+        h=content-transfer-encoding:mime-version:references:in-reply-to
+         :message-id:date:subject:cc:to:from:sender:from:to:cc:subject:date
+         :message-id:reply-to:content-type;
+        bh=o/72uAXaTsVr7uPmyAJWc84sqjae8zX2aydobF64zbo=;
+        b=NcWuAzsVQTn75hM2Mv45REGfF9fGy1QY/Qp3HpqT0zGSYZaWT1JwcgD8nkLxV15867
+         Wkja9ZMluutypHQGPSpM8dUy4q8DVmGlwdGuNeXtKg1bziXwvhljmWloizftqX6rbQCK
+         kZ7vcvT61OSJcEE6YVxaMLlllu7OWsbnKBLI2cp3dFhSswjR0xrZkVMkATtOJjuP1YVq
+         9hwp3NndqY6hlpfi4mZ0B61w1z0va5yVSsPeZBDMLj2zJ0P7wztARGVw0YJtFxj/h+vH
+         S/VC/1jrSp/CqnuYmkGvrkVRL4KQWEOEYzOV93BcYgnODEIOPVtWjgkqQ91k3eL7zppn
+         v3AQ==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20251104; t=1789152969; x=1789757769;
-        h=content-transfer-encoding:content-type:mime-version:references
-         :in-reply-to:message-id:date:subject:cc:to:from:sender:x-gm-gg
+        d=1e100.net; s=20251104; t=1789152971; x=1789757771;
+        h=content-transfer-encoding:mime-version:references:in-reply-to
+         :message-id:date:subject:cc:to:from:sender:x-gm-gg
          :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to
          :content-type;
-        bh=sEFiawXxHuKCKwDfYbHHPtZrl1SpYgTo9H6HX/SNxps=;
-        b=d87aW+jspO1S5PyLFkp5iszlvJbHHTZDdd8etGB8Q9z2UaxvvHVDlsrO/iryES+3mF
-         Rli1Ira9XxbthTdJeMlGN6H5Dga5FRjcWsNdhk7DriJp9otIFPztmpJ/5zRjnGvUEPL0
-         dSATrfxp2DHzb/4iglPUyls4vdZ91wIxbXgIEKrYB0Mh52oDu6y9br3F/rXG/GCVCwcK
-         KpgO0Vshv6HRagznMM6plVgMltbmWIvoqf9YH1WNrWADl3DjzsVDxD3JPfUZs/Hj0AHA
-         6PrEcWWKd8LKq7Sl6UQu/P7AWVIJVx3OpCPuxG7WRJCDciXLT/D/cGhGqJlwswFGNmB9
-         /+HQ==
-X-Gm-Message-State: AFuF++mfdLYXcMdL5omqQ7qcfsi0B45PGaBWU1XevY/T5gF42uokpTc6
-	ox82ylQaH+bFrLKZd8Ql9XZk2j3A728r55nyeyREqa1qiOWKAp0e2gi3Dq4jmA==
-X-Gm-Gg: AYBFou08slCe0T3zFdTIT5uPCKcG0Q7xD9jjTFIKcIjAuCea38bAcoNEphO91Y9z5bm
-	3ZvhsFNP6PpwbevWhoG2NY++zOCzBoLz7ZeQMJyaAQqLWHqMwzZYgQG/nFWgTbQb3DPpeUucj2l
-	m7aYzdWnH3FPtnaT8sp5DIOOVCpftlS0DQeOA0dIJ3U5/KKJ8cYGnglAfmm7gESx4FD1ZU4XGhI
-	diauoAY6rRTsefE/y2w2FHIUeqoIWFNQzti6/idQ/zr/Lh9XFIEycosojlxIl0/Kdb2sf5trK5w
-	7fwJCoSW+GY94BTuOZHTS29rt2WpY5qz53UqHohCv4lY+QKyF6UtXURFK+NbGmJB0krPlbHAhMT
-	diSQw+zJt3SXaZiGpMEhvGvRNl2Bqtw09d4tQVA3cq1vqgjhp3m7A7si4UigyNVKp/CHaKL/+G/
-	wde5JnscVbL5XC1fkUPmVQCSd2L1zHJDrgYomqbx8GyJoRMQHPvlijfNeKsXzfl6TBRMfFDEMoN
-	4GIwUYw6FJAV8bZmchmzRSumtPj6ULFNIh1JbbM32/WbIV0LKrbea/YxbgWJwHi
-X-Received: by 2002:a05:6214:519b:b0:910:5967:c379 with SMTP id 6a1803df08f44-912120692b3mr76859256d6.4.1789152969171;
-        Fri, 11 Sep 2026 11:56:09 -0700 (PDT)
+        bh=o/72uAXaTsVr7uPmyAJWc84sqjae8zX2aydobF64zbo=;
+        b=BZHXHMZECHH2Hjv1X4HA55+/+BxgrkfmsAcmvezEch+Mcspg/uOx/N6gJi2ieo8NDV
+         /TYxYmixvS1x1+144MG8QBYMxbGfvIHYjpX9o3Bqg9T0nivorHBbXzN7u/8h85xh/fRf
+         yThdJ80UZAGkK+G54FIwU85LOU5hv72PprZbB4PK/okjIuSxhf/PmKWVxxn+tRdXZgyV
+         qOy9DOXR7z5pv9fNgTQ58SpidNFs9cr182+27AliEn0unxxML6hv/I/1O5UWxcbjkVFA
+         +uoVufn4Mxqe6TCh1b2LLKIXiepoSMHdinW/wrh6CgXs7i/kysxhrvgJxuuJwfWOEG9X
+         lcMQ==
+X-Gm-Message-State: AFuF++n0hoFd6Czz4KCWevsZ4hVwieGrlAAuttvQ4KQnfVz/JxtdrTsB
+	LJBA7egpEuMu5XHbdeVvZ2jSEUtyqzzk3GMZdTUkVb2NfEvQLw9lWfW0M7GJgQ==
+X-Gm-Gg: AYBFou3Olg4vlXS8yGrRX7gp1OelIpWC5lpwB3duW/bBcI297mizC0qwheVmAppa7EM
+	CWYLBZp1FC31nIR4//+QUVXDzaAfA4yDENKZWuzXKZWna9I+gzYMaKITsamX44w8OTSdkH8ulYy
+	H4WmN48Y97++/K/kn+liiM1LCzKcg009gBFguP36awKd1hwbUzxHUF8Ajshf+kxMbDrvqtoam2o
+	9zIRoAs3xZmNeEox56nXE3hBVSeYx7TqbXN+vkj7DKARlrb6dSwkxGIJbizuugBw4D5MGf9yxFK
+	XwkvbMTSha50xTNQ+JtwCeR8UWJaztrYtUryHVcOTqndTcSIIROPTbEZwcN8bUDpDaFJc4rxoFp
+	K/7thzUxsJgrRIwYiUJRYX+ES8Thc6tfCpMIuuw5DQrYS7gKoQ+jWBUTt/Z+3BUndVbJuFpfo3V
+	96Y4ahyAlA1GOihgQn0cNGVhNmwwG9PSBAce4mwtyksSBLioZYjdHaQYvtzrKyFdZjb6rQMzWg/
+	eTNll7wqzH50DZfFHhvDCzANuq9vSUHBsdjcznfjabBY8Qs3qyuy7us+WR5k25+5A==
+X-Received: by 2002:ac8:6112:0:b0:530:5152:75f0 with SMTP id d75a77b69052e-530c8598ec0mr105793181cf.22.1789152966357;
+        Fri, 11 Sep 2026 11:56:06 -0700 (PDT)
 Received: from Cumhall.redhat.corp ([70.53.55.174])
-        by smtp.gmail.com with ESMTPSA id 6a1803df08f44-9120f4920c5sm27254726d6.32.2026.09.11.11.56.08
+        by smtp.gmail.com with ESMTPSA id 6a1803df08f44-9120f4920c5sm27254726d6.32.2026.09.11.11.56.05
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Fri, 11 Sep 2026 11:56:08 -0700 (PDT)
+        Fri, 11 Sep 2026 11:56:06 -0700 (PDT)
 Sender: John Kacur <jkacur@gmail.com>
 From: John Kacur <jkacur@redhat.com>
 To: linux-rt-users@vger.kernel.org
 Cc: Tomas Glozar <tglozar@redhat.com>,
 	Sana Sharma <sansshar@redhat.com>,
 	Clark Williams <williams@redhat.com>
-Subject: [PATCH 04/10] rteval: Fix stale malformed-data log patterns in regression tests
-Date: Fri, 11 Sep 2026 14:55:37 -0400
-Message-ID: <20260911185549.604199-5-jkacur@redhat.com>
+Subject: [PATCH 01/10] rteval: Update E2E tests to cover multiple recent changes
+Date: Fri, 11 Sep 2026 14:55:34 -0400
+Message-ID: <20260911185549.604199-2-jkacur@redhat.com>
 X-Mailer: git-send-email 2.55.0
 In-Reply-To: <20260911185549.604199-1-jkacur@redhat.com>
 References: <20260911185549.604199-1-jkacur@redhat.com>
@@ -77,118 +77,77 @@ List-Id: <linux-rt-users.vger.kernel.org>
 List-Subscribe: <mailto:linux-rt-users+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit
 
-The cyclictest and timerlat error-handling regression tests grepped the
-run log for warning strings that the modules no longer emit:
+From: Tomas Glozar <tglozar@redhat.com>
 
-- "Error parsing cyclictest bucket data" and "Error parsing timerlat
-  bucket data" do not exist anywhere in the modules.
-- When a bad value lands in a data column (rather than the row index),
-  the modules log "Skipping incomplete bucket data ... (expected during
-  process termination)" at DEBUG level, which none of the old patterns
-  matched.
+There have been multiple changes to the command line passed by rteval to
+rtla:
 
-As a result the cyclictest test always reported the soft
-"? No warnings about malformed data found", and the timerlat
-mixed_corruption scenario could hard-fail because its "Mock rtla was
-called" detection relied on a string that is never logged.
+- Commit f2c619a7ca08 ("rteval: Fix timerlat module for rtla short
+  option parsing bug") changed the format of rteval's short options from
+  "-o<arg>" and "-o=<arg>" to "-o <arg>".
 
-Update both tests to match the messages the modules actually emit
-("Skipping incomplete bucket data", "Skipping incomplete histogram
-line", "unexpected output", and the module-specific parse-error
-messages), and reword the check to reflect that the module handles the
-malformed data rather than warning about it.
+- Commit 5153f0e854cf ("rteval: Refactor timerlat parsing and fix max
+  line duplication bug") commented out "--no-summary" to get more
+  information out of rtla.
 
-Assisted-by: Claude:claude-opus-4-8
+- Commit daf3e54bae7c ("rteval: Fix timerlat stoptrace trace analysis
+  capture in XML") makes rteval not pass "--no-aa" in runs with
+  --timerlat-stoptrace.
+
+Reflect the changes in E2E tests to make them pass again. Note that
+some partial matches were extended with more arguments in the process
+for the purpose of more clarity.
+
+Signed-off-by: Tomas Glozar <tglozar@redhat.com>
 Signed-off-by: John Kacur <jkacur@redhat.com>
 ---
- .../test-cyclictest-error-handling.sh         | 19 +++++++++++-----
- .../test-timerlat-error-handling.sh           | 22 ++++++++++++++-----
- 2 files changed, 30 insertions(+), 11 deletions(-)
+ tests/e2e/measurement.t | 14 +++++++-------
+ 1 file changed, 7 insertions(+), 7 deletions(-)
 
-diff --git a/tests/regression/test-cyclictest-error-handling.sh b/tests/regression/test-cyclictest-error-handling.sh
-index a4903d2d34d8..436264111bdf 100755
---- a/tests/regression/test-cyclictest-error-handling.sh
-+++ b/tests/regression/test-cyclictest-error-handling.sh
-@@ -149,7 +149,10 @@ EOF
-             ;;
-         mixed_corruption)
-             # This scenario exits 0 but produces bad data
--            if grep -q "Error parsing cyclictest bucket data" "$log_file"; then
-+            if grep -q "Skipping incomplete bucket data" "$log_file" || \
-+               grep -q "Skipping incomplete histogram line" "$log_file" || \
-+               grep -q "unexpected output" "$log_file" || \
-+               grep -q "Error parsing max latencies" "$log_file"; then
-                 echo -e "${GREEN}✓ Mock cyclictest was called (parsing errors detected)${NC}"
-                 mock_called=true
-             fi
-@@ -161,13 +164,19 @@ EOF
-         result="FAIL"
-     fi
+diff --git a/tests/e2e/measurement.t b/tests/e2e/measurement.t
+index 9d1f4380e94c..62c39eb6e0e2 100644
+--- a/tests/e2e/measurement.t
++++ b/tests/e2e/measurement.t
+@@ -72,30 +72,30 @@ check "timerlat duration" \
  
--    # Check for warning about parsing errors
--    if grep -q "Error parsing cyclictest bucket data" "$log_file" || \
-+    # Check that the module noticed and handled the malformed data. The
-+    # messages vary by where the bad data is: a non-numeric bucket value is
-+    # skipped ("Skipping incomplete bucket data"), a non-numeric row index is
-+    # logged as "unexpected output", a short row as "Skipping incomplete
-+    # histogram line", and a bad "# Max Latencies:" header as "Error parsing
-+    # max latencies".
-+    if grep -q "Skipping incomplete bucket data" "$log_file" || \
-+       grep -q "Skipping incomplete histogram line" "$log_file" || \
-        grep -q "Error parsing max latencies" "$log_file" || \
-        grep -q "unexpected output" "$log_file"; then
--        echo -e "${GREEN}✓ Logged warnings about malformed data${NC}"
-+        echo -e "${GREEN}✓ Logged handling of malformed data${NC}"
-     else
--        echo -e "${YELLOW}? No warnings about malformed data found${NC}"
-+        echo -e "${YELLOW}? No handling of malformed data found${NC}"
-     fi
+ check "timerlat command, with --measurement-cpulist" \
+   "--noload -d 1 --measurement-cpulist=0-1" 0 \
+-  'Command: rtla timerlat hist -p100 -P f:95 -u -c0-1'
++  'Command: rtla timerlat hist -p 100 -P f:95 -u -c 0-1 -E 3500 --no-aa --dma-latency=0'
  
-     # Check for SIGINT handling (if applicable)
-diff --git a/tests/regression/test-timerlat-error-handling.sh b/tests/regression/test-timerlat-error-handling.sh
-index 06d7c4b87d24..9883608669bf 100755
---- a/tests/regression/test-timerlat-error-handling.sh
-+++ b/tests/regression/test-timerlat-error-handling.sh
-@@ -153,7 +153,10 @@ EOF
-             ;;
-         mixed_corruption)
-             # This scenario exits 0 but produces bad data
--            if grep -q "Error parsing timerlat bucket data" "$log_file"; then
-+            if grep -q "Skipping incomplete bucket data" "$log_file" || \
-+               grep -q "Skipping incomplete histogram line" "$log_file" || \
-+               grep -q "unexpected output" "$log_file" || \
-+               grep -q "Error parsing timerlat output" "$log_file"; then
-                 echo -e "${GREEN}✓ Mock rtla was called (parsing errors detected)${NC}"
-                 mock_called=true
-             fi
-@@ -165,12 +168,19 @@ EOF
-         result="FAIL"
-     fi
+ check "timerlat command, with --measurement-run-on-isolcpus" \
+   "--noload -d 1 --measurement-run-on-isolcpus" 0 \
+-  'Command: rtla timerlat hist -p100 -P f:95 -u'
++  'Command: rtla timerlat hist -p 100 -P f:95 -u -c [0-9|-]+ -E 3500 --no-aa --dma-latency=0'
  
--    # Check for warning about parsing errors
--    if grep -q "Error parsing timerlat bucket data" "$log_file" || \
--       grep -q "unexpected output" "$log_file"; then
--        echo -e "${GREEN}✓ Logged warnings about malformed data${NC}"
-+    # Check that the module noticed and handled the malformed data. The
-+    # messages vary by where the bad data is: a non-numeric bucket value is
-+    # skipped ("Skipping incomplete bucket data"), a non-numeric row index is
-+    # logged as "unexpected output", a short row as "Skipping incomplete
-+    # histogram line", and a wholesale parse failure as "Error parsing timerlat
-+    # output".
-+    if grep -q "Skipping incomplete bucket data" "$log_file" || \
-+       grep -q "Skipping incomplete histogram line" "$log_file" || \
-+       grep -q "unexpected output" "$log_file" || \
-+       grep -q "Error parsing timerlat output" "$log_file"; then
-+        echo -e "${GREEN}✓ Logged handling of malformed data${NC}"
-     else
--        echo -e "${YELLOW}? No warnings about malformed data found${NC}"
-+        echo -e "${YELLOW}? No handling of malformed data found${NC}"
-     fi
+ check "timerlat command, with --timerlat-interval" \
+   "--noload -d 1 --timerlat-interval 2000" 0 \
+-  'Command: rtla timerlat hist -p2000 -P f:95'
++  'Command: rtla timerlat hist -p 2000 -P f:95 -u -c [0-9|-]+ -E 3500 --no-aa --dma-latency=0'
  
-     # Check for SIGINT handling (if applicable)
+ check "timerlat command, with --timerlat-priority" \
+   "--noload -d 1 --timerlat-priority 80" 0 \
+-  'Command: rtla timerlat hist -p100 -P f:80 -u'
++  'Command: rtla timerlat hist -p 100 -P f:80 -u -c [0-9|-]+ -E 3500 --no-aa --dma-latency=0'
+ 
+ check "timerlat command, with --timerlat-buckets" \
+   "--noload -d 1 --timerlat-buckets 4000" 0 \
+-  'Command: rtla timerlat hist -p100 -P f:95 -u -c[0-9|-]+ -E4000'
++  'Command: rtla timerlat hist -p 100 -P f:95 -u -c [0-9|-]+ -E 4000 --no-aa --dma-latency=0'
+ 
+ check "timerlat command, with --timerlat-stoptrace" \
+   "--noload -d 1 --timerlat-stoptrace 1" any \
+-  'Command: rtla timerlat hist -p100 -P f:95 -u -c[0-9|-]+ -E3500 --no-summary --no-aa --dma-latency=0 -T1'
++  'Command: rtla timerlat hist -p 100 -P f:95 -u -c [0-9|-]+ -E 3500 --dma-latency=0 -T 1'
+ 
+ check "timerlat command, with --timerlat-trace" \
+   "--noload -d 1 --timerlat-stoptrace 1 --timerlat-trace trace.txt" any \
+-  'Command: rtla timerlat hist -p100 -P f:95 -u -c[0-9|-]+ -E3500 --no-summary --no-aa --dma-latency=0 -T1 -t=trace.txt'
++  'Command: rtla timerlat hist -p 100 -P f:95 -u -c [0-9|-]+ -E 3500 --dma-latency=0 -T 1 -t trace.txt'
+ 
+ test_end
 -- 
 2.55.0
 
