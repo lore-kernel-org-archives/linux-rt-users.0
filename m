@@ -1,99 +1,137 @@
-Received: from mail-yw1-f172.google.com (mail-yw1-f172.google.com [209.85.128.172])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from CH5PR02CU005.outbound.protection.outlook.com (mail-northcentralusazon11012030.outbound.protection.outlook.com [40.107.200.30])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 7D7CA52FE2A
-	for <linux-rt-users@vger.kernel.org>; Thu, 10 Sep 2026 18:06:27 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.128.172
-ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1789063588; cv=none; b=UF86NvhHa0kru6gNSfx4HNe9WPc5W1BLh8ZtYw3wWoADSe+bSjgoQTcbfm6xJSx+7E+PGHoYVFLzMVpA7J9QWIwg9cJyoQiUm8j/591QIE1gLfwyA8lhPB/Hk5kXi18l4PlArhMOfLvFvgAFuc1/ifWlzeMmUZhK2fqzDHIDWA4=
-ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1789063588; c=relaxed/simple;
-	bh=KkS2Y2C4yMLZUjgNozN9cZFnlKLkdyu2J0a9HplB07g=;
-	h=Date:From:To:cc:Subject:In-Reply-To:Message-ID:References:
-	 MIME-Version:Content-Type; b=k6xPcBTN+/89XkWeLlW1jA8RAV+06kKTTIj2LeyRiH+O8wk854iUKoBJZrzUT/33nYx6VFHgRgNWDxvgjYRbWtIRI6A/Jaw50+cWr3srd49S4K2gwkki1DHR82jOj51co9gM6uUDIPMHBFozp6KWIr8cMjYFuWarSZZYfcUqbDY=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=Wck1Yvgk; arc=none smtp.client-ip=209.85.128.172
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 13B7730568B
+	for <linux-rt-users@vger.kernel.org>; Fri, 11 Sep 2026 05:29:49 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=fail smtp.client-ip=40.107.200.30
+ARC-Seal:i=2; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
+	t=1789104591; cv=fail; b=EvYFEriwfgQU4cIL+RH7dU7bjZht4k1vbuwYYDzX5CLCNzw7E/b8q/UxLPdriPHrrIbfg8bmHauOiNzDAoKEXSzWd1NGKCeRNN0VCexBwAEtvil4cQPLoFmCuczRPJK87Bx0ZY/a+uADKwbLMyP+2RVNvMOr0wnHepUVhc236/8=
+ARC-Message-Signature:i=2; a=rsa-sha256; d=subspace.kernel.org;
+	s=arc-20240116; t=1789104591; c=relaxed/simple;
+	bh=uMaT6WPPDmiKTQaJoQMyA2gUJImjdAjAZIAsx6Uu8lQ=;
+	h=From:To:CC:Subject:Date:Message-ID:MIME-Version:Content-Type; b=MTnEdvRuZxlfQ5MjARLaL1AuboXw+3fzP3NHmDFV5E1QCnF5vMdUXBd0IRBAhrkc10KoyerqZs4Ppt81ggPLyka2HuldexvocoVWHMFQgDWUxsFscReOfioWu1iY3L1SxxSNZ8iUJ7l9P9DskySh/XT+439oskRnnMfa2ffQONQ=
+ARC-Authentication-Results:i=2; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=amd.com; spf=fail smtp.mailfrom=amd.com; dkim=pass (1024-bit key) header.d=amd.com header.i=@amd.com header.b=QtnFNDcL; arc=fail smtp.client-ip=40.107.200.30
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=amd.com
+Authentication-Results: smtp.subspace.kernel.org; spf=fail smtp.mailfrom=amd.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="Wck1Yvgk"
-Received: by mail-yw1-f172.google.com with SMTP id 00721157ae682-857ff9fef54so73948217b3.1
-        for <linux-rt-users@vger.kernel.org>; Thu, 10 Sep 2026 11:06:27 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20251104; t=1789063586; x=1789668386; darn=vger.kernel.org;
-        h=content-type:mime-version:references:message-id:in-reply-to:subject
-         :cc:to:from:date:from:to:cc:subject:date:message-id:reply-to
-         :content-type;
-        bh=+RHJOyEtY/MqNFmxnLODNW4ggVnAfzPCh4gwxLx0sSM=;
-        b=Wck1Yvgk7e/w3Aq7ll+6nH60/iQNQyHKUB9ozInZk4jg4Rx+wgE+EI9pPEu3AB1yuv
-         Q9GPWfoKLwLNoBWK8kqrjqthD2riGTRH00Cbk6BVKHDJGu3JBZnSYuUNWAN54VmpRd9S
-         YAcf8okaFdshp+jDYQ/wS4M2d3UOc1NQSYXBXuCEoLvlE7bNUTik72TeoQBGGGRT1uv0
-         Vt0hUYsi3eTDpTl3TKL6IX60woR4SlQ9OVBj/CzO186HTojhKwfK3ubwwwleLNQRnsTS
-         Lb0Tr2L1qPYpDML+Dr59I99dhHSV/YqBeHD1/j0ALwSFeZdsg/+K/VBrYpiXBezoEu8r
-         PhSA==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20251104; t=1789063586; x=1789668386;
-        h=content-type:mime-version:references:message-id:in-reply-to:subject
-         :cc:to:from:date:x-gm-gg:x-gm-message-state:from:to:cc:subject:date
-         :message-id:reply-to:content-type;
-        bh=+RHJOyEtY/MqNFmxnLODNW4ggVnAfzPCh4gwxLx0sSM=;
-        b=BTf3QZwqUeinopiwYAQEwckcPlLBk4rIuVql4tLbDi9822UJ0orteDFWV7c59RkjwB
-         yW8A8pLcjQDDAqNHdthhuVTMFjimaGxTOxA0vDK4UIgQPm1WWfRmgYw7Ez4zwok7BanO
-         I2ldcDgAIXHrEa2V44CXPmd9ynJRvZSr9I6mEJxPuohOv3Ls1ierEyRumctZ0jnzZvVZ
-         Ga2xOD9sHbM6oZYBT+1rjhDeq6dgbYRgnXWTmVmGaFy2cFZdGwD/mbqXj9BCfgpW7iW0
-         BlRZXHwsqsSknUKfoENFIzRN1wMiLIfNBWck3UiwDW3uQb9aNTSZYNmf1UPiYOsM6uhf
-         Lz1Q==
-X-Gm-Message-State: AFuF++kQIgJuPC6+rpEB3iLkwS1Ny/9U2r3B4empUnyfyYqb9t/iuMkT
-	qeVRxQ4wB/AAFNIdWd1XgJ74MCGbjjdH1WMhm8AIadHJ8YbsQWrBjSHv
-X-Gm-Gg: AYBFou1iN9D4rsxuvKQj85ipvSBP6kU6iBowfIZda8vacgfV2YHtxFa3cN9giRbj4LS
-	SeLNaA0e5iN3kZ9RigqYK5+YEJPet9+3vXQoC2kIlEr6D5oV3O/ZscQe/EogXECMmHFdA2W+wNQ
-	MN9bnnscVayViDaGzQEaAFmsy26qtb2BKFLGRlYybi7BNQkYpdtk+p/nfeym0a/v6DaYRktx7cX
-	8H0we+H7PDIBBmI/MpyPWJ3NSHuDOsOflWo+HHbvviPBCFmjuFIQeRPS88dd5vuzsy95B5mIoLG
-	N0mAvnYhZFxEvYKSLfMrOZGCZRMrrSayziEyXAuXbWkvDcKbKNcL9S7yOxmSH+6PRLOm6AXDDJz
-	TT+d4uaBTiQKtMcPtzEI0JSqvKM0uV7z+VPF5IkWQL+WdMzc066t/H1WhGh/9qYxtkqHBwE2TRi
-	THttmeBV8zGNWzWRwsaQkMi0UHZ+4QvXloioryNr48J4Z+ijpfe+qu8RYlufRnbCf2h8Halvdpr
-	UjxUA6xpgwvhfT6RGojNX9dVlmJQVSSr7cZqTIKutbXNBU=
-X-Received: by 2002:a05:690c:dd4:b0:873:5bb2:6c01 with SMTP id 00721157ae682-884b5d8d01amr2237007b3.43.1789063586367;
-        Thu, 10 Sep 2026 11:06:26 -0700 (PDT)
-Received: from Cumhall ([70.53.55.174])
-        by smtp.gmail.com with ESMTPSA id af79cd13be357-939e80f8142sm40761585a.43.2026.09.10.11.06.25
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Thu, 10 Sep 2026 11:06:25 -0700 (PDT)
-Date: Thu, 10 Sep 2026 14:06:14 -0400 (EDT)
-From: John Kacur <jkacur@gmail.com>
-To: Suneeth D <Suneeth.D@amd.com>
-cc: linux-rt-users@vger.kernel.org, williams@redhat.com, jkacur@redhat.com, 
-    bigeasy@linutronix.de
-Subject: Re: [PATCH v2] cyclictest: Fix BUILD failure for GCC_VER < 14
-In-Reply-To: <20260902095807.3531-1-Suneeth.D@amd.com>
-Message-ID: <f9fdfd51-d18f-dfd9-a6cf-08a3e530c921@gmail.com>
-References: <20260902095807.3531-1-Suneeth.D@amd.com>
+	dkim=pass (1024-bit key) header.d=amd.com header.i=@amd.com header.b="QtnFNDcL"
+ARC-Seal: i=1; a=rsa-sha256; s=arcselector10001; d=microsoft.com; cv=none;
+ b=LjP7EqeHkj4gj2DRM7psb1VUpsdQQFPZrv99MrTrdkzAtiFkHoGOeX4CvsbJAkyepJxSeRJXnAqTwMfBMyQfwWcVPP/bUofbWGnU9MrALmjMRr8yF+r5grCIQVPG1ejhmZyuTfyEBeRtZ1tLYsDPGAbUNOmxD/wzzqACXiSqXROJfBTvng0uOe3ttjhKGtjW9g/8VPDbhMfZtYcaTCRrLcgptQxo61V85axi4dUcgLqQsHCXRLoXlqxoI4duqufULSqG4cvyPHryArMKo4JFn20s4j9PjO6HyAIl7lLobwDF+YHI25AU1C7fuRtBjlmYaQn2NGh1r2FYjt5PqPKrqQ==
+ARC-Message-Signature: i=1; a=rsa-sha256; c=relaxed/relaxed; d=microsoft.com;
+ s=arcselector10001;
+ h=From:Date:Subject:Message-ID:Content-Type:MIME-Version:X-MS-Exchange-AntiSpam-MessageData-ChunkCount:X-MS-Exchange-AntiSpam-MessageData-0:X-MS-Exchange-AntiSpam-MessageData-1;
+ bh=gda47dLAp9h3X7Dr9WJHinFoEbfo7Vp7Y09d7AswHVY=;
+ b=vKjNJ5YIolvd3+0fC7KUNa+MGPtrVzyUMvUrTEZxXpZ7dQZnmchzAcTjxbDmUxPfJyaU0OwLj3wNSSbm60U+IaMXsxrgGD4U/FkaOiIseVVhlnyH5SdiK9el33OyMJkknqEK0EVQ+JFOrwh11YzZLE5mFp2KVPywN0Y/MI09DCItMcCRrzbAEtUeN53lj7zpUbUsJUd/MJ+8JLFjgh7g2sPCWd1xVnnTdhbmpohQoRLR7xJbXrEWZgMUjIObQemJwH40D0Dm1EfFu0zA/phKjctcagz7WzpqCp/pYpoE/720e74gtHom4t1etMz7+4p6wT99kA8aZklITOzgMjumxw==
+ARC-Authentication-Results: i=1; mx.microsoft.com 1; spf=pass (sender ip is
+ 165.204.84.17) smtp.rcpttodomain=vger.kernel.org smtp.mailfrom=amd.com;
+ dmarc=pass (p=quarantine sp=quarantine pct=100) action=none
+ header.from=amd.com; dkim=none (message not signed); arc=none (0)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=amd.com; s=selector1;
+ h=From:Date:Subject:Message-ID:Content-Type:MIME-Version:X-MS-Exchange-SenderADCheck;
+ bh=gda47dLAp9h3X7Dr9WJHinFoEbfo7Vp7Y09d7AswHVY=;
+ b=QtnFNDcLublPe9dpQdNVjKioHMxbCCMh+7r2YZtCA0vv4n52rVR3fTVjAeRlFPTRk4WQuMHF/+jAHHn8i4qHQnBa3xwI8utxEJk1Eptr5rMdgHhbDRqW4at1j24cczDBz2Tw5MlNDusBxoaAXTcpXCjPaGOr2c6uyGMlEsJgnZg=
+Received: from PH8PR21CA0012.namprd21.prod.outlook.com (2603:10b6:510:2ce::6)
+ by DM6PR12MB4186.namprd12.prod.outlook.com (2603:10b6:5:21b::11) with
+ Microsoft SMTP Server (version=TLS1_2,
+ cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.21.406.9; Fri, 11 Sep
+ 2026 05:29:44 +0000
+Received: from SN1PEPF00036F3F.namprd05.prod.outlook.com
+ (2603:10b6:510:2ce:cafe::27) by PH8PR21CA0012.outlook.office365.com
+ (2603:10b6:510:2ce::6) with Microsoft SMTP Server (version=TLS1_3,
+ cipher=TLS_AES_256_GCM_SHA384) id 15.21.428.6 via Frontend Transport; Fri, 11
+ Sep 2026 05:29:43 +0000
+X-MS-Exchange-Authentication-Results: spf=pass (sender IP is 165.204.84.17)
+ smtp.mailfrom=amd.com; dkim=none (message not signed)
+ header.d=none;dmarc=pass action=none header.from=amd.com;
+Received-SPF: Pass (protection.outlook.com: domain of amd.com designates
+ 165.204.84.17 as permitted sender) receiver=protection.outlook.com;
+ client-ip=165.204.84.17; helo=satlexmb07.amd.com; pr=C
+Received: from satlexmb07.amd.com (165.204.84.17) by
+ SN1PEPF00036F3F.mail.protection.outlook.com (10.167.248.23) with Microsoft
+ SMTP Server (version=TLS1_2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
+ 15.21.406.5 via Frontend Transport; Fri, 11 Sep 2026 05:29:43 +0000
+Received: from BLRSUNEETHD2.amd.com (10.180.168.240) by satlexmb07.amd.com
+ (10.181.42.216) with Microsoft SMTP Server (version=TLS1_2,
+ cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.2.2562.46; Fri, 11 Sep
+ 2026 00:29:41 -0500
+From: Suneeth D <Suneeth.D@amd.com>
+To: <linux-rt-users@vger.kernel.org>
+CC: <williams@redhat.com>, <jkacur@redhat.com>, <bigeasy@linutronix.de>,
+	Suneeth D <Suneeth.D@amd.com>
+Subject: [PATCH v2] cyclictest: Fix BUILD failure for GCC_VER < 14
+Date: Fri, 11 Sep 2026 05:29:29 +0000
+Message-ID: <20260911052929.2565-1-Suneeth.D@amd.com>
+X-Mailer: git-send-email 2.43.0
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
 List-Subscribe: <mailto:linux-rt-users+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 8bit
+Content-Type: text/plain
+X-ClientProxiedBy: satlexmb07.amd.com (10.181.42.216) To satlexmb07.amd.com
+ (10.181.42.216)
+X-EOPAttributedMessage: 0
+X-MS-PublicTrafficType: Email
+X-MS-TrafficTypeDiagnostic: SN1PEPF00036F3F:EE_|DM6PR12MB4186:EE_
+X-MS-Office365-Filtering-Correlation-Id: 798554bb-7f5a-477c-b36e-08df0fc5af81
+X-MS-Exchange-SenderADCheck: 1
+X-MS-Exchange-AntiSpam-Relay: 0
+X-Microsoft-Antispam:
+	BCL:0;ARA:13230040|82310400026|1800799024|376014|23010399003|36860700016|18002099003|13003099007|10067099003|56012099006|11063799006;
+X-Microsoft-Antispam-Message-Info:
+	fmfB0DW8XwBCtreb/1ZjHlptC3hqvlegkF7u5hr7Ho70P0crpgmorJ6feL2ztD6A2Jkj+T0BhRDC6y1PItZNCKSrpltIl4GIC5yI0XvYH0ijqFp7K6dVb0bki7dVqO1ZuZYtiyVtroB8+4UhiST7e4AC6D2Cgel3FTKOpVOIvXVuXxn0JmH+G0VbmoBRrGVLntxydHMaOp7+0iEZYm2SS4SeJ1AxPBVOuT7NWPDPyyxprOZqCekXqljv6dx7m1i6cIci46+6M0dIT7xTXpk4nj7MtSpU0yitglZ7EqFzV2wY1CMU09ue7a/fLz5rt67DsXimz3Nx/p3D4QEHkU6AngopqamuhUPUuhXE3GhQ+nXYRjvuIDYIloG6UN0TQJ+6cpXC6IEitmz63rxqF25fl1irA0B5uyH1leWv22YCBSgrSKyK2xD29ZLsnRbFqMMpJOZ+vZt0cBpu0abuzBzDFshjKkpxJY/60I3s1QS/KmBAS1j6d0+51zWZQcqQ/uHoGEH0d/jKZsiFBE4tVX1Ox33UTke51416XuDIHWOGOcXuH+v9YpZrsGI7XnZAWAdjDSGi0G2+3jp6uq0VXDQWZZEw+BmHmYTQ9hC6LLYlJQkJsBR71aKnS8K36s94xN3nchmkkokO1RDWlz+oh+55RDjgqgex5UMUlPTgy2ldiSyQgWnwbcLfVHdIwN2PASlKSyz2iwsKBnII1tg7FzHOOQ==
+X-Forefront-Antispam-Report:
+	CIP:165.204.84.17;CTRY:US;LANG:en;SCL:1;SRV:;IPV:NLI;SFV:NSPM;H:satlexmb07.amd.com;PTR:InfoDomainNonexistent;CAT:NONE;SFS:(13230040)(82310400026)(1800799024)(376014)(23010399003)(36860700016)(18002099003)(13003099007)(10067099003)(56012099006)(11063799006);DIR:OUT;SFP:1101;
+X-MS-Exchange-AntiSpam-MessageData-ChunkCount: 1
+X-MS-Exchange-AntiSpam-MessageData-0:
+	f8IHupjDmR7PI/8JX3KD1A0wr2vVb1wrhzcZFZQX2W8ZpAwop5A6pvZrk+KpI7Uu9OR7JyD39AQQXz81mYlzvkFWSK8NDOA9MRVNRql+N8XraUcF0uz1RatKhZpuIANatTi8ILunDhnHNWgCD1mu3V7eF/Sj4WYkx73CJU2W1ftiRcqTW4UcSd+3WuILnm5jo2h5XyW64DeSsBE/ZxHc0+AL6eL/9Sdfu7nhml/tbbmJ779G7dFuOSazTLqGuyIlG0dX+kOtczBpLGKKM9Y89NWvX6PxhyjU3jNrQEQ4m+ENMj+y7Gie0hAsuXkvemnPAPx1Cj3+N4yFEPwf8HawqPVpYpxpfMj7CiW4fsnRQI9H56eC8k6yW+KtjXT84CKrWUQtM9m5hO22NKf0QyxgWXtIAjTAj06/NqLH3l00Pj3v8/q2uVUpd+UtTg3ql+Qw
+X-OriginatorOrg: amd.com
+X-MS-Exchange-CrossTenant-OriginalArrivalTime: 11 Sep 2026 05:29:43.6726
+ (UTC)
+X-MS-Exchange-CrossTenant-Network-Message-Id: 798554bb-7f5a-477c-b36e-08df0fc5af81
+X-MS-Exchange-CrossTenant-Id: 3dd8961f-e488-4e60-8e11-a82d994e183d
+X-MS-Exchange-CrossTenant-OriginalAttributedTenantConnectingIp: TenantId=3dd8961f-e488-4e60-8e11-a82d994e183d;Ip=[165.204.84.17];Helo=[satlexmb07.amd.com]
+X-MS-Exchange-CrossTenant-AuthSource:
+	SN1PEPF00036F3F.namprd05.prod.outlook.com
+X-MS-Exchange-CrossTenant-AuthAs: Anonymous
+X-MS-Exchange-CrossTenant-FromEntityHeader: HybridOnPrem
+X-MS-Exchange-Transport-CrossTenantHeadersStamped: DM6PR12MB4186
 
+timerthread() uses bool, true, and false. Those are keywords in C23,
+which became GCC's default in GCC 15 (-std=gnu23), so the file compiles
+there without stdbool.h. With the earlier versions of GCC the default is gnu17,
+where they are provided by <stdbool.h>, and the build fails without it.
 
+Fixes: 98fcd661ac59 (cyclictest: Acquire a lock before invoking pthread_cond_signal())
+Closes: https://lore.kernel.org/linux-rt-users/4ce24139-5f7e-4180-a290-bcc15fb4f559@amd.com/
+Signed-off-by: Suneeth D <Suneeth.D@amd.com>
+Reviewed-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+---
 
-On Wed, 2 Sep 2026, Suneeth D wrote:
+Changes since v1 ---> v2:
 
-> timerthread() uses bool, true, and false. Those are keywords in C23,
-> which became GCC's default in GCC 15 (-std=gnu23), so the file compiles
-> there without stdbool.h. With the earlier versions of GCC the default is gnu17,
-> where they are provided by <stdbool.h>, and the build fails without it.
-> 
-> Fixes: 98fcd661ac59 (cyclictest: Acquire a lock before invoking pthread_cond_signal())
-> Closes: https://lore.kernel.org/linux-rt-users/4ce24139-5f7e-4180-a290-bcc15fb4f559@amd.com/
-> Signed-off-by: Suneeth D <Suneeth.D@amd.com>
-> Reviewed-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-> ---
-> 
-> Changes since v1 ---> v2:
-> 
->  * Modify commit message to include Tomas Glozar's note on default
->    changes happened since GCC 15.
-> 
-[snip]
-Signed-off-by: John Kacur <jkacur@redhat.com>
+ * Modify commit message to include Tomas Glozar's note on default
+   changes happened since GCC 15.
+
+based on: fd45df830803dd7f26d2ca8bdcf05fd7e0d62ae8 (rt-tests/main)
+
+ src/cyclictest/cyclictest.c | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/src/cyclictest/cyclictest.c b/src/cyclictest/cyclictest.c
+index 99194378f946..58b56bcede0f 100644
+--- a/src/cyclictest/cyclictest.c
++++ b/src/cyclictest/cyclictest.c
+@@ -15,6 +15,7 @@
+ #include <stdlib.h>
+ #include <stdint.h>
+ #include <stdarg.h>
++#include <stdbool.h>
+ #include <unistd.h>
+ #include <fcntl.h>
+ #include <getopt.h>
+-- 
+2.43.0
+
