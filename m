@@ -1,87 +1,148 @@
-Received: from mail-qk2-f13.google.com (mail-qk2-f13.google.com [74.125.230.205])
+Received: from mail-qk2-f12.google.com (mail-qk2-f12.google.com [74.125.230.204])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 2BE2D4BAA1A
-	for <linux-rt-users@vger.kernel.org>; Tue, 15 Sep 2026 16:58:03 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=74.125.230.205
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id B1F2143846B
+	for <linux-rt-users@vger.kernel.org>; Tue, 15 Sep 2026 17:09:40 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=74.125.230.204
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1789491485; cv=none; b=u6M0q89SJk+5ZC80TGbtKKwrZZKlSdmQm/FpFx2QgtX8TnumMA9awgF9zzn9hUE01zqYkSGYr/+wF0/GDVbCvIrrEp/uqmyxflRxK10GXxJKhGbZQLYIy8xS+fQ5+gglg4T2hdDGhtg5yYUAibuwmhi4Ovy9y1HIzfhPemWL6yc=
+	t=1789492185; cv=none; b=GOuRdiKWHZdY2wFExODG2qd8FCVl65HTdSVJABC1ZMADgPzWceYkzZsr9VA0IaipT4fAoLz1TCa7RK/M99f977q5H/6DiReng7137ODw4QkqOdzQJBWsz7B3hBScqJG3nPIIDGcJEjmOXNl8BtWIjAmGZsR60paNGz3jehvtu5o=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1789491485; c=relaxed/simple;
-	bh=mVSxFHid+/PbczeQL9lv9xJmklH4nQ6g9b4uuIuNyrc=;
-	h=Date:From:To:cc:Subject:In-Reply-To:Message-ID:References:
-	 MIME-Version:Content-Type; b=AVeXtUmVNdMg9OJOyo3n0AkKhBK9HEbEV9N7gnGvDf6to2g0lPOH8X9OMspgl7JRaNHiI1JvGX2wEp9XvghDW9YWPdd6Yer/s7ovdl/uNFUE/zNpbaUNPuuZfJleXniBiELQDEYuZmRCioLkpm0WKE6lSX+Z1izkYxl+XQcmO9w=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=CP19ujrH; arc=none smtp.client-ip=74.125.230.205
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
+	s=arc-20240116; t=1789492185; c=relaxed/simple;
+	bh=Nqs5FKY8rX/oFlQ6SlJrgqs5RTQ7w+7M4CB5Bf7pw7g=;
+	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=oehM85HtgOPc4vGpFUl2CMYI++6dYD3gRaiDYSynd8KuuH+ZBBXR9ekrG7gn9pmD1D2g25eBeJEUoCo7yyrzNwvbfniRFY7g+BWCCtVmsqD+TAHdnVAL96Null55YXHmzb02zjCwJ3IROa9Sl/L+j+9gWtBMO4UQJRJlA+Yj8CE=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=fail (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=oRkRRF+o; arc=none smtp.client-ip=74.125.230.204
+Authentication-Results: smtp.subspace.kernel.org; dmarc=fail (p=quarantine dis=none) header.from=redhat.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="CP19ujrH"
-Received: by mail-qk2-f13.google.com with SMTP id af79cd13be357-939109fafd6so360111285a.3
-        for <linux-rt-users@vger.kernel.org>; Tue, 15 Sep 2026 09:58:03 -0700 (PDT)
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="oRkRRF+o"
+Received: by mail-qk2-f12.google.com with SMTP id af79cd13be357-93a135ffb08so418385a.2
+        for <linux-rt-users@vger.kernel.org>; Tue, 15 Sep 2026 10:09:40 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20251104; t=1789491483; x=1790096283; darn=vger.kernel.org;
-        h=content-type:mime-version:references:message-id:in-reply-to:subject
-         :cc:to:from:date:from:to:cc:subject:date:message-id:reply-to
+        d=gmail.com; s=20251104; t=1789492174; x=1790096974; darn=vger.kernel.org;
+        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+         :to:from:sender:from:to:cc:subject:date:message-id:reply-to
          :content-type;
-        bh=JlqbD6Zsa2sSI1ISCaf1uK/m7jV9c5fIzkhpX1HzCLU=;
-        b=CP19ujrHuCXgknJwBT6j+bAlWQe5idxYJ7aKMJE0FQNDl7rSlt7UDP90kuBHisrSeU
-         bRFtBKaga8hqlq7Ycs89VdFkg+UwnkaIBpY3x/gtIszBra/cowah4vkzjvja133iRgrS
-         lnuGc8REOgDHrPihB8xsWTvOeHCsaZ6FDMhTwI9ZGhyVeION1JZE9jNVi+WeVmfrekRs
-         QEGcbGd73loOTHGuS3P1R7ttgzaO9DJ5GhF1YKsphqMlLZvM+fxAI39UWWxokeDPbMOS
-         nWNf9R52t/mkDbrRCRhGm5OIl+8ZUJ5h5q06mnfv+6f9834LUDEsK3CxuWBjwH+A+BQB
-         2vbg==
+        bh=lGdvogRmQpMNPXvebEu2vmy3uePnTObj/b4HXJYUI2k=;
+        b=oRkRRF+oJPFiv17uE6zg44SoDAkcvWgE7qAB1Oawnv9my78533HxJgN2BS3GsnEm7t
+         YjspZsAK5Y5E3fbZluZeIlAg2eksRwJQcxTJQIgB6T/H1/cX6+T/f+aRlZsq5/VWobUA
+         kZHO5V8lARqZfkqhtuu/rUF1A+YYXPhrSjVp4CBI6Ek5nFYS4SGQhaLFssQvvLwOPFwl
+         4GQVclRYQNLJ7HyMFT+YV6y6pHk/Vh3sO8D+06tiQPqk+LDFfmqN6PBJDAopVLpHHL15
+         S/zROEYD1n/fEgsTujB1sRiL6kR0kwPRvdoChWh+MWaV8stfiNYYpqXnSDGOYLMB0SPp
+         TygA==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20260707; t=1789491483; x=1790096283;
-        h=content-type:mime-version:references:message-id:in-reply-to:subject
-         :cc:to:from:date:x-gm-gg:x-gm-message-state:from:to:cc:subject:date
+        d=1e100.net; s=20260707; t=1789492174; x=1790096974;
+        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+         :to:from:sender:x-gm-gg:x-gm-message-state:from:to:cc:subject:date
          :message-id:reply-to:content-type;
-        bh=JlqbD6Zsa2sSI1ISCaf1uK/m7jV9c5fIzkhpX1HzCLU=;
-        b=rT71xsdE6Y2LWXEZYMrdoxd2xUTjCSiK+26OB7F9mZ2twNAsr7M4w+hy/tfkgIIHvJ
-         RMTSbm/2GHj+ywmcH3CppufStn/XFEE96KMsqe46yidKyOKqL7m7rKNK+cmf6hUvzXAe
-         4gZTorGeqQi7RFzEn0XXZOc+yvoawcf214Mxua+Dg9v619ZJnTJtbDLFophrNna1jxVx
-         AG3Sq3oQxhr2UnvGm56fKE1pKzjWoxcPKLEFnYSnryAGCHLh0MPd0QJM23fVsOrYmLcX
-         23EGDxZimQQkuHWcezvK9pMXYZoZDHVgq0XxL11r5GZXrX4F7bM4crueAH5BZ96s9HmD
-         PGYw==
-X-Gm-Message-State: AFuF++kToami8kZTyZnplTXsTR2fMBspY7SqCXh8wJtDgrpZLNWLtBEx
-	D/zsur6ewNl7PvkKlXbkDCdKrrfTqI2Liv/YBKSkiWIdWFmGXSCQ3Hw1
-X-Gm-Gg: AYBFou1LGpXLJSE1VzAPP7Z7quVQVvcpI7mhpZ0qDcVKjKEMYn/kJWfC5J20NoOAOvI
-	Oqy9NiF9mmbN1Bk25LgnlI1k5FiOwiVYxS/x1rzJMKWI2iJ4O88/FyAFyR46e3sw5TAKZRNJX0u
-	R6bUSV7rzmuqmhKJ9wWoyXX5Dgt17FW3P6jW6E8T2qFgwpVSGwOrPsehnPAMk+1O3Y+aEuMDei8
-	9xE5D/yiUM/ayHS0fw7ttVYOG/vSUCKaG+wPwjM9UdzLo0KitPLJ0ENweh4ZyL3HG4Cr9PMG25r
-	tW50qy0BVwn4G1oKUNyGBW1zzOk2gJN+nNvrDuug59iMFya+zwGz9bm4++ubsfLbVZB9fF8YjuD
-	e6c+N4mGUgn4OKRQUg6F7+LSu61q7WOXdiBip24tXHAZ9O1+e60truwFUvLuhf98eVSTAM294Kn
-	CPOB713EzxYggupq6icGp2YkkPrdRv0J+FekGARPFsEuNDVBMHbUj0Scby6/wGIWGndkYN3SpDg
-	Cd2XjsDq6kJjSQ6aFS6S56YicLlQzNdqRoIy6hJdMWkyhqfR8f+EV/4Dg==
-X-Received: by 2002:a05:620a:4455:b0:939:6dea:ce79 with SMTP id af79cd13be357-93a29be9db9mr1244553585a.47.1789491482824;
-        Tue, 15 Sep 2026 09:58:02 -0700 (PDT)
-Received: from Cumhall ([70.53.55.174])
-        by smtp.gmail.com with ESMTPSA id af79cd13be357-939e80d453esm1316957985a.38.2026.09.15.09.58.01
+        bh=lGdvogRmQpMNPXvebEu2vmy3uePnTObj/b4HXJYUI2k=;
+        b=MIkOp4OsP1+N6zX2aZtd8/6D8P3WgtZuwZXBfEs30Z/pdm40PodOMzXVMG+pGHK39x
+         6B1pl8lyPWyn8FY9jvXOdVY6J/2uGGWvs9Hy9cjFkVGvTkxpieRP828ZKNhjmxn7Dx6v
+         hNYTrQGixCEOAk3gjzxYMS/eaxop+ViKpx5deBmJe5B7jN3ZhTjwyCV2wfeO737cKel9
+         3uRahV2Wdmrg/4orpB20Ll32yKjxShrO/dM0yKpjUTMIo2zMPu4sEtjLf9WDVChPm2kG
+         y0WU9kZ10mRyrrXCerebGUjqWgG3GDqad9LUvEsgVL8NbgZn/8k5y8lVlNrG/esFyLcQ
+         nSNA==
+X-Gm-Message-State: AFuF++lXAO6TQV/qIuhxU/cOt9zpI1bnFzn0QdkqHovt6Rj7GUxM0dXb
+	UosZa33T6bduOhQ/YBX/v8T3hvk2DcDmkyvuoecziOXWVp0K3qqU8gk9SYfTS9Ao
+X-Gm-Gg: AYBFou3bPtAaY0qc/V61tAujkpkYDviX2eTIxPm0SUenR1Y4IZgavR9vGvSa3+O0GOJ
+	9e8nDaYywmHK8qWSqCjUl+aZIZueCVUIug7bXAawqd+jTByEjzd3GzQKQyMa9QjRzgyHf8z9ajL
+	fv/iFS28t9poFZQqitv/njjUiSLxlhGv22Vt2354f6K2XSDhEwHMcf+nbFUgjnUiig5nmQpTMu6
+	7H7spjYH87aKRujqEeIPa6+0EJ9hlydOcCKLBSbYghr5wBvhd894tDipjgeQLm5V5WZbtqAxRJy
+	JKKPmanwI0z/ZtC55HMk28KDB6OD6+qOADBUrLUKuRw6f7JqU7LLE27wPTATbl58Y4nihadRjLz
+	cuOVfGNFeutUVXpFp6nN6lkM50WrFVnEGnxLy7C8g0j2o638HQSXyG4HUmBoYFY3M4Ok/rwhqT/
+	g7ZTyklBS8bPkJ2jYHomAAQ1ZAzhww4sh3Gojkpb3aLdv2lN4iqf1jziq4CqCYoGWxqv+dd4h1J
+	nz8E6guexZ0hQZZ9sw2ZOcf4A+VLeuvpTHliNe3L8RcuMAgfRBKedkn4FKxBvyj
+X-Received: by 2002:a05:620a:2b83:b0:939:6de8:43dc with SMTP id af79cd13be357-93a29bf9892mr249402585a.48.1789492173733;
+        Tue, 15 Sep 2026 10:09:33 -0700 (PDT)
+Received: from Cumhall.redhat.corp ([70.53.55.174])
+        by smtp.gmail.com with ESMTPSA id af79cd13be357-93b81cefa3bsm1887885a.34.2026.09.15.10.09.32
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Tue, 15 Sep 2026 09:58:02 -0700 (PDT)
-Date: Tue, 15 Sep 2026 12:57:51 -0400 (EDT)
-From: John Kacur <jkacur@gmail.com>
-To: Sana Sharma <sansshar@redhat.com>
-cc: linux-rt-users@vger.kernel.org, jkacur@redhat.com
-Subject: Re: [PATCH v6] rteval: Added unit tests for stress-ng validation
-In-Reply-To: <aqk6ur3jcn5tFD11@fedora>
-Message-ID: <4e97b834-e825-07aa-112b-1a25ed2bc29c@gmail.com>
-References: <aqk6ur3jcn5tFD11@fedora>
+        Tue, 15 Sep 2026 10:09:32 -0700 (PDT)
+Sender: John Kacur <jkacur@gmail.com>
+From: John Kacur <jkacur@redhat.com>
+To: linux-rt-users@vger.kernel.org
+Cc: Sana Sharma <sansshar@redhat.com>,
+	Clark Williams <williams@redhat.com>
+Subject: [PATCH] rteval: Improve test_stressng output readability
+Date: Tue, 15 Sep 2026 13:09:17 -0400
+Message-ID: <20260915170917.122102-1-jkacur@redhat.com>
+X-Mailer: git-send-email 2.55.0
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
 List-Subscribe: <mailto:linux-rt-users+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 8bit
 
+Rewrite the test docstrings in the concise "Test when ..." style used by
+test_measurement_module_selection.py, and run the suite with verbosity=2
+through a main() wrapper so each test prints its description as it runs.
 
+The tests exercise the stress-ng error paths, which emit messages to
+stderr. Without descriptions these messages appeared on their own and
+looked alarming. Now each one is preceded by a clear statement of the
+test that produces it, making the expected error output easy to follow.
 
-On Tue, 15 Sep 2026, Sana Sharma wrote:
-
-> Used the python unittest capability to add tests that check the
-> code paths added in commit aecc7c6e47d4 ("rteval: Adding stressor
-> validation for stress-ng").
-> 
-> Signed-off-by: Sana Sharma <sansshar@redhat.com>
-[snip]
+Assisted-by: Claude:claude-opus-4-8
 Signed-off-by: John Kacur <jkacur@redhat.com>
+---
+ tests/test_stressng.py | 16 ++++++++++------
+ 1 file changed, 10 insertions(+), 6 deletions(-)
+
+diff --git a/tests/test_stressng.py b/tests/test_stressng.py
+index ac1a3b707321..6211fb36a42f 100644
+--- a/tests/test_stressng.py
++++ b/tests/test_stressng.py
+@@ -15,14 +15,14 @@ class TestGetValidStressors(unittest.TestCase):
+ 
+     @patch('rteval.modules.loads.stressng.subprocess.run')
+     def test_parses_stressor_list(self, mock_run):
+-        """Tests that the function works for multiple correct inputs"""
++        """Test parsing a valid stress-ng stressor list"""
+         mock_run.return_value = MagicMock(stdout="cpu vm matrix\n")
+         self.assertEqual(stressng.get_valid_stressors(), ['cpu', 'vm', 'matrix'])
+ 
+     @patch('rteval.modules.loads.stressng.subprocess.run',
+            side_effect=FileNotFoundError)
+     def test_not_installed_exits(self, _):
+-        """Tests that the program exits correctly if stress-ng is not installed"""
++        """Test when stress-ng is not installed"""
+         with self.assertRaises(SystemExit) as cm:
+             stressng.get_valid_stressors()
+         self.assertEqual(cm.exception.code, 1)
+@@ -30,7 +30,7 @@ class TestGetValidStressors(unittest.TestCase):
+     @patch('rteval.modules.loads.stressng.subprocess.run',
+            side_effect=subprocess.CalledProcessError(1, 'stress-ng'))
+     def test_query_failure_exits(self, _):
+-        """Tests that the program exits correctly if the query attempt fails"""
++        """Test when the stress-ng query fails"""
+         with self.assertRaises(SystemExit):
+             stressng.get_valid_stressors()
+ 
+@@ -40,16 +40,20 @@ class TestValidateStressor(unittest.TestCase):
+     @patch('rteval.modules.loads.stressng.get_valid_stressors',
+            return_value=['cpu', 'vm'])
+     def test_valid_passes(self, _):
+-        """Tests that the function works for correct inputs"""
++        """Test that a valid stressor is accepted"""
+         stressng.validate_stressor('cpu')   # should not raise
+ 
+     @patch('rteval.modules.loads.stressng.get_valid_stressors',
+            return_value=['cpu', 'vm'])
+     def test_invalid_exits(self, _):
+-        """Tests that the function exits properly for incorrect inputs"""
++        """Test that an invalid stressor is rejected"""
+         with self.assertRaises(SystemExit) as cm:
+             stressng.validate_stressor('bogus')
+         self.assertEqual(cm.exception.code, 1)
+ 
++def main():
++    """Run the test suite"""
++    unittest.main(verbosity=2)
++
+ if __name__ == '__main__':
+-    unittest.main()
++    main()
+-- 
+2.55.0
+
