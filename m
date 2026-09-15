@@ -1,171 +1,164 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+Received: from AM0PR83CU005.outbound.protection.outlook.com (mail-westeuropeazon11010040.outbound.protection.outlook.com [52.101.69.40])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 8FA26478E25
-	for <linux-rt-users@vger.kernel.org>; Tue, 15 Sep 2026 12:32:29 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
-ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1789475551; cv=none; b=rlJs3LTHRJgernsR1lmz5JJvXV9zF6yMnuEEXBRVEWpuajGkGExjUO5Q+04Hro8RdU9H8YKL+54CFpu0pv3WaTL0eZ8vzRnBbSjyz82LJ8/PhbRjTynd6jC82Tq/8xK9UusobS5otBo5Igd0G68C3QSK0focHGc/dowIOwtc45E=
-ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1789475551; c=relaxed/simple;
-	bh=SsQZ+HKEv7SKp8ljJGj5Bp1OVwUkL2NioJdHK8/FopU=;
-	h=Date:From:To:Cc:Subject:Message-ID:MIME-Version:Content-Type:
-	 Content-Disposition; b=pm5IjaIZchmkuLgfqXUCG/kFv8e31ycespoh/9443V9eJj02Fp841+8b+uDWlCpr/4YtIesNSyvgYls6LIZiV8hGHGdu386K/6uQ3ywj1KV2DI/f8cPjJd5blP0XNRXOFe958Sy/n+6R6QLpr1yEZJi2xjc+x1eEfBMQEHJ21/Q=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=J1AsZv9e; dkim=pass (2048-bit key) header.d=redhat.com header.i=@redhat.com header.b=YO7FuwO1; arc=none smtp.client-ip=170.10.133.124
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 6D6CB38422E
+	for <linux-rt-users@vger.kernel.org>; Tue, 15 Sep 2026 12:58:34 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=fail smtp.client-ip=52.101.69.40
+ARC-Seal:i=2; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
+	t=1789477116; cv=fail; b=Rs+23t7yViZgRTZLUO016oEfBCmHRjDwMTJX0rdMWplsSLLfDleXrc1rYW04iq1bsvXKQY3pZTprS6nSJPOK97WB0Kto5civFgH7hxnGEXPL319MRGX9cD0phTO/bIM/4gmDvK5viJkpfrcC/xwmbRLGhkMAJvTGiHHYTecQkAk=
+ARC-Message-Signature:i=2; a=rsa-sha256; d=subspace.kernel.org;
+	s=arc-20240116; t=1789477116; c=relaxed/simple;
+	bh=czBqULSjj5j/R38WFw409sxDjDVEF02dVgHUHYxYdfI=;
+	h=From:To:CC:Subject:Date:Message-ID:MIME-Version:Content-Type; b=ERResgeTRkYjQlMAGLNNuDoYtHqNIifNs5Fxe7+A6oF3TeE3Oiv+3hPB8pTG4jhEtccbqa3X6d94S06C4Cil4bEHvEKL/D5Ij8dQh/OogOSYZXtl/tXpfo0DCSaXL4J8yA2Dv2eNjAf1GsDXrTDttA6q5TrTnWUqaiX/SqdGkGI=
+ARC-Authentication-Results:i=2; smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=ericsson.com; spf=pass smtp.mailfrom=ericsson.com; dkim=pass (2048-bit key) header.d=ericsson.com header.i=@ericsson.com header.b=MTAKJo1J; arc=fail smtp.client-ip=52.101.69.40
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=ericsson.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=ericsson.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="J1AsZv9e";
-	dkim=pass (2048-bit key) header.d=redhat.com header.i=@redhat.com header.b="YO7FuwO1"
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1789475548;
-	h=from:from:reply-to:reply-to:subject:subject:date:date:
-	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
-	 content-type:content-type; bh=Muiuuo/67Cg76U/RB4wYtGvnL5FITkNka4oNai90a/Q=;
-	b=J1AsZv9eWLwCRhVROmP2TODmbyagbqDrucmdmFfFYFD0w7ZOWmgHty1K6KwCdIwXt+Xdw+
-	daXLm9xqB/B0Kg+8c823edeJeaWSpMYFZCsL0W/3rD/cY+mzakd8MfuWtlwzGw+NHo2m1m
-	NxMKUuOZLrSSXRE3KjcrPug8gqe3hdc=
-Received: from mail-vs1-f70.google.com (mail-vs1-f70.google.com
- [209.85.217.70]) by relay.mimecast.com with ESMTP with STARTTLS
- (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
- us-mta-390-KKFFtEnkMraI1sAwvleEAw-1; Tue, 15 Sep 2026 08:32:27 -0400
-X-MC-Unique: KKFFtEnkMraI1sAwvleEAw-1
-X-Mimecast-MFC-AGG-ID: KKFFtEnkMraI1sAwvleEAw_1789475546
-Received: by mail-vs1-f70.google.com with SMTP id ada2fe7eead31-79630cb8723so550834137.0
-        for <linux-rt-users@vger.kernel.org>; Tue, 15 Sep 2026 05:32:27 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=redhat.com; s=google; t=1789475546; x=1790080346; darn=vger.kernel.org;
-        h=content-disposition:content-type:mime-version:reply-to:message-id
-         :subject:cc:to:from:date:from:to:cc:subject:date:message-id:reply-to
-         :content-type;
-        bh=Muiuuo/67Cg76U/RB4wYtGvnL5FITkNka4oNai90a/Q=;
-        b=YO7FuwO1fG6MI6Hf3JWqWSSWT1lGqTf7N4+oqV0yMEp1ws2M0BwZLjlApG2dTkWE4K
-         NGNbIxl9UYz2FuLZ4pvPB/8E1O6hZHXMouxcZEcEkRB4cRi+If5MdU+NKKpAcDDjbKV/
-         2/UDSX+udIQnwai1n1OZnQ7dQWzBLThd6dPSe7MYydnL9tYpqy4AQQT0d4Gm29sQwFFC
-         f9i3k3g/ywmnWUoQDdIJQF4ep3HxTQXHz4lCdAZ4PqVbULLj9hP67SsI9WZ0ZaVYBhHU
-         k+1FoGee8zizMkSld7OTfUVybDmp8WzqfewX4ZhBVIkeVEUL/82Vm765LkFPc7zB4UaT
-         YiOA==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20260707; t=1789475546; x=1790080346;
-        h=content-disposition:content-type:mime-version:reply-to:message-id
-         :subject:cc:to:from:date:x-gm-gg:x-gm-message-state:from:to:cc
-         :subject:date:message-id:reply-to:content-type;
-        bh=Muiuuo/67Cg76U/RB4wYtGvnL5FITkNka4oNai90a/Q=;
-        b=xumfM3pdkMOo2uRbWMpf1tI0RUcqZImIXkLs5uDvf3bMm3/DBh2mnXIhreaJ9XAE22
-         Ml8tKSfP4KYfneJXZpji2VPJ4Z1cLmtcZTos+ktu2uCY3mgrRAfWrMzs2hS5U26kXjsU
-         nDyhAeG0YnCmFz14yPsWPxpAaeHVcBvEiFhHORi4sunFMYUlBT2vj3qAvGOZV1JAhad5
-         hN6XwVKNta6LuTBkWrAnJsaqWBAyEgnG0tTktxtY9taH12ekCY+WN8xhCbZ4nVubmK/P
-         M4K962UA/0O7zolI9wUHW+kLPGvrvKFoZAQ0Eb3rnq/9Vy6VIITsdnNBDCCCL4UwBwUj
-         9xrg==
-X-Gm-Message-State: AFuF++nWCtv40mJlo8F6aJJshkBc39A7DXCbJKCVa9D+82XZkSKrAQic
-	2EhLmrdPjogLPoi39PbOl08J3VP/VZ+RlGR3872r2dtyGW0UGl7gUKr5Pyt+B1t31HCXgrprlwi
-	OyBOEEBLJAcduI1EWoJGU2J0Yk2uG16dO+SuuO9R0fUjGLdXauoK+p0D8MtN3CVFCXVtdjniDSb
-	AKvEgn+JDoOS8pkRFYYXZo3KN6GPhiXwhI/D2jN1Yl4fmfPi3YfShd
-X-Gm-Gg: AYBFou061jL8N8MNciGeKxULWIuUnYlompV+RD06FKLYXzwo9GVA02Z1Y+RvdH7woT8
-	y6v+Dm7UMgBIwsoIY5+72YEHFUWrOtyn9Mwk5LAAU5hx7N3VfqYPacbMjKx9LN6b5Wfzy/h8+qE
-	PQEfEkFe3DKJ9gfB3vzqQ1G8zwrMxAuiacWmwLCsfuup/T6qomOvNtgX8LDUIQxdexdLqgMBhvA
-	oYgjCOKU8p6S1shTdS8zCosJaoQoKA+3nwPzJ0D0JmoD+2L3Wzt9t3Oh3lcV71eBag+PIURuZBM
-	lHZkUAEhaSO7JMSZkWbXzAeSsuDhfoKaAdmne0/q3GxRaocpL7QrNFYlwJxoGjz51ZWR0HXeG4Q
-	Px6TyblcVSZxSEDyfkV0VwhZcEEe3Wt+wVxY=
-X-Received: by 2002:a05:6102:3706:b0:79c:2e36:a2e8 with SMTP id ada2fe7eead31-79c2e36a8bbmr6228637137.5.1789475543032;
-        Tue, 15 Sep 2026 05:32:23 -0700 (PDT)
-X-Received: by 2002:a05:6102:3706:b0:79c:2e36:a2e8 with SMTP id ada2fe7eead31-79c2e36a8bbmr6225296137.5.1789475518848;
-        Tue, 15 Sep 2026 05:31:58 -0700 (PDT)
-Received: from localhost (c-71-234-51-224.hsd1.ma.comcast.net. [71.234.51.224])
-        by smtp.gmail.com with ESMTPSA id 6a1803df08f44-9120f45ab71sm117193266d6.12.2026.09.15.05.31.58
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Tue, 15 Sep 2026 05:31:58 -0700 (PDT)
-Date: Tue, 15 Sep 2026 08:31:54 -0400
-From: Sana Sharma <sansshar@redhat.com>
-To: linux-rt-users@vger.kernel.org
-Cc: jkacur@redhat.com
-Subject: [PATCH v6] rteval: Added unit tests for stress-ng validation
-Message-ID: <aqk6ur3jcn5tFD11@fedora>
-Reply-To: sansshar@redhat.com
+	dkim=pass (2048-bit key) header.d=ericsson.com header.i=@ericsson.com header.b="MTAKJo1J"
+ARC-Seal: i=1; a=rsa-sha256; s=arcselector10001; d=microsoft.com; cv=none;
+ b=KSxudtFMLeO15HRld5lYpebEGUL/0zpBXukM3vRcb+K00JDgeBKbMP9NZAZHSLlG/anuU9yD9ksHXTgP5Z8yW8sYY6+YRfMCTFkwcA6RrEnscur93pJf2bZfur6TFFLTJr/45B5lLcXjI8bCLciIZOXlr94o/PjCVZ5iFir4krMAqiAMdvHM5SDXy4MrAJdlRu36Nt+bioQuWrg1eVN5YBIfQw/gHooiCGTiFmos15rgqkHDZs+x8l6wPXtcfYac0SU9Ssr0kjaqDyibUqMcTXR9ZgVu/lBHfLPU2eyWXBNWuqw+qCCUpChnsVWFMl7M+uYNN98BHDqjRcQvCBeCag==
+ARC-Message-Signature: i=1; a=rsa-sha256; c=relaxed/relaxed; d=microsoft.com;
+ s=arcselector10001;
+ h=From:Date:Subject:Message-ID:Content-Type:MIME-Version:X-MS-Exchange-AntiSpam-MessageData-ChunkCount:X-MS-Exchange-AntiSpam-MessageData-0:X-MS-Exchange-AntiSpam-MessageData-1;
+ bh=czBqULSjj5j/R38WFw409sxDjDVEF02dVgHUHYxYdfI=;
+ b=KBMjHIC/rgLUBQ+Qo+GgwmYAao7+JhBwNefW1980oU8A1DK9SFDRj21j/5yIfhRZd1twENEbSPHOBeTN2nyz2z6ZqAQjL/P2qg3To2yG78yqRHh5R5LU2oMEVtaBZ8GQA6sma6dRhxKK/1PoPMlYCa3OPuwYjJIeGpY7Y32LxFSOWkOaxGI/9rqoAoUEmEE7XSstyyIa2mU3c4MXkSCNkgo5piwBIp6jzX6n1brU0IJMhcMu16e77DMIxlaKWYz/OmB7sZgIXst4ZFUlzQ4gbik9BfGHgGIBsXn7RRP5V/zm7FWbm+IKagOaPktwZQThio+2h8rwci2plcg17WDh6Q==
+ARC-Authentication-Results: i=1; mx.microsoft.com 1; spf=pass (sender ip is
+ 192.176.1.74) smtp.rcpttodomain=redhat.com smtp.mailfrom=ericsson.com;
+ dmarc=pass (p=reject sp=reject pct=100) action=none header.from=ericsson.com;
+ dkim=none (message not signed); arc=none (0)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=ericsson.com;
+ s=selector2;
+ h=From:Date:Subject:Message-ID:Content-Type:MIME-Version:X-MS-Exchange-SenderADCheck;
+ bh=czBqULSjj5j/R38WFw409sxDjDVEF02dVgHUHYxYdfI=;
+ b=MTAKJo1JP4nDXvqtESunbW7AiRaRtxPPL9RemWHwBBq4RtyrWrsRLSLrIQT+vS5axC+XS94FFKz3+LIUL6Ei3sGgy4MuYhOy/Dv3ilrUr4RjnZBE3sRU6xu/BnOWd6eHnBRK+7ukOoGt4pys5WuO+YbE1BXURyOBGqKPcldCU3YAgQ8ql/lI8UBhYgtTnXRK4FR0KMFdthfwIRwAZFlkZXugnxmuIaTwkg+hKc0kd4oUuODegMzhbR+VK5mLeG/L1JY7ZGBVtK4kYDnywcN6+TtwLq4db7sSlNtsfX+xTaHu3f70fpT2Uv8nk5Fe7HfvmfU5h0Exac6E4pxkx7BofQ==
+Received: from MA2P292CA0005.ESPP292.PROD.OUTLOOK.COM (2603:10a6:250:1::8) by
+ AM9PR07MB7316.eurprd07.prod.outlook.com (2603:10a6:20b:2c0::12) with
+ Microsoft SMTP Server (version=TLS1_2,
+ cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.21.428.9; Tue, 15 Sep
+ 2026 12:58:29 +0000
+Received: from MAD0EPF000008A9.eurprd04.prod.outlook.com
+ (2603:10a6:250:1:cafe::4c) by MA2P292CA0005.outlook.office365.com
+ (2603:10a6:250:1::8) with Microsoft SMTP Server (version=TLS1_3,
+ cipher=TLS_AES_256_GCM_SHA384) id 15.21.428.9 via Frontend Transport; Tue, 15
+ Sep 2026 12:58:29 +0000
+X-MS-Exchange-Authentication-Results: spf=pass (sender IP is 192.176.1.74)
+ smtp.mailfrom=ericsson.com; dkim=none (message not signed)
+ header.d=none;dmarc=pass action=none header.from=ericsson.com;
+Received-SPF: Pass (protection.outlook.com: domain of ericsson.com designates
+ 192.176.1.74 as permitted sender) receiver=protection.outlook.com;
+ client-ip=192.176.1.74; helo=oa.msg.ericsson.com; pr=C
+Received: from oa.msg.ericsson.com (192.176.1.74) by
+ MAD0EPF000008A9.mail.protection.outlook.com (10.167.241.181) with Microsoft
+ SMTP Server (version=TLS1_2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
+ 15.21.428.7 via Frontend Transport; Tue, 15 Sep 2026 12:58:28 +0000
+Received: from seroius18814.sero.gic.ericsson.se (153.88.142.248) by
+ smtp-central.internal.ericsson.com (100.87.178.62) with Microsoft SMTP Server
+ (version=TLS1_2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
+ 15.2.2562.37; Tue, 15 Sep 2026 14:58:26 +0200
+Received: from seroiuvd01221.sero.gic.ericsson.se (seroiuvd01221.sero.gic.ericsson.se [10.86.87.142])
+	by seroius18814.sero.gic.ericsson.se (Postfix) with ESMTP id E0A1D40263CE;
+	Tue, 15 Sep 2026 14:58:16 +0200 (CEST)
+Received: by seroiuvd01221.sero.gic.ericsson.se (Postfix, from userid 7162142)
+	id 94E2460968D2; Tue, 15 Sep 2026 14:58:11 +0200 (CEST)
+From: Jinnan Li <jinnan.a.li@ericsson.com>
+To: Tomas Glozar <tglozar@redhat.com>
+CC: <jkacur@redhat.com>, <williams@redhat.com>,
+	<linux-rt-users@vger.kernel.org>
+Subject: Re: [RFC PATCH 0/1] cyclictest: add --warmup option to skip initial cycles
+Date: Tue, 15 Sep 2026 14:58:11 +0200
+Message-ID: <20260915125811.3695093-1-jinnan.a.li@ericsson.com>
+X-Mailer: git-send-email 2.50.1
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
 List-Subscribe: <mailto:linux-rt-users+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
+Content-Transfer-Encoding: 8bit
+Content-Type: text/plain
+X-EOPAttributedMessage: 0
+X-MS-PublicTrafficType: Email
+X-MS-TrafficTypeDiagnostic: MAD0EPF000008A9:EE_|AM9PR07MB7316:EE_
+X-MS-Office365-Filtering-Correlation-Id: 5d409de1-bd23-47cc-67de-08df132909eb
+X-SMTP-Server: smtp-central.internal.ericsson.com
+X-MS-Exchange-SenderADCheck: 1
+X-MS-Exchange-AntiSpam-Relay: 0
+X-Microsoft-Antispam:
+	BCL:0;ARA:13230040|23010399003|36860700016|376014|1800799024|82310400026|11063799006|5023799004|56012099006|10067099003|18002099003|6133799003;
+X-Microsoft-Antispam-Message-Info:
+	U4JBdg7acd/fLn9EVvCJbaV95NgTXQK/tbn6U5UynabGAbrQ421cTXim4gbTMh11VsHbt/DGWKhFNNTjHsEeIyQXGkgrVh9NK1E5o24H265Rb8d9742edXEYdN3NbaID+1SGx7Zfl8Ia2QCr+ff4hGwTCz4E5AdnptyFlqzUzCHKNYdT5+w656KAWmnX4fVwyHm0C6YmJt9IfwzsSxVd1f/nlT/XpD7YQvkhwSOqd6R+/MXYcCYcCRqrLrD0f1XdPf33gTADY6Rllkbd8CQRObh3DKWko9J3GHEACC2z/XE0HnlnJoTyvs7S3ePn1vuqQiQII+1HWcXM6fz/8R2nFM2nXFPU+XLt0s6FZjOSmiwjSxGS2Hhhr2IbWaKyggnEFXO/oq9JFQickcSy7F75Z6vtx1Te1NBYeFFBCWQqUMomAbKLTO3VyCrlorJu65+3XdLlVCi+aRwCD2/U09hXATMUVE8O2pG8xheMbNCSAYKLHlnrUtChq2Ms/wPQyQ5YOU3W7XXeLNJamzhgUUivfZIgJ9JxqF4dzRYytE1wBL7BK0NcHNqmgljEdBgLx5DWExUQ8SlDUuzHpCzwxtiRicDZaTVYlSdiD9fszvpPQnm1ICRMEwKimuHAuz+0qqiBNx2LddTera3i+3+fvmdM49Ao2tsYO+CFCLpeh+qXQFgYvFp/RxaAWVIJVv+mA9Ql0DbX9sedknDdkQXYDhYqeg==
+X-Forefront-Antispam-Report:
+	CIP:192.176.1.74;CTRY:SE;LANG:en;SCL:1;SRV:;IPV:NLI;SFV:NSPM;H:oa.msg.ericsson.com;PTR:office365.se.ericsson.net;CAT:NONE;SFS:(13230040)(23010399003)(36860700016)(376014)(1800799024)(82310400026)(11063799006)(5023799004)(56012099006)(10067099003)(18002099003)(6133799003);DIR:OUT;SFP:1101;
+X-MS-Exchange-AntiSpam-MessageData-ChunkCount: 1
+X-MS-Exchange-AntiSpam-MessageData-0:
+	tTnwpTz7DfDatzvTpbulhqe786bejJWxe21g/XtCt7PWADH5bzyw8fGia3uI8AGlljcBZdOxKuErVnUGGe8IC3BwqHhZnrR3sSKep5JR7wG6cIkE9LLSez1FgbAtkoSNkhOv9+eRryQzxi/Q1MtLPMnXlI0q9ivHEz0xrizCfER9C0KsELm66tuZYmL8AIaj4bSKHICB6TqCj412Nf7p9137Ihogtmf/WBwJTYeKFJgq1witFjpmiYPL1Wb3fx+bJy8c7SV4pWykHZR439uXJ+nGopdLq8pQvlP1xV4py5/M/UcTWPPftXmZKtV6FC1+AbJdDWpghgAs61ZAozt2GxOm5rfvirk0oWosv5qAdj88a7XO4CUQPYXwwvfnxsKD/OVcLHKU3T2Obketx54DzHeoDHINZvyMhAXPPzqnfHG1e8MJVorCbH7+GFM702dX
+X-OriginatorOrg: ericsson.com
+X-MS-Exchange-CrossTenant-OriginalArrivalTime: 15 Sep 2026 12:58:28.5912
+ (UTC)
+X-MS-Exchange-CrossTenant-Network-Message-Id: 5d409de1-bd23-47cc-67de-08df132909eb
+X-MS-Exchange-CrossTenant-Id: 92e84ceb-fbfd-47ab-be52-080c6b87953f
+X-MS-Exchange-CrossTenant-OriginalAttributedTenantConnectingIp: TenantId=92e84ceb-fbfd-47ab-be52-080c6b87953f;Ip=[192.176.1.74];Helo=[oa.msg.ericsson.com]
+X-MS-Exchange-CrossTenant-AuthSource:
+	MAD0EPF000008A9.eurprd04.prod.outlook.com
+X-MS-Exchange-CrossTenant-AuthAs: Anonymous
+X-MS-Exchange-CrossTenant-FromEntityHeader: HybridOnPrem
+X-MS-Exchange-Transport-CrossTenantHeadersStamped: AM9PR07MB7316
 
-Used the python unittest capability to add tests that check the
-code paths added in commit aecc7c6e47d4 ("rteval: Adding stressor
-validation for stress-ng").
+On Tue, Sep 15, 2026 at 1:49 PM Tomas Glozar <tglozar@redhat.com> wrote:
+>
+> Wouldn't it be easier and less error-prone (from the implementation
+> side) to simply suppress the processing of the results during the
+> warm-up period rather than reset everything afterwards?
 
-Signed-off-by: Sana Sharma <sansshar@redhat.com>
----
- tests/test_stressng.py | 55 ++++++++++++++++++++++++++++++++++++++++++
- 1 file changed, 55 insertions(+)
- create mode 100644 tests/test_stressng.py
+Agreed, that is cleaner. In v2 the sample processing is suppressed
+while in the warm-up period instead of collecting everything and
+resetting afterwards. This drops the fragile reset/boundary handling
+(min = UINT64_MAX, and the '>' vs '>=' alignment between the histogram
+and the average divisor), and the statistics and the histogram stay
+consistent by construction.
 
-diff --git a/tests/test_stressng.py b/tests/test_stressng.py
-new file mode 100644
-index 0000000..ac1a3b7
---- /dev/null
-+++ b/tests/test_stressng.py
-@@ -0,0 +1,55 @@
-+#!/usr/bin/env python3
-+# SPDX-License-Identifier: GPL-2.0-or-later
-+# Copyright 2026 Sana Sharma <sansshar@redhat.com>
-+""" Unit tests for the new stressng input validation """
-+
-+import sys
-+import subprocess
-+import unittest
-+from unittest.mock import patch, MagicMock
-+sys.path.insert(0,'.')
-+from rteval.modules.loads import stressng
-+
-+class TestGetValidStressors(unittest.TestCase):
-+    """Test suite for the function get_valid_stressors"""
-+
-+    @patch('rteval.modules.loads.stressng.subprocess.run')
-+    def test_parses_stressor_list(self, mock_run):
-+        """Tests that the function works for multiple correct inputs"""
-+        mock_run.return_value = MagicMock(stdout="cpu vm matrix\n")
-+        self.assertEqual(stressng.get_valid_stressors(), ['cpu', 'vm', 'matrix'])
-+
-+    @patch('rteval.modules.loads.stressng.subprocess.run',
-+           side_effect=FileNotFoundError)
-+    def test_not_installed_exits(self, _):
-+        """Tests that the program exits correctly if stress-ng is not installed"""
-+        with self.assertRaises(SystemExit) as cm:
-+            stressng.get_valid_stressors()
-+        self.assertEqual(cm.exception.code, 1)
-+
-+    @patch('rteval.modules.loads.stressng.subprocess.run',
-+           side_effect=subprocess.CalledProcessError(1, 'stress-ng'))
-+    def test_query_failure_exits(self, _):
-+        """Tests that the program exits correctly if the query attempt fails"""
-+        with self.assertRaises(SystemExit):
-+            stressng.get_valid_stressors()
-+
-+class TestValidateStressor(unittest.TestCase):
-+    """Test suite for the function validate_stressor"""
-+
-+    @patch('rteval.modules.loads.stressng.get_valid_stressors',
-+           return_value=['cpu', 'vm'])
-+    def test_valid_passes(self, _):
-+        """Tests that the function works for correct inputs"""
-+        stressng.validate_stressor('cpu')   # should not raise
-+
-+    @patch('rteval.modules.loads.stressng.get_valid_stressors',
-+           return_value=['cpu', 'vm'])
-+    def test_invalid_exits(self, _):
-+        """Tests that the function exits properly for incorrect inputs"""
-+        with self.assertRaises(SystemExit) as cm:
-+            stressng.validate_stressor('bogus')
-+        self.assertEqual(cm.exception.code, 1)
-+
-+if __name__ == '__main__':
-+    unittest.main()
--- 
-2.54.0
+> > 1. Is this worth having in cyclictest at all [...]
+>
+> I think yes. Running longer "dilutes" the average value, but with RT
+> measurements, one is usually also interested in the maximum value over
+> some period, and in shorter runs, the startup spike can pollute that.
 
+Thanks, agreed. That matches what I see: on a short multi-threaded run
+only the first setup thread shows an inflated Max while the others sit
+at the steady-state level.
 
--- 
-Sana Sharma <sansshar@redhat.com>
+> > 2. Is defaulting to 0 (opt-in, no behavior change) the right choice?
+>
+> I believe opt-in is the right choice not to break existing workloads,
+> e.g. someone might want to deliberately measure the cold cycle.
 
+Agreed, kept opt-in with a default of 0, so --warm-up=0 behaves exactly
+as before.
+
+> > 3. Is "--warmup" a good name? Should it get a short option?
+>
+> In RTLA, the option is spelled --warm-up. I don't think a short option
+> makes much sense, that should be for core settings.
+
+Agreed. Renamed to --warm-up in v2 to match RTLA, and no short option
+was added.
+
+> > 4. For the corner case where the run ends before N cycles complete
+> [...]
+>
+> I think the warm-up should not take time from the whole duration /
+> cycles, but add time on top of it. For example, -D 1s --warmup 10 will
+> run for 11 seconds. That would resolve this issue, and it is the
+> behavior of RTLA as well, so it would make it consistent with that.
+
+Agreed, and done. In v2 the warm-up cycles run on top of the requested
+run: the -D duration and the --loops count are measured only after
+warm-up completes, so "-D 1s --warm-up 10" runs the 10 warm-up cycles
+and then measures for one second. Since warm-up always completes before
+measurement starts, the corner case can no longer happen, so I dropped
+the previous --loops warning.
+
+I will send v2 shortly, threaded under this reply.
+
+Thanks,
+Jinnan
