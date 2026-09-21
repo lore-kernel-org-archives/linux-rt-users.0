@@ -1,194 +1,103 @@
-Received: from mail-qk2-f43.google.com (mail-qk2-f43.google.com [74.125.230.235])
+Received: from mail-lf1-f42.google.com (mail-lf1-f42.google.com [209.85.167.42])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 067FF4DA9C7
-	for <linux-rt-users@vger.kernel.org>; Wed, 16 Sep 2026 20:44:02 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=74.125.230.235
-ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1789591453; cv=none; b=FsZKciaeYljQWirg0EqggwAykfKzkofA48K/HtzySNYlbRWYwiGGSj3U3GkArKnmgPOBWdQDZx1jnk0mQwemaIu/atMI1G8enRGtBj323PUyZTeFRLAGnmVDCaw0GZiSzewaca4VTRB693tzQ4DsU5TXfkwb0ptGNmZwGED8Igo=
-ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1789591453; c=relaxed/simple;
-	bh=nF7AXE2oK+SyYZ+x/sFO8sHhl4Pfns9IDb+N6dybQeQ=;
-	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version:Content-Type; b=Mjlm2AXdYYG6tIA+VQY1ywZT5WA+24b655PWutQejF/WDxCX6Tl6qGGOCbwoq6lkglMGtVpkW47BVhmd98XnXBq74lmVhOqkUpPzbTqfZ7CGIdCzmpUZPHq6MJUjlGTJIHqQmg6AvIKv6iOHEjofDSZwGyAbYD0BevsgNHogQWk=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=fail (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=ag0iCw3N; arc=none smtp.client-ip=74.125.230.235
-Authentication-Results: smtp.subspace.kernel.org; dmarc=fail (p=quarantine dis=none) header.from=redhat.com
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 076E8247280
+	for <linux-rt-users@vger.kernel.org>; Mon, 21 Sep 2026 04:22:33 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=pass smtp.client-ip=209.85.167.42
+ARC-Seal:i=2; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
+	t=1789964555; cv=pass; b=Fs0o03IskkXoNB4OwrFSpfDpx+A+svPo+7BDpQQ0d8fKeZggXd2kJYEurHq5s3wxGX2xgu6AYUlMxxs7xbysyi1r0GokUvlmfXUoJ6bW9wEK068sBCJGLtTHYgJn94fwWr84iHGuvjWinY7znQEYGNV4141pFMV4Ul4AsS5f7e0=
+ARC-Message-Signature:i=2; a=rsa-sha256; d=subspace.kernel.org;
+	s=arc-20240116; t=1789964555; c=relaxed/simple;
+	bh=V7dcKA19Vn4OLNirAI/fzi6nQvr1myU4q0y/JbpnLM0=;
+	h=MIME-Version:From:Date:Message-ID:Subject:To:Content-Type; b=U3JuOUtaafS7uIN1FWDUP1Sg+s5rdhKnQGltcvqzXFh67vVDirZWI13C0B+PJGk0JHNn6UGauxF3tJv7dLbzU0cc6iXX5qUi4lNUKnvUu5w5kLpgsDVxU8kiUFloJJRDmgZNR3xPp/CeMoV3KR+Uk753A5uJ7hnP/ffsKeM+rQA=
+ARC-Authentication-Results:i=2; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=rtMv7jyE; arc=pass smtp.client-ip=209.85.167.42
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="ag0iCw3N"
-Received: by mail-qk2-f43.google.com with SMTP id af79cd13be357-939109f067cso6691385a.3
-        for <linux-rt-users@vger.kernel.org>; Wed, 16 Sep 2026 13:44:01 -0700 (PDT)
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="rtMv7jyE"
+Received: by mail-lf1-f42.google.com with SMTP id 2adb3069b0e04-5b8b3c8c4bbso2159447e87.0
+        for <linux-rt-users@vger.kernel.org>; Sun, 20 Sep 2026 21:22:33 -0700 (PDT)
+ARC-Seal: i=1; a=rsa-sha256; t=1789964552; cv=none;
+        d=google.com; s=arc-20260327;
+        b=KJDjkKnWSIj8S2R8ATpy1zoAkvjX49yBnnFzV6iBR1Ym5WXZ9SUOKEfZiKTGciwJEX
+         P7V6buVJjYODzvwfVwYj1qLJYOwLJOyHMcvEvNcnrhty7/4YzPDXb1tUJhSQOxF7CTXf
+         8tyBetSW0jPZJ9lyUUrObi2KFfHEMW/bq8kBgr+E/pbtK5PLDFFMP6/UGMcvgJEnMCqV
+         Lg2ZavJFU8kSQP9cc13qd4MvMDZ4esNOm8s2ApNJZIXq8ErD3HZzIvR9AqQr5GpC6RiA
+         IV5l52fltsJ6hNAz8V/Bah7aNhOw1Jar88jUJNT/qVVCTYY6garf0C9m2IGO6ckDT3s4
+         m2oQ==
+ARC-Message-Signature: i=1; a=rsa-sha256; c=relaxed/relaxed; d=google.com; s=arc-20260327;
+        h=to:subject:message-id:date:from:mime-version:dkim-signature;
+        bh=V7dcKA19Vn4OLNirAI/fzi6nQvr1myU4q0y/JbpnLM0=;
+        fh=3byEJjXsHEe0LsUVc+7oI5ETe+uPw2m3X5rwolFG6l4=;
+        b=Xm9+1P2LPjAU4kZuPOa4KbQSm29aeLSHi9bok7P6nZ8vWkuEoinlN8CekoDmRIbrEA
+         lGan6CWRU6NFbF757Fu71I5InXGDwl2z+d2R3ir0qSDwzIuPusPLccWWESz8Ukkqcpy9
+         H1OCrK5295wb2MWBwHu38cvQoWBaQs6nOXbtQK2tUy81LYP8mFca5jT7ARb0aPO1WqTd
+         CuY5edj27kZmCshiJ1QzwyMezAQpVHCYykSwXBDESxIq8EDwKgJFLS5nXB3qS5HmkWUG
+         C+jTqQ0REl40ig7tc8hWWYYPZ47lO2xCmEYaVMUO+sAWnhRJCbl+wzmBeiYy6vpdE38g
+         m9sg==;
+        darn=vger.kernel.org
+ARC-Authentication-Results: i=1; mx.google.com; arc=none
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20251104; t=1789591437; x=1790196237; darn=vger.kernel.org;
-        h=content-transfer-encoding:content-type:mime-version:message-id:date
-         :subject:cc:to:from:sender:from:to:cc:subject:date:message-id
-         :reply-to:content-type;
-        bh=yi1Rfr9drk8zScNg2s6ZLOqeNm8GiRX36Fti9lQIdVA=;
-        b=ag0iCw3NWbjpow9eqHTVQQACmR6NMftum3i1coYcK4jOcpIcF720FVRftQabERGVPV
-         O8wwfJpcIpVjwY7y9suy9MY7o6ItWvCTvRhEeUUJyrYFP9/+pqGWj5KtXQjfIT2pXeoo
-         hisEX7lQsaOfVoLf8ufBdOSJ9ewExtjwcocHMGjdcunqNTjo23bHCcDi9Vh5xBljTKfK
-         rVLWxcjRrsvOA72FmSSSl9OoH9nijBnuQd9gOM1l8PhaLhF/TA5vZxvPXm/vifaaQoVk
-         mbIdWJcCJsgpED+65vI7wPm7RRrgzJda+9hpuNHJTjei4FBtmgL54S/9xmC2/p9fhVaT
-         bIYA==
+        d=gmail.com; s=20251104; t=1789964552; x=1790569352; darn=vger.kernel.org;
+        h=content-type:to:subject:message-id:date:from:mime-version:from:to
+         :cc:subject:date:message-id:reply-to:content-type;
+        bh=V7dcKA19Vn4OLNirAI/fzi6nQvr1myU4q0y/JbpnLM0=;
+        b=rtMv7jyE7CL7yp87cBzwqgpSUgFsRfPHzJ3aa63uM2nOMDYSOXAS/KG3SlQTfbP9WE
+         Xi3+wMmcinsDu8B9u9WhSqlgjdQnXl/GHJ1tN2H4W+8aqnnM/bJB/mFqt5OW75/vd+3f
+         SRvsqc1oku1tRsF0xDNpYCzvM1s9vweoxRTIcrgop1v3GCxaauNxgBDqvnUWQKo52RP6
+         511UXJlE7P3TwfV5naUFu2deY/+8s/C37pFqm3HGNV1X6YEEBJo3czjkLm+SRCBIwRCm
+         jGVNwK0/eHsZXCQ1vOyVia+Odm60vayz1KPD0Hig9LXkttbzpFtSfaFCBjYtsZiKVO3F
+         0TiA==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20260707; t=1789591437; x=1790196237;
-        h=content-transfer-encoding:content-type:mime-version:message-id:date
-         :subject:cc:to:from:sender:x-gm-gg:x-gm-message-state:from:to:cc
-         :subject:date:message-id:reply-to:content-type;
-        bh=yi1Rfr9drk8zScNg2s6ZLOqeNm8GiRX36Fti9lQIdVA=;
-        b=lP0dom/ZxGqAFxo2lpeIO3+VZL9P9Uj08hLN1/TAChtdigQHgNlKRhXcVIDelUNftP
-         EvfAmATo9/YVwQXIu+K0wlFnwWcg5xEQU7ZYpS6SMkEOn7gOjUoYWqZg98Stya5GGUI4
-         lptmdLxbUYgvZ06zWWibGcSaGcxzVoTzMxmFhDHLesl7M18GFIdler9QwVJomqykab+M
-         Dzrl0yWKoBi7PySQC+tXQ0ZghxVZFphfaFQEtzGBcW1y6uRUsjM2BTRXMpcqKGKofvxK
-         55ynC9sLF3UFme6hrDVtcY9/y4IadFZoEuQJPm8xFaGA8nYTKo9yDLV6/sipuK1mWH+h
-         Pj5A==
-X-Gm-Message-State: AFuF++m4apxqHBuuyDOCKhmxCkWyTEssSia3JHUHds6E5uoTmR9rc5OU
-	l2xB22Ya54eqXL+WRF/IotB4A9QAmyA+vDPA1vKfeDx8oFVR7EPFzjQZZQw8+w==
-X-Gm-Gg: AYBFou2fudW3SCaRPrfOUR6nOXHvNKI8rvLOkVwBf2bEwOmpR4VM603iMNnpcQMpsKl
-	yZqjmvMGugkxg3bI3l3fkK9E5wWiGi9j4XGYVMK3/P7ZZcfu0ErgkFnwRK8166/+E1xUEMHrGKb
-	zNsCuTU+49N9q8IpkQkIGBs8H2QyolHVKsY1OsdBeOjwTlmFlQdR9XvtfgAGtmS4rptd2kE2B20
-	C1msYi97isGdLneotTJcEXY5QOBR83j2akfG5KKD8soeT4ySBkPkz2jJkDL4+ry92KpzqkQMQaK
-	JoNDlOp6Iqv5zfTmKHVmdMChSIGFnXNi9aFZZR/oWf9+jYpXJgOSrC4Am7ykQUKs91LJJcySRHt
-	s2kyOMHP1rT7vlbfzfk+YIJthAYtJPuqztUGErdluhaQ2gkR7XwWGgDsZJdv63BS2FPR7gx3kv9
-	X3dHDcB9qDU10yBIafcX/l9ZIuqGzKOPCW1P9vPn0ZQJa4zFT3eAbOlSJou8fW0PW6DvuDX1jdw
-	hM3oHWVkb+8yYK50XmO+f/EUHQJmPAFesgEAuY5uuO4bgCm
-X-Received: by 2002:a05:620a:2809:b0:936:77d7:55a4 with SMTP id af79cd13be357-93bb76b85cfmr676967785a.19.1789591437256;
-        Wed, 16 Sep 2026 13:43:57 -0700 (PDT)
-Received: from Cumhall ([70.53.55.174])
-        by smtp.gmail.com with ESMTPSA id af79cd13be357-93b78255316sm295176785a.29.2026.09.16.13.43.56
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Wed, 16 Sep 2026 13:43:56 -0700 (PDT)
-Sender: John Kacur <jkacur@gmail.com>
-From: John Kacur <jkacur@redhat.com>
-To: linux-rt-users@vger.kernel.org
-Cc: lkml <linux-kernel@vger.kernel.org>,
-	Clark Williams <williams@redhat.com>
-Subject: [ANNOUNCE] rt-tests-2.11
-Date: Wed, 16 Sep 2026 16:43:41 -0400
-Message-ID: <20260916204341.238841-1-jkacur@redhat.com>
-X-Mailer: git-send-email 2.55.0
+        d=1e100.net; s=20260707; t=1789964552; x=1790569352;
+        h=content-type:to:subject:message-id:date:from:mime-version:x-gm-gg
+         :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to
+         :content-type;
+        bh=V7dcKA19Vn4OLNirAI/fzi6nQvr1myU4q0y/JbpnLM0=;
+        b=y6P0N352yvgvB5/kfsjumkshySumQ9HKVW+hJzqqEG3w/sWxl6k0CVfDvaXtuRpmhM
+         5lJiExDi3MUUmqEfwf77MxB4YgqEJuFoQ5nTe3fj+Dj4ZPw+c8wUB/M8q5T5zz0O+vo5
+         5h0x74Y0RLvdXQ/BKyZ66RAwV4/VARXxK4LfKra8Mh5sJZgUDBfU75hu5UMw9Rn6UBOk
+         LF1qkLKD+xbGrfkoRuUcSIcixS6wJsdfigh6qcorOAdTnkAxpvouoIj0eo4RmX73uATN
+         rqcn825l9hECQZJCEKOmpS5F1vcfeWpXGLxVzGFqV3GZ+vMmVgMHmHQQEmTRrbLugvwz
+         AC/w==
+X-Gm-Message-State: AFuF++nCa9+lr0YXIp0gk0Vija4Zk9YVsm0q63xeOdJ9DG/3FpzGP+aN
+	xghiNOtSuyKeYuWVEZ4U2kSM/aVXdkMMcsPb196SXdLasECo+jCS9bv13KPH44CnPKjs23t2vZ+
+	X/9mE3R1u5lpGGYHsbN4KazjZ1a7Z6cpSM+Tj2m0=
+X-Gm-Gg: AYBFou1NafPripXIlAcbo6MKo+YphiGHM4cyhlVjMoNFG6uLXkmPCRli0o0vxscILt3
+	QBoKdQoG+Ea4jsoxyQpjideAjcdXXC1ibIrTAuHIE8d01A3cUgx9uzzCJLIx0n9lzWtAgp4uwdA
+	GtVm6VtrZ74lS3y7ovQtxfiLgTSndOoECIdG9DnWjKhWou0+FgA1QtZdZmmVgznDgrBeJZ07YJK
+	25fVpc1XS7xvlSoGi6WQ3j4GSPTjaZIQbROlJAwrGtRTQ58rhnedkXeYtokHicVnLRZG5IryDvJ
+	9KnmjIEvq1iT4J4qS5HbLXcmY5MC8BtHCQxH7OshMBNSNvicstFmOZIY+ww5QR/Ovpyp25iSW+N
+	1tiiad6IhI9fKow==
+X-Received: by 2002:a05:6512:400f:b0:5b4:a798:2630 with SMTP id
+ 2adb3069b0e04-5b8ba5d19aamr3781919e87.3.1789964551679; Sun, 20 Sep 2026
+ 21:22:31 -0700 (PDT)
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
 List-Subscribe: <mailto:linux-rt-users+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: 8bit
+From: Aryan Sewa <aryansewa2004@gmail.com>
+Date: Mon, 21 Sep 2026 09:51:42 +0530
+X-Gm-Features: AcwNN1XfUrxWWYq403CDXdk_kdnvEJF8TK3jpgWET6Q_halylghxU2X0h8--AbM
+Message-ID: <CAB05US=e0o2dm1DBxjHkraL+vDgA1M-ufSqrQbxG5RsbRfdjQA@mail.gmail.com>
+Subject: Inquiry on PREEMPT_RT
+To: linux-rt-users@vger.kernel.org
+Content-Type: text/plain; charset="UTF-8"
 
-We are pleased to announce rt-tests-2.11
+warm greetings,
 
-To fetch:
+This is Aryan Sewa from Measurecal Instrumentation pvt. lmt. India.
+I'm new to linux's kernel and i was looking for an RTOS for raspberry
+pi 4 model B and STM32MP135D, i went through the linux kernel code and
+i actually need some guidance on how to activate the PREEMPT_RT
+feature of linux. If possible pls guide me through this, i don't mind
+if there are any documents or videos I have to go through in order to
+achieve this. Anything, please l;et me know.
 
-Clone one of the following
-git://git.kernel.org/pub/scm/utils/rt-tests/rt-tests.git
-https://git.kernel.org/pub/scm/utils/rt-tests/rt-tests.git
-https://kernel.googlesource.com/pub/scm/utils/rt-tests/rt-tests.git
+Looking forward to your reply. Thank you !!
 
-Branch: main
-Tag: v2.11
-
-Tarballs are available here:
-https://kernel.org/pub/linux/utils/rt-tests
-
-Older version tarballs are available here:
-https://kernel.org/pub/linux/utils/rt-tests/older
-
-Thank to everyone who contributed.
-patches and bug-reports are always welcome.
-
-John Kacur
-
-
-Ahmed S. Darwish (28):
-  cyclictest.8: Comment-out SPDX license tag
-  cyclictest.8: Synopsis: Remove -U
-  cyclictest.8: Synopsis: Remove -w/-W
-  cyclictest.8: Synopsis: Remove -y
-  cyclictest.8: Synopsis: Remove -h flag
-  cyclictest.8: Standardize --verbose paragraph formatting
-  cyclictest.8: Remove left-over comments
-  cyclictest.8: Align source file to 75 columns
-  cyclictest.8: Separate source sections
-  cyclictest.8: Capitalize section headers
-  cyclictest.8: Synopsis: Fix parameters list rendering
-  cyclictest.8: Rework the Synopsis blurb
-  cyclictest.8: Synopsis: Distinguish --help mode
-  cyclictest.8: Group system-altering options
-  cyclictest.8: Group sleep-mechanism (clock) options
-  cyclictest.8: Group thread wakeup timing options
-  cyclictest.8: Group SMP-related options
-  cyclictest.8: Group memory options
-  cyclictest.8: Group thread priority options
-  cyclictest.8: Group tracing options
-  cyclictest.8: Group test duration options
-  cyclictest.8: Group output options
-  cyclictest.8: Group x86 options
-  cyclictest.8: System options: Deprecate --laptop
-  cyclictest.8: Options: Expand --default-system description
-  cyclictest.8: Options: Reference clock_getres(2)
-  cyclictest.8: Add example invocation
-  cyclictest.8: Reference rtla-timerlat(1)
-
-Costa Shulyupin (2):
-  rt-tests: hwlatdetect: Add timestamp delta
-  rt-tests: hwlatdetect: Add --time-format argument
-
-John Kacur (13):
-  Makefile: Use relative symlinks for Python scripts
-  cyclictest: Simplify auxiliary clock parsing
-  rt-tests: README: Remove obsolete -n option from cyclictest examples
-  rt-tests: Add SPDX identifiers and fix documentation issues
-  rt-tests: Add AGENTS.md guide for AI coding assistants
-  pi_stress: Fix inconsistent barrier wait logic to prevent deadlock
-  pi_stress: Validate numeric command-line arguments
-  pi_stress: Improve error message for permission failures
-  pi_stress: Fix error and debug message formatting
-  pi_stress: Ensure null-termination of JSON filename
-  cyclicdeadline: Fix potential path truncation in open_cpuset()
-  rt-tests: rt-migrate-test: Report trace_marker write errno once and
-    stop
-  rt-tests: Create v2.11
-
-Lukas Beckmann (1):
-  cyclictest: fix growing shm stat file
-
-Sebastian Andrzej Siewior (4):
-  rt-tests: cyclicdeadline: Remove unused `alloverflows'
-  cyclictest: Acquire a lock before invoking pthread_cond_signal()
-  cyclictest: Make break_thread_id_lock a PI lock
-  cyclictest: Make trigger_lock a PI lock
-
-Suneeth D (1):
-  cyclictest: Fix BUILD failure for GCC_VER < 14
-
-Thomas Weißschuh (Schneider Electric) (6):
-  cyclictest: Centralize clock option parsing
-  cyclictest: Test the return value of timer_create()
-  cyclictest: Fix error error returns for uclibc clock_nanosleep()
-    fallback
-  cyclictest: Correctly print clock_nanosleep() errors
-  cyclictest: Allow symbolic clock names
-  cyclictest: Add support for auxiliary clocks
-
- AGENTS.md                             | 416 ++++++++++++++++++++++++++
- Dockerfile                            |   1 +
- MAINTAINERS                           |   2 +
- Makefile                              |   6 +-
- README-Dockerfile                     |  11 +-
- README.markdown                       |   6 +-
- get_pylib.py                          |   1 +
- src/cyclictest/cyclictest.8           | 405 ++++++++++++++++---------
- src/cyclictest/cyclictest.c           |  93 ++++--
- src/hwlatdetect/hwlatdetect.py        |  26 +-
- src/pi_tests/README                   |  10 +-
- src/pi_tests/pi_stress.c              |  44 ++-
- src/queuelat/README                   |   3 +-
- src/queuelat/targeted-ipi/README      |   1 +
- src/rt-migrate-test/rt-migrate-test.c |  22 +-
- src/sched_deadline/cyclicdeadline.c   |   9 +-
- 16 files changed, 850 insertions(+), 206 deletions(-)
- create mode 100644 AGENTS.md
-
--- 
-2.55.0
-
+Warm regards,
+Aryan Sewa,
+Measurecal
