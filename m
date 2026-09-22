@@ -1,73 +1,73 @@
-Received: from mail-qk2-f12.google.com (mail-qk2-f12.google.com [74.125.230.204])
+Received: from mail-qv2-f12.google.com (mail-qv2-f12.google.com [74.125.230.140])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 99BF24D4887
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 981804D17BD
 	for <linux-rt-users@vger.kernel.org>; Tue, 22 Sep 2026 22:26:35 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=74.125.230.204
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=74.125.230.140
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1790116004; cv=none; b=DA8kdpPV+uG+e55fOcOUoa7jmKR5CCH3SUQBYQs4STcFAtZi3B4rySi5BEI7kV9as/y36MsgzGSihE7a0WmiP3Ce3lM6RPfWch0ZN9e16ZftowOZpRPY8xZ1cnR4oPTMdql6pbwpFdfFzEkfRPzKIMdL1xkyAbhfk7T/FO1EgYE=
+	t=1790116004; cv=none; b=gcgfoUyYP//WY2OgLW9jyf6pTyBzHllhm+ruO7im3S3/h2uVrKvtYKnyq+M/ni8p4RpfnUfuVoXbu53Z9nR7RLXzK01CluSBKktz52QdZn9ICHQz2i27Fc8TJ2UbpsPR52T5TN/3OB89HoAduvDZ9qIeSOMxH3u7kZc7ZZdHf1w=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
 	s=arc-20240116; t=1790116004; c=relaxed/simple;
-	bh=CzI/ua3UZtIw7WkPY4Rt2YWIHFufExG1ZhLtow10+OM=;
+	bh=2CcT//5iemB4UIPQrZERndy+DURV6OL07SKwbc8mBGs=;
 	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=DeKjVRRFmXSRUCnWrepcce5Uvns1ZfeNj3n8beQEiDplzrT2rGMzZMV4nupfg9CACXgBIL9qJyGRvvYnkMPX7rHpYeyFVU9fnyET1VAZN7oT/lByq/6VnJjmfeWX5qh5MdLSG/JRGTcTJ2qUePqM5o//c35r7VdL+H5mpIETzKw=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=fail (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=QqlsM1N4; arc=none smtp.client-ip=74.125.230.204
+	 MIME-Version; b=rh4uVEdlBj/5tEmQR8NU+jcDqxx54uPaegAdJIymMEK/wMvia71rBwTrrCd39k1A/nWteYCRFuZ7GUW34AnvvQuwAb+zhfbw0Rl0AGrOerJ3TvBrWnJfz2G3u4FWoYEErDlJJiSBEzoeovPcTe9GZkK0vpi7NJz+bWPeOR0efIs=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=fail (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=XUnpk+F2; arc=none smtp.client-ip=74.125.230.140
 Authentication-Results: smtp.subspace.kernel.org; dmarc=fail (p=quarantine dis=none) header.from=redhat.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="QqlsM1N4"
-Received: by mail-qk2-f12.google.com with SMTP id d75a77b69052e-530d8a00bcdso2862981cf.2
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="XUnpk+F2"
+Received: by mail-qv2-f12.google.com with SMTP id 6a1803df08f44-91235f46716so2989866d6.1
         for <linux-rt-users@vger.kernel.org>; Tue, 22 Sep 2026 15:26:34 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20251104; t=1790115992; x=1790720792; darn=vger.kernel.org;
+        d=gmail.com; s=20251104; t=1790115991; x=1790720791; darn=vger.kernel.org;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:sender:from:to:cc:subject:date
          :message-id:reply-to:content-type;
-        bh=kpF07ANF9YjmoHtyxKDG5HXt/kxsIIgMJ5WDpqPuVTI=;
-        b=QqlsM1N4zw2wdnEdTxu6S11esoGgSfCfnNHj9XVg3GeMX1pHoaK+7ZLjKn5vZkJHxh
-         DyRjtGQIzlwzMkAqAHLfb8htf0Q5ysdTIHfXDnv4lEt4H6uGUdSofyqHP8QqoFWwThUp
-         +sthh3+JtFpYjzuT6NfkClQX/Dmam99WBTAncEj6zHeqWL74hoFniISAyAmF2/PIa6oR
-         wZPM8YPFkQkrN0M4xHnqf33myqa/gkY5Tis3XqcPhKtkHlbC3vyql+AbK36LaEpZ/tJw
-         ST/Ah3xqX133J7z9BwLI6Gq7mGwlh5LdAVyORAjcQ9E/FJpHipEq0CCMCyivw4N34cJ7
-         RZJQ==
+        bh=0faWSPdj7nbBnYUw4dhXuzn2aNje90Y8o/CDNC6f1RU=;
+        b=XUnpk+F2+x1KRete3T/zpTvgT/VJMIy1J39Rpit2Awfgq2vNeurYxxHoOM/JpaEBbP
+         bzCr6KDZyFZ0Q8g1ss3imkMRDtjrvT1K29qizFZ2kC/EnrOP81LgSQZpEXkD+8T4d2eg
+         abgzoVdM2OX70JyJfl96xC9nRTHZDQTiu32xzJp+inP9TSCjGcFy9AKNcIPZ4O9xCIyn
+         Tuk6Y2wgD1ftnvGqZ+4yhFeW+le4YTgRRu2VMV28aqGFr5Tb264kfdvtSBkri7xcVsvU
+         x8SgGgHLLadlV6GiOf1xIJeN7pIwEd1+Mv3a7sf86MWWYH+b1pvYvkrj7T/MRE5Wyav9
+         MIZw==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20260707; t=1790115992; x=1790720792;
+        d=1e100.net; s=20260707; t=1790115991; x=1790720791;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:sender:x-gm-gg
          :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to
          :content-type;
-        bh=kpF07ANF9YjmoHtyxKDG5HXt/kxsIIgMJ5WDpqPuVTI=;
-        b=Ib078kx1l/dC2a9u14pPYJV3u/1gIeVpTCY9VF5M14i8uY306a/81U8S1UyMUjNspY
-         DTGtQrMRjHf68i4dNcYd74r001QxbnIfCy3Ma8umUfXbvG7HdJzzgwFg8eOR6JlQs1+5
-         7YV2VB9h0uV6OQK8m3cagm4+0m5maVf+wi0/1/a1LNeTVnYa1lywqgweH+V34BDuxvWK
-         jQXySOjlcH0qHRyMc+U/ddbgjpunVV76+8gdv2yKpKcuNzutnOIOtnhfygGBB4Zy84xA
-         dWyj6aWp34Ei6y/QUrc7tSwcE838cejSB0cKqyZbgwE7n0orMf4hmegcy2VrUDd+kE8h
-         euQw==
-X-Gm-Message-State: AFuF++mC3XZUZhBZckXcMPtsNL2Jy4FT3ZEKU5KnrA6dbDCoR4S+jouT
-	av1rmDuflfm+dPKYkg9tXS/6eJ4QcCNwyvh/d4WFneJ7RhCj7+3ICoaKOXGgCw==
-X-Gm-Gg: AYBFou1UaL3rwIOZu3nhuhZjnXZJ8MEGYmbrESCPsAUyGlFRYS88nRbMlTuCdIZFcRh
-	Ab/d0iNaVmYXJoEbmJP5jCkB+2nd1PC7LDFVoaEz2NR66TVAsvVOsSatqn5dUUmE5XoH1+L1u74
-	DdRpSYRcE/vtpCQaMcoUIzRE0rWIV0fcZl7Rte6jg4oGhkwD0K0oibZLaZfTzjyJMb9kkR2fsqk
-	OG2p11OCCw6lVPW3iUwj7TMdpi7d6ZYhg15d4l3QbjInVdP8Oz87Zjp3jjku+ISmvHsBaqEqrgd
-	MV/mgBv4ACrjZ/F9WknDYoY4UQa7QkhBXeeYD0lOpRuH4fIOXm0WK4NJz6dWEiRfL+NCrKgUk0u
-	GozifmVC0DrNplfGy2SXoK317cX+GfKqtbFu1Fng3ik1T9oZmV3k53gU+Wt+78E1mdUPqOoPS1b
-	E7uIPAsGeSB1VfFTQ4bxspgVBQvlfcza8B/4GawsjcAXa6zlMXtA/PfxCFXODftBanvPTjNjcYO
-	lLV1fQUxzUtSvdha2eSOaqMnA2vNAhdt/zJGR+O9Yjq+unF2pbvk9Y=
-X-Received: by 2002:a05:622a:190c:b0:52e:3a14:9022 with SMTP id d75a77b69052e-532eac5b9c0mr16577581cf.27.1790115991580;
-        Tue, 22 Sep 2026 15:26:31 -0700 (PDT)
+        bh=0faWSPdj7nbBnYUw4dhXuzn2aNje90Y8o/CDNC6f1RU=;
+        b=b7Za5FBoPSg70BT5pHw812r0U3BULunJcPrw2vITse26bflBdHDL5p4bf3uhf4mFn1
+         xRapixu4OYgTttR6d2oc61WcIzrTfJbKZ4LuUqyQPt7OLhlABDAV5JLV8TOBaxtb0Jwq
+         0QNggNEfEVGAGNqLduisVJtvtBfPGclUtwu5rR2Js4qcgaC2uHZi3aaVIoHwaovaeMWq
+         W2MIeXsKPZdDFUhc0O4PnSas2fGjswl9Jfgg87mVUuO7zV4AUA2PA+PH8NU8996APfnc
+         VEwwkWcTp0eG9wN3xgD+c8sxr0JRaMSmX4+hLS3Jzrblsxz9OT1H/RaNqCHqcMrMdasQ
+         tn/g==
+X-Gm-Message-State: AFuF++mu2qTyM+qFgoag+wJSwoERjiDx3Dy5W9GG7tbZISD+mRJcNHGY
+	OttU1os+c/0ff48pkoxyrHKurpfRIEgWSrd0lplAkY1OEVWYMI6iZn5+TagC2g==
+X-Gm-Gg: AYBFou2sJydi6heyegWvysxhK/5tHsAdA8FFftXFP21FGoAEBOpJrukvErDNFrNI6gm
+	4jTEdpTYD48LQnsvxNs/9mgaqYIqKBInxQBtCOuCOrMarcokiFAMv9eYXLc+LdJmB90u1cxFs4q
+	mK9vBFthX5TZAy70r1PWT470izIulwTJmSylGQ6WCw3GEclVSZ06zFmT9GQltvb7ixDXoCqt1J6
+	Pcu97g/kYqnkS0nqEYZ5P7NOUnaK+BS2xvcQeMR0wg00/CaIz2LG30WTCnEKjzR8ojQ+t1R/+Uo
+	oYQnFB+1VS4Oay4deJ18lCvYOc/Bn1TNTJ/aFP1QX2TE5IdcNbK1bm22+dPVpAlMaQzCOdjgzLV
+	jOYAzcMpZToNe5SPSE9bM3IBs8pHoFbFeCulZVoesPbsIvGF0xkNJystsfbd9GXgoKyQHUnyvbl
+	15xORbo3+P9pndbOb3jlq8mma+jFpTcTlSCl8yajqPrO+wOCMQm4jadnQ+NFTehCka84+mMSHJL
+	QnBCnL2RtpBzhNPv9+8AW+vrN1ES32xrzhz6/uBnKBHmcgMgPOpDNM=
+X-Received: by 2002:a05:6214:f2a:b0:912:517b:913 with SMTP id 6a1803df08f44-9140c48bd6cmr15622926d6.50.1790115990647;
+        Tue, 22 Sep 2026 15:26:30 -0700 (PDT)
 Received: from Cumhall.home ([70.53.55.174])
-        by smtp.gmail.com with ESMTPSA id 6a1803df08f44-9140c4425f3sm7552786d6.34.2026.09.22.15.26.30
+        by smtp.gmail.com with ESMTPSA id 6a1803df08f44-9140c4425f3sm7552786d6.34.2026.09.22.15.26.29
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Tue, 22 Sep 2026 15:26:31 -0700 (PDT)
+        Tue, 22 Sep 2026 15:26:30 -0700 (PDT)
 Sender: John Kacur <jkacur@gmail.com>
 From: John Kacur <jkacur@redhat.com>
 To: linux-rt-users@vger.kernel.org
 Cc: Sana Sharma <sansshar@redhat.com>,
 	Clark Williams <williams@redhat.com>,
 	Chris White <chwhite@redhat.com>
-Subject: [PATCH 3/8] rteval: Add --measurement-member and guard against measurement/load overlap
-Date: Tue, 22 Sep 2026 18:25:47 -0400
-Message-ID: <20260922222552.482102-4-jkacur@redhat.com>
+Subject: [PATCH 2/8] rteval: Don't create measurement cpuset with --onlyload
+Date: Tue, 22 Sep 2026 18:25:46 -0400
+Message-ID: <20260922222552.482102-3-jkacur@redhat.com>
 X-Mailer: git-send-email 2.55.0
 In-Reply-To: <20260922222552.482102-1-jkacur@redhat.com>
 References: <20260922222552.482102-1-jkacur@redhat.com>
@@ -79,189 +79,132 @@ List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 
-By default, --cpusets creates the rteval_measurement cpuset as a cgroup
-v2 isolated partition, which removes its CPUs from the root cgroup where
-the taskset-bound loads run. When the measurement and load CPU lists
-overlap (as they do by default, when both cover all online CPUs), the
-loads are left with no usable CPUs and the run fails in a confusing way.
+--onlyload runs the loads but no measurement threads, yet CpusetManager
+always created the rteval_measurement cpuset as an isolated partition.
+Nothing is ever migrated into it in this mode, so it served only to
+remove its CPUs from the root cgroup where the taskset-bound loads run,
+leaving those loads with fewer (or no) usable CPUs for no benefit.
 
-Add a --measurement-member option that flips the measurement cpuset to a
-member partition, letting loads and measurement share CPUs (co-location).
-Like --housekeeping-isolated, it requires --cpusets. The partition type
-is threaded through to CpusetManager via a measurement_member parameter,
-replacing the previously hardcoded isolated partition.
+Add a create_measurement parameter to CpusetManager (default True) and
+skip creating the measurement cpuset when it is False. rteval-cmd passes
+create_measurement=not onlyload, so --onlyload now runs loads without an
+empty isolated measurement partition getting in their way.
 
-When --cpusets is used with an isolated measurement partition and the
-measurement and load CPU lists overlap, fail loud with a message that
-points to the two ways forward: add --measurement-member to co-locate,
-or supply disjoint --measurement-cpulist and --loads-cpulist. The check
-is skipped when no loads run (--noload) or no measurement runs
-(--onlyload), since neither can produce the collision.
-
-Add unit tests for the member partition type and the --cpusets guard.
+Add a unit test asserting the measurement cpuset is not created when
+create_measurement is False.
 
 Assisted-by: Claude:claude-opus-4-8
 Signed-off-by: John Kacur <jkacur@redhat.com>
 ---
- rteval-cmd                  | 30 +++++++++++++++++++++++++++++-
- rteval/cpusetmanager.py     | 10 +++++++---
- tests/test_cpusetmanager.py | 29 +++++++++++++++++++++++++++++
- 3 files changed, 65 insertions(+), 4 deletions(-)
+ rteval-cmd                  |  3 ++-
+ rteval/cpusetmanager.py     | 22 ++++++++++++++--------
+ tests/test_cpusetmanager.py | 18 ++++++++++++++++++
+ 3 files changed, 34 insertions(+), 9 deletions(-)
 
 diff --git a/rteval-cmd b/rteval-cmd
-index 7a8512e1a254..46a09c9de3c6 100755
+index 438ead95f843..7a8512e1a254 100755
 --- a/rteval-cmd
 +++ b/rteval-cmd
-@@ -126,6 +126,9 @@ def parse_options(cfg, parser, cmdargs):
-     parser.add_argument("--housekeeping-isolated", dest="rteval___housekeeping_isolated",
-                       action="store_true", default=False,
-                       help="make housekeeping cpuset use partition=isolated instead of member (requires --cpusets and --housekeeping)")
-+    parser.add_argument("--measurement-member", dest="rteval___measurement_member",
-+                      action="store_true", default=False,
-+                      help="make measurement cpuset use partition=member instead of isolated, allowing loads and measurement to share CPUs (requires --cpusets)")
-     parser.add_argument("--warn-non-isolated-core-sharing", dest="rteval___warn_non_isolated_core_sharing",
-                       action="store_true", default=False,
-                       help="warn about measurement and load CPUs sharing cores even when neither is isolated")
-@@ -420,6 +423,11 @@ if __name__ == '__main__':
-             if not rtevcfg.housekeeping:
-                 raise RuntimeError("--housekeeping-isolated requires --housekeeping")
- 
-+        # Validate --measurement-member usage
-+        if rtevcfg.measurement_member:
-+            if not rtevcfg.cpusets:
-+                raise RuntimeError("--measurement-member requires --cpusets")
-+
-         # Validate and process housekeeping CPUs
-         housekeeping_cpus = []
-         if rtevcfg.housekeeping:
-@@ -517,6 +525,25 @@ if __name__ == '__main__':
-         for warning in core_warnings:
-             logger.log(Log.WARN, warning)
- 
-+        # With cpusets, the measurement cpuset is an isolated partition by
-+        # default, which removes its CPUs from the root cgroup where the
-+        # taskset-bound loads run. If the measurement and load CPUs overlap,
-+        # the loads are left with no usable CPUs. Fail loud unless the user
-+        # opts into a shared (member) measurement partition. Skipped when no
-+        # loads run (--noload) or no measurement runs (--onlyload).
-+        if rtevcfg.cpusets and not rtevcfg.measurement_member \
-+                and not rtevcfg.noload and not rtevcfg.onlyload:
-+            overlap = CpuList(msrcfg_cpus).intersection(ldcfg_cpus)
-+            if overlap:
-+                raise RuntimeError(
-+                    f"Measurement CPUs {CpuList(msrcfg_cpus)} and load CPUs "
-+                    f"{CpuList(ldcfg_cpus)} overlap on {overlap}, but the measurement "
-+                    "cpuset is an isolated partition, which would remove those CPUs "
-+                    "from the loads. Either add --measurement-member to co-locate "
-+                    "loads and measurement on the same CPUs, or supply disjoint "
-+                    "--measurement-cpulist and --loads-cpulist."
-+                )
-+
-         # if --summarize was specified then just parse the XML, print it and exit
-         if cmd_opts.rteval___summarize:
-             for xmlfile in cmd_opts.rteval___summarize:
-@@ -573,7 +600,8 @@ if __name__ == '__main__':
+@@ -572,7 +572,8 @@ if __name__ == '__main__':
+                 housekeeping_cpus=housekeeping_cpus,
                  measurement_cpus=msrcfg_cpus,
                  logger=logger,
-                 housekeeping_isolated=rtevcfg.housekeeping_isolated,
--                create_measurement=not rtevcfg.onlyload
-+                create_measurement=not rtevcfg.onlyload,
-+                measurement_member=rtevcfg.measurement_member
+-                housekeeping_isolated=rtevcfg.housekeeping_isolated
++                housekeeping_isolated=rtevcfg.housekeeping_isolated,
++                create_measurement=not rtevcfg.onlyload
              )
  
          # Pass cpuset_manager to RtEval (None if not using cpusets)
 diff --git a/rteval/cpusetmanager.py b/rteval/cpusetmanager.py
-index 8b257731b4f1..0c99744b42cf 100644
+index a204312eda9a..8b257731b4f1 100644
 --- a/rteval/cpusetmanager.py
 +++ b/rteval/cpusetmanager.py
-@@ -72,7 +72,7 @@ class CpusetManager:
+@@ -23,7 +23,8 @@ class CpusetManager:
+ 
+     Creates 1-2 cpusets based on configuration:
+     - rteval_housekeeping: Only if housekeeping_cpus specified
+-    - rteval_measurement: Always created for measurement workloads
++    - rteval_measurement: Created unless create_measurement is False
++      (e.g. --onlyload, which runs no measurement workloads)
+ 
+     Load workloads use taskset for CPU affinity (no cpuset needed).
+ 
+@@ -71,7 +72,7 @@ class CpusetManager:
              except Exception as e:
                  logger.log(Log.WARN, f"Failed to clean up {cpuset_name}: {e}")
  
--    def __init__(self, housekeeping_cpus, measurement_cpus, logger, housekeeping_isolated=False, create_measurement=True):
-+    def __init__(self, housekeeping_cpus, measurement_cpus, logger, housekeeping_isolated=False, create_measurement=True, measurement_member=False):
+-    def __init__(self, housekeeping_cpus, measurement_cpus, logger, housekeeping_isolated=False):
++    def __init__(self, housekeeping_cpus, measurement_cpus, logger, housekeeping_isolated=False, create_measurement=True):
          """
          Initialize cpuset manager
  
-@@ -83,6 +83,8 @@ class CpusetManager:
+@@ -80,6 +81,8 @@ class CpusetManager:
+             measurement_cpus: List of CPU integers for measurement workloads
+             logger: rteval Log instance for logging
              housekeeping_isolated: If True, use partition=isolated for housekeeping (default: False = partition=member)
-             create_measurement: If False, skip creating the rteval_measurement cpuset
-                 (e.g. --onlyload, which runs no measurement workloads; default: True)
-+            measurement_member: If True, use partition=member for measurement, allowing
-+                loads and measurement to share CPUs (default: False = partition=isolated)
++            create_measurement: If False, skip creating the rteval_measurement cpuset
++                (e.g. --onlyload, which runs no measurement workloads; default: True)
  
          Note: Load workloads use taskset for CPU affinity and don't need cpusets.
          """
-@@ -97,6 +99,7 @@ class CpusetManager:
+@@ -93,6 +96,7 @@ class CpusetManager:
+         self.measurement_cpus = measurement_cpus
          self.logger = logger
          self.housekeeping_isolated = housekeeping_isolated
-         self.create_measurement = create_measurement
-+        self.measurement_member = measurement_member
++        self.create_measurement = create_measurement
  
          # Cpuset objects (will be created in __enter__)
          self.housekeeping_cpuset = None
-@@ -130,11 +133,12 @@ class CpusetManager:
-         # Create measurement cpuset (skipped when there are no measurement
-         # workloads, e.g. --onlyload)
-         if self.create_measurement:
--            self.logger.log(Log.DEBUG, f"Creating rteval_measurement cpuset with CPUs {collapse_cpulist(self.measurement_cpus)}")
-+            partition_type = "member" if self.measurement_member else "isolated"
-+            self.logger.log(Log.DEBUG, f"Creating rteval_measurement cpuset with CPUs {collapse_cpulist(self.measurement_cpus)} (partition={partition_type})")
-             self.measurement_cpuset = Cpuset('rteval_measurement')
-             self.measurement_cpuset.write_memnode(self.numa_nodes)
-             self.measurement_cpuset.assign_cpus(collapse_cpulist(self.measurement_cpus))
--            self.measurement_cpuset.write_cpu_exclusive(True)  # partition=isolated
-+            self.measurement_cpuset.write_cpu_exclusive(not self.measurement_member)  # partition=isolated unless member
+@@ -123,12 +127,14 @@ class CpusetManager:
+             self.housekeeping_cpuset.assign_cpus(collapse_cpulist(self.housekeeping_cpus))
+             self.housekeeping_cpuset.write_cpu_exclusive(self.housekeeping_isolated)  # partition=isolated if True, member if False
+ 
+-        # Create measurement cpuset
+-        self.logger.log(Log.DEBUG, f"Creating rteval_measurement cpuset with CPUs {collapse_cpulist(self.measurement_cpus)}")
+-        self.measurement_cpuset = Cpuset('rteval_measurement')
+-        self.measurement_cpuset.write_memnode(self.numa_nodes)
+-        self.measurement_cpuset.assign_cpus(collapse_cpulist(self.measurement_cpus))
+-        self.measurement_cpuset.write_cpu_exclusive(True)  # partition=isolated
++        # Create measurement cpuset (skipped when there are no measurement
++        # workloads, e.g. --onlyload)
++        if self.create_measurement:
++            self.logger.log(Log.DEBUG, f"Creating rteval_measurement cpuset with CPUs {collapse_cpulist(self.measurement_cpus)}")
++            self.measurement_cpuset = Cpuset('rteval_measurement')
++            self.measurement_cpuset.write_memnode(self.numa_nodes)
++            self.measurement_cpuset.assign_cpus(collapse_cpulist(self.measurement_cpus))
++            self.measurement_cpuset.write_cpu_exclusive(True)  # partition=isolated
  
          self.logger.log(Log.INFO, "Cpusets created successfully")
          return self
 diff --git a/tests/test_cpusetmanager.py b/tests/test_cpusetmanager.py
-index 8d69fed90443..4b834a0fb218 100644
+index 984e0f900edf..8d69fed90443 100644
 --- a/tests/test_cpusetmanager.py
 +++ b/tests/test_cpusetmanager.py
-@@ -114,6 +114,20 @@ class TestCpusetManagerHousekeepingPartitions(unittest.TestCase):
-             self.assertEqual(partition, 'isolated',
-                            "Measurement cpuset should always be partition=isolated")
+@@ -132,6 +132,24 @@ class TestCpusetManagerHousekeepingPartitions(unittest.TestCase):
+             self.assertTrue(os.path.exists(measurement_path),
+                           "Measurement cpuset should exist")
  
-+    def test_measurement_member_flag(self):
-+        """Test that measurement_member=True makes measurement partition=member"""
++    def test_no_measurement_cpuset_created_when_create_measurement_false(self):
++        """Test that measurement cpuset is not created when create_measurement=False (e.g. --onlyload)"""
 +        with CpusetManager(
 +            housekeeping_cpus=[0, 1],
 +            measurement_cpus=[2, 3],
 +            logger=self.logger,
-+            measurement_member=True
++            create_measurement=False
 +        ) as manager:
-+            measurement_partition_file = '/sys/fs/cgroup/rteval_measurement/cpuset.cpus.partition'
-+            with open(measurement_partition_file) as f:
-+                partition = f.read().strip()
-+            self.assertEqual(partition, 'member',
-+                           "Measurement cpuset should have partition=member when measurement_member is True")
++            # Check that measurement cpuset does NOT exist
++            measurement_path = '/sys/fs/cgroup/rteval_measurement'
++            self.assertFalse(os.path.exists(measurement_path),
++                           "Measurement cpuset should not exist when create_measurement is False")
 +
-     def test_no_housekeeping_cpuset_created_when_empty(self):
-         """Test that housekeeping cpuset is not created when housekeeping_cpus is empty"""
-         with CpusetManager(
-@@ -185,6 +199,21 @@ class TestCpusetManagerCLIIntegration(unittest.TestCase):
-         self.assertIn('requires --cpusets', result.stderr,
-                      "Error message should mention --cpusets requirement")
++            # Check that housekeeping cpuset DOES exist
++            hk_path = '/sys/fs/cgroup/rteval_housekeeping'
++            self.assertTrue(os.path.exists(hk_path),
++                          "Housekeeping cpuset should exist")
++
  
-+    def test_measurement_member_requires_cpusets(self):
-+        """Test that --measurement-member requires --cpusets"""
-+        result = subprocess.run(
-+            [sys.executable, '/home/jkacur/src/rteval/rteval-cmd',
-+             '--measurement-member',
-+             '--duration', '1', '--onlyload'],
-+            capture_output=True,
-+            text=True
-+        )
-+
-+        self.assertNotEqual(result.returncode, 0,
-+                          "--measurement-member without --cpusets should fail")
-+        self.assertIn('requires --cpusets', result.stderr,
-+                     "Error message should mention --cpusets requirement")
-+
-     def test_housekeeping_isolated_requires_housekeeping(self):
-         """Test that --housekeeping-isolated requires --housekeeping"""
-         result = subprocess.run(
+ @unittest.skipUnless(os.geteuid() == 0, "Requires root permissions")
+ @unittest.skipUnless(cpuset.CpusetsInit().supported, "Requires cgroup v2 support")
 -- 
 2.55.0
 
