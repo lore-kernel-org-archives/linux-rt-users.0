@@ -1,91 +1,116 @@
-Received: from mail.nearlyone.de (mail.nearlyone.de [49.12.199.46])
+Received: from galois.linutronix.de (Galois.linutronix.de [193.142.43.55])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 5DBCE3546D6;
-	Mon, 28 Sep 2026 08:30:40 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=49.12.199.46
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id F0B474D6C55
+	for <linux-rt-users@vger.kernel.org>; Mon, 28 Sep 2026 14:00:26 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=193.142.43.55
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1790584244; cv=none; b=ZRBPzojCZ2A3DMXl6hYfXQWUeTs1Hsq3DHmqOJ6owRN9jaDXskppBJzj2F/eINrKXD+SLuzTcHSRgQd8rA9UMI0sqojMQ+R1r15JmzZcM0hi1GS+vJ31Qegx9ya6Utet/spSNpLCagh1bATfdLi+vlKxDjxVgaQfwP7h55FbkQE=
+	t=1790604028; cv=none; b=f50t6cAChbza4u7QeaSFOlETSbgd5Zg0PJoAretFOSnZ4SoMyBnl35jmrSxBAkwnhWswA2bZe7Nmad495O8fJAVDQe8N+lS2q6Fyi91V7OnISU25AeELKyHWNBQLjcD4hDJ4iJVxetRo8XFDJB0cMaJBr7SNK3d1qu4sORjKyFA=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1790584244; c=relaxed/simple;
-	bh=oQjHm7sEy+oh7SJWSJZ8N5kBh62Zvmh2K4EEsJpmSDQ=;
-	h=Date:From:To:Subject:Message-ID:MIME-Version:Content-Type:
-	 Content-Disposition; b=IlGAhprRIIKH+YHk0wG8WQj0LKIiw/MxFuM3iDkG8X7l0sV6vn0CgU/qRcsl1jW3U81xuVV8Roi2+RxRtPcG3YqaA45DAPvg7WMi+PCiWTfwF1mosoLg2P1z7gUJkyEoPAiPdlkTCrO0t3ZW7dkd3Fip1s91JLcKOv3geEuXSE4=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=monom.org; spf=pass smtp.mailfrom=monom.org; dkim=permerror (0-bit key) header.d=monom.org header.i=@monom.org header.b=VwnbiQF5; dkim=pass (2048-bit key) header.d=monom.org header.i=@monom.org header.b=y4WwN7GG; arc=none smtp.client-ip=49.12.199.46
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=monom.org
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=monom.org
+	s=arc-20240116; t=1790604028; c=relaxed/simple;
+	bh=78CVplWbF/uryaNvL8KJRi1HHLwkE25f/AtJi9u8y5w=;
+	h=From:To:Cc:Subject:In-Reply-To:References:Date:Message-ID:
+	 MIME-Version:Content-Type; b=gL4sJrtAEqK7Iaw5fc33EOs8sHVPw9XFag7Wfmh55LwceGC7rz4VqI7B0XXbJCnHta4B7NYjMipbpN0SpyEQKFglfKM4fGZrxvcS+oKqiygL3qblS4zp2DkzucWeYOGUtmfhq53krvmUSDnm/1XkvWJhT0IgR+ik20b3g055Y3A=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linutronix.de; spf=pass smtp.mailfrom=linutronix.de; dkim=pass (2048-bit key) header.d=linutronix.de header.i=@linutronix.de header.b=iXfnszcc; dkim=permerror (0-bit key) header.d=linutronix.de header.i=@linutronix.de header.b=HfnZrXmz; arc=none smtp.client-ip=193.142.43.55
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linutronix.de
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=linutronix.de
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=permerror (0-bit key) header.d=monom.org header.i=@monom.org header.b="VwnbiQF5";
-	dkim=pass (2048-bit key) header.d=monom.org header.i=@monom.org header.b="y4WwN7GG"
-DKIM-Signature: v=1; a=ed25519-sha256; s=v1-ed25519-20260726; d=monom.org; c=relaxed/relaxed; r=y;
-	h=Message-ID:Subject:To:From:Date; t=1790584229; bh=Z+E1mFhW1QTgJSUbNOSCRFP
-	vFVqJS8RcT7jrbS3GYek=; b=VwnbiQF5X21M3/oU488sXwZm/b6eaY1OTKFuGz3ESi0bREhwf9
-	yusv5uzf/QFTW2GzIJIS+zzT1LgnBVh+bxBQ==;
-DKIM-Signature: v=1; a=rsa-sha256; s=v1-rsa-20260726; d=monom.org; c=relaxed/relaxed; r=y;
-	h=Message-ID:Subject:To:From:Date; t=1790584229; bh=Z+E1mFhW1QTgJSUbNOSCRFP
-	vFVqJS8RcT7jrbS3GYek=; b=y4WwN7GG0PjPYB2Z1i0I9oi3YdSxtyPq9fyw17sD6TFcxOGAzs
-	73Sb9MTFk5C+gNUxNUkdArYMRb4urHRYUSxD8RGHfMgyp3QOei42fXTIQwZkerQ2rJHTYDzhY7l
-	iF+Kn+gjAeL2gpTd9InbuiXIwdiabEX66LNa2kPvlnApm+pkgl59MZSLQOJmbfuU7uo+0ykTYbQ
-	WfTQBKr/qK53mbl4Up/y24FoJQ1q/n3MQskKVJeGzAifY9D/jFTbuVQSvxetBCzgs35aIn+IOro
-	kjcIt7FOwYEbe8Rg7itud7tvimR2MYeI77KBZ2bvuVW0pW5YXHmR1tOW1joTLEunUgA==;
-Date: Mon, 28 Sep 2026 10:30:28 +0200
-From: Daniel Wagner <wagi@monom.org>
-To: LKML <linux-kernel@vger.kernel.org>, linux-rt-users@vger.kernel.org, 
-	stable-rt@vger.kernel.org, Steven Rostedt <rostedt@goodmis.org>, 
-	Thomas Gleixner <tglx@linutronix.de>, Sebastian Andrzej Siewior <bigeasy@linutronix.de>, 
-	Clark Williams <williams@redhat.com>
-Subject: [ANNOUNCE] v6.12.111-rt21
-Message-ID: <f2e55011-72d3-48fd-b680-68421d77239c@monom.org>
+	dkim=pass (2048-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="iXfnszcc";
+	dkim=permerror (0-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="HfnZrXmz"
+From: John Ogness <john.ogness@linutronix.de>
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
+	s=2020; t=1790604023;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 in-reply-to:in-reply-to:references:references;
+	bh=L4gLg0vGLCkwGjesQa3VAhiCTT1fNqMhO59IeH76iTc=;
+	b=iXfnszccLLCSknyglLmFr9SD4UR4rLfouodf92qkNUML6rL3wcE4x8eh8JqNh0B4jCq99X
+	a8ZG1ePOWX9AnBSD5/5Y8QouwNT53lGawL/POEYqdGPEaWB778yCQjAdWiyYkhlPwXKSLc
+	nE4EXeK2BYAQcNWPH8Lf2UDkMfAuh/OgcZqvCmgtUXfeKBi3E5BaOgfMO/hz9YL2AARQkR
+	9SnrIXM197bXWOKcvD2By/P2zotI5e6PiKBMBDR3FV11xcJvJc8c0f85vOdwA12CFdVAmM
+	f2ykVruIhsr4/tmKFoL4SBYZqB3DlaZLy8g3XKTizZx8ZjSBD9Gz+lWs8A/0lA==
+DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
+	s=2020e; t=1790604023;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 in-reply-to:in-reply-to:references:references;
+	bh=L4gLg0vGLCkwGjesQa3VAhiCTT1fNqMhO59IeH76iTc=;
+	b=HfnZrXmzUyMq9K4ZKXwl5SJknwiYIWcXYZNjxQrI4IT3R9ytUC0I356NQyxQCbTFelaGut
+	k26cbXitOPDtKfAw==
+To: debarbos@redhat.com, williams@redhat.com
+Cc: williams@redhat.com, vkuznets@redhat.com,
+ linux-rt-users@vger.kernel.org, Petr Mladek <pmladek@suse.com>
+Subject: Re: Console Hang on SMP Secondary CPU Bringup
+In-Reply-To: <arPmYPbFLf2EldIl@debarbos-thinkpadt14gen5.rmtusma.csb>
+References: <arPmYPbFLf2EldIl@debarbos-thinkpadt14gen5.rmtusma.csb>
+Date: Mon, 28 Sep 2026 16:06:22 +0206
+Message-ID: <87fqytbhmx.fsf@jogness.linutronix.de>
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
 List-Subscribe: <mailto:linux-rt-users+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
+Content-Type: text/plain
 
-Hello RT-list!
+Hi Derek,
 
-I'm pleased to announce the 6.12.111-rt21 stable release. This is just
-an update on top of the latest upstream stable release. There are no
-RT specific changes.
+On 2026-09-23, Derek Barbosa <debarbos@redhat.com> wrote:
+> It appears as though the behavior in question has been bisected to af3a8162581e
+> ("serial: 8250: Switch to nbcon console")
 
-There is a bit of churn due to upstream backporting a couple of paches:
+Since you are hacking up the code anyway, here a few things you could
+try.
 
- 9482507381c7 ("powerpc: Add preempt lazy support")
- 6421a07d2ff2 ("ARM: ensure interrupts are enabled in __do_user_fault()")
+First off, it might be helpful to enable CONFIG_PRINTK_CALLER. This will
+print the CPU-ID that the printk message originated from.
 
-and some updates on the patch context/hunk. Nothing serious.
+To be sure it is timing related due to the nbcon atomic printing, you
+could try short-circuiting:
 
-In my test lab, I see that x86 seem to hit higher cyclictest values
-than usual. armhf and aarch64 have reasonable numbers. I suspect,
-the stable tree introduced it but it might just be my test box.
+	drivers/tty/serial/8250/8250_port.c:serial8250_console_write_atomic()
 
-You can get this release via the git tree at:
+so that it immediately does
 
-  git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
+	return true;
 
-  branch: v6.12-rt-patches
-  Head SHA1: c49530ec12e3772dd6e6d7e5cc23d3512e1fdd73
+Obviously you will not see any kernel messages on boot, but the machine
+should boot and with dmesg you should still see all the messages.
 
-Or to build 6.12.111-rt21 directly, the following patches should be applied:
+Assuming that boots, you could change the short-circuit in
+serial8250_console_write_atomic() to simulate the timing with:
 
-  https://www.kernel.org/pub/linux/kernel/v6.x/linux-6.12.tar.xz
+	mdelay(7);
+	return true;
 
-  https://www.kernel.org/pub/linux/kernel/v6.x/patch-6.12.111.xz
+If it fails to boot, then we at least know it has nothing to do with the
+8250 and is instead either delays in time-sensitive sections or some
+sort of contention bug in the core nbcon code.
 
-  https://www.kernel.org/pub/linux/kernel/projects/rt/6.12/older/patch-6.12.111-rt21.patch.xz
+> <snip>
+> 	while (!nbcon_enter_unsafe(wctxt))
+> 		nbcon_reacquire(wctxt);
+>
+> 	/* Finally, wait for transmitter to become empty and restore IER. */
+> 	wait_for_xmitr(up, UART_LSR_BOTH_EMPTY);
+> 	if (em485) {
+> 		mdelay(port->rs485.delay_rts_after_send);
+> 		if (em485->tx_stopped)
+> 			up->rs485_stop_tx(up);
+> 	}
+> 	serial_port_out(port, UART_IER, ier);
+> </snip>
+>
+> Is it possible that we just spin here?
 
-Signing key fingerprint:
+That loop means that the console has lost ownership. A console can only
+lose ownership if a WARN or panic were to occur at that moment. I assume
+you have neither.
 
-  5BF6 7BC5 0826 72CA BB45  ACAE 587C 5ECA 5D0A 306C
+With QEMU it is easy to attach gdb and dump the kernel logs using the
+gdb scripts. I don't know if Hyper-V has anything like this. But it
+could help if there is one more printk message you are not seeing. When
+printk() is called, it locklessly inserts the message and then tries to
+print it to the console.
 
-All keys used for the above files and repositories can be found on the
-following git repository:
-
-   git://git.kernel.org/pub/scm/docs/kernel/pgpkeys.git
-
-Enjoy!
-Daniel
-
+John Ogness
