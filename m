@@ -1,273 +1,221 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+Received: from mail-qv2-f41.google.com (mail-qv2-f41.google.com [74.125.230.169])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 391B3386567
-	for <linux-rt-users@vger.kernel.org>; Tue, 29 Sep 2026 19:19:28 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 2D8CB3A4F58
+	for <linux-rt-users@vger.kernel.org>; Tue, 29 Sep 2026 20:25:29 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=74.125.230.169
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1790709570; cv=none; b=dN0Ydq7mrQ0VUSSwLrsOC0UG1z+zAMoaAiD54v04KpHAaXRztoH/52cZbBiM6gsGPh7iUnjN/cCYOe5lzuZfz4hh3/THawczWlpdZNviq05qGEw2yKCHO/6rJKGzLd+626Xjn3l5OrZhFHRc51vMgmKuQKcc5387UJ4FIV+jvrE=
+	t=1790713530; cv=none; b=W8f+WBWRVTAD5OmceGJyjRtEXzf9T1GzYFWr3HEJRDPzWcx52XwxihEEdanUdqSVhDs912qjcL5vcc/StK01ANh/Tfv5sd+g78pec4kFlys9ptau6VRdeTLstTH5WwNcz5c2c1miLYS4fGqhOGn0zUSTP8OniifKLOUxYlRfVqY=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1790709570; c=relaxed/simple;
-	bh=15dgtYPfRZT03zySmwyCRmTqXg7B5XzKCPPldn9CHEw=;
-	h=Date:From:To:Cc:Subject:Message-ID:MIME-Version:Content-Type:
-	 Content-Disposition; b=teR/CSmJMwQK3WZu7aHg1nekEI3zQOsFJ7b3jjKyuhsg3N1FA/9bovpviYE7Ped5Q7hDH2bI6//khqgBPZpwvjmX/Z9jOz1VuEe8nOZ46Ghcd/E1/ZY/wK3GI7n0QIWF5jyIcX2Yu1djtYvr8P9QMEkv/XsXL8dem9aLSDP7yj4=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=cjpCkf1Q; dkim=pass (2048-bit key) header.d=redhat.com header.i=@redhat.com header.b=QEDMk9jO; arc=none smtp.client-ip=170.10.129.124
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
+	s=arc-20240116; t=1790713530; c=relaxed/simple;
+	bh=Z2CPlX6F8GOlX/5CHrYhAfEKCx/hKHnO7h2HN94Vxno=;
+	h=Date:From:To:cc:Subject:In-Reply-To:Message-ID:References:
+	 MIME-Version:Content-Type; b=H2Cihu31xcv2TB1/GQFc9QQsgPBNpAfCuP2+wiCyXnCzKdSahYtgu15aPi5N5oBHN2NdNJmTuYBnwBS3fqB0snlvLok2TLuIfevI0BqBnprp8zADGTOAQeVWczf9k8ClP819+wOHX58Y3Xzyn4Ob505FsyvtuVh39ParkjsvuU8=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=QEbz+n3M; arc=none smtp.client-ip=74.125.230.169
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="cjpCkf1Q";
-	dkim=pass (2048-bit key) header.d=redhat.com header.i=@redhat.com header.b="QEDMk9jO"
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1790709567;
-	h=from:from:reply-to:reply-to:subject:subject:date:date:
-	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
-	 content-type:content-type; bh=xtICPWUNj0B+nJ9T7BlyCcEyMlCVD6+EkFimMWdbMCg=;
-	b=cjpCkf1QthkBaT9amwBF4R0kE3ikN/Iom9EnFWrool4YCvGzPRqPrRWcuZax6kq6RB1KAN
-	tWyzlAO+WrnGgpKfDEEXcR29ThmDXQVVBNji5rV3sfoD4r1DmpdSQYFZyzLzoi4/t8oNEv
-	7EHLRQUrpFEHcObAyeFlCyJVyBhg/Zk=
-Received: from mail-qv1-f70.google.com (mail-qv1-f70.google.com
- [209.85.219.70]) by relay.mimecast.com with ESMTP with STARTTLS
- (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
- us-mta-25-iU-p9LoaPk-RgRbd5PYNLA-1; Tue, 29 Sep 2026 15:19:25 -0400
-X-MC-Unique: iU-p9LoaPk-RgRbd5PYNLA-1
-X-Mimecast-MFC-AGG-ID: iU-p9LoaPk-RgRbd5PYNLA_1790709565
-Received: by mail-qv1-f70.google.com with SMTP id 6a1803df08f44-9175cbd3beaso44180776d6.0
-        for <linux-rt-users@vger.kernel.org>; Tue, 29 Sep 2026 12:19:25 -0700 (PDT)
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="QEbz+n3M"
+Received: by mail-qv2-f41.google.com with SMTP id 6a1803df08f44-91799c58ba0so592216d6.3
+        for <linux-rt-users@vger.kernel.org>; Tue, 29 Sep 2026 13:25:28 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=redhat.com; s=google; t=1790709565; x=1791314365; darn=vger.kernel.org;
-        h=content-disposition:content-type:mime-version:reply-to:message-id
-         :subject:cc:to:from:date:from:to:cc:subject:date:message-id:reply-to
+        d=gmail.com; s=20251104; t=1790713528; x=1791318328; darn=vger.kernel.org;
+        h=content-type:mime-version:references:message-id:in-reply-to:subject
+         :cc:to:from:date:from:to:cc:subject:date:message-id:reply-to
          :content-type;
-        bh=xtICPWUNj0B+nJ9T7BlyCcEyMlCVD6+EkFimMWdbMCg=;
-        b=QEDMk9jO2dphwG7Xzle6v7bLEukbH4hxxFT3465j5asGoGpD7+PTe7xSwLasmduHnZ
-         kXOIiuLSIsSNMxh6TPXB0zNDA1p5cpe+uqD8P0mT2BLomhJlA24fhYWd10xGaETjGM6f
-         jhpCi9z+80l8NJROGBiwxvv8Hb/WuCqEdseK4/7dVYUS1/Q7x3s27SXqwVH7EWvp6c3e
-         Wdcf54lmV6FwaKPj2cXY4t0mtpQiP6ymGRW5TBpd6cNd06QZW18Le2pq8gkldKK6wp6c
-         n8X2uCitzc0UBvAKQalN8MIfdr/723utFZMw+099gvdkY/SI860wVJPY8w4RUnKg0xPH
-         nTIA==
+        bh=DsuJfBjRoMo0TESKsCjz5Nifs5jq29JNQPauOFV3aps=;
+        b=QEbz+n3M+4TKQyTHgmjenhpi9sWpx3XAjopobhNnFBx8tLHGyFTlrWHF9cWYRMUO4Z
+         P2Dd9Ok9UHTMUETmLF0M5raAtTFNwo57t5r/jJp1uqA/oMeewTVwE4OW9Xxsm4Ty+kt4
+         uHFDfZPZY4a8rIen+HC7udz6nQBLzPyK7pIEy0E1FPb6LAjgcpOek1uX/29LIzkj8D+K
+         I0LmdMF4oJCUgS9EXwk9SKKx1Z5aS9KA7fgCxUh0d5CpbcOxOQHFvx9wRvX9EQR8C7py
+         T/8T9wIdGIENWu08q4BWo4hzlGd/E7BYfZBhAPnZJFAcU3yB+o0TnQizCwOr05DPRN+F
+         rMHQ==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20260707; t=1790709565; x=1791314365;
-        h=content-disposition:content-type:mime-version:reply-to:message-id
-         :subject:cc:to:from:date:x-gm-gg:x-gm-message-state:from:to:cc
-         :subject:date:message-id:reply-to:content-type;
-        bh=xtICPWUNj0B+nJ9T7BlyCcEyMlCVD6+EkFimMWdbMCg=;
-        b=YDZOhmi6sCwBWwyj8XUpe62t1apAROcWkRzPHyEcyPxG5NzVVQXQ0rqUbMhn7UXomR
-         xfx6YSSwVa2IMFF6GvgGNo9Jz1IrdMKQu0a2guKwV6BF7PWuhketkWdEbX5QoIpyaTdJ
-         jougAOQx/N00Iiiw/yRmDn0mQV3Z7WtoYWIq7qTe5IsQMkQv7zzFHfs8XH/FuswyE9gU
-         Z30xQnw8q4gzROZ+40d25mYIA9XJbRifSTXgJQZrZle5Dl9zHu8tsFfBUHYlejsfoj50
-         HdZrCzF03PkJ5FMfOjoRcTJuZurRf/EzHmEcdc221myd92fMiT7LkKxU0ZHui5mWd1/a
-         u76Q==
-X-Gm-Message-State: AFuF++mAfr/m2HFj9M2COAVxkig+BpM5c9IXK/izAHG6Y4Vjk0qnFxpA
-	wp2Vmo6WMgTUts539kN/TWJbmrCQGLG5y04Bt8RGrDq9c8ouhzKAdArwKfoTWzTNncmo+beZ3jF
-	Qc0a/8Ilszcbkvpxgl4toIAWTqXfKV2AM/6q6pWa5CDlUlymNv0qV8LdRifbiUhaeLJt5w5bOh0
-	8mghAyrcYzXckf5ApcNgsq5tIK/AtY5DrA6rvw3B3tYMs2isB92FVb
-X-Gm-Gg: AYBFou26j2Zom1f2HYvcmMDmVibhEwUgHEovEe2GwJ1ssdR3faQeTxzDugIFjLTQ/lB
-	uuWsfaFdjA4iLh3xDKv762MYTfDJGReTJ86ADCy8BNtbbSZ8blmW441a0M2wrBx703uGr9k+Rjh
-	d19dxmlFRp6Gwu3xIJKA33mA1oXy/l6Sp0Y7F8oxUBOzgwQcursQ3QuS1myN7wumCokQKSxC0mF
-	YLFsSchs+MyNe74zjwAF+jvpzbj6Z2s9rjuhDUv6ioyIzoIPxtu1yvjhNS7uAcNLfcu1fzmGrnI
-	aww/MSEs/2d/krcBcqJO6HJksLXy4BDwf+XNkKgY+FN2udWDfFF9wjsJQWd/Kauv4GJZ5qevQSh
-	Cp5/xvVmxopQMw6kUybJJBhQnBkA78aD8Qg==
-X-Received: by 2002:ad4:5d66:0:b0:917:848a:43de with SMTP id 6a1803df08f44-91799a5b83bmr2545886d6.8.1790709565130;
-        Tue, 29 Sep 2026 12:19:25 -0700 (PDT)
-X-Received: by 2002:ad4:5d66:0:b0:917:848a:43de with SMTP id 6a1803df08f44-91799a5b83bmr2545316d6.8.1790709564566;
-        Tue, 29 Sep 2026 12:19:24 -0700 (PDT)
-Received: from localhost (c-71-234-51-224.hsd1.ma.comcast.net. [71.234.51.224])
-        by smtp.gmail.com with ESMTPSA id 6a1803df08f44-917987e1439sm2381696d6.21.2026.09.29.12.19.23
+        d=1e100.net; s=20260707; t=1790713528; x=1791318328;
+        h=content-type:mime-version:references:message-id:in-reply-to:subject
+         :cc:to:from:date:x-gm-gg:x-gm-message-state:from:to:cc:subject:date
+         :message-id:reply-to:content-type;
+        bh=DsuJfBjRoMo0TESKsCjz5Nifs5jq29JNQPauOFV3aps=;
+        b=O66op+c5FWVCdF1GbYujV1k1KvHd49OeKS+NDwvaavDPktcqjfGQwPAQXoi0YiFyV8
+         72n6198D3p9BHRhLXNEcUwwZra1P4lEo1rxE2pdfcLIcE5qP6UhBIl0YY9jh7U8wzKHU
+         7sqf5rLHKRK7/JUaaPmtGSJbJ8lMXv8WyDGZTIWxDXpqQEcJZ9WzfbHpg2qM+BemvinR
+         UQ0fgsoMSFxjBYzdWSKM2HPRW8FunnYKHcpey7FbMv3vZb9qp+cKnqMuBCw49Po2yGnt
+         j525T8aNXhuirW2nAGMzwnXq4P2vEzESS7tFo1NFy39r0kM9VsaM5O5VF0ENE9EG9+Qr
+         WWyQ==
+X-Forwarded-Encrypted: i=1; AKwUvByoJZWQCAvN7vVsYeqASoQoeMbkmCVtLk+hw278q7L60k2Qw5t3xPvXEdT5bvmk/twQxXa/+B6LsOdBv/1f6A==@vger.kernel.org
+X-Gm-Message-State: AFuF++mBjKPkiokgiF5kUWB3iElj4JEjGya1SdKgXpbs4Z/nB+ZtLbZV
+	oKWXK0T8FWJs1eWqCavZFAg0Kg8ql3A86QikTy4m5jdTTRDxdzeLUc80
+X-Gm-Gg: AYBFou1pujX1pSYOyA8+3Xre2OakMVbee4iiCKTwcgmPErQ+hpMkSImsrP2+hQ7B5oX
+	kKzxy9LECYygJVNpVC4NCNwmGnnwAlBci9T0i3vS4pfvJ1hV875m79H6vwLI8dJk6ILEtjqHjbH
+	r0dLt+JMTANEIBeXoqWZraTda0nNdQ3WipPJ4sOgLlMDbSGiqAKFCXAomRlT95wlDEqNfhKfEM7
+	xp4pWp5li3MKWnNTfNURxH7WwRXBmSEECiDXZK2rPWa+ERrpXhwx/QV5R6D1Y/9cdDUN+hiFczy
+	BCsCUfZnmQg9gctilJtFYFfpnUXRTMG9pneUGsRpGB4KOtQkX67bO6hzzAb74Qd/TI/OwSGHSy/
+	oZlOYu1Jiy/dKyRQm7zmxFRcR/qBPYeexC1JQhCQ2dfh/3ddUr8/HgG+13mnGPS+L7xfF7QH7GL
+	gtu/GyM1r+Br9HtjfFzchpTh+11w2MSVAWn743U0SyzIatrEPotKBbWWi5VrEo4xlhcA+MTiUf/
+	keyqEzJo9+zxmk1OKs1t7ZM/RYLaKSreQ2Xl6cDhRBLFK63e6ly7B9dHA==
+X-Received: by 2002:a05:6214:f0a:b0:914:3ef6:ec1c with SMTP id 6a1803df08f44-91799bc0dbemr5852296d6.31.1790713527720;
+        Tue, 29 Sep 2026 13:25:27 -0700 (PDT)
+Received: from Cumhall ([70.53.55.174])
+        by smtp.gmail.com with ESMTPSA id 6a1803df08f44-917987e3776sm3575356d6.22.2026.09.29.13.25.26
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Tue, 29 Sep 2026 12:19:24 -0700 (PDT)
-Date: Tue, 29 Sep 2026 15:19:19 -0400
-From: Sana Sharma <sansshar@redhat.com>
-To: linux-rt-users@vger.kernel.org
-Cc: jkacur@redhat.com
-Subject: [PATCH v1] rteval: Added multi stressor support
-Message-ID: <arwPN52esmki-k_f@fedora>
-Reply-To: sansshar@redhat.com
+        Tue, 29 Sep 2026 13:25:27 -0700 (PDT)
+Date: Tue, 29 Sep 2026 16:25:14 -0400 (EDT)
+From: John Kacur <jkacur@gmail.com>
+To: Costa Shulyupin <costa.shul@redhat.com>
+cc: John Kacur <jkacur@redhat.com>, "Ahmed S. Darwish" <darwi@linutronix.de>, 
+    =?ISO-8859-15?Q?Thomas_Wei=DFschuh_=28Schneider_Electric=29?= <thomas.weissschuh@linutronix.de>, 
+    Lukas Beckmann <lbckmnn@mailbox.org>, 
+    Sebastian Andrzej Siewior <bigeasy@linutronix.de>, 
+    Cheng-Yang Chou <yphbchou0911@gmail.com>, 
+    linux-rt-users <linux-rt-users@vger.kernel.org>
+Subject: Re: [PATCH v3] clictest, cyclicdeadline: Exit with failure when
+ breaktrace threshold is exceeded
+In-Reply-To: <20260824101852.2237494-1-costa.shul@redhat.com>
+Message-ID: <d414bdc8-361f-9768-1f6c-f8e1e8b80f7a@gmail.com>
+References: <20260824101852.2237494-1-costa.shul@redhat.com>
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
 List-Subscribe: <mailto:linux-rt-users+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-
-Added the ability for rteval to take multiple stressors in one
-command. The syntax works as follows:
-
---stressng-stressor cpu --stressng-stressor vm --stressng-workers 2
-will use 2 workers for each  stressor (in this case cpu and vm)
-
---stressng-stressors cpu,vm --stressng-workers 2
-will use 2 workers for each stressor as in the above example
-
-The second option exists to allow the user to access multiple
-stressors in an easier way.
-
-The tests/test_stressng file has also been updated to reflect
-these changes.
-
-Signed-off-by: Sana Sharma <sansshar@redhat.com>
----
- rteval/modules/__init__.py       |  3 +-
- rteval/modules/loads/stressng.py | 59 ++++++++++++++++++++++++--------
- tests/test_stressng.py           |  7 ++--
- 3 files changed, 49 insertions(+), 20 deletions(-)
-
-diff --git a/rteval/modules/__init__.py b/rteval/modules/__init__.py
-index 183efd8..a89d452 100644
---- a/rteval/modules/__init__.py
-+++ b/rteval/modules/__init__.py
-@@ -356,6 +356,7 @@ reference from the first import"""
-             for (o, s) in list(opts.items()):
-                 descr = 'descr' in s and s['descr'] or ""
-                 metavar = 'metavar' in s and s['metavar'] or None
-+                action = 'action' in s and s['action'] or 'store'
- 
-                 try:
-                     default = cfg and getattr(cfg, o) or None
-@@ -369,7 +370,7 @@ reference from the first import"""
- 
-                 grparser.add_argument(f'--{shortmod}-{o}',
-                                          dest=f"{shortmod}___{o}",
--                                         action='store',
-+                                         action=action,
-                                          help='%s%s' % (descr,
-                                                         default and ' (default: %s)' % default or ''),
-                                          default=default,
-diff --git a/rteval/modules/loads/stressng.py b/rteval/modules/loads/stressng.py
-index 564e798..24dd7a2 100644
---- a/rteval/modules/loads/stressng.py
-+++ b/rteval/modules/loads/stressng.py
-@@ -1,5 +1,6 @@
- # SPDX-License-Identifier: GPL-2.0-or-later
- """ Module containing class Stressng to manage stress-ng as an rteval load """
-+import argparse
- import os
- import os.path
- import time
-@@ -12,6 +13,32 @@ from rteval.systopology import SysTopology
- from rteval.cpulist_utils import CpuList
- from rteval.cpuset import cpuset_preexec
- 
-+def validate_stressors(stressor_list):
-+    """Validate multiple stressor names.
-+
-+    Args:
-+        stressor_list: stressor names to validate, either as a list
-+                       (from repeated --stressng-stressor) or a
-+                       comma-separated string (from --stressng-stressors)
-+
-+    Raises:
-+        ValueError: If any stressor is invalid
-+    """
-+    valid = get_valid_stressors()
-+    if isinstance(stressor_list, str):
-+        stressor_list = stressor_list.split(",")
-+    stressors = [word.strip() for word in stressor_list]
-+    invalid = []
-+    for stressor in stressors:
-+        if stressor not in valid:
-+            invalid.append(stressor)
-+            continue
-+
-+    if invalid:
-+        raise ValueError(f"Invalid stress-ng stressors: {', '.join(invalid)}. "
-+                        f"Run 'stress-ng --stressors' to see valid options.")
-+    return stressors
-+
- def get_valid_stressors():
-     """Query stress-ng for list of valid stressor names."""
-     try:
-@@ -25,14 +52,6 @@ def get_valid_stressors():
-         print(f"Failed to query stress-ng stressors: {e}")
-         sys.exit(1)
- 
--def validate_stressor(stressor_name):
--    """Validate a single stressor name against stress-ng's available stressors."""
--    valid = get_valid_stressors()
--    if stressor_name not in valid:
--        print(f"Invalid stress-ng stressor: '{stressor_name}'. "
--              f"Run 'stress-ng --stressors' to see valid options.")
--        sys.exit(1)
--
- class Stressng(CommandLineLoad):
-     " This class creates a load module that runs stress-ng "
-     def __init__(self, config, logger):
-@@ -47,10 +66,14 @@ class Stressng(CommandLineLoad):
-         self.__nullfp = None
-         self.args = None
-         " Only run this module if the user specifies an stressor "
--        if self.cfg.stressor is not None:
-+        if (hasattr(self.cfg, 'stressor') and self.cfg.stressor is not None):
-+            setattr(self.cfg, 'stressors', list(self.cfg.stressor))
-+            self._donotrun = False
-+        elif (hasattr(self.cfg, 'stressors') and self.cfg.stressors is not None):
-             self._donotrun = False
-         else:
-             self._donotrun = True
-+
-         # When this module runs, other load modules should not
-         self.set_exclusive()
- 
-@@ -74,10 +97,10 @@ class Stressng(CommandLineLoad):
- 
-         # stress-ng is only run if the user specifies an stressor
-         self.args = ['stress-ng']
--        validate_stressor(self.cfg.stressor)
--        self.args.append(f'--{str(self.cfg.stressor)}')
--        if self.cfg.workers is not None:
--            self.args.append(self.cfg.workers) #default is 0
-+        stressors = validate_stressors(self.cfg.stressors)
-+        workers = str(self.cfg.workers)  # defaults to '0'
-+        for stressor in stressors:
-+            self.args.extend([f'--{stressor}', workers])
-         if self.cfg.timeout is not None:
-             self.args.append('--timeout')
-             self.args.append(self.cfg.timeout)
-@@ -164,8 +187,14 @@ def ModuleParameters():
-     """ Commandline options for Stress-ng """
-     return {
-         "stressor": {
--            "descr": "stressor name (eg. vm, cpu)",
--            "metavar": "STRESSOR"
-+            "descr": "stressor to run; repeat the flag to run several in parallel "
-+                     "(e.g., --stressng-stressor cpu --stressng-stressor vm)",
-+            "action": "append",
-+            "metavar": "NAME"
-+        },
-+        "stressors": {
-+            "descr": "comma-separated stressors to run in parallel (e.g., cpu,vm,io)",
-+            "metavar": "LIST"
-         },
-         "workers": {
-             "descr": "number of workers(default: 0 = one per CPU)",
-diff --git a/tests/test_stressng.py b/tests/test_stressng.py
-index 6211fb3..29291e6 100644
---- a/tests/test_stressng.py
-+++ b/tests/test_stressng.py
-@@ -41,15 +41,14 @@ class TestValidateStressor(unittest.TestCase):
-            return_value=['cpu', 'vm'])
-     def test_valid_passes(self, _):
-         """Test that a valid stressor is accepted"""
--        stressng.validate_stressor('cpu')   # should not raise
-+        stressng.validate_stressors('cpu, vm')   # should not raise
- 
-     @patch('rteval.modules.loads.stressng.get_valid_stressors',
-            return_value=['cpu', 'vm'])
-     def test_invalid_exits(self, _):
-         """Test that an invalid stressor is rejected"""
--        with self.assertRaises(SystemExit) as cm:
--            stressng.validate_stressor('bogus')
--        self.assertEqual(cm.exception.code, 1)
-+        with self.assertRaises(ValueError):    
-+            stressng.validate_stressors('bogus')
- 
- def main():
-     """Run the test suite"""
--- 
-2.54.0
+Content-Type: text/plain; charset=US-ASCII
 
 
--- 
-Sana Sharma <sansshar@redhat.com>
 
+On Mon, 24 Aug 2026, Costa Shulyupin wrote:
+
+> cyclictest and cyclicdeadline always exit 0 even when the latency
+> threshold set by --breaktrace is exceeded, requiring test harnesses
+> to parse output or json to detect a failed test.
+> 
+> Set ret to 2 when break_thread_id is set, indicating the breaktrace
+> threshold was hit.  The exit code enables shell expressions like
+> "cyclictest ... && echo PASS" and seamless integration with testing
+> frameworks.  Also pass ret to rt_write_json() in cyclicdeadline so the
+> JSON output reflects the failure.
+> 
+> Assisted-by: Claude:claude-opus-4-6
+> Signed-off-by: Costa Shulyupin <costa.shul@redhat.com>
+> 
+> ---
+> v3:
+> - return 2 on failure
+> - reword error descriptions in manpages
+> v2:
+> - refine subject
+> - "Assisted-by" already conforms format AGENT_NAME:MODEL_VERSION
+> - add sob
+> ---
+>  src/cyclictest/cyclictest.8         | 11 +++++++++++
+>  src/cyclictest/cyclictest.c         |  1 +
+>  src/sched_deadline/cyclicdeadline.8 | 11 +++++++++++
+>  src/sched_deadline/cyclicdeadline.c |  7 +++++--
+>  4 files changed, 28 insertions(+), 2 deletions(-)
+> 
+> diff --git a/src/cyclictest/cyclictest.8 b/src/cyclictest/cyclictest.8
+> index fc6121aa4d47..c52e09cbd73c 100644
+> --- a/src/cyclictest/cyclictest.8
+> +++ b/src/cyclictest/cyclictest.8
+> @@ -311,6 +311,17 @@ in mind, below cyclictest example invocation can provide a good start:
+>     --histfile=output.txt
+>  .fi
+>  .
+> +.SH "Exit status"
+> +.TP
+> +.B 0
+> +Success - breaktrace latency was not exceeded.
+> +.TP
+> +.B 1
+> +Error or invalid argument.
+> +.TP
+> +.B 2
+> +Test failure - breaktrace latency is exceeded.
+> +.
+>  .SH "See also"
+>  .MR numa 3 ,
+>  .MR numactl 8 ,
+> diff --git a/src/cyclictest/cyclictest.c b/src/cyclictest/cyclictest.c
+> index 71cf5cb25c22..032b3e411afc 100644
+> --- a/src/cyclictest/cyclictest.c
+> +++ b/src/cyclictest/cyclictest.c
+> @@ -2337,6 +2337,7 @@ int main(int argc, char **argv)
+>  		if (break_thread_id) {
+>  			printf("# Break thread: %d\n", break_thread_id);
+>  			printf("# Break value: %llu\n", (unsigned long long)break_thread_value);
+> +			ret = 2;
+>  		}
+>  	}
+>  
+
+Did you test this?
+When I run (on a non-rt kernel)
+ su -c './cyclictest -t -b50 --json json.txt'
+Password: 
+# /dev/cpu_dma_latency set to 0us
+policy: other/other: loadavg: 0.70 1.00 0.80 1/2952 198115          
+
+T: 0 (198100) P: 0 I:1000 C:  0 Min:1000000 Act:  0 Avg:  0 Max:  0 T: 1 
+(198101) P: 0 I:1500 C:  0 Min:1000000 Act:  0 Avg:  0 Max:  0 T: 2 
+(198102) P: 0 I:2000 C:  0 Min:1000000 Act:  0 Avg:  0 Max:  0 T: 3 
+(198103) P: 0 I:2500 C:  0 Min:1000000 Act:  0 Avg:  0 Max:  0 T: 4 
+(198104) P: 0 I:3000 C:  0 Min:1000000 Act:  0 Avg:  0 Max:  0 T: 5 
+(198105) P: 0 I:3500 C:  0 Min:1000000 Act:  0 Avg:  0 Max:  0 T: 6 
+(198106) P: 0 I:4000 C:  0 Min:1000000 Act:  0 Avg:  0 Max:  0 T: 7 
+(198107) P: 0 I:4500 C:  0 Min:1000000 Act:  0 Avg:  0 Max:  0 T: 8 
+(198108) P: 0 I:5000 C:  0 Min:1000000 Act:  0 Avg:  0 Max:  0 T: 9 
+(198109) P: 0 I:5500 C:  0 Min:1000000 Act:  0 Avg:  0 Max:  0 T:10 
+(198110) P: 0 I:6000 C:  0 Min:1000000 Act:  0 Avg:  0 Max:  0 T:11 
+(198111) P: 0 I:6500 C:  0 Min:1000000 Act:  0 Avg:  0 Max:  0 T:12 
+(198112) P: 0 I:7000 C:  0 Min:1000000 Act:  0 Avg:  0 Max:  0 T:13 
+(198113) P: 0 I:7500 C:  0 Min:1000000 Act:  0 Avg:  0 Max:  0 T:14 
+(198114) P: 0 I:8000 C:  0 Min:1000000 Act:  0 Avg:  0 Max:  0 T:15 
+(198115) P: 0 I:8500 C:  0 Min:1000000 Act:  0 Avg:  0 Max:  0 # Thread 
+Ids: 198100 198101 198102 198103 198104 198105 198106 198107 198108 198109 
+198110 198111 198112 198113 198114 198115
+# Break thread: 198100
+# Break value: 52
+
+the top part of the json.txt file is
+
+  "file_version": 1,
+  "cmdline:": "./cyclictest -t -b50 --json json.txt",
+  "rt_test_version:": "2.10",
+  "start_time": "Tue, 29 Sep 2026 16:18:56 -0400",
+  "end_time": "Tue, 29 Sep 2026 16:18:56 -0400",
+  "return_code": 0,
+
+So the return_code is 0, and not 2
+
+Looking at the code
+
+	ret = EXIT_SUCCESS;
+
+ outall:
+	shutdown = 1;
+	usleep(50000);
+
+	if (!verbose && !quiet && refresh_on_max)
+		printf("\033[%dB", num_threads + 2);
+
+	if (strlen(jsonfile) != 0)
+		rt_write_json(jsonfile, ret, write_stats, NULL);
+
+So we write EXIT_SUCCESS before we even get to the part where we have
+"ret = 2"; added to the code
+
+	if (tracelimit) {
+		print_tids(parameters, num_threads);
+		if (break_thread_id) {
+			printf("# Break thread: %d\n", break_thread_id);
+			printf("# Break value: %llu\n", (unsigned long 
+long)break_thread_value);
+			ret = 2;
+		}
+	}
+
+Maybe instead do ret = break_thread_id ? 2 : EXIT_SUCCESS;
+
+Fix the typo in the subject too "clictest" should be "cyclictest"
+
+John Kacur
