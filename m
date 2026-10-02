@@ -1,234 +1,136 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+Received: from mx0a-001b2d01.pphosted.com (mx0a-001b2d01.pphosted.com [148.163.156.1])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id B71854DE725
-	for <linux-rt-users@vger.kernel.org>; Thu,  1 Oct 2026 10:12:05 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id BB92628B4E2;
+	Fri,  2 Oct 2026 04:45:27 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=148.163.156.1
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1790849538; cv=none; b=n8lRTfk5QyMGn2vCI689wb/Xcjps/rcQL9eTLj6D7cu8HdVCWrOY7f+Ytnw7LdCKDPnAWmw9PMnDEYJo0zS8B2NtqwqgOmzL8SSHmqboRUrQ7xIQXuUqgorxLj2wHFviDnbfXqpQRoHqC+9cSVJOXryt7JpJcgD8wYObdovW72k=
+	t=1790916329; cv=none; b=Yq/Ec+OWEU0Tu9O8211DAtGin8wwnyMGDU2s27n5o8hc9VDSLwsNyKAs3WUjMjhtEOHtcBFrHZOBj8JehX0rn+M5DC/VmVqtTKalZQ2yvCSLphetXNxElK1t8bjJmqAk9csYVgjVXfuhB1OHCBcDXdzcoR1f2GCOTU4nICzu4jg=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1790849538; c=relaxed/simple;
-	bh=jiMa3LvigGqxJM9dmwofP0pma4uaN1plgovfS482+xU=;
-	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=hbHqyclNQEa7qOjpfZw/wRxjFGrKnGaaAkijK9V173AvIUFLgtkqf58KBPNWOK1MRbvvUc0W88adnPs80Gd6W057B4qnnOR96TqDyzihtr5nflPIw+x+Ng0CQFlFBqE/OeHQSlPcsduutVRNSMSgKbIsZ3+IX//tCfqSENXXaeI=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=WseVyDXW; dkim=pass (2048-bit key) header.d=redhat.com header.i=@redhat.com header.b=iDZiN5yl; arc=none smtp.client-ip=170.10.133.124
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
+	s=arc-20240116; t=1790916329; c=relaxed/simple;
+	bh=wyAORYeusP4vcptey9/n2NPgydi9/Gw5lAe0phtrrvg=;
+	h=Message-ID:Date:MIME-Version:Subject:To:Cc:References:From:
+	 In-Reply-To:Content-Type; b=RoRHws6PKxOPRJniEBpygCnTUZbHr5rlhyAJ/fmhherkZJW0bBU+6V8OVfRfYFUviv0ZrSf2EdbJyOxUO3tMzEsccdueURb3el5Q/NtY3nXroYeKnpxLGv3F45BNkLM6OPm16L3X9puJygFYrf75GDfU+vxgFRXSXnJcB1kUMWg=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.ibm.com; spf=pass smtp.mailfrom=linux.ibm.com; dkim=pass (2048-bit key) header.d=ibm.com header.i=@ibm.com header.b=c5RRVgnq; arc=none smtp.client-ip=148.163.156.1
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.ibm.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=linux.ibm.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="WseVyDXW";
-	dkim=pass (2048-bit key) header.d=redhat.com header.i=@redhat.com header.b="iDZiN5yl"
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1790849522;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:
-	 content-transfer-encoding:content-transfer-encoding;
-	bh=cDJsxkM+SvXdClLQE052pKwrNvvVaUn0QYC/SN5qJQc=;
-	b=WseVyDXWvYkBi1ScO1VeF3OVn9Icvtx+jk4tCqkr6LhRHsR2GlSqJ7Umydy1RMeNgdTW7b
-	IG7OpYevr2Sbq3bypWnfLq2QNlpJVsc7PwLhNklIDOBc15bDWrFgGN+lE1b5nnWEIVuzuq
-	pqnUByXmbxuBABSt/C/9qe5SKW9mhyQ=
-Received: from mail-wr1-f69.google.com (mail-wr1-f69.google.com
- [209.85.221.69]) by relay.mimecast.com with ESMTP with STARTTLS
- (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
- us-mta-320-yopnj5rqMHyHIk9wrTV7YA-1; Thu, 01 Oct 2026 06:12:00 -0400
-X-MC-Unique: yopnj5rqMHyHIk9wrTV7YA-1
-X-Mimecast-MFC-AGG-ID: yopnj5rqMHyHIk9wrTV7YA_1790849519
-Received: by mail-wr1-f69.google.com with SMTP id ffacd0b85a97d-48b0a199b20so506724f8f.1
-        for <linux-rt-users@vger.kernel.org>; Thu, 01 Oct 2026 03:12:00 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=redhat.com; s=google; t=1790849519; x=1791454319; darn=vger.kernel.org;
-        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
-         :to:from:from:to:cc:subject:date:message-id:reply-to:content-type;
-        bh=cDJsxkM+SvXdClLQE052pKwrNvvVaUn0QYC/SN5qJQc=;
-        b=iDZiN5ylDus7FW5MgvSjt5PudFNL1iGqoJWxi4Tjt72EHa0nGRqQXoEdrRmq84wX20
-         syRiTrHDjtUkKOb91Lc6Xy6CnOU0MInRuk0jT6fyUVLh8fDZvWjbbgDECFGZVWS2rs6P
-         R6Oc5Yy0kUyrDlXnpx+41NNZBe2+pNKelFevTnIN89rehbvl55l6iWU3hXMWVxsYsY9B
-         /cK1zhRDZ0KUH22WfapGPxQMJZNjKjxeRwRiUmuBt6F7liEJ00L59ASJzYbDIKEhtFkp
-         tneWaZg0tyeZHM/5iHsY5o4uXiJBKOrElxumEgP1H4Qn585gFxmkWpt5S0dgSrqUaMGC
-         ZLOw==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20260707; t=1790849519; x=1791454319;
-        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
-         :to:from:x-gm-gg:x-gm-message-state:from:to:cc:subject:date
-         :message-id:reply-to:content-type;
-        bh=cDJsxkM+SvXdClLQE052pKwrNvvVaUn0QYC/SN5qJQc=;
-        b=MvZBD3vRK2y2TFVRs0eHNu/0h+aI+6Z8Rx+dMOTOV1lxl1qD5L6+bICAqkrphlQUHo
-         rXRkM7T8guERPeBmChEfuNufSvE4aMX/ho5Vy8Zv6uVs9qbXsXF3T+y2zpcr+2FFAR5f
-         hweXXh99dh7YUVY9fbNHJrHvUbYeQXlvNGQGNZXmyjs3vgy9uEQaYELSEWjFh1JrJng1
-         8nXt8Rzl/IphSg75MY2UFDP6SF+mocZtCvXc+k76Z/6j64PadHjIASGRL54slxtDjpwX
-         AYhpWpU+JBvvC8oDv4wkS6330aYWYmwNnxnlDBQDwyzm9l58jBOnQufB3Qv3+w544H/e
-         TFXw==
-X-Gm-Message-State: AFuF++mJu9SHSNC+TMQJIH/EVl6v7cyuPfd2galDRP3XVK+ukYxXFCjO
-	h8n+3ZvEakP0L8/6yAIMwBQ7RJefuGoERsT2spbdbhCCI8HZWOaWsHG0w+elTJqCJQASN9acdgm
-	vHuYPmja2123lToD/YbmTEiEd0LlyW0XiAbrharfdrWXlPNqzeYtbfbJMxgPHv77Q/Y/y
-X-Gm-Gg: AYBFou143B5ZULkgvTPYDb1/cHgBfWtacj/EGp4LBksBRKr3gWXMiWLu2/WysZUicTk
-	8aX0APfCKXhGY6XASr8lQNHk/fInm12ysHdPZG5qFFSNzcQhNAEYz2UlZDVIrTN8GN36k99Fys5
-	V5SRYUYWEAS3p9qgyGwo/clo2FpU6g8wdZJ/jgGCylLgllUABAA0gIy/mhA/tmzRxDgfM39AgqK
-	jPkEqF6IyCRStjJVpiPDJYmBoj32+maWiwhmFa1WBgjlp3fFEfM89n4xmlxGf6Oz2KJV/N0bcDq
-	l0jkf1Yi++qUroH15TQ30eZ1lyVp6lsUUVHRgKeY1DHAwJ7GLgjXsZlnXfKBA/9QaiBV6YWTGRv
-	KUZOkts0DpT57rxwX
-X-Received: by 2002:a05:600c:4512:b0:49f:bd3c:bc1b with SMTP id 5b1f17b1804b1-4a01b00ee5dmr73130265e9.22.1790849519375;
-        Thu, 01 Oct 2026 03:11:59 -0700 (PDT)
-X-Received: by 2002:a05:600c:4512:b0:49f:bd3c:bc1b with SMTP id 5b1f17b1804b1-4a01b00ee5dmr73129845e9.22.1790849518874;
-        Thu, 01 Oct 2026 03:11:58 -0700 (PDT)
-Received: from cshulyup.raanaii.csb ([2a00:a041:e223:1b00:cde9:6812:f4a4:646])
-        by smtp.gmail.com with ESMTPSA id 5b1f17b1804b1-4a01f952931sm63334295e9.13.2026.10.01.03.11.57
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Thu, 01 Oct 2026 03:11:58 -0700 (PDT)
-From: Costa Shulyupin <costa.shul@redhat.com>
-To: John Kacur <jkacur@redhat.com>,
-	"Ahmed S. Darwish" <darwi@linutronix.de>,
-	=?UTF-8?q?Thomas=20Wei=C3=9Fschuh=20=28Schneider=20Electric=29?= <thomas.weissschuh@linutronix.de>,
-	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-	Suneeth D <Suneeth.D@amd.com>,
-	Costa Shulyupin <costa.shul@redhat.com>
-Cc: linux-rt-users <linux-rt-users@vger.kernel.org>
-Subject: [PATCH v4] cyclictest, cyclicdeadline: Exit with failure when breaktrace threshold is exceeded
-Date: Thu,  1 Oct 2026 13:11:21 +0300
-Message-ID: <20261001101121.1451706-1-costa.shul@redhat.com>
-X-Mailer: git-send-email 2.55.0
+	dkim=pass (2048-bit key) header.d=ibm.com header.i=@ibm.com header.b="c5RRVgnq"
+Received: from pps.filterd (m0353729.ppops.net [127.0.0.1])
+	by mx0a-001b2d01.pphosted.com (8.18.1.11/8.18.1.11) with ESMTP id 6922ZUxa1680368;
+	Fri, 2 Oct 2026 04:44:57 GMT
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=ibm.com; h=cc
+	:content-transfer-encoding:content-type:date:from:in-reply-to
+	:message-id:mime-version:references:subject:to; s=pp1; bh=98Wq12
+	iIlaIraiVSCF0jeRQmWRURkESi4objlUGIYfQ=; b=c5RRVgnqbtU4LjUDFWU0iQ
+	Hww3dMcTWV1YiRHd8g6woW1i5QIv6hLvN3pMSHoSeDQNaCNuAfU9FSQMYxy7U/g2
+	QAmDcFkmDtufWs3FTkXGlS4zqM2kyEumqIRC7njcEI9oyzlEi00hmkrZKyg7l0ck
+	amovJtZc0Iwx6kpaxkHF4R+XLCcOQxKc2kYeCr3KdUTox/Aak+zdXXWWFsSSDftl
+	F8bVbGZvCaE5Hreqkoe0xq8opP2XacktCTLb8Ncx0/s9vTvkTNHp174YQUzD/NxK
+	cc3070aif4h/b2n0U0RvkujGYcevZUWxNIRYvn//RBxCs6235NouD0MT8QVQsMHw
+	==
+Received: from ppma21.wdc07v.mail.ibm.com (5b.69.3da9.ip4.static.sl-reverse.com [169.61.105.91])
+	by mx0a-001b2d01.pphosted.com (PPS) with ESMTPS id 4gx5qrqe8p-1
+	(version=TLSv1.3 cipher=TLS_AES_256_GCM_SHA384 bits=256 verify=NOT);
+	Fri, 02 Oct 2026 04:44:57 +0000 (GMT)
+Received: from pps.filterd (ppma21.wdc07v.mail.ibm.com [127.0.0.1])
+	by ppma21.wdc07v.mail.ibm.com (8.18.1.11/8.18.1.11) with ESMTP id 6922KDs81834253;
+	Fri, 2 Oct 2026 04:44:56 GMT
+Received: from smtprelay07.fra02v.mail.ibm.com ([9.218.2.229])
+	by ppma21.wdc07v.mail.ibm.com (PPS) with ESMTPS id 4h1y2dhagc-1
+	(version=TLSv1.2 cipher=ECDHE-RSA-AES256-GCM-SHA384 bits=256 verify=NOT);
+	Fri, 02 Oct 2026 04:44:56 +0000 (GMT)
+Received: from smtpav02.fra02v.mail.ibm.com (smtpav02.fra02v.mail.ibm.com [10.20.54.101])
+	by smtprelay07.fra02v.mail.ibm.com (8.14.9/8.14.9/NCO v10.0) with ESMTP id 6924isI147776040
+	(version=TLSv1/SSLv3 cipher=DHE-RSA-AES256-GCM-SHA384 bits=256 verify=OK);
+	Fri, 2 Oct 2026 04:44:54 GMT
+Received: from smtpav02.fra02v.mail.ibm.com (unknown [127.0.0.1])
+	by IMSVA (Postfix) with ESMTP id 43AD320043;
+	Fri,  2 Oct 2026 04:44:54 +0000 (GMT)
+Received: from smtpav02.fra02v.mail.ibm.com (unknown [127.0.0.1])
+	by IMSVA (Postfix) with ESMTP id 6836420040;
+	Fri,  2 Oct 2026 04:44:52 +0000 (GMT)
+Received: from [9.124.216.180] (unknown [9.124.216.180])
+	by smtpav02.fra02v.mail.ibm.com (Postfix) with ESMTP;
+	Fri,  2 Oct 2026 04:44:52 +0000 (GMT)
+Message-ID: <37b02446-1e54-4ea1-9532-11056053de6c@linux.ibm.com>
+Date: Fri, 2 Oct 2026 10:14:51 +0530
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
 List-Subscribe: <mailto:linux-rt-users+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
+User-Agent: Mozilla Thunderbird
+Subject: Re: [ANNOUNCE] v7.3-rc4-rt1
+To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+        Thomas Gleixner <tglx@linutronix.de>, linux-rt-devel@lists.linux.dev
+Cc: LKML <linux-kernel@vger.kernel.org>, linux-rt-users@vger.kernel.org,
+        Steven Rostedt <rostedt@goodmis.org>,
+        Maarten Lankhorst <dev@lankhorst.se>
+References: <20260922144152.x2J3_tNz@linutronix.de>
+Content-Language: en-US
+From: Shrikanth Hegde <sshegde@linux.ibm.com>
+In-Reply-To: <20260922144152.x2J3_tNz@linutronix.de>
+Content-Type: text/plain; charset=UTF-8; format=flowed
+Content-Transfer-Encoding: 7bit
+X-TM-AS-GCONF: 00
+X-Proofpoint-Spam-Details-Enc: AW1haW4tMjYxMDAyMDAxOCBTYWx0ZWRfX6rzjqGf53FZd
+ BwACgFfzH0XWOQ2PQ3+HvyVzlFKnsPbCcmx018kMQMCWQfGfVryMiezZqwm7N1ov6+niYKN8yLG
+ eSmCWJQWoXOX2JEsFS5GnGXjOeuJ85beHSznYpTFoMuX/KPQVslympCCRLEWbwWiintmiMvLL/T
+ IniQOAtuI2ykDXibyry2BQl9wx8LxeRR8SjQ+0KP/bWQZ6ZpTeGgnn4C9pcWEtd3AHVLoiPIwqn
+ m6cW3ZQrOg2NsU4OelWnsend96TypV+EHtvlz3RhDfcsZt0Kuuwu/6biiTHWjVCZrdET6tFHwq7
+ FersjydK66r9chj8JwVsJRLmNxkGxLj0ZMiZ0sksi7F0UQlPI+sHcH5TMfmv6T0QWAwisbd1aPE
+ PSvBO2o0IlU7VfKz6AgnGertX61WYRQ7G383O8XY+Qdkn3Kz1Kj72fAOv8798rO2KtXTCmelguO
+ B1Mk3449ig+6hJZfOvg==
+X-Authority-Analysis: v=2.4 cv=SPbXx+vH c=1 sm=1 tr=0 ts=6abf36c9 cx=c_pps
+ a=GFwsV6G8L6GxiO2Y/PsHdQ==:117 a=GFwsV6G8L6GxiO2Y/PsHdQ==:17
+ a=IkcTkHD0fZMA:10 a=660iZSQnnn4A:10 a=VkNPw1HP01LnGYTKEx00:22
+ a=RnoormkPH1_aCDwRdu11:22 a=uAbxVGIbfxUO_5tXvNgY:22 a=DQibb4ZKopN1BLnJEHUA:9
+ a=QEXdDO2ut3YA:10 a=zZCYzV9kfG8A:10
+X-Proofpoint-ORIG-GUID: vQvH7_aSxS0iulhrs5hhgItPoqTZXnUb
+X-Proofpoint-Spam-Info: AW1haW4tMjYxMDAyMDAxOCBTYWx0ZWRfX2uls8LkMKnIS
+ aXfK1eY4jV7tV/LvWWrAPl58nqxqGIfWLmSQOpWCX+DQA4DNXxHLcyfH+j3kJjvPrFWqBH/md8/
+ dcpjo2u9qNuQIsWGf4ETKIDiq3vOrBU=
+X-Proofpoint-GUID: vQvH7_aSxS0iulhrs5hhgItPoqTZXnUb
+X-Proofpoint-Virus-Version: vendor=baseguard
+ engine=ICAP:2.0.293,Aquarius:18.0.1176,Hydra:6.1.134,FMLib:17.12.100.49
+ definitions=2026-10-02_01,2026-10-01_01,2025-10-01_01
+X-Proofpoint-Spam-Details: rule=outbound_notspam policy=outbound score=0
+ priorityscore=1501 suspectscore=0 clxscore=1011 spamscore=0
+ lowpriorityscore=0 malwarescore=0 adultscore=0 bulkscore=0 impostorscore=0
+ phishscore=0 classifier=typeunknown authscore=0 authtc= authcc=
+ route=outbound adjust=0 reason=mlx scancount=1 engine=8.22.0-2609040000
+ definitions=main-2610020018
 
-cyclictest and cyclicdeadline always exit 0 even when the latency
-threshold set by --breaktrace is exceeded, requiring test harnesses
-to parse output or json to detect a failed test.
 
-Set ret to 2 when break_thread_id is set, indicating the breaktrace
-threshold was hit.  The exit code enables shell expressions like
-"cyclictest ... && echo PASS" and seamless integration with testing
-frameworks.  Also pass ret to rt_write_json() in cyclicdeadline so the
-JSON output reflects the failure.
 
-Assisted-by: Claude:claude-opus-4-6
-Signed-off-by: Costa Shulyupin <costa.shul@redhat.com>
+On 9/22/26 8:11 PM, Sebastian Andrzej Siewior wrote:
+> Dear RT folks!
+> 
+> I'm pleased to announce the v7.3-rc4-rt1 patch set.
+> 
+> Changes since v7.2-rt5:
+> 
+>    - Rebase to v7.3-rc4
+> 
+> The printk related changes are all gone. What is left in the queue is
+> PowerPC, i915 and a sysfs file:
+> - PowerPC
+>    Some progress has been made. What is left is a pseries related MMU
+>    change, a patch dropping KVM_MPIC (which is e500 only) and a stack
+>    protector related workaround.
+>    The stack protector workaround might work with a different fix since
+>    only arch/powerpc is using boot_init_stack_canary().
+> 
 
----
-v4:
-- Address comments of John and Sebastian
-- Fix cyclictest json and title
-v3:
-- return 2 on failure
-- reword error descriptions in manpages
-v2:
-- refine subject
-- "Assisted-by" already conforms format AGENT_NAME:MODEL_VERSION
-- add sob
----
- src/cyclictest/cyclictest.8         | 11 +++++++++++
- src/cyclictest/cyclictest.c         |  6 +++---
- src/sched_deadline/cyclicdeadline.8 | 11 +++++++++++
- src/sched_deadline/cyclicdeadline.c |  7 +++++--
- 4 files changed, 30 insertions(+), 5 deletions(-)
+Thanks Sebastian.
 
-diff --git a/src/cyclictest/cyclictest.8 b/src/cyclictest/cyclictest.8
-index fc6121aa4d47..c52e09cbd73c 100644
---- a/src/cyclictest/cyclictest.8
-+++ b/src/cyclictest/cyclictest.8
-@@ -311,6 +311,17 @@ in mind, below cyclictest example invocation can provide a good start:
-    --histfile=output.txt
- .fi
- .
-+.SH "Exit status"
-+.TP
-+.B 0
-+Success - breaktrace latency was not exceeded.
-+.TP
-+.B 1
-+Error or invalid argument.
-+.TP
-+.B 2
-+Test failure - breaktrace latency is exceeded.
-+.
- .SH "See also"
- .MR numa 3 ,
- .MR numactl 8 ,
-diff --git a/src/cyclictest/cyclictest.c b/src/cyclictest/cyclictest.c
-index 58b56bcede0f..a541f4c66369 100644
---- a/src/cyclictest/cyclictest.c
-+++ b/src/cyclictest/cyclictest.c
-@@ -2325,9 +2325,6 @@ int main(int argc, char **argv)
- 	if (!verbose && !quiet && refresh_on_max)
- 		printf("\033[%dB", num_threads + 2);
- 
--	if (strlen(jsonfile) != 0)
--		rt_write_json(jsonfile, ret, write_stats, NULL);
--
- 	if (quiet)
- 		quiet = 2;
- 	for (i = 0; i < num_threads; i++) {
-@@ -2353,9 +2350,12 @@ int main(int argc, char **argv)
- 		if (break_thread_id) {
- 			printf("# Break thread: %d\n", break_thread_id);
- 			printf("# Break value: %llu\n", (unsigned long long)break_thread_value);
-+			ret = 2;
- 		}
- 	}
- 
-+	if (strlen(jsonfile) != 0)
-+		rt_write_json(jsonfile, ret, write_stats, NULL);
- 
- 	for (i=0; i < num_threads; i++) {
- 		if (!statistics[i])
-diff --git a/src/sched_deadline/cyclicdeadline.8 b/src/sched_deadline/cyclicdeadline.8
-index bfc6327c51da..39b5d422a452 100644
---- a/src/sched_deadline/cyclicdeadline.8
-+++ b/src/sched_deadline/cyclicdeadline.8
-@@ -58,6 +58,17 @@ Send break trace command when latency > USEC
- .B \-\-tracemark
- write a trace mark when \-b latency is exceeded.
- .br
-+.SH "Exit status"
-+.TP
-+.B 0
-+Success - breaktrace latency was not exceeded.
-+.TP
-+.B 1
-+Error or invalid argument.
-+.TP
-+.B 2
-+Test failure - breaktrace latency is exceeded.
-+.
- .SH AUTHOR
- cyclicdeadline was written by Steven Rostedt <rostedt@goodmis.org>
- .PP
-diff --git a/src/sched_deadline/cyclicdeadline.c b/src/sched_deadline/cyclicdeadline.c
-index ff3356a9be3e..61caacfde832 100644
---- a/src/sched_deadline/cyclicdeadline.c
-+++ b/src/sched_deadline/cyclicdeadline.c
-@@ -1314,10 +1314,13 @@ int main(int argc, char **argv)
- 
- 	loop(sched_data, nr_threads);
- 
-+	ret = EXIT_SUCCESS;
-+
- 	if (tracelimit) {
- 		if (break_thread_id) {
- 			printf("# Break thread: %d\n", break_thread_id);
- 			printf("# Break value: %llu\n", (unsigned long long)break_thread_value);
-+			ret = 2;
- 		}
- 	}
- 
-@@ -1333,7 +1336,7 @@ int main(int argc, char **argv)
- 	}
- 
- 	if (strlen(jsonfile) != 0)
--		rt_write_json(jsonfile, 0, write_stats, sched_data);
-+		rt_write_json(jsonfile, ret, write_stats, sched_data);
- 
- 	if (setcpu_buf)
- 		free(setcpu_buf);
-@@ -1343,5 +1346,5 @@ int main(int argc, char **argv)
- 		fclose(histfile);
- 	hset_destroy(&hset);
- 
--	return 0;
-+	return ret;
- }
--- 
-2.55.0
+It is nice to see a little progress has been made atleast.
+But it was mostly my mistake that I couldn't get time to work on it.
 
+Let me see if we can atleast get these ppc patches upstream.
+Most seems sensible to me.
+
+But then would come heavy lifting on function and performance verification.
+That's a different beast altogether.
