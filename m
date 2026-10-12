@@ -1,284 +1,155 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 9DDB045A299
-	for <linux-rt-users@vger.kernel.org>; Sun, 11 Oct 2026 19:30:13 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 0FC5C4BD782
+	for <linux-rt-users@vger.kernel.org>; Mon, 12 Oct 2026 17:46:02 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1791747018; cv=none; b=TKkacusJ5wyMGSiPDkW5MIBOMzVYkReOIBh2t9Bz3yj5yW+RXTXiuTBohd0gRtEcBX//Qbnf9t4X63TzrbFHgG3IsP/0H67yyj5j8AN1S1rMLO1+3ywnTS371KKBB6rD5kkk7yxk9L18HiaYD7KYIy2zgfgFGWUpnqDbEzEAK9s=
+	t=1791827164; cv=none; b=NTUoSdUl3ZdsT4Q1TDw/cGmfT18GPTnbHJ35fACCn4RZRmVlboDAhx4iSsPOvm7YYDLwZkqVkumUWS0yvKGSTJJzTVjWnYrkjXPNTww9tv+FcjBZsQH4OwF+2fYhytJ9mcvbIMnZf6/ezRDHhulBKntkEC0Lz2Y5GZigSTzOSZM=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1791747018; c=relaxed/simple;
-	bh=vmZIHUSgSmg0o7AaB444HWc451yB+RhsKpsy5P/+Cfg=;
-	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=RVtRTxlbkScvH4jMdEhWlq4AT+m+moXmgJ19D/cJ7Lip+oK4RColcinlQxqe+msWkJxlWeXv+ZO3qSsoRDWVpdEqWaDv4gPwNJQ6IvD300sxK8E40hw8bSqGN7y/IO92uUlR7/ddHxrLnA4XkDseA+qpjcJ/zkfX8Jx7wCCKSCk=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=FGfpQUND; dkim=pass (2048-bit key) header.d=redhat.com header.i=@redhat.com header.b=dqhzUkjs; arc=none smtp.client-ip=170.10.129.124
+	s=arc-20240116; t=1791827164; c=relaxed/simple;
+	bh=zZF9EqFdZwxu5Fw3+PWrysZ1XN13CPiEUzJoZRxDJAk=;
+	h=Message-ID:Subject:From:To:Cc:Date:In-Reply-To:References:
+	 Content-Type:MIME-Version; b=lThn7lrnAAFkwyCVt14D/aaXHOyVcHEoIBco4lHvT6lDKEnmgmWltngd6iXIkK4elqsX8UU/E//mV7OD5uaPt/+MTwGw/UMSF8aFOlV2XQuLEghwV54FWIwH03qx09nkGI/9qnnjKuEFZZiOLONoGgcrMircrCXsVabXfjY0fJw=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=A/QkYAv1; dkim=pass (2048-bit key) header.d=redhat.com header.i=@redhat.com header.b=btlqKPoj; arc=none smtp.client-ip=170.10.133.124
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="FGfpQUND";
-	dkim=pass (2048-bit key) header.d=redhat.com header.i=@redhat.com header.b="dqhzUkjs"
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="A/QkYAv1";
+	dkim=pass (2048-bit key) header.d=redhat.com header.i=@redhat.com header.b="btlqKPoj"
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1791747012;
+	s=mimecast20190719; t=1791827161;
 	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:
-	 content-transfer-encoding:content-transfer-encoding;
-	bh=96kuyfTUoTYI+dD0/dzvOD0gJHOa530FGghh53J/IXw=;
-	b=FGfpQUNDvDjSq5DkoNxBr+EGbGcFcPn+dHNQUAJwjH625/9v9Eormuz8QMEnxJeIToeocM
-	GMSe0fDhKdrrKrZXPYI/wtDDACYc7usQgR0P6wq/kVijGNev6HaYt1svUMJG6g3yiwVz/G
-	cSScCkEXKwuhk3Oy2cq+jmeZO65FNLk=
-Received: from mail-wm1-f71.google.com (mail-wm1-f71.google.com
- [209.85.128.71]) by relay.mimecast.com with ESMTP with STARTTLS
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references;
+	bh=QYW0PopOAaRvPuR+L6JhRwJ2rf1kO7BRG6yM1RtINDg=;
+	b=A/QkYAv1FhlwpOxb9Y0IToEwoQa4KAVMISNbtPJknuaKtUp8tqXg11fx6UtVRF3s8MUeOa
+	yCMx22yTbGMa6T8SJAIl5zv7W44BYt1VSngVhvkLA1Hn9DTHXspRH1X3fOfSatybaB2rwP
+	p18EAimosQ2PW4RYV4/7hSYbVd40ItY=
+Received: from mail-qk1-f198.google.com (mail-qk1-f198.google.com
+ [209.85.222.198]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
- us-mta-411-yM_ya-dAMlqzCOE_MuRSMQ-1; Sun, 11 Oct 2026 19:30:10 +0000
-X-MC-Unique: yM_ya-dAMlqzCOE_MuRSMQ-1
-X-Mimecast-MFC-AGG-ID: yM_ya-dAMlqzCOE_MuRSMQ_1791747010
-Received: by mail-wm1-f71.google.com with SMTP id 5b1f17b1804b1-4a19df2328cso4475765e9.3
-        for <linux-rt-users@vger.kernel.org>; Sun, 11 Oct 2026 12:30:10 -0700 (PDT)
+ us-mta-146-qee91CdSMb2CtrOk8iGu4A-1; Mon, 12 Oct 2026 17:46:00 +0000
+X-MC-Unique: qee91CdSMb2CtrOk8iGu4A-1
+X-Mimecast-MFC-AGG-ID: qee91CdSMb2CtrOk8iGu4A_1791827160
+Received: by mail-qk1-f198.google.com with SMTP id af79cd13be357-93dd3c3badbso482627685a.2
+        for <linux-rt-users@vger.kernel.org>; Mon, 12 Oct 2026 10:46:00 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=redhat.com; s=google; t=1791747009; x=1792351809; darn=vger.kernel.org;
-        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
-         :to:from:from:to:cc:subject:date:message-id:reply-to:content-type;
-        bh=96kuyfTUoTYI+dD0/dzvOD0gJHOa530FGghh53J/IXw=;
-        b=dqhzUkjs1l4sY8UXLVTnVviPVkosECJWMvT1/Jaqce3tUxg6xmh3cief2OYgqTni8B
-         RSbTJsns2Dwub3eUdbdz2pRQtaYYcR3BB/P8NOGuyZjmqeoAbcjYnrfI66VCxIcmlaIr
-         wVUnswYnPtNSgvIfbSnKifhuJcL2G2QivEhxpDH+dMzNt2gIZf2zZXYNCQzVxoA311K5
-         27emx0Bj7S9JOhGnTjkclifRKuawjldGi4zedGVPJRsNGaJ+j3yPj7hj7ExwQo3LO04/
-         g4f5IZsb+VNe0//O9e2jhaqZg+oSbzHk4CYK6UlB16CMGOv//QO3LVx5eZeTsRhU/hxu
-         lf9A==
+        d=redhat.com; s=google; t=1791827160; x=1792431960; darn=vger.kernel.org;
+        h=mime-version:user-agent:content-transfer-encoding:content-type
+         :references:in-reply-to:date:cc:to:from:subject:message-id:from:to
+         :cc:subject:date:message-id:reply-to:content-type;
+        bh=QYW0PopOAaRvPuR+L6JhRwJ2rf1kO7BRG6yM1RtINDg=;
+        b=btlqKPojAQ5cj+ZtKf2HemEABo9s9M0QuLBg5szbxgXtnEg9k+fmEbT5kbM9go4b8X
+         jKnsCPTADiiD4HBbxH1WGYvtRV6RfPZFAIus9diYg6G0uKlXz3+qZcvwTqzS1JxecfLF
+         2uplweJqPC8FOKE20c897/VlYf3oONgJfB7b4rgHQmQiYQjHgLolRm2xdJ+iyMII8RcQ
+         WCi+HRZ2eb5xKzggCb2ebAoqBMq1mB8uoPqF6EInAczC1NkaLDD1yvXQKzR89Ezyrfxs
+         7bpaIHS/YkcbaJn+8VVDJUxYfGzbRUtlqDt+fR48H/FG+bX7EqzlRccAHY9CVnBD1Bb7
+         e5+A==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20260707; t=1791747009; x=1792351809;
-        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
-         :to:from:x-gm-gg:x-gm-message-state:from:to:cc:subject:date
-         :message-id:reply-to:content-type;
-        bh=96kuyfTUoTYI+dD0/dzvOD0gJHOa530FGghh53J/IXw=;
-        b=QuOFrqoXMuG/itcvU9yPW+MT2c4AplDWP2InzET8MMECJ/XvaDS9rq+TfYptyUW5hc
-         m8nkWKHEkVT1wEeu/btaCKbg4Uq/kWuZyMexJAUtWLMlNYz5e+eFpfviEpWX7fzLCoiz
-         K2gj+OZcZ2ulsbThauGXyHMRXYefbriENSdUzsQS1fHM0mJZf/uJYCZnvxZuLxgtfIUT
-         huOnmCIEdNc6KrlmTNuPkGSIyd57thGgk+oo+fGoBnXERl3XoX67sis6fzztfxuhAqA7
-         PrcmRXemxKuHXT9gScXzLsyKvy85Qw1yv82cKS/cRAIX799WeZvv5X13v4ODgySsS85D
-         npLg==
-X-Gm-Message-State: AFq9FYLNj0JjmUux0t/cmuFV/T4LyOe2UFTWppeLXbUsXC8gqLF7YcuM
-	Mxxokur1KmTh3Ls8YUS7k8PfWsAplRaHCegRgj05+VHs/yLu6pZX57x//5KwBCPSkghu6S2CJ1j
-	/x+PWEgR86e2bgSzz1XUmsCSF7FZpdAj6mhpr3QCsqnYhbiXrX8vyCGCX0g51ysxxEJAmt47u5t
-	Nq
-X-Gm-Gg: AYBFou34TNI88c76ov8FWvshWAqA5TGyWThVnq1QLn8Mjq9ejqonQLq3fk7zg35bYj6
-	T6XF8qqeHfGrxTdqZvf67pfmftYcXS1BHkBlBKCxI6AnN25FyzK6FHBD3Nf4sPI3JdTrZzjZqzY
-	+hEkqQaKokI71AuQFVfT2i82TkNECofoliInuYpuXglOA2fldG6X7macVa7DtDpkCvc3PBC99wQ
-	I0PEzZZ12b/VYVNr3CZGFOJ0MmPe3wTMZ7k17KveHLC3mFs6oAZNXg3GOwBG3C3Mn0ZDRodcLNN
-	262Nwd7YAno6kgDlFaNPyS8W3Xaa8C718ugegoqJ+Eit5cKdFfsDrd4mGY96kS3ej6EAgtsy5Ci
-	Wh10rVx1e4/eceBIZ
-X-Received: by 2002:a05:600c:3b2a:b0:4a0:2540:b46 with SMTP id 5b1f17b1804b1-4a18e4aca94mr133639655e9.12.1791747009540;
-        Sun, 11 Oct 2026 12:30:09 -0700 (PDT)
-X-Received: by 2002:a05:600c:3b2a:b0:4a0:2540:b46 with SMTP id 5b1f17b1804b1-4a18e4aca94mr133639365e9.12.1791747008979;
-        Sun, 11 Oct 2026 12:30:08 -0700 (PDT)
-Received: from cshulyup.raanaii.csb ([2a00:a041:e223:1b00:cde9:6812:f4a4:646])
-        by smtp.gmail.com with ESMTPSA id 5b1f17b1804b1-4a18d12fe04sm146536145e9.4.2026.10.11.12.30.07
+        d=1e100.net; s=20260707; t=1791827160; x=1792431960;
+        h=mime-version:user-agent:content-transfer-encoding:content-type
+         :references:in-reply-to:date:cc:to:from:subject:message-id:x-gm-gg
+         :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to
+         :content-type;
+        bh=QYW0PopOAaRvPuR+L6JhRwJ2rf1kO7BRG6yM1RtINDg=;
+        b=Zw3BDdtXo2q92U9poHTonSyxHxm+L4gTC9IFmGZozVfoE+Pd1lRsR6O+h0QccGM4br
+         LEodF+1Er12KLG9o11bYssfAN7km59rNXStt8zBUzq6KKQKETkTHa0kFOxrUlcE5CCAW
+         0QMY8lTw0T3GMPxEJI40r2bgKMfnsaa2dUUZbzan3XqEj3WwHqCKQTZtKssRHxfyR+Kn
+         Dg4k2gXR2FQ/wjZ3IndPlixf10b9CGouaDrF/1wCcq1R4XqrfwXiKh5eWEUEvPTgWnM2
+         3b/EYVHs3gTN9+2EcaI22QtZioFevT7Qj0chfMW1NL6I4T5CO7vzrx3KbybBngQCueGi
+         NQcQ==
+X-Gm-Message-State: AFq9FYJcvK+KuctxD8FAZgEW79Ojb1xyR7ehqtgt/AMidyDc/enjXZJQ
+	Xg0mp2yf5KA3AmH0xoLo3CM9csnITDBFXlK0ndK9KlX8q6pid7a+933XjXvsMJS7jxaSjWGExbF
+	0LSQXbwZNiNCyHEXYO2vDEAGIuQLJUpYNyd8Ev8D8I+IflanP5ujIrPuvmrJcWmb9+2oX
+X-Gm-Gg: AYBFou0+ivIKvzx3l6Y2sJas00UvGD1k0vqeG2/MO8A3W1vXrMcFkKyYVyNJIkTDyRL
+	YsnXdDJEfc9JIJ7l31J5jr885uDhcb9jmHiqZpxdXInxZ7FvnzVMRF88z+WdVDN9FbwjKigGJUf
+	bKI94hYwCwhfcGKkRKQyHl35K7wB0U31G9vWG2JaD5P+0HDy73vmBsgktvFN47ud3A+I+jqV2Ma
+	NsyFNXKEv41T78DLvpbMN9uYq1hfHiAb6ROU03kMnbGnN45nlZc0/wspyjltwzqRtcwYXmOyCn/
+	GpK4fHcRjfMVQKle7YOQMweW5hp/GWvvCHyYd9gBM2C/s9cxl//KH53OELww2emaD9MzPrX9ryH
+	iIbWFZQos/2BZNIwoZV3V+91+tbnak6UldX09r393BHiC3Kdo1/3/90c=
+X-Received: by 2002:a05:620a:46ac:b0:93a:11a4:223c with SMTP id af79cd13be357-93ebd0c6dcfmr1604862285a.9.1791827159969;
+        Mon, 12 Oct 2026 10:45:59 -0700 (PDT)
+X-Received: by 2002:a05:620a:46ac:b0:93a:11a4:223c with SMTP id af79cd13be357-93ebd0c6dcfmr1604860385a.9.1791827159485;
+        Mon, 12 Oct 2026 10:45:59 -0700 (PDT)
+Received: from crwood-thinkpadp16vgen1.minnmso.csb (71-34-25-140.mpls.qwest.net. [71.34.25.140])
+        by smtp.gmail.com with ESMTPSA id af79cd13be357-93ef5055eb3sm38397585a.33.2026.10.12.10.45.58
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Sun, 11 Oct 2026 12:30:08 -0700 (PDT)
-From: Costa Shulyupin <costa.shul@redhat.com>
-To: Costa Shulyupin <costa.shul@redhat.com>,
-	John Kacur <jkacur@redhat.com>,
-	"Luis Claudio R. Goncalves" <lgoncalv@redhat.com>
+        Mon, 12 Oct 2026 10:45:58 -0700 (PDT)
+Message-ID: <b922c748910362ecdfaf90e79ac8bcb18d45dfa7.camel@redhat.com>
+Subject: Re: [PATCH v1] rt-tests: hwlatdetect: Restore tracing parameters on
+ request
+From: Crystal Wood <crwood@redhat.com>
+To: Costa Shulyupin <costa.shul@redhat.com>, John Kacur <jkacur@redhat.com>,
+  "Luis Claudio R. Goncalves"	 <lgoncalv@redhat.com>
 Cc: linux-rt-users <linux-rt-users@vger.kernel.org>
-Subject: [PATCH v1] rt-tests: hwlatdetect: Restore tracing parameters on request
-Date: Sun, 11 Oct 2026 22:29:59 +0300
-Message-ID: <20261011192959.2122274-1-costa.shul@redhat.com>
-X-Mailer: git-send-email 2.55.0
+Date: Mon, 12 Oct 2026 12:45:57 -0500
+In-Reply-To: <20261011192959.2122274-1-costa.shul@redhat.com>
+References: <20261011192959.2122274-1-costa.shul@redhat.com>
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
+User-Agent: Evolution 3.60.2 (3.60.2-1.fc44) 
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
 List-Subscribe: <mailto:linux-rt-users+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
 
-hwlatdetect leaves tracing parameters changed after a run. These
-parameters can affect later tests. When --cpu-list is omitted,
-hwlatdetect reuses the existing tracing_cpumask.
+On Sun, 2026-10-11 at 22:29 +0300, Costa Shulyupin wrote:
+> hwlatdetect leaves tracing parameters changed after a run. These
+> parameters can affect later tests. When --cpu-list is omitted,
+> hwlatdetect reuses the existing tracing_cpumask.
+>=20
+> Add --restore to save the CPU mask, current tracer, threshold, window
+> and width before changing them. Restore them during cleanup, including
+> after SIGTERM or an unhandled exception. Leave tracing disabled, as
+> before, and keep the default cleanup behavior.
+>=20
+> Add a shell test for successful and failing runs, SIGTERM handling,
+> --cpu-list changes, and restoration of the tracing settings.
+>=20
+> Assisted-by: Codex:GPT-6
+> Signed-off-by: Costa Shulyupin <costa.shul@redhat.com>
+> ---
+>  src/hwlatdetect/hwlatdetect.8       |  4 +++
+>  src/hwlatdetect/hwlatdetect.py      | 31 +++++++++++++++--
+>  src/hwlatdetect/test_hwlatdetect.sh | 54 +++++++++++++++++++++++++++++
+>  3 files changed, 86 insertions(+), 3 deletions(-)
+>  create mode 100755 src/hwlatdetect/test_hwlatdetect.sh
 
-Add --restore to save the CPU mask, current tracer, threshold, window
-and width before changing them. Restore them during cleanup, including
-after SIGTERM or an unhandled exception. Leave tracing disabled, as
-before, and keep the default cleanup behavior.
+Is there a use case for *not* restoring?  Though I'm curious which tests
+are just using the default parameters.
 
-Add a shell test for successful and failing runs, SIGTERM handling,
---cpu-list changes, and restoration of the tracing settings.
+> @@ -323,6 +326,12 @@     def __init__(self):
+>          self.samples =3D []
+>          self.first =3D None
+>          self.last =3D None
+> +        self.saved =3D None
+> +        if restore:
+> +            fields =3D ("cpumask", "current_tracer", "threshold", "windo=
+w", "width")
+> +            self.saved =3D {f: self.get(f).strip() for f in fields}
+> +            atexit.register(self.cleanup)
+> +            signal.signal(signal.SIGTERM, lambda sig, _: sys.exit(128 + =
+sig))
+>          self.set("enable", 0)
+>          self.set('current_tracer', 'hwlat')
 
-Assisted-by: Codex:GPT-6
-Signed-off-by: Costa Shulyupin <costa.shul@redhat.com>
----
- src/hwlatdetect/hwlatdetect.8       |  4 +++
- src/hwlatdetect/hwlatdetect.py      | 31 +++++++++++++++--
- src/hwlatdetect/test_hwlatdetect.sh | 54 +++++++++++++++++++++++++++++
- 3 files changed, 86 insertions(+), 3 deletions(-)
- create mode 100755 src/hwlatdetect/test_hwlatdetect.sh
+Why only SIGTERM?  I'd think SIGINT would be more likely.  And why only
+when --restore is used, given that there is other cleanup that is done
+unconditionally?
 
-diff --git a/src/hwlatdetect/hwlatdetect.8 b/src/hwlatdetect/hwlatdetect.8
-index 560ff7cc0cc9..5c16a94ebd04 100644
---- a/src/hwlatdetect/hwlatdetect.8
-+++ b/src/hwlatdetect/hwlatdetect.8
-@@ -92,6 +92,10 @@ behavior is to print to standard output
- .B \-\-cpu-list=CPU-LIST
- Specify the CPUs for hwlat thread to move across.
- .TP
-+.B \-\-restore
-+Restore the previous CPU mask, tracer, threshold, window, and width after
-+the test.
-+.TP
- .B \-\-debug
- Turn on debug prints
- .TP
-diff --git a/src/hwlatdetect/hwlatdetect.py b/src/hwlatdetect/hwlatdetect.py
-index ee1e0171210d..5f49a9730ec8 100755
---- a/src/hwlatdetect/hwlatdetect.py
-+++ b/src/hwlatdetect/hwlatdetect.py
-@@ -8,9 +8,11 @@
- # (C) 2009 Clark Williams <williams@redhat.com>
- 
- import abc
-+import atexit
- import errno
- import os
- import os.path
-+import signal
- import subprocess
- import sys
- import time
-@@ -183,6 +185,7 @@     def c_states_on(self):
-         """ close the file descriptor and re-enable c-states """
-         if self.dma_latency_handle:
-             os.close(self.dma_latency_handle)
-+            self.dma_latency_handle = None
-             debug("c-states enabled")
- 
-     @abc.abstractmethod
-@@ -314,7 +317,7 @@     def translate(self, field):
-             return os.path.join(path, field)
-         return os.path.join(path, Tracer.__field_translation[field])
- 
--    def __init__(self):
-+    def __init__(self, restore=False):
-         super().__init__()
-         path = self.debugfs.getpath('tracing/hwlat_detector')
-         if not os.path.exists(path):
-@@ -323,6 +326,12 @@     def __init__(self):
-         self.samples = []
-         self.first = None
-         self.last = None
-+        self.saved = None
-+        if restore:
-+            fields = ("cpumask", "current_tracer", "threshold", "window", "width")
-+            self.saved = {f: self.get(f).strip() for f in fields}
-+            atexit.register(self.cleanup)
-+            signal.signal(signal.SIGTERM, lambda sig, _: sys.exit(128 + sig))
-         self.set("enable", 0)
-         self.set('current_tracer', 'hwlat')
- 
-@@ -388,7 +397,18 @@     def display(self):
- 
-     def cleanup(self):
-         self.set("tracing_on", "0")
--        self.set("current_tracer", "nop")
-+        if self.saved:
-+            self.c_states_on()
-+            debug("Restoring previous configuration")
-+            old = self.saved
-+            self.set("current_tracer", old["current_tracer"])
-+            self.set("width", 0) # must be always width <= window
-+            self.set("window", old["window"])
-+            self.set("width", old["width"])
-+            self.set("cpumask", old["cpumask"])
-+            self.set("threshold", old["threshold"])
-+        else:
-+            self.set("current_tracer", "nop")
-         if not self.debugfs.umount():
-             raise RuntimeError("Failed to unmount debugfs")
- 
-@@ -472,6 +492,9 @@     def cleanup(self):
-                         dest="cpulist",
-                         help="the CPUs for hwlat thread to move across")
- 
-+    parser.add_argument("--restore", action="store_true",
-+                        help="restore tracing settings after the test")
-+
-     parser.add_argument("--debug", action="store_true", default=False,
-                         dest="debug",
-                         help="turn on debugging prints")
-@@ -499,7 +522,7 @@     def cleanup(self):
-         quiet = True
-         debugging = False
- 
--    detect = Tracer()
-+    detect = Tracer(restore=args.restore)
- 
-     if args.threshold:
-         t = microseconds(args.threshold)
-@@ -606,4 +629,6 @@     def cleanup(self):
-         detect.display()
- 
-     detect.cleanup()
-+    if args.restore:
-+        atexit.unregister(detect.cleanup)
-     sys.exit(maxlatency > hardlimit)
-diff --git a/src/hwlatdetect/test_hwlatdetect.sh b/src/hwlatdetect/test_hwlatdetect.sh
-new file mode 100755
-index 000000000000..f2d990cbfdfc
---- /dev/null
-+++ b/src/hwlatdetect/test_hwlatdetect.sh
-@@ -0,0 +1,54 @@
-+#!/bin/bash
-+# SPDX-License-Identifier: GPL-2.0-only
-+
-+set -o errexit
-+
-+[[ $(id -u) == 0 ]]
-+
-+d=$(dirname -- "${BASH_SOURCE[0]}")
-+
-+tracing=/sys/kernel/debug/tracing
-+mask=$tracing/tracing_cpumask
-+settings=("$mask" "$tracing/current_tracer" "$tracing/tracing_thresh"
-+	"$tracing/hwlat_detector/window" "$tracing/hwlat_detector/width")
-+original=$(cat $mask)
-+all=$(PYTHONPATH="$d" python3 -B -c '
-+from hwlatdetect import group_sep
-+m = 0
-+for part in open("/sys/devices/system/cpu/online").read().strip().split(","):
-+    a, *b = map(int, part.split("-"))
-+    for i in range(a, (b[0] if b else a) + 1):
-+        m |= 1 << i
-+print(group_sep(f"{m:x}"))
-+')
-+
-+trap 'echo $original > $mask' EXIT
-+out=
-+trap 'echo -e "FAIL: ${BASH_SOURCE[0]}:${LINENO}: $BASH_COMMAND -> $?\noutput:\n$out" >&2' ERR
-+
-+out=$("$d/hwlatdetect.py" --duration 1 --hardlimit 999 2>&1)
-+[[ $out == *"test finished"* ]]
-+
-+! out=$("$d/hwlatdetect.py" --duration 1 --threshold 0 --hardlimit 0 2>&1)
-+[ $? -eq 0 ]
-+[[ $out == *"test finished"* ]]
-+
-+echo $all > $mask
-+baseline=$(cat "${settings[@]}")
-+
-+! out=$("$d/hwlatdetect.py" --cpu-list 1 --duration 1 --restore 2>&1)
-+[[ $out == *"test finished"* ]]
-+[[ $(cat "${settings[@]}") == "$baseline" ]]
-+
-+rc=0
-+out=$(timeout --signal=TERM 2 \
-+	"$d/hwlatdetect.py" --cpu-list 1 --duration 60 --restore 2>&1) || rc=$?
-+[[ $rc -eq 124 ]]
-+[[ $out == *"Starting test"* ]]
-+[[ $(cat "${settings[@]}") == "$baseline" ]]
-+
-+! out=$("$d/hwlatdetect.py" --cpu-list 1 --duration 1 2>&1)
-+[[ $out == *"test finished"* ]]
-+[[ $(tr -d ',' < $mask | sed 's/^0*//') == 2 ]]
-+
-+echo Passed
--- 
-2.55.0
+> +trap 'echo $original > $mask' EXIT
+> +out=3D
+> +trap 'echo -e "FAIL: ${BASH_SOURCE[0]}:${LINENO}: $BASH_COMMAND -> $?\no=
+utput:\n$out" >&2' ERR
+
+Why is cpumask the only setting that gets restored on exit?
+
+Likewise, it seems to be the only setting that you force to have a
+different value than what hwlatdetect will set.
+
+-Crystal
 
