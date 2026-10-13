@@ -1,155 +1,159 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+Received: from galois.linutronix.de (Galois.linutronix.de [193.142.43.55])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 0FC5C4BD782
-	for <linux-rt-users@vger.kernel.org>; Mon, 12 Oct 2026 17:46:02 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 63554518153
+	for <linux-rt-users@vger.kernel.org>; Tue, 13 Oct 2026 14:41:22 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=193.142.43.55
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1791827164; cv=none; b=NTUoSdUl3ZdsT4Q1TDw/cGmfT18GPTnbHJ35fACCn4RZRmVlboDAhx4iSsPOvm7YYDLwZkqVkumUWS0yvKGSTJJzTVjWnYrkjXPNTww9tv+FcjBZsQH4OwF+2fYhytJ9mcvbIMnZf6/ezRDHhulBKntkEC0Lz2Y5GZigSTzOSZM=
+	t=1791902484; cv=none; b=RviB6NpPUIokYcOXlMCKbpwk3VQn+sRGn2XaBpMairD7fr8dsif9Coklkyymcf02h76bb4nDdcKxImHzP1oK2mxRI+yS1nZEJqyo5DT51uAsB6H4AAQDPB+vmo2r2CihCexeCvEVy6j6pOmFMKG4/zeaKT/ECBJ97arbSAi6QBI=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1791827164; c=relaxed/simple;
-	bh=zZF9EqFdZwxu5Fw3+PWrysZ1XN13CPiEUzJoZRxDJAk=;
-	h=Message-ID:Subject:From:To:Cc:Date:In-Reply-To:References:
-	 Content-Type:MIME-Version; b=lThn7lrnAAFkwyCVt14D/aaXHOyVcHEoIBco4lHvT6lDKEnmgmWltngd6iXIkK4elqsX8UU/E//mV7OD5uaPt/+MTwGw/UMSF8aFOlV2XQuLEghwV54FWIwH03qx09nkGI/9qnnjKuEFZZiOLONoGgcrMircrCXsVabXfjY0fJw=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=A/QkYAv1; dkim=pass (2048-bit key) header.d=redhat.com header.i=@redhat.com header.b=btlqKPoj; arc=none smtp.client-ip=170.10.133.124
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
+	s=arc-20240116; t=1791902484; c=relaxed/simple;
+	bh=3HzTVTKLBcHQQ/8+F+1NWpKN7SDZfiDX+voqK9CCMwg=;
+	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
+	 Content-Type:Content-Disposition:In-Reply-To; b=kkUcxmbv4i7cmptC4i9dyS7HY8C1w3R8Zsm6KX8m3ydFq2uMjhqGf2SoZYu0WFqASsc+cp93Sax8OK1E7FKczYTh5I1LPgUdwY7/LH6wig0xVPmzEWLkS99ru1aWxa9KOSnoQ2Zu7fSmc/qumdyXPxK+cc2xllHqb199cacDH2g=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linutronix.de; spf=pass smtp.mailfrom=linutronix.de; dkim=pass (2048-bit key) header.d=linutronix.de header.i=@linutronix.de header.b=41FTg5V9; dkim=permerror (0-bit key) header.d=linutronix.de header.i=@linutronix.de header.b=is7Bnqir; arc=none smtp.client-ip=193.142.43.55
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linutronix.de
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=linutronix.de
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="A/QkYAv1";
-	dkim=pass (2048-bit key) header.d=redhat.com header.i=@redhat.com header.b="btlqKPoj"
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1791827161;
+	dkim=pass (2048-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="41FTg5V9";
+	dkim=permerror (0-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="is7Bnqir"
+Date: Tue, 13 Oct 2026 16:41:19 +0200
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
+	s=2020; t=1791902480;
 	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
 	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references;
-	bh=QYW0PopOAaRvPuR+L6JhRwJ2rf1kO7BRG6yM1RtINDg=;
-	b=A/QkYAv1FhlwpOxb9Y0IToEwoQa4KAVMISNbtPJknuaKtUp8tqXg11fx6UtVRF3s8MUeOa
-	yCMx22yTbGMa6T8SJAIl5zv7W44BYt1VSngVhvkLA1Hn9DTHXspRH1X3fOfSatybaB2rwP
-	p18EAimosQ2PW4RYV4/7hSYbVd40ItY=
-Received: from mail-qk1-f198.google.com (mail-qk1-f198.google.com
- [209.85.222.198]) by relay.mimecast.com with ESMTP with STARTTLS
- (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
- us-mta-146-qee91CdSMb2CtrOk8iGu4A-1; Mon, 12 Oct 2026 17:46:00 +0000
-X-MC-Unique: qee91CdSMb2CtrOk8iGu4A-1
-X-Mimecast-MFC-AGG-ID: qee91CdSMb2CtrOk8iGu4A_1791827160
-Received: by mail-qk1-f198.google.com with SMTP id af79cd13be357-93dd3c3badbso482627685a.2
-        for <linux-rt-users@vger.kernel.org>; Mon, 12 Oct 2026 10:46:00 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=redhat.com; s=google; t=1791827160; x=1792431960; darn=vger.kernel.org;
-        h=mime-version:user-agent:content-transfer-encoding:content-type
-         :references:in-reply-to:date:cc:to:from:subject:message-id:from:to
-         :cc:subject:date:message-id:reply-to:content-type;
-        bh=QYW0PopOAaRvPuR+L6JhRwJ2rf1kO7BRG6yM1RtINDg=;
-        b=btlqKPojAQ5cj+ZtKf2HemEABo9s9M0QuLBg5szbxgXtnEg9k+fmEbT5kbM9go4b8X
-         jKnsCPTADiiD4HBbxH1WGYvtRV6RfPZFAIus9diYg6G0uKlXz3+qZcvwTqzS1JxecfLF
-         2uplweJqPC8FOKE20c897/VlYf3oONgJfB7b4rgHQmQiYQjHgLolRm2xdJ+iyMII8RcQ
-         WCi+HRZ2eb5xKzggCb2ebAoqBMq1mB8uoPqF6EInAczC1NkaLDD1yvXQKzR89Ezyrfxs
-         7bpaIHS/YkcbaJn+8VVDJUxYfGzbRUtlqDt+fR48H/FG+bX7EqzlRccAHY9CVnBD1Bb7
-         e5+A==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20260707; t=1791827160; x=1792431960;
-        h=mime-version:user-agent:content-transfer-encoding:content-type
-         :references:in-reply-to:date:cc:to:from:subject:message-id:x-gm-gg
-         :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to
-         :content-type;
-        bh=QYW0PopOAaRvPuR+L6JhRwJ2rf1kO7BRG6yM1RtINDg=;
-        b=Zw3BDdtXo2q92U9poHTonSyxHxm+L4gTC9IFmGZozVfoE+Pd1lRsR6O+h0QccGM4br
-         LEodF+1Er12KLG9o11bYssfAN7km59rNXStt8zBUzq6KKQKETkTHa0kFOxrUlcE5CCAW
-         0QMY8lTw0T3GMPxEJI40r2bgKMfnsaa2dUUZbzan3XqEj3WwHqCKQTZtKssRHxfyR+Kn
-         Dg4k2gXR2FQ/wjZ3IndPlixf10b9CGouaDrF/1wCcq1R4XqrfwXiKh5eWEUEvPTgWnM2
-         3b/EYVHs3gTN9+2EcaI22QtZioFevT7Qj0chfMW1NL6I4T5CO7vzrx3KbybBngQCueGi
-         NQcQ==
-X-Gm-Message-State: AFq9FYJcvK+KuctxD8FAZgEW79Ojb1xyR7ehqtgt/AMidyDc/enjXZJQ
-	Xg0mp2yf5KA3AmH0xoLo3CM9csnITDBFXlK0ndK9KlX8q6pid7a+933XjXvsMJS7jxaSjWGExbF
-	0LSQXbwZNiNCyHEXYO2vDEAGIuQLJUpYNyd8Ev8D8I+IflanP5ujIrPuvmrJcWmb9+2oX
-X-Gm-Gg: AYBFou0+ivIKvzx3l6Y2sJas00UvGD1k0vqeG2/MO8A3W1vXrMcFkKyYVyNJIkTDyRL
-	YsnXdDJEfc9JIJ7l31J5jr885uDhcb9jmHiqZpxdXInxZ7FvnzVMRF88z+WdVDN9FbwjKigGJUf
-	bKI94hYwCwhfcGKkRKQyHl35K7wB0U31G9vWG2JaD5P+0HDy73vmBsgktvFN47ud3A+I+jqV2Ma
-	NsyFNXKEv41T78DLvpbMN9uYq1hfHiAb6ROU03kMnbGnN45nlZc0/wspyjltwzqRtcwYXmOyCn/
-	GpK4fHcRjfMVQKle7YOQMweW5hp/GWvvCHyYd9gBM2C/s9cxl//KH53OELww2emaD9MzPrX9ryH
-	iIbWFZQos/2BZNIwoZV3V+91+tbnak6UldX09r393BHiC3Kdo1/3/90c=
-X-Received: by 2002:a05:620a:46ac:b0:93a:11a4:223c with SMTP id af79cd13be357-93ebd0c6dcfmr1604862285a.9.1791827159969;
-        Mon, 12 Oct 2026 10:45:59 -0700 (PDT)
-X-Received: by 2002:a05:620a:46ac:b0:93a:11a4:223c with SMTP id af79cd13be357-93ebd0c6dcfmr1604860385a.9.1791827159485;
-        Mon, 12 Oct 2026 10:45:59 -0700 (PDT)
-Received: from crwood-thinkpadp16vgen1.minnmso.csb (71-34-25-140.mpls.qwest.net. [71.34.25.140])
-        by smtp.gmail.com with ESMTPSA id af79cd13be357-93ef5055eb3sm38397585a.33.2026.10.12.10.45.58
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Mon, 12 Oct 2026 10:45:58 -0700 (PDT)
-Message-ID: <b922c748910362ecdfaf90e79ac8bcb18d45dfa7.camel@redhat.com>
-Subject: Re: [PATCH v1] rt-tests: hwlatdetect: Restore tracing parameters on
- request
-From: Crystal Wood <crwood@redhat.com>
-To: Costa Shulyupin <costa.shul@redhat.com>, John Kacur <jkacur@redhat.com>,
-  "Luis Claudio R. Goncalves"	 <lgoncalv@redhat.com>
-Cc: linux-rt-users <linux-rt-users@vger.kernel.org>
-Date: Mon, 12 Oct 2026 12:45:57 -0500
-In-Reply-To: <20261011192959.2122274-1-costa.shul@redhat.com>
-References: <20261011192959.2122274-1-costa.shul@redhat.com>
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
-User-Agent: Evolution 3.60.2 (3.60.2-1.fc44) 
+	bh=uErNyVpCtfUPW3MFhIwE40WV48bt/HhFjAcuyMglJtw=;
+	b=41FTg5V9xGAt4rJ52q+w2CL92UBCi61RXOBkI0SuXEarbJcvrhlUL7N/HcXlvUVmVMONFy
+	qmUAA7cP2poD05YMrjxXay97ihKzvy/VLbypAqYLHVQ0l9H+d9/yCgo3eTUC5rQgpp582S
+	t8wsiMrowFlHaa7qf/Aoluv0Ke/J11tx4wd9iVXqx/0PT8+p7PuUtn9+tFWqxNeFYciSxn
+	+oPxqfBq8zaKzSpRHHuepglP7rQYEeDYhVWJSEITYvVW6G1x76PNXZUf2pGAyCYkD2BEI0
+	lrMJn7iFxWHn9pfUubdOzOI1jQsofZKAPPgjeUPWghLifvqqTAWFsoi5ddj9SA==
+DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
+	s=2020e; t=1791902480;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references;
+	bh=uErNyVpCtfUPW3MFhIwE40WV48bt/HhFjAcuyMglJtw=;
+	b=is7Bnqir7Ns93/gmLwNYxx/C7WTtWM322m1BNkIPuc20nK8IcAn/krv3DPEUZg0Jpwfxqk
+	tCNuYK4SRPSzeAAw==
+From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+To: "Naulls, Peter" <PeterNaulls@eaton.com>
+Cc: "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>
+Subject: Re: Btrfs PREEMPT_RT transaction-waiter livelock: experimental
+ mitigation in kernel 6.6.78
+Message-ID: <20261013144119.-2EEqlL-@linutronix.de>
+References: <PH0PR17MB4277167A37B20340B231443FBB922@PH0PR17MB4277.namprd17.prod.outlook.com>
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
 List-Subscribe: <mailto:linux-rt-users+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
+Content-Type: text/plain; charset=utf-8
+Content-Disposition: inline
+Content-Transfer-Encoding: quoted-printable
+In-Reply-To: <PH0PR17MB4277167A37B20340B231443FBB922@PH0PR17MB4277.namprd17.prod.outlook.com>
 
-On Sun, 2026-10-11 at 22:29 +0300, Costa Shulyupin wrote:
-> hwlatdetect leaves tracing parameters changed after a run. These
-> parameters can affect later tests. When --cpu-list is omitted,
-> hwlatdetect reuses the existing tracing_cpumask.
+On 2026-10-09 15:34:02 [+0000], Naulls, Peter wrote:
+> Long term kernel hacker, but very infrequent contributor.=C2=A0
+Hi Peter,
+
+> We are using the RT kernel patch on x86 under kernel 6.6.78-rt51.
+> Specifically, this is the kernel from meta-intel in Yocto Scarthgap in
+> the intel-kernel-rt recipe.=C2=A0
+=E2=80=A6
+> sync (PID 52371)
+> =C2=A0 btrfs_commit_transaction+0xc48
+> =C2=A0 =C2=A0 [return address immediately after rt_spin_lock(&fs_info->tr=
+ans_lock)]
+> =C2=A0 btrfs_sync_fs
+> =C2=A0 sync_fs_one_sb
+> =C2=A0 ksys_sync
+
+This sort of sounds like the state is TRANS_STATE_SUPER_COMMITTED but is
+not making progress after that. Are there any tasks involved that run at
+realtime priority and would block other tasks from making progress?
+
+=E2=80=A6
+> This is in related code. I put this patch into our 6.6.78 kernel and it d=
+id not resolve the problem.=C2=A0
+=E2=80=A6
+> # Experimental mitigation for a suspected PREEMPT_RT Btrfs transaction-wa=
+iter
+> # livelock. wait_for_commit() can reselect a completed transaction that r=
+emains
+> # on trans_list after its waiters are woken. Skip completed entries while=
+ still
+> # waiting for older incomplete transactions. This is a diagnostic hypothe=
+sis,
+> # not a confirmed fix for the observed lockup.
+> # Review notes: the scan is O(n) under trans_lock. Completion state is pu=
+blished
+> # locklessly elsewhere; READ_ONCE provides a single load, not acquire ord=
+ering.
+> # A multi-hour run did not reproduce the issue, but the lock owner and ro=
+ot cause
+> # remain unknown.
+> diff --git a/fs/btrfs/transaction.c b/fs/btrfs/transaction.c
+> index e15e1855fa0a..0f05fabe451c 100644
+> --- a/fs/btrfs/transaction.c
+> +++ b/fs/btrfs/transaction.c
+> @@ -865,6 +865,7 @@ static noinline void wait_for_commit(struct btrfs_tra=
+nsaction *commit,
+>                                      const enum btrfs_trans_state min_sta=
+te)
+>  {
+>         struct btrfs_fs_info *fs_info =3D commit->fs_info;
+> +       struct btrfs_transaction *next;
+>         u64 transid =3D commit->transid;
+>         bool put =3D false;
 >=20
-> Add --restore to save the CPU mask, current tracer, threshold, window
-> and width before changing them. Restore them during cleanup, including
-> after SIGTERM or an unhandled exception. Leave tracing disabled, as
-> before, and keep the default cleanup behavior.
+> @@ -893,10 +894,16 @@ static noinline void wait_for_commit(struct btrfs_t=
+ransaction *commit,
+>                  */
 >=20
-> Add a shell test for successful and failing runs, SIGTERM handling,
-> --cpu-list changes, and restoration of the tracing settings.
+>                 spin_lock(&fs_info->trans_lock);
+> -               commit =3D list_first_entry_or_null(&fs_info->trans_list,
+> -                                                 struct btrfs_transactio=
+n,
+> -                                                 list);
+> -               if (!commit || commit->transid > transid) {
+> +               commit =3D NULL;
+> +               list_for_each_entry(next, &fs_info->trans_list, list) {
+> +                       if (next->transid > transid)
+> +                               break;
+> +                       if (READ_ONCE(next->state) =3D=3D TRANS_STATE_COM=
+PLETED)
+> +                               continue;
+> +                       commit =3D next;
+> +                       break;
+> +               }
+> +               if (!commit) {
+>                         spin_unlock(&fs_info->trans_lock);
+>                         break;
+>                 }
 >=20
-> Assisted-by: Codex:GPT-6
-> Signed-off-by: Costa Shulyupin <costa.shul@redhat.com>
-> ---
->  src/hwlatdetect/hwlatdetect.8       |  4 +++
->  src/hwlatdetect/hwlatdetect.py      | 31 +++++++++++++++--
->  src/hwlatdetect/test_hwlatdetect.sh | 54 +++++++++++++++++++++++++++++
->  3 files changed, 86 insertions(+), 3 deletions(-)
->  create mode 100755 src/hwlatdetect/test_hwlatdetect.sh
+>=20
+> Note the O(N) time here. To that end, this is very unlikely to be the
+> correct fix, but I hope it highlights the core problem. I ran this
+> patch for several hours with no apparent problem (versus seconds of a
+> lockup in previous testing).=20
+>=20
+> If there's a later kernel patch I've missed, or something else I ought
+> to be looking at or test or need more info, please let me know.=20
 
-Is there a use case for *not* restoring?  Though I'm curious which tests
-are just using the default parameters.
+PREEMPT_RT shouldn't do much different than !PREEMPT_RT. Do you have
+tasks with different priorities? If that is the case then it might be
+that one thread is blocking another thread that should make progress.
+Your changes iterates over TRANS_STATE_COMPLETED so it seems that it is
+not cleaned up for some reason.
 
-> @@ -323,6 +326,12 @@     def __init__(self):
->          self.samples =3D []
->          self.first =3D None
->          self.last =3D None
-> +        self.saved =3D None
-> +        if restore:
-> +            fields =3D ("cpumask", "current_tracer", "threshold", "windo=
-w", "width")
-> +            self.saved =3D {f: self.get(f).strip() for f in fields}
-> +            atexit.register(self.cleanup)
-> +            signal.signal(signal.SIGTERM, lambda sig, _: sys.exit(128 + =
-sig))
->          self.set("enable", 0)
->          self.set('current_tracer', 'hwlat')
+Could you try if you can reproduce this with v7.3-rc7? This one does not
+require any additional patches.
+I'm not sure if this report would help the btrfs folks to recognize if
+this is a solved problem or where the issue might be.
 
-Why only SIGTERM?  I'd think SIGINT would be more likely.  And why only
-when --restore is used, given that there is other cleanup that is done
-unconditionally?
-
-> +trap 'echo $original > $mask' EXIT
-> +out=3D
-> +trap 'echo -e "FAIL: ${BASH_SOURCE[0]}:${LINENO}: $BASH_COMMAND -> $?\no=
-utput:\n$out" >&2' ERR
-
-Why is cpumask the only setting that gets restored on exit?
-
-Likewise, it seems to be the only setting that you force to have a
-different value than what hwlatdetect will set.
-
--Crystal
-
+Sebastian
