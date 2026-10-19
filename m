@@ -1,97 +1,126 @@
-Received: from mail-dy1-f182.google.com (mail-dy1-f182.google.com [74.125.82.182])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 469CA2EBDE9
-	for <linux-rt-users@vger.kernel.org>; Sun, 18 Oct 2026 03:42:41 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=74.125.82.182
-ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1792294963; cv=none; b=rGMvW3i2SfVw+ZDn0CNh2bOWxF09Yj3uL94AyFo53AnSdAp3brpBz6ozJ5QnHse1hWblr+tYCo08BPOAzgajxuIY+0Sa0N3sSByu8cfYqHMVa9+aexF1w9Wc3BNumoP6s8eRD6rRNXHUeLVR3n4l1Pok0xUj5pJm+6gWQeYHJlg=
-ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1792294963; c=relaxed/simple;
-	bh=OEiXZACQSG+UMfc3g985+eXqc1K6tNvfEVBEPiC+0Js=;
-	h=From:To:Cc:Subject:In-Reply-To:References:Date:Message-ID:
-	 Content-Type:MIME-Version; b=o/Zoz9FOhjI2pfdbzHjxGm1bOwb7lt7Ak3g626pFwYAlPcCDZsqU3JCbklrPuWPVobwlrMSt1x/Vh8hqvd+YyU72+aim7xu95Gn3RhYkHFFOFXZ11iXo4X7i0CRBIo+HCFGOhnNdhbNqyTm1C3nKFZgkKsQ/u0kGqEbPXnmO8EE=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=k92C8ftm; arc=none smtp.client-ip=74.125.82.182
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 8614F4CEE7E
+	for <linux-rt-users@vger.kernel.org>; Mon, 19 Oct 2026 10:24:05 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=pass smtp.client-ip=170.10.129.124
+ARC-Seal:i=2; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
+	t=1792405446; cv=pass; b=LocVqh09/C6DI6ROwhFJ6NvdOgXcGXvsZ6E7IZGIsqOLR///rTU3/H2llGp+bcWuNmczmlCOs3qKXzt7em4uv0CQxF9v2bXcFsBHMWH+CGIXsei5ekCt4VKVhCxQY6lsd7cG/f4GKNeObwn5RUQ9cok6um3nxFoGaL3ze7wu/Uk=
+ARC-Message-Signature:i=2; a=rsa-sha256; d=subspace.kernel.org;
+	s=arc-20240116; t=1792405446; c=relaxed/simple;
+	bh=w4ecmBS9RcSJvpZHV2T9H8zX8wgB4XDc8bzNKDIkkOM=;
+	h=MIME-Version:References:In-Reply-To:From:Date:Message-ID:Subject:
+	 To:Cc:Content-Type; b=Envcy8fUAUvISfa5tPYJZ0YMSODhSZYCtIIQBoL1rCBiyqmthV1sxjweKC3n1XIcmebnMNYuoHMrwMH1wNkRDnQcaJ9NnLFVlzQXZ5Xe9YvjgnygGK3Bd2sl1bBO0LPQlJ7w2cCGh05oljiaCvs1xhVf/xuwyBY2gT8Y2RsOv3M=
+ARC-Authentication-Results:i=2; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=E3bCHFyw; dkim=pass (2048-bit key) header.d=redhat.com header.i=@redhat.com header.b=WPGC1xud; arc=pass smtp.client-ip=170.10.129.124
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="k92C8ftm"
-Received: by mail-dy1-f182.google.com with SMTP id 5a478bee46e88-33bf40b0c8bso2175203eec.0
-        for <linux-rt-users@vger.kernel.org>; Sat, 17 Oct 2026 20:42:41 -0700 (PDT)
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="E3bCHFyw";
+	dkim=pass (2048-bit key) header.d=redhat.com header.i=@redhat.com header.b="WPGC1xud"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1792405444;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 in-reply-to:in-reply-to:references:references;
+	bh=W1uyDsMBUaRht2STbrOGrKWI9y7NVw04caCuU34nyMk=;
+	b=E3bCHFywsSthdRil8F/2G1aYU2ZvMTPtrG/+3jnK+iYBSZXj438KwSt+CTVBV4AndPqnt2
+	bj0EBoY5Uk1/1jvrBumh0I2PEDU9C/UZ2bHfZJWbWgOjM6thbYYJDZGv1aaIWrHnffM6gO
+	vbjNVEAOBnoplQoXfKh8ifHVYHN6QWg=
+Received: from mail-ej1-f72.google.com (mail-ej1-f72.google.com
+ [209.85.218.72]) by relay.mimecast.com with ESMTP with STARTTLS
+ (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
+ us-mta-591-Qs0ckEAfOimGiDltomPUhQ-1; Mon, 19 Oct 2026 10:24:03 +0000
+X-MC-Unique: Qs0ckEAfOimGiDltomPUhQ-1
+X-Mimecast-MFC-AGG-ID: Qs0ckEAfOimGiDltomPUhQ_1792405442
+Received: by mail-ej1-f72.google.com with SMTP id a640c23a62f3a-c25edb54d22so215574966b.1
+        for <linux-rt-users@vger.kernel.org>; Mon, 19 Oct 2026 03:24:03 -0700 (PDT)
+ARC-Seal: i=1; a=rsa-sha256; t=1792405442; cv=none;
+        d=google.com; s=arc-20260327;
+        b=LmCB2n4UptW0QkJmG2gZtkNfQaKGFHAsLjbLVdDtffTo+OUrgSq5mRMpDD0I9v8ELP
+         vBT3QDAVl0Nfz447jJTfHBlnV5dX+Ad99z5gm3Ew75guLIhHFi8hhlG07CC8/Ur9W2gV
+         3bEJ7T/Q1z5CxAEvlR7U+u8A4ENe8eycNIv644egnHtUuBFN3wneFtHQePPVXKOPSIX5
+         joyO9tqQ5QbddpGaxS5askC+ybT8QsY9Lj2imPeg4CDesgRbcTsadqOd7ylVQIZwkpgC
+         iyzsFdrxhtqm8kkMFUnrbSLwBSjcLN7V1UPrbeesvIIrmPUV8SNYBNRske7wW3FZ2x63
+         wjOA==
+ARC-Message-Signature: i=1; a=rsa-sha256; c=relaxed/relaxed; d=google.com; s=arc-20260327;
+        h=cc:to:subject:message-id:date:from:in-reply-to:references
+         :mime-version:dkim-signature;
+        bh=W1uyDsMBUaRht2STbrOGrKWI9y7NVw04caCuU34nyMk=;
+        fh=eWqfEurXEsIq82gY41hKEhMWw/woAV0WKEdR0nB4Po0=;
+        b=EC2tND1x7f31+eZIparIQTTh0qfk5REt7J/fFLr0eYzikizPKrQfl49DmDwHVvgmjN
+         78rGvHPeESkMWnJaE3xkXpL3BsV5Tn/r1YhOkqUdGjOOrfF5/jWu74Ttz5l5AAN9Phw6
+         T2rhJA+0DwcglfT7ivLPx6BU+YEUtD7ImosODwaQvAqDzZGn1S2EnP+XQ97oVMdtzwE/
+         U5w7SlxK0AB3v3S2OKG7eg9tySZ09i6C36FwYvXyH01ObdkXsOlMfZnTKrW5xUum+MS1
+         SZLMEqu0PeHVykrGpcP/27cU9qdFVDc5YMYB+it8eml4aWq7+OK+SLQztZdv2EtQ8Nik
+         eRNQ==;
+        darn=vger.kernel.org
+ARC-Authentication-Results: i=1; mx.google.com; arc=none
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20251104; t=1792294960; x=1792899760; darn=vger.kernel.org;
-        h=mime-version:content-transfer-encoding:content-type:message-id:date
-         :references:in-reply-to:subject:cc:to:from:from:to:cc:subject:date
-         :message-id:reply-to:content-type;
-        bh=OEiXZACQSG+UMfc3g985+eXqc1K6tNvfEVBEPiC+0Js=;
-        b=k92C8ftm4Z4uVSPvuYtUJvVrhJy837wGK15NvGscbLc6ABrM4otx4JXt3NFqQNE0GN
-         AIR+chAK01GHsCB1X0eY0Krofz2OjNceM+mynyi9xJPOuqLPQPxHYbXabEuahhLWcV8l
-         Bl8rYd8mr60vccXZerJjUntxVYc4IQAuZlWshZjIGNlnaa4xIIfEMZn146HxNXZmLYgr
-         hLc0eOKEBPrXHKvXIS7rVmB3O7350w85n3CKQLql1n3P8ngCVmb/8a2k62VGeB1r1Mvj
-         KT2Cq6915LZ4VCSJ6y4V3ERd5U6XABdoe765mLUBMT6uG4Jpy8YNfeAjlWpB1aGtYMS4
-         /32g==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20260707; t=1792294960; x=1792899760;
-        h=mime-version:content-transfer-encoding:content-type:message-id:date
-         :references:in-reply-to:subject:cc:to:from:x-gm-gg
-         :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to
+        d=redhat.com; s=google; t=1792405442; x=1793010242; darn=vger.kernel.org;
+        h=content-type:cc:to:subject:message-id:date:from:in-reply-to
+         :references:mime-version:from:to:cc:subject:date:message-id:reply-to
          :content-type;
-        bh=OEiXZACQSG+UMfc3g985+eXqc1K6tNvfEVBEPiC+0Js=;
-        b=PTZba+IsvL/eAOIPuEBkx27h8e9Y+FkCrkfGdLkR+gJbv0g06QlSmWu00+Pm3/vebP
-         1d1QxreGc0yveHdPuGXFSf6V3zJnt18sVDYnq8BSm5QJxClRkiMlbfbpE0zUU55GeLrF
-         TxEFTPTGBeMhWik7tnMUneaWEPWTMeFalmk6lFWKXlj1U7Gk/BgPDfbt8xMPG5TqEhQp
-         vP/keakAoeAU/15n7SQAlwPpqBYPAnWYfjQvQ6zH27zYv7u/U/0LRcBNp/8XimCVv2jF
-         ge33XV9YMonAYDog9Yc9Qm+IgdSxcXbEUbHSDjaSOoWXjtp07hZcuskcrPsOjIDSMDs1
-         Ie1g==
-X-Forwarded-Encrypted: i=1; AKwUvByvHzxxoBCcXBF5Y/CehFDTUGMaPf4K5McZWMioZckYazwgHOdC5sOd2zluVHRudcCgGp0rEqqPjdIq4OuYLw==@vger.kernel.org
-X-Gm-Message-State: AFq9FYKkNK1OmccjeklZU7qZn57bhmN0/U4IlNRD+09bO48ExTPuqzhY
-	lHvGLgrgDVSo3jdcNU3ovY94Y4h44GaLJw4b3899K+dzM86arxvOIuus
-X-Gm-Gg: AYBFou0AwrxVNOFiRrFNFGZIp0VOtsBF1KHH12ojbQqHQkqG0U0gV10+jItuUp5wRbu
-	CN0I/mj5zsgYkSvGNeqfvAuBnxUCtSyY5/3wrifkPeFLJ67GNR2RG0NrRC9Qgtr97aSMZ8mYi1b
-	80JW5E7cOwuhMzBdZ+jEDNGHk04VzYMcIsMjlwjGbE4Bla7sexJV+yE39stR6vClxQX/tdVmrwa
-	FZd6QFxzDoM6HLmxg2gIdlsa+jB1+3NgQhC6fW+NwxPDghu3mzKJQD/5+n7o3QjFOAwxgXO/WtS
-	FyLMp9ocnCaGrK84vPH9Kj5xhCWlufHJEif22JYhh8gqP+jNC2Ya/22hb3qLi7pSPLyFjo4apAz
-	TkkanrehsDQjxNHAmVmXVstUgA+IzoIMAWKvcfE2eH8Fs9YvOXzYRtjdqFxi2U2Hr13Knlq89u7
-	Sh8w01q2WdBEXW1nUNXHMgJ+psgm2LDph5HWPcLeLqqn3bGngL1MLYn9LPaiucGo38Uw==
-X-Received: by 2002:a05:701b:205b:10b0:184:d593:2897 with SMTP id a92af1059eb24-185138b5855mr6502042c88.29.1792294959920;
-        Sat, 17 Oct 2026 20:42:39 -0700 (PDT)
-Received: from localhost ([183.242.161.82])
-        by smtp.gmail.com with ESMTPSA id a92af1059eb24-1831a6f5a13sm21454007c88.12.2026.10.17.20.42.35
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Sat, 17 Oct 2026 20:42:39 -0700 (PDT)
-From: Chaosheng Qu <chaosheng.qu.linux@gmail.com>
-To: Kayra Cizmeci <kayracizmeci@gmail.com>
-Cc: Steven Rostedt <rostedt@goodmis.org>,
- Peter Zijlstra <peterz@infradead.org>, Martin King <martin3kx@gmail.com>,
- Thorsten Leemhuis <regressions@leemhuis.info>, regressions@lists.linux.dev,
- linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org
-Subject: Re: [PATCH] sched/rt: queue a push when a queued RT task is boosted
-In-Reply-To: <atOGI0tcyXnuWuD9@scheduler.schedules>
-References:
- <CAEB5A_91hob8ddOhW=PrO1=O7GrFmSxY3r1-_Ard6x8KHHuJGA@mail.gmail.com>
- <20260814183652.611e7ecf@gandalf.local.home>
- <6db9c47f-a1f8-49dd-9e80-f9014d75f9e8@leemhuis.info>
- <20260903092037.5b739980@gandalf.local.home>
- <20261015061915.126442-1-chaosheng.qu.linux@gmail.com>
- <20261017121423.393837-1-chaosheng.qu.linux@gmail.com>
- <atOGI0tcyXnuWuD9@scheduler.schedules>
-Date: Sun, 18 Oct 2026 11:42:32 +0800
-Message-ID: <179229495240.39966.14792426764563252817@gmail.com>
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: 7bit
+        bh=W1uyDsMBUaRht2STbrOGrKWI9y7NVw04caCuU34nyMk=;
+        b=WPGC1xudL9tG9eCmeAnKzRN2KpGC8kwTMQpgYdSkyxEVGiKHfp6B3Ffj2v8YGI+hET
+         WoOGbNSaFbWKlaVwNkNwuzM/E28oUURAUBa/FOYD4hA5elmpDd97FI0DKFpGoBk8kVTs
+         yx/VOCXZNh/BmPaK8mUofhTnA7qq1I6s777ZYnNYMXo2L4Epao8PMxKJNs0L9I+sCr6y
+         vJriHv0lpdLGkhU40Qicg36f1F/THwnt6FufrbdRkApO9WcRvrDz0/q4toRwmTM7iLnN
+         AmMcd21vLWRWVgEonSMciWx/83gJbUJuRXuXW8S9T1FLxf1Xy8s1mEn9DGjMPa6w93Z6
+         WNPQ==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20260707; t=1792405442; x=1793010242;
+        h=content-type:cc:to:subject:message-id:date:from:in-reply-to
+         :references:mime-version:x-gm-gg:x-gm-message-state:from:to:cc
+         :subject:date:message-id:reply-to:content-type;
+        bh=W1uyDsMBUaRht2STbrOGrKWI9y7NVw04caCuU34nyMk=;
+        b=AZ5hV0QBhck7IfVSrDUtClVJAHld8Wknkj1pnsZ5Y05hpamzr9/aN0oqdqDrEBsmvR
+         qeukPfD0voD8HxeJvMXRHiqBknf3ldWJOGdtotUJFGfxbDbB+K5VVIuUSE5E4G/onqaz
+         5U5wpyOwqCvEymqxnRb7LfBo/nlebrdWF3de+s3d6N60uQbnYclJemteCtIMbPxMzjfB
+         jMdsw9Mwnp04MCpyyGb5cngLvp7OM0S9af+4/rDXfGO/nGzGzaJk5SLlGRh8gymrYv58
+         JZotmxUXwiovJIvbojNyvRmG8vEzMaelFCe+VOy567gbi6cY+Umdtm7uW+fqtFfs0prO
+         Iquw==
+X-Forwarded-Encrypted: i=1; AKwUvBxVBln6V+uw6fScrNOQGhZfZzJmbwOfsJ2siwUss1dIQrCCvBl3J3Z/xU7/AMIIfodlosocsdmPvjlkZP/bkQ==@vger.kernel.org
+X-Gm-Message-State: AFq9FYJoegsqSiUk78OEsHT0Emge6JKqrKbL2RJUrne/drF8nIvJWChX
+	wNFX93KnIA2sPONoeccMM6zFMJXyl0A4ElSjXRM7GWZKQ3cql1L8j3v4u/i7NTe+ID6VHEY9NrL
+	s1w4zBTltDhCkmaQ1ALawIPhOl+I5eyjzJldUL5+dmH3JJ1z31ZSHXiSnYpy7y0eNRClhYF4C6q
+	S+a3Cc8QCyFlfuJ9tyfHPKXR7tzWDDQLS55KdiRGETzow=
+X-Gm-Gg: AYBFou0vhTm+qzoZvhSqqnChJXG/PHK+UJnrc7ln2gi2DRtbPWshf47Q0OaY/mtqlan
+	LWl2tPGZSSCD6cahuFEqS1s2OcuD20xSbgwIXLHaMxbBHRIJiBVDzm/bGg9iqY3C8FrfeN8AZEa
+	5rzVFRv7tYebgwCi/Jgoy2/70LHQGTD/KwnpYKT4gGSNeDjFB4VqwkPl/QDTb6HQpjPDWHNLofL
+	4sSy7EqXTjfD6LqZQ==
+X-Received: by 2002:a17:907:c011:b0:c2e:4c59:a3ab with SMTP id a640c23a62f3a-c41a06e5177mr500222766b.48.1792405441921;
+        Mon, 19 Oct 2026 03:24:01 -0700 (PDT)
+X-Received: by 2002:a17:907:c011:b0:c2e:4c59:a3ab with SMTP id
+ a640c23a62f3a-c41a06e5177mr500214666b.48.1792405439787; Mon, 19 Oct 2026
+ 03:23:59 -0700 (PDT)
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
 List-Subscribe: <mailto:linux-rt-users+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
+References: <20261011192959.2122274-1-costa.shul@redhat.com> <b922c748910362ecdfaf90e79ac8bcb18d45dfa7.camel@redhat.com>
+In-Reply-To: <b922c748910362ecdfaf90e79ac8bcb18d45dfa7.camel@redhat.com>
+From: Costa Shulyupin <costa.shul@redhat.com>
+Date: Mon, 19 Oct 2026 13:23:23 +0300
+X-Gm-Features: AclHuK-SyVLNdvssr6baPfyRPe18-HMszETrsEyU1A1ECsOHjusnxaZGJ_N_koM
+Message-ID: <CADDUTFxXf+3sB-kbnbTiRQZ6r7FQzdQRKYqxDVYobzQJh4bFFg@mail.gmail.com>
+Subject: Re: [PATCH v1] rt-tests: hwlatdetect: Restore tracing parameters on request
+To: Crystal Wood <crwood@redhat.com>
+Cc: John Kacur <jkacur@redhat.com>, "Luis Claudio R. Goncalves" <lgoncalv@redhat.com>, 
+	linux-rt-users <linux-rt-users@vger.kernel.org>
+Content-Type: text/plain; charset="UTF-8"
 
-Thanks. The long explanation is below the --- in the patch; the prose above
-it is the short changelog. I added the Suggested-by and shortened the
-changelog. The commit is now 04de902d6a4e8a6ce6471b97d73f869c5753dc61 on top
-of 1d08a07fd492.
+On Mon, 12 Oct 2026 at 20:46, Crystal Wood <crwood@redhat.com> wrote:
+> Is there a use case for *not* restoring?  Though I'm curious which tests
+> are just using the default parameters.
+Backward compatibility results in awkward code.
 
-The patch is attached.
+> Why only SIGTERM?  I'd think SIGINT would be more likely.  And why only
+> when --restore is used, given that there is other cleanup that is done
+> unconditionally?
 
-Thanks,
-Chaosheng
+SIGINT is already covered. Python turns it into KeyboardInterrupt.
+
+Costa
+
