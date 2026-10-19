@@ -1,251 +1,153 @@
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=170.10.133.124
+ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
+	t=1792441230;
+	b=0G3fK+XTqMlZDKB4dIxPTfTrwmqdcmZveT47ibgGxOikB0PbOb9EJxJxmZuBNs8FI63t
+	 FvOAvSogCPyJuFkRB+9r6t4WPRuYDqmNUvYMyCKVk5+Rt9FF5864FSvEyW2udtfHPouK4
+	 JX218w9BA1FO22zVI2MAX1N93rGpKkmcCmQGJ/qyst/Klxc7INOrjTvsX13bh0rLf3ofn
+	 Vsxe45I5LfkmaaXM9OHX8VyPfrcVWBoRes+8eDuZVQdSZnZCbVk25Wf4GDaLKSOfAiPim
+	 bO1irQ6YtMijdBEIpebbGNWws6v6IUFe9eC7NQ+WyZLlpcVdoQEZaIK4W7S6JIdyzJg==
+ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
+	a=rsa-sha256; c=relaxed/relaxed; t=1792441230;
+	h=DMARC-Filter:DKIM-Signature:Received:X-MC-Unique:
+	 X-Mimecast-MFC-AGG-ID:Received:DKIM-Signature:X-Google-DKIM-Signature:
+	 X-Forwarded-Encrypted:X-Gm-Message-State:X-Gm-Gg:X-Received:
+	 X-Received:Received:Message-ID:Subject:From:To:Cc:Date:In-Reply-To:
+	 References:Content-Type:Content-Transfer-Encoding:User-Agent:
+	 MIME-Version;
+	bh=egY8aXoYUqLerkUG+cz/c3yIfOvIfJOmeCo0llp4TbA=;
+	b=r4dcphwP8vd7rKrwam2FIvKRsTCDL4A0pXhrfRuUeqwlBg2e3U4lEKLW1W/pDoUHQJ5f
+	 UsQKuF0LrKsN/7rmOuCFPdLCHcprUvnOavbLZw3RWaNn0QMi2kErk51BiOsqZ1EZK7ao/
+	 yeYzlTucvoKYBFFsTZ6+s08By6P/oPjiloz/u0zuLq4s9UpPPBIy6YfUvvH/wv0TWBaKr
+	 gyBJ89uxZb0LpEUEkqe4QTK1JDzp510XVGM3WIFA7UUeVm+niMZ/gJbZTpkHZjmDom8ui
+	 pD5iYlRvJev94KmYsx2gJScOKNqQN7FilIgZ56AS8XjWrdWoN0CULe1azmn7NH+6Sxg==
+ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
+	dmarc=pass header.from=redhat.com;
+	spf=pass smtp.mailfrom=redhat.com;
+	dkim=pass header.d=redhat.com header.i=@redhat.com header.a=rsa-sha256 header.s=mimecast20190719 header.b=Wb0awvLa;
+	dkim=pass header.d=redhat.com header.i=@redhat.com header.a=rsa-sha256 header.s=google header.b=kcvFFyjA;
+	arc=none smtp.remote-ip=170.10.133.124
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature ECDSA (prime256v1) server-digest SHA256)
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 3B22D4B9229
-	for <linux-rt-users@vger.kernel.org>; Mon, 19 Oct 2026 10:29:36 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
-ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1792405779; cv=none; b=tKAn0LXbpyTGGjHvFRk1l53ScXqqV7OR/ipzJ1QS6IHTzS6Mld7sHtn2xHdMphEtiMPSbdmQC/dK9qYZJTajGTlb6L9rc0D5e7gMePDUMUqQyBMfwOMGCE2Yz6WvKdXYB1QdzdZhGzFS/UrjkXN8h9gku1LLHZcK79r2xuNo8fs=
-ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1792405779; c=relaxed/simple;
-	bh=+RrZpSQ+dpKWlsMm3ReciBrOlos2Vl+7eUpCTRCh0yw=;
-	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=FekgboR3lbCtUUOoKJsRirUn5u3o95qiRxsHLtOZRPxI+09Qt6IK9hBtoWK1sWZcUH07QujEmY0HpPTxjAdWIwjsD+W4qmnF0nUEc9IR05EcVGOIXYVLqqHEZYPpOJvmq0yJXaLtpmJCGURXJoRXoa8leFm4QMe/eHPK6o2LdiA=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=e1rkeZi0; dkim=pass (2048-bit key) header.d=redhat.com header.i=@redhat.com header.b=MpBkGrdb; arc=none smtp.client-ip=170.10.133.124
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 2DB08606A31A
+	for <linux-rt-users@vger.kernel.org>; Mon, 19 Oct 2026 20:20:29 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 2DB08606A31A
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="e1rkeZi0";
-	dkim=pass (2048-bit key) header.d=redhat.com header.i=@redhat.com header.b="MpBkGrdb"
+	dkim=pass (1024-bit key, unprotected) header.d=redhat.com header.i=@redhat.com header.a=rsa-sha256 header.s=mimecast20190719 header.b=Wb0awvLa;
+	dkim=pass (2048-bit key, unprotected) header.d=redhat.com header.i=@redhat.com header.a=rsa-sha256 header.s=google header.b=kcvFFyjA
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1792405776;
+	s=mimecast20190719; t=1792441229;
 	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:
-	 content-transfer-encoding:content-transfer-encoding;
-	bh=NoHbSvqJtX7bhXzwy5x29sQlsITPXaxb+KcAmo0EzCE=;
-	b=e1rkeZi0fczSYYp4eYvzyyImr3i41ZR1AoBH4jb4YdglkmnUhr/PUqY1uqDgwpqcJ2TLwC
-	CnXSxSMloBoyj2uWGMZhLVhiKG/6EPvjAFnp7kEX+5oDwZQ7hFQayqCWKl/spFNDhnqJhI
-	z7uUXLKM3XSbUJd2rocI3ykGrDoZIRc=
-Received: from mail-wm1-f72.google.com (mail-wm1-f72.google.com
- [209.85.128.72]) by relay.mimecast.com with ESMTP with STARTTLS
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references;
+	bh=egY8aXoYUqLerkUG+cz/c3yIfOvIfJOmeCo0llp4TbA=;
+	b=Wb0awvLa0vLTLeMYygN6pLw0EjLQUo1A3VOJbv3Ys0Fg9fTeoZ0Fiw6URArBhvEdye12La
+	0xVAL0kh0X2oJf3KsZe9ncweTG4ot6AlVi64I/1eQqt+R2wNxfX2TaXF30nmHOSw+r9Kci
+	Fp5V6/Gr/Ispga8d3+VwwWCr9ZpLB+c=
+Received: from mail-qv1-f69.google.com (mail-qv1-f69.google.com
+ [209.85.219.69]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
- us-mta-308-LQeO09UyPi2moY2z4C1eiw-1; Mon, 19 Oct 2026 10:29:34 +0000
-X-MC-Unique: LQeO09UyPi2moY2z4C1eiw-1
-X-Mimecast-MFC-AGG-ID: LQeO09UyPi2moY2z4C1eiw_1792405773
-Received: by mail-wm1-f72.google.com with SMTP id 5b1f17b1804b1-49cdc4080ddso13996045e9.1
-        for <linux-rt-users@vger.kernel.org>; Mon, 19 Oct 2026 03:29:34 -0700 (PDT)
+ us-mta-688-dz6Y3G-cN0eLczyzuQq7rA-1; Mon, 19 Oct 2026 20:20:27 +0000
+X-MC-Unique: dz6Y3G-cN0eLczyzuQq7rA-1
+X-Mimecast-MFC-AGG-ID: dz6Y3G-cN0eLczyzuQq7rA_1792441227
+Received: by mail-qv1-f69.google.com with SMTP id 6a1803df08f44-917a7fffbe0so49845996d6.1
+        for <linux-rt-users@vger.kernel.org>; Mon, 19 Oct 2026 13:20:27 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=redhat.com; s=google; t=1792405773; x=1793010573; darn=vger.kernel.org;
-        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
-         :to:from:from:to:cc:subject:date:message-id:reply-to:content-type;
-        bh=NoHbSvqJtX7bhXzwy5x29sQlsITPXaxb+KcAmo0EzCE=;
-        b=MpBkGrdbAciAGYdI2Cj5mtanP6ZrHzEjPVbBpo7uGnHPCyACzYB5ptDZ6Gsubyqxbl
-         4gybcY+quf7kHVoVuSYYK8lx9+f+KliD2Gtr69bk5OfDP9stPqYmaSUwYmwTxryGAJo3
-         kXsotJASXh/mjKy2feVhu12XSoIhzXuDosA0choSeIgKfaQyRLwgW3SM3elR8ek9z3JD
-         nVEIbIS8/KkQUBJH5kuztAhL41bOZCcwW0nKMBRMuvtF4Tdav5j7Af7NJ/37+TxDtokq
-         fInUCp3YxRe/tCJuHCAAoOCruFBP7fhrglc3ebzdLOcQKCpOVngzpHsiJEDh/t079cfO
-         sA5A==
+        d=redhat.com; s=google; t=1792441227; x=1793046027; darn=vger.kernel.org;
+        h=mime-version:user-agent:content-transfer-encoding:content-type
+         :references:in-reply-to:date:cc:to:from:subject:message-id:from:to
+         :cc:subject:date:message-id:reply-to:content-type;
+        bh=egY8aXoYUqLerkUG+cz/c3yIfOvIfJOmeCo0llp4TbA=;
+        b=kcvFFyjAkP1XVZhPdjaypRLD4E+PE3xpwWJQ/Bpmu/YvtZ651INiD15kToSuHHHFpx
+         wHg5snEF7YAHhOGOejdSuCd8xRk13Wft5VP83l3XrP23ezYqycBZa/hkxw7BtGT0Nrwi
+         x+8pcac95Jl6Z5pGCCtqpnMJ9L1jkvjec6ieYn1jqewMtQgpjptsO+/jRzZFyWmk/o58
+         2Chal7XsxWDsUB4ghFDyAbokSAyn0ywv1JsB4MTwTXRdgY2z+KA4mOrz22bjoda8lFJ0
+         iuUWAgUkHmjIN+Zkby3AqkSb8/vhy8tt1o+ebGcYCnbC3WDkXrCbgqN9qxVWdkJYRcv8
+         rZJQ==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20260707; t=1792405773; x=1793010573;
-        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
-         :to:from:x-gm-gg:x-gm-message-state:from:to:cc:subject:date
-         :message-id:reply-to:content-type;
-        bh=NoHbSvqJtX7bhXzwy5x29sQlsITPXaxb+KcAmo0EzCE=;
-        b=qqGidVyCg4WIUk7xLPO/tbom9e1dfMMwvsKLfy5ZUAVdOhATLV+NTjXdW0KQftt3Ax
-         fwEJmzusDPDxu2eb5jB2GUGHE8ZUre0NumVCYcP1jlYZLpxTSN3d/6hwAMLVpaYAj+6B
-         Q7uXhibufvsHYNKDSEibdimyWsk9t9vnCpydGaNO9uKF65OhnDFPq//uJZ1qrENiRAiV
-         aRYAqKskoQ3UedT2E1ryX4cLxyLP2HZdPm4oiA3Rs5IkiSTgUzXV4lvDGDfhCCQ2nvxH
-         1e1LhatcC1ZiIXyfVVB/WldMLiyPdVLW8GJoevod2DYlFa427DqZgTsiYCvhVsRPFI++
-         ggTw==
-X-Gm-Message-State: AFq9FYKNqBPy/ZJyZZNwQvZeXWqrWO6HMpIejiwX2gIAcLPlBwXwp8AE
-	1H3a8x6/sy0lt2oMZtnloA/bVFmcCJbupeV+su2yaCY0nHsOq3oIqb8cpKC9Ii1hIGw94UFSPBY
-	qQFeJfDyEIISj2ksjyCRYqPBDZerFPMpo3krLI+n64trz38WWOFMJaLpivDI6Lti6BXqr
-X-Gm-Gg: AYBFou1vTNj5ulz2ymq7ylFscJDG4nXBDqV3e+mF6ygS+Tx8+pNzbySx6Tv0CIubM3a
-	9BZ+7B8yfjlj8jl+235O0BiEbD541/VNUbbapgg92s0bLmH/T9FDOue6SkQSUdbn71VbimJhSwd
-	IrnS0C0pS8y3DbkQazIhoPto8s6ebx6maklV3B51f9lsGZhde5Qrc/ufKofYfifgX5JJuRs/1Bj
-	n8cG2MPtQYesHPE0+W17aXs+U+TvTOdi7qOE+gNxNypSgk+C6LMM8nUx1C8UUzrb7EGl/rPzFsL
-	Am3lA/V4MxEx6Cxjd8Muj96h686fEeyFhG1G7835BNtY/0/dJ4MX1GQso7Xbo58+pa1SrVeTqN5
-	PUV8sT42j4a1vPICo
-X-Received: by 2002:a05:600c:8b65:b0:49e:65f2:db64 with SMTP id 5b1f17b1804b1-4a1d75f2574mr166847805e9.5.1792405773368;
-        Mon, 19 Oct 2026 03:29:33 -0700 (PDT)
-X-Received: by 2002:a05:600c:8b65:b0:49e:65f2:db64 with SMTP id 5b1f17b1804b1-4a1d75f2574mr166847505e9.5.1792405772922;
-        Mon, 19 Oct 2026 03:29:32 -0700 (PDT)
-Received: from cshulyup.raanaii.csb ([2a00:a041:e223:1b00:cde9:6812:f4a4:646])
-        by smtp.gmail.com with ESMTPSA id 5b1f17b1804b1-4a1c8ad6245sm272689255e9.3.2026.10.19.03.29.31
+        d=1e100.net; s=20260707; t=1792441227; x=1793046027;
+        h=mime-version:user-agent:content-transfer-encoding:content-type
+         :references:in-reply-to:date:cc:to:from:subject:message-id:x-gm-gg
+         :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to
+         :content-type;
+        bh=egY8aXoYUqLerkUG+cz/c3yIfOvIfJOmeCo0llp4TbA=;
+        b=LAr8mZ8XwFQWgSFmIZUEtok4qrArZDQNjtPqAUQu3DDnPtuG9pnOfFNKGp3iGowTLU
+         YuMgtOQQu5IRe2hj7lI2cc4d/i0femkQFaugNGIqtnU2V/PUAqXQKiJttSQ/YWN8Kjyj
+         4O8fa9BX1Aw7X06zDShxHUPYm7ApaiuMrlT/ead7LCvMrqqeNZu+3SQiJIuRYgpzI4/g
+         UUzq8+ntrgOFkJ1va75L4mbj4Uh3zXsCeeXC6et5xA+nrR1PH/HKeLgbymjPi486cSHK
+         J2bUt8E3k/RxdZcvHVvZIrxd2PGQMxN9vOh+zEu0n8N6u94vdizkyoOL12Ns1aJDXlVg
+         Uggg==
+X-Forwarded-Encrypted: i=1; AKwUvBy4dvlrKOSMwUjSrYR4MUt2PPDWaGcqXHlXjlKzc923ZyFHjLDXEMl0XTzKGZGoYLbQiAeI7y4rsVwFTlTbTw==@vger.kernel.org
+X-Gm-Message-State: AFq9FYLeFWtqhcA9M6rZ5bvbwMVXz3lHc4qf4nAhZsAOjqlnKoT6lgvp
+	qZivakbJm7t/9Ot94dcqDqC6tmqGaim5Ilt1WQTAhpYOvCnMKBZ0beHoJ80qfP6v24FBCC3VOCO
+	9kVtCZ1KjuFhnEgr0G/VMT6tHEyhCIWFNk0ty3TRPR7QQAuMo7HaR3Mb44mUxaGbnNhW2
+X-Gm-Gg: AYBFou1qpn69zykynoRX7qI4AfaGHAQUTbAM2JZvG8R41RLkKTpvBLbWyxpymV4Lcr+
+	vAuJ9EZta5L0htiwMNXGvB7EySssDUwuvnjAUCSGbIUi2XvcRaAUGyRCpP70I2QsP/RGRSxMKXR
+	ANDKWteTCEUxMgXTp8Jfhe58klcRMlZrOCfSQn9aQU08RcTxhFtsfDumC2xVsG1jv0C1gY8xVi8
+	j9UDzK5ZmVvRfLVVmZ8ULDJHinuKWPImEJ0v+SQk2yAshosxaBMPgt5PA+pkRRoKlghfsgSNJ2m
+	VZ1PVrypgS7sOhNsY4/bg6DNiVhWJXP2clFMbsQWnUePrupf/6EeLz8dgXQ3sVv5N4JjPLWAaHT
+	MgTtNMlLRoUSBGyQWE0EyuBEExPGxIPM=
+X-Received: by 2002:a05:6214:33c4:b0:91b:d5d7:8c90 with SMTP id 6a1803df08f44-91bdec2d7fbmr153181796d6.5.1792441226963;
+        Mon, 19 Oct 2026 13:20:26 -0700 (PDT)
+X-Received: by 2002:a05:6214:33c4:b0:91b:d5d7:8c90 with SMTP id 6a1803df08f44-91bdec2d7fbmr153181296d6.5.1792441226358;
+        Mon, 19 Oct 2026 13:20:26 -0700 (PDT)
+Received: from crwood-thinkpadp16vgen1.minnmso.csb ([2601:447:cc00:985:7b12:3d75:e5c0:6b9c])
+        by smtp.gmail.com with ESMTPSA id 6a1803df08f44-91c040d4cedsm5152556d6.34.2026.10.19.13.20.25
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Mon, 19 Oct 2026 03:29:32 -0700 (PDT)
-From: Costa Shulyupin <costa.shul@redhat.com>
-To: Costa Shulyupin <costa.shul@redhat.com>,
-	John Kacur <jkacur@redhat.com>,
-	"Luis Claudio R. Goncalves" <lgoncalv@redhat.com>,
-	Bart Wensley <bartwensley@gmail.com>,
-	Crystal Wood <crwood@redhat.com>
-Cc: linux-rt-users <linux-rt-users@vger.kernel.org>
-Subject: [PATCH v2] rt-tests: hwlatdetect: Restore tracing parameters
-Date: Mon, 19 Oct 2026 13:29:09 +0300
-Message-ID: <20261019102909.3339372-1-costa.shul@redhat.com>
-X-Mailer: git-send-email 2.56.0
-Precedence: bulk
+        Mon, 19 Oct 2026 13:20:26 -0700 (PDT)
+Message-ID: <98115d4661519c32e54faf26e086895562ea1383.camel@redhat.com>
+Subject: Re: [PATCH v1] rt-tests: hwlatdetect: Restore tracing parameters on
+ request
+From: Crystal Wood <crwood@redhat.com>
+To: Costa Shulyupin <costa.shul@redhat.com>
+Cc: John Kacur <jkacur@redhat.com>, "Luis Claudio R. Goncalves"
+	 <lgoncalv@redhat.com>, linux-rt-users <linux-rt-users@vger.kernel.org>
+Date: Mon, 19 Oct 2026 15:20:25 -0500
+In-Reply-To: <CADDUTFxXf+3sB-kbnbTiRQZ6r7FQzdQRKYqxDVYobzQJh4bFFg@mail.gmail.com>
+References: <20261011192959.2122274-1-costa.shul@redhat.com>
+	 <b922c748910362ecdfaf90e79ac8bcb18d45dfa7.camel@redhat.com>
+	 <CADDUTFxXf+3sB-kbnbTiRQZ6r7FQzdQRKYqxDVYobzQJh4bFFg@mail.gmail.com>
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
+User-Agent: Evolution 3.60.2 (3.60.2-1.fc44) 
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
+List-Post: <mailto:linux-rt-users@vger.kernel.org>
+List-Help: <mailto:linux-rt-users+help@vger.kernel.org>
 List-Subscribe: <mailto:linux-rt-users+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
+List-Owner: <mailto:linux-rt-users+owner@vger.kernel.org>
+Precedence: list
 MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
 
-hwlatdetect leaves tracing parameters changed after a run. These
-parameters can affect later tests. When --cpu-list is omitted,
-hwlatdetect reuses the existing tracing_cpumask.
+On Mon, 2026-10-19 at 13:23 +0300, Costa Shulyupin wrote:
+> On Mon, 12 Oct 2026 at 20:46, Crystal Wood <crwood@redhat.com> wrote:
+> > Is there a use case for *not* restoring?  Though I'm curious which test=
+s
+> > are just using the default parameters.
+> Backward compatibility results in awkward code.
 
-Save the CPU mask, current tracer, threshold, window and width before
-changing them. Restore them during cleanup, including after SIGTERM or
-an unhandled exception. Leave tracing disabled, as before.
+Why do we need to be "backwards compatible" with this particular
+behavior?  Who and what would we be depending on hwlatdetect permanently
+changing settings?
 
-Add a shell test for successful and failing runs, SIGTERM handling,
---cpu-list changes.
+On the other hand, what are these "later tests" that are relying on the
+default values?
 
-Assisted-by: Codex:GPT-6
-Signed-off-by: Costa Shulyupin <costa.shul@redhat.com>
+>=20
+> > Why only SIGTERM?  I'd think SIGINT would be more likely.  And why only
+> > when --restore is used, given that there is other cleanup that is done
+> > unconditionally?
+>=20
+> SIGINT is already covered. Python turns it into KeyboardInterrupt.
 
----
-v2:
-Restore tracing parameters unconditionally
-as suggested by Crystal Wood and Bart Wensley
----
- src/hwlatdetect/hwlatdetect.8       |  2 ++
- src/hwlatdetect/hwlatdetect.py      | 18 +++++++++-
- src/hwlatdetect/test_hwlatdetect.sh | 52 +++++++++++++++++++++++++++++
- 3 files changed, 71 insertions(+), 1 deletion(-)
- create mode 100755 src/hwlatdetect/test_hwlatdetect.sh
+OK.  Why are the SIGTERM handling and atexit call gated by --restore?=20
+Are you claiming "backwards compatibility" for not calling the existing
+cleanup on an abnormal exit?
 
-diff --git a/src/hwlatdetect/hwlatdetect.8 b/src/hwlatdetect/hwlatdetect.8
-index 560ff7cc0cc9..0a0c531502f9 100644
---- a/src/hwlatdetect/hwlatdetect.8
-+++ b/src/hwlatdetect/hwlatdetect.8
-@@ -57,6 +57,8 @@ The hwlatdetector script manages the mounting/unmounting of the
- debugfs as well as interacting with the ftrace hwlatdetector
- If the debugfs is already mounted then hwlatdetector will not
- unmount it after a run.
-+The previous CPU mask, tracer, threshold, window, and width are
-+restored after the test.
- 
- .SH OPTIONS
- .TP
-diff --git a/src/hwlatdetect/hwlatdetect.py b/src/hwlatdetect/hwlatdetect.py
-index ee1e0171210d..0e9e3568f5ee 100755
---- a/src/hwlatdetect/hwlatdetect.py
-+++ b/src/hwlatdetect/hwlatdetect.py
-@@ -8,9 +8,11 @@
- # (C) 2009 Clark Williams <williams@redhat.com>
- 
- import abc
-+import atexit
- import errno
- import os
- import os.path
-+import signal
- import subprocess
- import sys
- import time
-@@ -183,6 +185,7 @@     def c_states_on(self):
-         """ close the file descriptor and re-enable c-states """
-         if self.dma_latency_handle:
-             os.close(self.dma_latency_handle)
-+            self.dma_latency_handle = None
-             debug("c-states enabled")
- 
-     @abc.abstractmethod
-@@ -323,6 +326,10 @@     def __init__(self):
-         self.samples = []
-         self.first = None
-         self.last = None
-+        fields = ("cpumask", "current_tracer", "threshold", "window", "width")
-+        self.saved = {f: self.get(f).strip() for f in fields}
-+        atexit.register(self.cleanup)
-+        signal.signal(signal.SIGTERM, lambda sig, _: sys.exit(128 + sig))
-         self.set("enable", 0)
-         self.set('current_tracer', 'hwlat')
- 
-@@ -388,7 +395,15 @@     def display(self):
- 
-     def cleanup(self):
-         self.set("tracing_on", "0")
--        self.set("current_tracer", "nop")
-+        self.c_states_on()
-+        debug("Restoring previous configuration")
-+        old = self.saved
-+        self.set("current_tracer", old["current_tracer"])
-+        self.set("width", 0) # must be always width <= window
-+        self.set("window", old["window"])
-+        self.set("width", old["width"])
-+        self.set("cpumask", old["cpumask"])
-+        self.set("threshold", old["threshold"])
-         if not self.debugfs.umount():
-             raise RuntimeError("Failed to unmount debugfs")
- 
-@@ -606,4 +621,5 @@     def cleanup(self):
-         detect.display()
- 
-     detect.cleanup()
-+    atexit.unregister(detect.cleanup)
-     sys.exit(maxlatency > hardlimit)
-diff --git a/src/hwlatdetect/test_hwlatdetect.sh b/src/hwlatdetect/test_hwlatdetect.sh
-new file mode 100755
-index 000000000000..187536f95264
---- /dev/null
-+++ b/src/hwlatdetect/test_hwlatdetect.sh
-@@ -0,0 +1,52 @@
-+#!/bin/bash
-+# SPDX-License-Identifier: GPL-2.0-only
-+
-+set -o errexit
-+
-+out=
-+trap 'echo -e "FAIL: ${BASH_SOURCE[0]}:${LINENO}: $BASH_COMMAND -> $?\noutput:\n$out" >&2' ERR
-+
-+[[ $(id -u) == 0 ]]
-+
-+d=$(dirname -- "${BASH_SOURCE[0]}")
-+
-+tracing=/sys/kernel/debug/tracing
-+mask=$tracing/tracing_cpumask
-+settings=("$mask" "$tracing/current_tracer" "$tracing/tracing_thresh"
-+	"$tracing/hwlat_detector/window" "$tracing/hwlat_detector/width")
-+all=$(PYTHONPATH="$d" python3 -B -c '
-+from hwlatdetect import group_sep
-+m = 0
-+for part in open("/sys/devices/system/cpu/online").read().strip().split(","):
-+    a, *b = map(int, part.split("-"))
-+    for i in range(a, (b[0] if b else a) + 1):
-+        m |= 1 << i
-+print(group_sep(f"{m:x}"))
-+')
-+
-+out=$("$d/hwlatdetect.py" --duration 1 --hardlimit 999 2>&1)
-+[[ $out == *"test finished"* ]]
-+
-+! out=$("$d/hwlatdetect.py" --duration 1 --threshold 0 --hardlimit 0 2>&1)
-+[ $? -eq 0 ]
-+[[ $out == *"test finished"* ]]
-+
-+echo $all > $mask
-+baseline=$(cat "${settings[@]}")
-+
-+! out=$("$d/hwlatdetect.py" --cpu-list 1 --duration 1 2>&1)
-+[[ $out == *"test finished"* ]]
-+[[ $(cat "${settings[@]}") == "$baseline" ]]
-+
-+rc=0
-+out=$(timeout --signal=TERM 2 \
-+	"$d/hwlatdetect.py" --cpu-list 1 --duration 60 2>&1) || rc=$?
-+[[ $rc -eq 124 ]]
-+[[ $out == *"Starting test"* ]]
-+[[ $(cat "${settings[@]}") == "$baseline" ]]
-+
-+! out=$("$d/hwlatdetect.py" --cpu-list 1 --duration 1 2>&1)
-+[[ $out == *"test finished"* ]]
-+[[ $(cat "${settings[@]}") == "$baseline" ]]
-+
-+echo Passed
--- 
-2.56.0
+-Crystal
 
