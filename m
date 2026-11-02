@@ -1,96 +1,98 @@
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=209.85.219.45
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=209.85.160.181
 ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1793653760;
-	b=wVRkLAXNAXrVGfRF4xf3OQRnR5UTCUqJ9VZrtdCqZs8bDQ7C2B50fSx39CoLiMehD8a0
-	 RXru/CQoy7TQq+oxtz5Wu50w4xmAMruatmLI3km0znyThK4wsG9m7VQhcWo0+b46KhzTT
-	 jGaR6287475r3cDKJ5MLxyUHrz4Cn6+K8Z+sw+CO7FAhSi3SpsRSjxJX8Pmki/EcuzXm1
-	 /TYbxUvuX9AI7R2ZWkHCvC4u3KigsAhXHDuBzUawTVzojwydxHfosWZMmWqIKM1c9k1sP
-	 B4SrOdXmkLgRwJoJ/moc7FJ7Qe3j/qPT0F6LiktUarj9D3oGdubyqUi9/pumKJPJCYQ==
+	t=1793656090;
+	b=qW9k/acb6O178D9YD6sFNB86yqbpkIPVW95xoAdKsjzroTCYpoEmNWHM0lperM+8MKrm
+	 /sC30q5VrZGsRUCT7qFmQF0YCJ7y6rOZgGX5MT8hDUWvddEqhY7F9DYhh9H7Tb445s7dX
+	 xtmlyMxxkhhA+tYLEJ9GnvAw08cU7L18WZmmjViUVimXoSGJlaI9/1QA9ymbgoLLVbneo
+	 X23z7Vt/iQe4V7U5u4bcwbBt2khnY7zXTnEF8BasiAnDu9ElFXqV5XEV9iZwCvRfJK+ys
+	 VD5wme13wiBPoIe/m+bsw9N0ft5lIiZUx6XEzes8l0W0htJ42g9PMHvGMdgKdmx+tAg==
 ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1793653760;
+	a=rsa-sha256; c=relaxed/relaxed; t=1793656090;
 	h=DMARC-Filter:Received:DKIM-Signature:X-Google-DKIM-Signature:
 	 X-Gm-Message-State:X-Gm-Gg:X-Received:Received:Sender:From:To:Cc:
 	 Subject:Date:Message-ID:X-Mailer:In-Reply-To:References:MIME-Version:
 	 Content-Type:Content-Transfer-Encoding;
-	bh=b4HNXk7a1WDB2Y77HkTIftoKOAfBuPm6gIaFkuxHZ7g=;
-	b=GeO55VPAGaDBM8/aWDK2+lNZbMcmuKbQ9N/eT2HM0TJCpwZxejaGAynA1Rf4l1/Q3I4r
-	 VBoc4rYpslgHIc6zS9u0qZG5biQI6IeGRSRgKdDf3E4i8FcFZIevkZX79rGEVNM3ZyC91
-	 LKr1zyfRzWMUu0oNDnKm7Eoormm/eGdRS99kVlBvkjBrOZzyeVEPfuRTtNOj1alQbagXt
-	 UniRLdC80AUNmbFSIqHK+7R92ku7NqjcgTUtWInVfFdOIW3FHKQ4cmUOKFb9KoeIx0Rsz
-	 1EvmOaz6s0o4pn2l8SwLcaSO0HklU678hlyylleJBMkBepSlafZeXa9AYpIWocLKR5g==
+	bh=HL8n4hM1jkSziOepCQ+JNi3Ux30Dn49fTFbbZh+6dLE=;
+	b=r68+L6LQ+w/HLK/92tndq0Iyl3T0ocQ4VtVmvkUSQHmKDGPjcm5BVopyQj+lR+0yUPcO
+	 +N9H7eLkvu8S0G2/4fnEhc9f9lwCpZnvDOL/wXoriu6n7ljEU4z2Wk9TfadziutqNgmCI
+	 47/RaV8iaMiN8df++petKqD8stBH7NJHthC2tgMaFQDwdBZc3rH4Cie+SL0LKXh6aVG7i
+	 YFqQPqoKf+BAVrk0YCp6v+tmznSrDUEkFm30ENLHUhOL5uhqon1ilfAMyKsqNrJAL5ZV+
+	 Gqipol+Jwa43pTZ47JARrNCXyfVsklZCTXc53GGzRZtQ5mqOoIiMd7ffdbIUqpvQdCw==
 ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
 	dmarc=fail header.from=redhat.com;
 	spf=pass smtp.mailfrom=gmail.com;
-	dkim=pass header.d=gmail.com header.i=@gmail.com header.a=rsa-sha256 header.s=20260707 header.b=i4S0UfVg;
-	arc=none smtp.remote-ip=209.85.219.45
-Received: from mail-qv1-f45.google.com (mail-qv1-f45.google.com [209.85.219.45])
+	dkim=pass header.d=gmail.com header.i=@gmail.com header.a=rsa-sha256 header.s=20260707 header.b=MqA4M3Rp;
+	arc=none smtp.remote-ip=209.85.160.181
+Received: from mail-qt1-f181.google.com (mail-qt1-f181.google.com [209.85.160.181])
 	(using TLSv1.3 with cipher TLS_AES_128_GCM_SHA256 (128/128 bits)
 	 key-exchange X25519 server-signature ECDSA (prime256v1) server-digest SHA256)
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id BAB5E606A324
-	for <linux-rt-users@vger.kernel.org>; Mon,  2 Nov 2026 21:09:19 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org BAB5E606A324
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 960AE606A327
+	for <linux-rt-users@vger.kernel.org>; Mon,  2 Nov 2026 21:48:09 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 960AE606A327
 Authentication-Results: smtp.subspace.kernel.org; dmarc=fail (p=quarantine dis=none) header.from=redhat.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key, unprotected) header.d=gmail.com header.i=@gmail.com header.a=rsa-sha256 header.s=20260707 header.b=i4S0UfVg
-Received: by mail-qv1-f45.google.com with SMTP id 6a1803df08f44-91c791d5460so40086656d6.0
-        for <linux-rt-users@vger.kernel.org>; Mon, 02 Nov 2026 13:09:19 -0800 (PST)
+	dkim=pass (2048-bit key, unprotected) header.d=gmail.com header.i=@gmail.com header.a=rsa-sha256 header.s=20260707 header.b=MqA4M3Rp
+Received: by mail-qt1-f181.google.com with SMTP id d75a77b69052e-533797e72e8so22551181cf.2
+        for <linux-rt-users@vger.kernel.org>; Mon, 02 Nov 2026 13:48:09 -0800 (PST)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20260707; t=1793653759; x=1794258559; darn=vger.kernel.org;
+        d=gmail.com; s=20260707; t=1793656088; x=1794260888; darn=vger.kernel.org;
         h=content-transfer-encoding:content-type:mime-version:references
          :in-reply-to:message-id:date:subject:cc:to:from:sender:from:to:cc
          :subject:date:message-id:reply-to:content-type;
-        bh=b4HNXk7a1WDB2Y77HkTIftoKOAfBuPm6gIaFkuxHZ7g=;
-        b=i4S0UfVgT0tLI6AkAkzQv6yIi3yZdOVkcN+dtbY5iXNNEAR4R/iYonX09X1KYHPB80
-         n9OXmwiV//FaoFdJLSpiSMkIlgh3OjA0GLwZqfosO+tuFWJ8EwSD66PepoJv4fXfkJ4M
-         T0+D243w37UvKQmB/aIRThhRDlUhK4k9BI6lbjXBJP8hlXWMWAyOjtWWb3Y64uhdihK9
-         KjK90hqCTaOR5FZI9o30pjnud6V/VlZhRCfsx9GVmVbu7wlBZRwprLxT7GSW5nC0YIMN
-         IH8F0i6jOKDWahNcIxvueoV5oMP6aN3pvHj5GNCheeCgwEM1hR2irL0TsKPAKI7GXJFW
-         akWQ==
+        bh=HL8n4hM1jkSziOepCQ+JNi3Ux30Dn49fTFbbZh+6dLE=;
+        b=MqA4M3RpP6GU3Bg/kDkNIwMgSJzYy1CVEGPoKfoNbUWrFaYefT48NkwHvazE6UYAUh
+         UTEMeaC9m4EiBCM9dMbo/pUa633Jj3NCgJKkeBQTdi/MsO8hdsRCFYLj+taGp3AzDoK+
+         CVMLBmAa3xeLsgAdabj5+LEXG09bG1uXXRD5Tfv7gUPkcuWsSUNUa7m9rKxPsDK3cHWP
+         +tUV4RgO93TEQlctFnGuRfpp1Gj+rol6U119hdOjQtQ8s3GxvIVxt6cq6RYheca52hJz
+         0ZET5CMlTZ+pz4KACPfgJ3KgyfEsN9f5E+sz6NDlWs025lzy1vYUDQ+Nz55MxNm1t76J
+         H1xg==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20260707; t=1793653759; x=1794258559;
+        d=1e100.net; s=20260707; t=1793656088; x=1794260888;
         h=content-transfer-encoding:content-type:mime-version:references
          :in-reply-to:message-id:date:subject:cc:to:from:sender:x-gm-gg
          :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to
          :content-type;
-        bh=b4HNXk7a1WDB2Y77HkTIftoKOAfBuPm6gIaFkuxHZ7g=;
-        b=L2GQuAk6WVHu2KE9qAlkJ8akefpg8+cHsMRcMb9kJVVfT166+rqa/otGpVqTQhQ3wd
-         WxGz4qdLPQjeCEO+HdJv/7l/YDs6qc+QK+Gb2VxJiYMRu9TDfzpnb6nsXk9LAD1fS5W3
-         Hl/5lP5o/GbJo1h+lHte/ZFZeQe6kK410t3anOtpvJt8zwSqGRgrrs2eQpM9RyuZ7BLA
-         geAKzlIFMw9RSJ8nd+6IAWCHq0A8/gL0OqT91+tH8ETJnxZKar2kPFVeu4t3JNs9v2mj
-         HQnuRZnnSmo2E0hmEg6KakbvmTRzZeN6bWqdZL9mQ/5Dv76dlCFVDXbLKtxpBp/EAr0e
-         dvbg==
-X-Gm-Message-State: APuU4Z8n3PmhFSh7yzmcJJQlhSsHe97+iGz/ex/dJ4XL9bd9B8wwvZEh
-	3Fpz61K+t61DbZ5KF9PMzF7sRKXYOC4H10BaFzqgM0JNsRT8wNG4T9eK
-X-Gm-Gg: AYBFou0wvg5uKkZaaVYT9bybXdpgsj51SRjRt3xbQLwX9yeSgCmXEI/PR3RdFYCHTjZ
-	CjOMrZf8JtKb8u7UUes+gidr33wIK6Xs08wgbUSDwTT+gNZAiowatN5YjvNUbtMxsH6+Hx3Srgp
-	+PkDTMCewkXnpa8Tc9AJqkFVu/u2FfrBQe6Dgp3hs7ID6AwX1bQk4bR+u1zNt8VkMu7f2Dd1nIg
-	u/8V7V0dvmZn2ayercMAYesXDu15wzxZE+QT9txrmwdXiNx9gn0z5qA2hYOQ6FGTx78aBcpMuaM
-	ysKBzCVzegn4LZL+kd1Hvt++/CAdiK6bHPM4LcXiuCvE1r/EntjDu1GVfcYuoEdfYpHs+q5LMpX
-	AsiYSYdlTAYDs+DxQpETXIviKDegq+11oVuxFYrj3bqI1RPHv5T/ATO7kOXZBrMsXP9jqPQiwh4
-	iPHjhvghDqFvcUe2c30lWcJIHgiZK+ocQLkEF6cMyI6xv1mkalBxgBbzMhmrch+8Z9jdA+LGgtb
-	FRQbLkUQgsAHuyHyHJb2YE7BjDL4ydRxrxev35dFQW4xeTfsnhuiDplnqglEAw+mThABzes9oeA
-	ELSr6qlv6E0h7t2z67SZSo4Bh/dUo6+V4jl+RnC2dK+kyAToJuWWTQIqIkOdl5SWMBest80gnrB
-	rnbofI1YrgezqmzBIuh92+IGoau/DzGGIlaBIuqE0osqDaYY0kvyxGcQSkIbYUyTN3PSejqbLkM
-	kj3HmP3u87ZXuD+5sHx9VsYkCfrQY=
-X-Received: by 2002:a05:6214:1310:b0:91c:62b7:296f with SMTP id 6a1803df08f44-91ca4b933a7mr175951756d6.50.1793653758617;
-        Mon, 02 Nov 2026 13:09:18 -0800 (PST)
+        bh=HL8n4hM1jkSziOepCQ+JNi3Ux30Dn49fTFbbZh+6dLE=;
+        b=U4FheISIYxV0PxwRjfMk95MX5wnQL8df6NMEG8R9Aj3g9fmw6ba68iNk7dhmvy9GJ0
+         ISR41fRXBNyO3zdFdHnkzB3Ma3jDmPO3iQ33Y3G7AQ96cpLkj1TrWuvkq31vExOZwQQQ
+         VlqZUbxWMklS0ADmThkqd2FTv04DWuZxI5hg2Vi2K1KeCNgt1CZoliIsk2HKWElenH8Z
+         dkQcPnCHaRk3d6TDOp4LymHRaG4F3a2wUkB8bkccWtLu3rUS6DZHyEVlqiEHVKmtXf6g
+         PNlykpg/J7LNUjeKbQ8YuhnnRC+Qa8K47KMRHGkBqeZfhP+Ehh+QNf/whYSBIP3gAhO9
+         gkDA==
+X-Gm-Message-State: APuU4Z9c6ScZX0rB09cv6uG5jq0dSsfHu4bVu169XkMCvYU3iUuooeDz
+	n3j9BoJ6ryhI0zLenRe4QHDNI3v6ZkqtWmyctsI+PFR26sg29mBmb5Z7
+X-Gm-Gg: AYBFou3vFO8ocrF2w4C8SV0hSBkRnbFOmdwFJ1Xj0VOEcTSAS5vNLzA1hAOwphTTHzw
+	ydell34mi3Nn7CP6Cqfdl2/w7+Inr8DDPqCz/LIiG//GUNrzb5nw/fo+32JvT0/Br/9Dg4740LQ
+	q2ASGuIHGfji3ydVQWH7PLL1k0YXb7nzdzUYnMMgnaTfI1WZ67XOUunHqNnOCy2Om3rg3QGEeop
+	iq/mLyyvoYM9N5mjqNPOoUAbcCh7I25FJ2V/QPuVPW7Y4RaGT+Ijyt+7J/rofPOVufjjYX5+hVb
+	x+9YJKnIhsKosrwsZwfCrL2VhSnMYxIaLAYfsXTs4Vh85v5lL+0OruQaHWGA4zywhOA9eK1UaTH
+	uXmK4FQJa7zwTw+idlK45GeunMmFOVHCzY/+tDUxYZnGBO7M16kyqN3TZeTDKhN6xjpYiiabCX5
+	MkEtTbPt1ew58AXy11PKpUgpdJe1/vVxEWbu2hzOA3HdwCAUEwQSp/OyLVFb9ASAEyHqU20Dmnp
+	VhEZKdyq4SGPEZ7KKplA+j8W6G8YYA3MgwcJ/sN5Z7St5KkDJBo/6jaV1bIp4Jo4p9xD+vsnETO
+	wnZQ3r5xjglTKJjMSdXBFQVlL55CHt7Vk6yZ2rgGXYAl5MxE2YOgiEglR9PT0O8Hn0pfZ0Y6Aza
+	FvwM8VO4oaDR7+y2D49Onlfs5YKUjcpes8Fh1vxNaGmbhmr4sRa9MzF08+Iebez0dHv8xQJ6okn
+	gwJeoTUNuPt9Br/lu0Ys+ujfzBoHQ=
+X-Received: by 2002:a05:622a:1247:b0:535:a5fa:ee02 with SMTP id d75a77b69052e-542b7dfcaa1mr191905521cf.66.1793656088417;
+        Mon, 02 Nov 2026 13:48:08 -0800 (PST)
 Received: from jkacur-thinkpadp1gen2.rmtcaon.csb (bras-base-toroon01zb3-grc-09-70-50-116-123.dsl.bell.ca. [70.50.116.123])
-        by smtp.gmail.com with ESMTPSA id 6a1803df08f44-91ca7f4367dsm100705856d6.20.2026.11.02.13.09.17
+        by smtp.gmail.com with ESMTPSA id 6a1803df08f44-91ca7f3f903sm100963826d6.17.2026.11.02.13.48.07
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Mon, 02 Nov 2026 13:09:18 -0800 (PST)
+        Mon, 02 Nov 2026 13:48:07 -0800 (PST)
 Sender: John Kacur <jkacur@gmail.com>
 From: John Kacur <jkacur@redhat.com>
 To: Costa Shulyupin <costa.shul@redhat.com>
 Cc: linux-rt-users@vger.kernel.org,
-	Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Subject: Re: [PATCH v4] cyclictest, cyclicdeadline: Exit with failure when breaktrace threshold is exceeded
-Date: Mon,  2 Nov 2026 16:09:13 -0500
-Message-ID: <20261102210913.89391-1-jkacur@redhat.com>
+	Crystal Wood <crwood@redhat.com>,
+	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+	Bart Wensley <bartwensley@gmail.com>
+Subject: Re: [PATCH v3] rt-tests: hwlatdetect: Restore tracing parameters
+Date: Mon,  2 Nov 2026 16:48:03 -0500
+Message-ID: <20261102214803.100471-1-jkacur@redhat.com>
 X-Mailer: git-send-email 2.56.0
-In-Reply-To: <20261001101121.1451706-1-costa.shul@redhat.com>
-References: <20261001101121.1451706-1-costa.shul@redhat.com>
+In-Reply-To: <20261020180339.1062486-1-costa.shul@redhat.com>
+References: <20261020180339.1062486-1-costa.shul@redhat.com>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
 List-Post: <mailto:linux-rt-users@vger.kernel.org>
@@ -103,9 +105,12 @@ MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit
 
-On Thu, 01 Oct 2026 at 13:11:21 +0300, Costa Shulyupin wrote:
-> cyclictest, cyclicdeadline: Exit with failure when breaktrace threshold is exceeded
+On Tue, 20 Oct 2026 at 21:03:39 +0300, Costa Shulyupin wrote:
+> rt-tests: hwlatdetect: Restore tracing parameters
 
 Applied, thanks!
+
+The DebugFS/tracefs rework and the hwlat.txt refresh Sebastian mentioned are
+orthogonal to this fix and can be handled as separate patches.
 
 Signed-off-by: John Kacur <jkacur@redhat.com>
