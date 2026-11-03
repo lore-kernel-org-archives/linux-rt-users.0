@@ -1,95 +1,94 @@
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=209.85.128.169
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=209.85.128.173
 ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1793728523;
-	b=dZ4ksVv0MHwXOeCRuBrxz02vdVUL9kLWVvJSXVclGMTJyyUwqoq3SRbgDpt0NTCxVtx7
-	 0t9X72vOn6iI5dJa2ZrMr0thyk9mA7Ew0fVXj3qGjNpBQrjj36sE2E7H2fWOxeuAK0aK8
-	 Agsg1dsIH5l6SO/Bp0CdGgqgZyg6Qk6QjX+KTsXMgSWrMD2enzVNWqsz0Z+tE0C3/a7kN
-	 jqjmC3h1mGMyXqFbhfJSImqC2Ld9ODjXlWRPolchyr6OPguf+za5kuJLHFnhF/0JdhlDY
-	 07H4sihaOXRJHFNsvYyNu/uNFEaaXXJ7v1STjHtou+svOMobunm0jr/0JiejcwB52vQ==
+	t=1793728524;
+	b=4YaJhIEozfHVSfYRqSVREP2MD2DV6642Ibp7RwSSvaSeQpAyUQLkgLFFOhN/alEe/gsp
+	 UM57e2VrJswCc+YSyT7XGpTO4+KMUhGLcD3Nqcd761dKOs3j8zjZP2qxsDUnmkeOY1LFF
+	 AW2EolFajpAwHJAJue/NZYYy7xuG9QHHKu0neTE4P2zSucgVYlv21DdB2iAZ+AllyhSe0
+	 bvyvXCdj0XwQZPSqrz/wlMsfLvXp9TnBY8gZC1TCMYoytNKp0yvB6W0jfA7owofVDWxVz
+	 GCamiyTV9KKgFImv0e0RyTfRK8Xp1lRSbgjkG8TUwW+UZAfE+3FdkOc+AxhcmBvNe+w==
 ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1793728523;
+	a=rsa-sha256; c=relaxed/relaxed; t=1793728524;
 	h=DMARC-Filter:Received:DKIM-Signature:X-Google-DKIM-Signature:
 	 X-Gm-Message-State:X-Gm-Gg:X-Received:Received:Sender:From:To:Cc:
 	 Subject:Date:Message-ID:X-Mailer:In-Reply-To:References:MIME-Version:
 	 Content-Type:Content-Transfer-Encoding;
-	bh=hgC2jszRhcbrP1Ah6Vr19omv8g4IklUPg6gHa2W5Q9g=;
-	b=QUpYXl3EaCQcEcGunQ0PKWu7YemAZVCAGv/vC3xLE5m3IBym/MsMYISiFP6EIc6eaQ8X
-	 6gif1MgXJHaRMmZkGwOJoIfzhCpYUHPR4za6MInwprqMR/3t2EJAH1ohtS8KyM8F8b/Ve
-	 TRkl5Z1e8CDJs1tgvzjICYRYBZ/3OVX+sqZNCHgMmmBfP/YWPDOz3OTbDnQdZTphG7O49
-	 sSvbPCnLigH4tZpA+h7fT/GLszTSnc6IfySmv/6FxBh9NfhdRG7Gn7rx218kDSi2frwBq
-	 ZT4JvX+EU2osThxAzoTKLnm5wDrdExnbpBIW8lUDMcJCoEd8hgmTvRyqymq3TTrKZLw==
+	bh=8wWRnO45gNbOxksG+IRchu1UIqHpeVwxIrzSBv3SSCA=;
+	b=03KwOXLWkWDwELP9JJq8gc/mvBA2SDd8jAS/zwc6lAjg2jYuQt2JF5A9cK+63f2LjCS0
+	 B8limjUw582794bGAx0H71JNENXQhse4Kl8DKUDahvqZqJMtu7w0fH5V2sWQ6nulTIG+P
+	 4lZYJQiaowsLtr4mY+NDLdANYCYzCQ+r4tClFvX0fVn4yTU0WM1oteaazLZcBn/s0K9Ct
+	 VdRmu6Vm10QY8CfwSxBFuWvMJRBUt4IAUVZmuUw6d74ezlyuQzw92oFayW/aWfGsUIiro
+	 9lxMuzSMNjxXEiKLqyC2AhYjOY4+Dxn7E7874g2Tv+uCOzkSld20T8OYx+pFnU8BfBg==
 ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
 	dmarc=fail header.from=redhat.com;
 	spf=pass smtp.mailfrom=gmail.com;
-	dkim=pass header.d=gmail.com header.i=@gmail.com header.a=rsa-sha256 header.s=20260707 header.b=A6WYB8Fk;
-	arc=none smtp.remote-ip=209.85.128.169
-Received: from mail-yw1-f169.google.com (mail-yw1-f169.google.com [209.85.128.169])
+	dkim=pass header.d=gmail.com header.i=@gmail.com header.a=rsa-sha256 header.s=20260707 header.b=d49Qa7Ea;
+	arc=none smtp.remote-ip=209.85.128.173
+Received: from mail-yw1-f173.google.com (mail-yw1-f173.google.com [209.85.128.173])
 	(using TLSv1.3 with cipher TLS_AES_128_GCM_SHA256 (128/128 bits)
 	 key-exchange X25519 server-signature ECDSA (prime256v1) server-digest SHA256)
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 2B2B2606A31B
-	for <linux-rt-users@vger.kernel.org>; Tue,  3 Nov 2026 17:55:23 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 2B2B2606A31B
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 25E05606A32E
+	for <linux-rt-users@vger.kernel.org>; Tue,  3 Nov 2026 17:55:24 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 25E05606A32E
 Authentication-Results: smtp.subspace.kernel.org; dmarc=fail (p=quarantine dis=none) header.from=redhat.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key, unprotected) header.d=gmail.com header.i=@gmail.com header.a=rsa-sha256 header.s=20260707 header.b=A6WYB8Fk
-Received: by mail-yw1-f169.google.com with SMTP id 00721157ae682-8b0dba37a7fso41550997b3.0
+	dkim=pass (2048-bit key, unprotected) header.d=gmail.com header.i=@gmail.com header.a=rsa-sha256 header.s=20260707 header.b=d49Qa7Ea
+Received: by mail-yw1-f173.google.com with SMTP id 00721157ae682-8b06c0794cfso41668487b3.0
         for <linux-rt-users@vger.kernel.org>; Tue, 03 Nov 2026 09:55:23 -0800 (PST)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20260707; t=1793728522; x=1794333322; darn=vger.kernel.org;
+        d=gmail.com; s=20260707; t=1793728523; x=1794333323; darn=vger.kernel.org;
         h=content-transfer-encoding:content-type:mime-version:references
          :in-reply-to:message-id:date:subject:cc:to:from:sender:from:to:cc
          :subject:date:message-id:reply-to:content-type;
-        bh=hgC2jszRhcbrP1Ah6Vr19omv8g4IklUPg6gHa2W5Q9g=;
-        b=A6WYB8FkX0i9b6cFJw6aXiEjSuN4jA+1oZvK3V+eHKJZ6AGcOSp+Pxg+xsJrvN3Uue
-         bp94j4c73o5oLJKoStFKeyBlSDr7QX/8/ATAs3JbV/VzHvi1XdbrTvJzeImY0ThOF56K
-         DKYTz8rwI1Wx93kMlRbzmdI/b/UZTs6OTdf8iWEoe9++FWFKUBZ6qOa1YnefEYgmdCle
-         3lQ7TBEBddrOy/lBkC3BTzmBleAARTJNoiW4iikNUWQRCsiPLk+Vy9UoPxCgeAXWkhK8
-         6MciuQx19jtZtuSzp+7UiayOO/FQz5k0rp9fbOAuzVBOU83+8t6m9Lyy+Sk1LRmTv38t
-         6IKQ==
+        bh=8wWRnO45gNbOxksG+IRchu1UIqHpeVwxIrzSBv3SSCA=;
+        b=d49Qa7Ea4A6pFYn3//gGqXjYIU0ZK2sZwXk35NFwUzx9joMQ/a/6gRLoZ31Q0I9M0I
+         pS0glc+Q2AE1taiOlDHDKoK+5TJBUKVcn9ekc994XdGORItGLeJSivOb1ap0GscAyyHL
+         cWvn3+g/Rc7tSeadXS4PN/TEt/pL0Fh+iSObrwHevj7+OuasQZKcjReMxLMb9JJWdba8
+         sPrrePGoHh2l7s6SlfdhYBhAAExk9XcbvLX1JG9+v0Nh+DdAwnFpK0CTopIZq9TxiVPC
+         bh/sdRxh671jea82N1UBaNR5g9haZfdXYJbZpXy8wfdZeCy7tqu3uiFGHemvp/ZCGzkO
+         owtQ==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20260707; t=1793728522; x=1794333322;
+        d=1e100.net; s=20260707; t=1793728523; x=1794333323;
         h=content-transfer-encoding:content-type:mime-version:references
          :in-reply-to:message-id:date:subject:cc:to:from:sender:x-gm-gg
          :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to
          :content-type;
-        bh=hgC2jszRhcbrP1Ah6Vr19omv8g4IklUPg6gHa2W5Q9g=;
-        b=qhBiXNjFvqEbkSZegJ62U7wOLssQAJ/IlqqWOXazdTWwPTa9kjSTIxB2CHDBl4jvl6
-         4SXiKR1EYigYjsJmaihDWCZh1mHLkjFMAumio3w6k/6EyxC2lCzaMg/8xOMqxGkjIzbc
-         pXBPl8Wt5kiKkphEGMBKbJiQ/gKYubkCXHtLIEIJXyO66ewpp8VSpaLJ8epjVBlwX6X6
-         N0Q2AW2GmaleOLyesiksXuiCAoEN5cwDNzyngK8n0aeKYsTOGLVvgNX3nxHvmINQgKZV
-         OctJw+m4Ql2MkeZv1itsHAaO+qvfBxR5IR3T1Sz/bqsjgZ1PQzOBn8IpS6R6yrSTTvNd
-         rjMg==
-X-Gm-Message-State: APuU4Z/UnC79VRWQ2bgmmVwcRumkMlwDTaDRTvOBwe/6n7PxP7bBED6F
-	WHhAV25scgtWyy+43ltdX0na6T47BK/12GJ8jf2PJ/VnKb6hlg7MOa1oNeyOKQ==
-X-Gm-Gg: AYBFou0qlOzLeJSmtQI6SYMs6bWbLikZ48R/RWty0mjEt3dTA3K5NoWrAv66d2n1RRn
-	zrjX1qgBvTb3yn64iuGjWkngUKH689DPW/jTGf+yfCEVQJgRcgRAws2sPj0lCSsNh98XHJHVPbh
-	8zoIZU211SQFr0m15aRQ8YuHgLGFD/2H2kRlSWue1WMgmKD6YCEqIECaijJdIN2FRf244Tj9zvx
-	JQDe0fiYHkm9wIKuodYqLTbqZgS/zxPXO3TzkUIAGtZQ34nWfSshicOoJsq1UrnVSwwLyg1Dltj
-	Oq8Fixsz5Tv6fTxvgbOjjRBFpnDGVPyZiG+EXjxbnfMB80diuVwDaFO0ynHUI4mX/buhWARlfGq
-	7r/zS1Nj7dAbJyi9APvAeYZxCBybh4NXZlyhxT1p4mAKJLu+DVOz17rgSLQgJ5jucSC4uEm6RrB
-	q8E/TltHbDUJ+uazjjt85R4dOGGqhpe1BtXW68mvFH4Q00N5+VFs2AA/bWCeXRU3n0D45M+TInk
-	5caHvOe7TDUOIkSfx/sv0FwNgDnsl6nFEd0sIaN1FABiB7OHwiR91Izi3wXflsGLczZaubf3YhU
-	WTAdgFSFtQKIOoCqKMRy3aaRNeePIWtLVId/pcUvkFDERbTTaFMxFtYUPz8DHce7AEPmlkBR781
-	xRZoNNSxYjQZWOb+y/poj6dydapqq+K1BMao6Bm2yp4d9fkhQqT1T1WCXh+XN4NYd1xk9xrAc2A
-	==
-X-Received: by 2002:a05:690c:e192:20b0:8ae:a5b5:e97a with SMTP id 00721157ae682-8b2b66d26eemr57346977b3.13.1793728522178;
-        Tue, 03 Nov 2026 09:55:22 -0800 (PST)
+        bh=8wWRnO45gNbOxksG+IRchu1UIqHpeVwxIrzSBv3SSCA=;
+        b=WXGC3AHDCGnNZkRT6/58OD6bF1+pwE83oQffGFt8+Wk44lRDzTnlktg+ude5vfX30+
+         GbsjfCPz/9/RlSFL36n75tdSO7LccF4gdEutCJ7SOtHhUgUhXoT9xGjkEboW/wY+YbDD
+         DdF7z2yfIP4SgkCMxYL7ggoywC5Y790v5hDbsTxnti8GRSY8jgP5aHfkGOw5fVt6E04D
+         NeJBi9mQiviYkp7RtVn0LIzMf2T91m7zA/dufz2hGcE4vyruwYzUx3MCPSdqmHU6rLg6
+         wPLoIGsmBHDB/IhI8SZZe1qKguZ4JlpPJoSNpK73dNH3LWJ60uebsbtpjG/pXfGk/yKH
+         QtXw==
+X-Gm-Message-State: APuU4Z86kTVfPyYW2BknQwG0e1t7Wnf3467KwYTvDvEt/R0pqVrNunBc
+	2oWD56517yjmQTTXfjhzWujZftEw9ctpFMstbhxnd+/cC+hBXeRjrgI5
+X-Gm-Gg: AYBFou2YFRzdqKo/ebkimCRefWkNC/RxOcWJK35lzqGii5LTDQcRICsmE6q8LUC6XOc
+	6fPsMfMHOP3SOpun1NCiGETSxSK1iEr8xpGg8+fXFKMARvv0YsrTRa/sa1nwt/xjuyGnOejFLte
+	oWjbg5h1ecMLSSOxRvtpSH0FWnq9Oc5vc0QO/GmF1p8FGcTjKsw3SZHbenTe9/+AL42vFQxIizW
+	xWs5xnoY80P09Ja6Y8DYLwq/nOUrqn9mPFQtCDQtyijHyuzIVF1bp2iOu+WkYdvBmAXMnGYPpVR
+	KRk1CU67c/KDEnxxj05gUZkMqOyGmRjfVKUxRbIF+Cr+V+muICzUI6lXzKqDhe3laxT4PrwBdwn
+	FjT4qDlE5gFFmx3C1Cjg1g5bvTcOS+4IuzaN5/qLF2pu8u8Ha3Q7pG3VdYlHKYcXSB3kFA8kGbv
+	pYE6SWjKz1kPv/uwWabjDoWUPmLJ9RxXF5d1xx3hGD+CFAcH36d9azDzjjfQ4QQ249feIceqHXz
+	TjyPeOalAqbs4rb4O2oirPrvvh94bduFLrb9UT8ElND7ySI746ayVJRJyYFyRSLOtGTsJYi+Dec
+	lyCrmDHsEmKqPrG1lSCvhbOBhfrHNZuKXebzm0yQs4CBEtYIXlM4ZWGQPmu5PqMB2eaSHXrVfDZ
+	3XLls2j53tDO3xP2hA/AgDt4sa4kS8yEQ0Sk3rTd14BsalVA09cPV2YQKJVKgBCqV1TXs2Y+4
+X-Received: by 2002:a05:690c:34c9:b0:8b0:ad5b:d466 with SMTP id 00721157ae682-8b2b66f8f31mr103345327b3.25.1793728523149;
+        Tue, 03 Nov 2026 09:55:23 -0800 (PST)
 Received: from fionn.home (bras-base-toroon01zb3-grc-09-70-50-116-123.dsl.bell.ca. [70.50.116.123])
-        by smtp.gmail.com with ESMTPSA id 00721157ae682-8b30997aa84sm1700707b3.29.2026.11.03.09.55.21
+        by smtp.gmail.com with ESMTPSA id 00721157ae682-8b30997aa84sm1700707b3.29.2026.11.03.09.55.22
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Tue, 03 Nov 2026 09:55:21 -0800 (PST)
+        Tue, 03 Nov 2026 09:55:22 -0800 (PST)
 Sender: John Kacur <jkacur@gmail.com>
 From: John Kacur <jkacur@redhat.com>
 To: Sana Sharma <sansshar@redhat.com>
 Cc: linux-rt-users@vger.kernel.org
-Subject: Re: [PATCH v1] rteval: Added multi stressor support
-Date: Tue,  3 Nov 2026 12:55:15 -0500
-Message-ID: <20261103175517.107723-1-jkacur@redhat.com>
+Subject: Re: [PATCH v1] rteval: Added integration tests multi stressor support in stress-ng
+Date: Tue,  3 Nov 2026 12:55:16 -0500
+Message-ID: <20261103175517.107723-2-jkacur@redhat.com>
 X-Mailer: git-send-email 2.56.0
-In-Reply-To: <arwPN52esmki-k_f@fedora>
-References: <arwPN52esmki-k_f@fedora>
+In-Reply-To: <auSgczD-qWxJhBbC@fedora>
+References: <auSgczD-qWxJhBbC@fedora>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
 List-Post: <mailto:linux-rt-users@vger.kernel.org>
@@ -102,33 +101,57 @@ MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit
 
-On Tue, 29 Sep 2026 at 15:19:19 -0400, Sana Sharma wrote:
-> [PATCH v1] rteval: Added multi stressor support
+On Fri, 30 Oct 2026 at 09:49:39 -0400, Sana Sharma wrote:
+> [PATCH v1] rteval: Added integration tests multi stressor support in stress-ng
 
-Thanks Sana. The feature works - I ran it end to end
-(--stressng-stressor cpu, and --stressng-stressors cpu,vm) and it builds
-the right stress-ng command, with workers correctly defaulting to 0.
-A couple of small things to fix for a v2:
+Thanks for the patch Sana. Two fixes for a v2, and then a request for a
+follow-up patch.
 
-1. Drop the unused import.
+Fixes for this patch:
 
-> +import argparse
+1. Don't rely on the 60s default duration. These tests only check the
+   stress-ng command line that rteval builds, which does not depend on run
+   length, so pass a short explicit -d. I verified -d 5 runs cleanly
+   (exit 0, command logged); even -d 1 worked, but 5 leaves a little
+   margin. As written, each run-based test takes the full 60 seconds.
 
-argparse is not used anywhere in the file.
+2. Don't depend on the default measurement module. With no
+   --measurement-module the tests default to timerlat/rtla; on a machine
+   that only has cyclictest the run exits non-zero and the
+   "returncode == 0" asserts fail. Pass --measurement-module explicitly
+   (cyclictest is a safe choice for a test), or otherwise guarantee a
+   measurement tool is present.
 
-2. Precedence when both flags are given.
+Follow-up patch (separate from the v2 above):
 
-> +        if (hasattr(self.cfg, 'stressor') and self.cfg.stressor is not None):
-> +            setattr(self.cfg, 'stressors', list(self.cfg.stressor))
+The happy paths are well covered, but I'd like a follow-up patch adding
+negative / corner-case coverage. These are cheap to write as rootless
+unit tests - like the existing TestWorkloadPrepareCpuset and the
+validate_stressors tests - rather than as more full runs:
 
-If both --stressng-stressor and --stressng-stressors are passed, the
---stressng-stressors value is silently dropped (the single-stressor form
-wins). I'd rather the multi form win: let --stressng-stressors take
-precedence, document it, and ideally warn when both are supplied.
+  - partial-invalid list, e.g. cpu,bogus -> ValueError naming only 'bogus'
+  - multiple invalid, e.g. bogus,fake -> both listed
+  - empty / trailing comma / bare comma ("cpu,", "", ",") - today these
+    raise with an ugly message ("Invalid stress-ng stressors: ."); filter
+    empties, give a clear message, and test it
+  - case sensitivity (CPU) - confirm it is intentionally rejected
+  - both --stressng-stressor and --stressng-stressors together - test that
+    the multi form (--stressng-stressors) wins
+  - neither flag -> module is skipped (_donotrun)
+  - duplicates, e.g. cpu,cpu -> today this builds "--cpu 0 --cpu 0";
+    decide whether to de-duplicate or warn, then test it
+  - non-numeric / negative --stressng-workers -> either validate it, or
+    document that it is passed straight through to stress-ng
 
-Minor: the `continue` at the end of the validate_stressors loop is a
-no-op and can be removed.
+Separately (and this one predates your series, so definitely its own
+patch): get_valid_stressors() currently sys.exit(1)s when stress-ng is
+missing or the query fails, and TestGetValidStressors locks that in. That
+is heavy-handed for a load module and is why these tests can't run where
+stress-ng is absent. It would be nicer to return [] and have the
+validators pass names through (let stress-ng report bad ones), updating
+the two existing tests to match - but that is a cleanup of existing code,
+not something to pile onto this series.
 
-With those addressed I'm happy to take it.
+No need to fold all of that into the v2 - a separate patch on top is fine.
 
 John
