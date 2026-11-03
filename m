@@ -1,94 +1,94 @@
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=209.85.128.182
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=74.125.224.50
 ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1793728525;
-	b=jmXPRQF/5/D9R2k03iRqEHeyLIMUWLXQqAqpgzgPktpMhWxWSbk5LjPidRggYMhecSD8
-	 ZwA+UWpJhMz2GMxZ+buv61JFCkgeC5LelbokYInXj5cyMhPMeYoIHOUtuLDXIQYgU6tzJ
-	 CV6eVf7ZLfjclX5lqv7YrEDSn9G+ZayORpxL2Hw1NJ6MV2nm4u7xzLPQAHMpw1yRIHKru
-	 CffNZmcqTQ7JYlhGzkJT9sfX+Zj32mkLtDoXYcFwLkoxh5gIrHTi6U5Ho4bim9NEE//Rt
-	 vGOTjfI2cPy5P2X81Z2dSLwc8HP8DTb734TWAb6sd5xiHyR8fq9cKBUKQ3ubVG8A2DA==
+	t=1793730520;
+	b=Oem4HLLeoMOMEu+NbiNw6EYupxtq4xKH/s6D2+om4SdkiE3Z2lTWq5ys9urOB1y53B1Y
+	 BKV7rUZ2PfECwDR6QzaYOG2uLIHEG9nxv3mK1AAFhOl7fCQjZYbrTkwMbRnrlUot9YGP4
+	 JMPlfuVotMcwjqSwdIm5echcrInlm0qjFpFqTfJm/LicWgqxvW1+lwkx0wUp1W8utBPRC
+	 H07sI6lQO2pNXyXzxg51DyziZW9cKOz2usuJREDyu7sZb2paEtfLGU+gz8GavXD3YHpR9
+	 k1UphQAOwpHMgfRMhKoZlBOrBQK70e+MSsU4+FP1BiOMPhtCUCF/TgxaWfyNAeVK9Wg==
 ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1793728525;
+	a=rsa-sha256; c=relaxed/relaxed; t=1793730520;
 	h=DMARC-Filter:Received:DKIM-Signature:X-Google-DKIM-Signature:
 	 X-Gm-Message-State:X-Gm-Gg:X-Received:Received:Sender:From:To:Cc:
 	 Subject:Date:Message-ID:X-Mailer:In-Reply-To:References:MIME-Version:
 	 Content-Type:Content-Transfer-Encoding;
-	bh=o/jcBChagKqvFY/K/V6UTzh9HQjRQjKi/q/iCF4A08Y=;
-	b=j0GB0HlKtDBI/TH1D1QWUBosgEtSRh71TJlRbjNTE3J+CPzEltALpwKv0RBsUulVp+dh
-	 QC6A7lsiIk+YQK+SWk3CpYNqJyk18KDYLHamRnpW/jnp7qeYHygnILjZbz39N9wBL7bE5
-	 urmAO2pJXlpCo6fGS9oELUd2xfE7XFw+cfQ1eiPU/nEMVrhlz6wb27qJyLsHEGrBfqs+i
-	 44OYGljFrMoRrgVZKPm7gA91D3rjsqUFA/IeKvMCeXbpsBZST1eogMfXATbVEdrqxQ8XX
-	 NQdAruidUmYCNffMlcPWXqIw+4Af7bWmKUO345hKyeWtrQcNvtDx9IbCvuyK6vfro7Q==
+	bh=/P9l0XzUDKBxfbJYNFsurl3JtxLLNN6HBoUEFo1Tkp0=;
+	b=fOp8qZDWJule40UZ1RqkZJ27T14RtEuscVPSAMOaPmkF0fEJIpLeWaSo0Q4NVTE3I0NG
+	 EdEmOlcHUjMQGRvuC4D9bWx/t41VBdfwEIaE1i3oxRI0+LIZbooBZY9uN/V6kvI4FBtfy
+	 84Dh45jnK2yX7xoywJmxGeOlXOOtMQtdBCx1eO+dihUkq0Blj5PIRwKgCYBsv9okexvne
+	 CijMgg/nKbyIJLM2IEHWNH9eSU4IDVOBPgBcZzNgUCx9W/xuHALdmq89h0tXI2VJOBOvL
+	 dgtOhhEf6CxqJrsLu8VcaY4Bp4CyWeBJq7VgeKUCcVetFmDV9AEkzy7nDuKcLNkWbzA==
 ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
 	dmarc=fail header.from=redhat.com;
 	spf=pass smtp.mailfrom=gmail.com;
-	dkim=pass header.d=gmail.com header.i=@gmail.com header.a=rsa-sha256 header.s=20260707 header.b=nbCRm7Ma;
-	arc=none smtp.remote-ip=209.85.128.182
-Received: from mail-yw1-f182.google.com (mail-yw1-f182.google.com [209.85.128.182])
+	dkim=pass header.d=gmail.com header.i=@gmail.com header.a=rsa-sha256 header.s=20260707 header.b=MeI2RRpU;
+	arc=none smtp.remote-ip=74.125.224.50
+Received: from mail-yx1-f50.google.com (mail-yx1-f50.google.com [74.125.224.50])
 	(using TLSv1.3 with cipher TLS_AES_128_GCM_SHA256 (128/128 bits)
 	 key-exchange X25519 server-signature ECDSA (prime256v1) server-digest SHA256)
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 286A3606A329
-	for <linux-rt-users@vger.kernel.org>; Tue,  3 Nov 2026 17:55:25 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 286A3606A329
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id AD555606A31B
+	for <linux-rt-users@vger.kernel.org>; Tue,  3 Nov 2026 18:28:39 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org AD555606A31B
 Authentication-Results: smtp.subspace.kernel.org; dmarc=fail (p=quarantine dis=none) header.from=redhat.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key, unprotected) header.d=gmail.com header.i=@gmail.com header.a=rsa-sha256 header.s=20260707 header.b=nbCRm7Ma
-Received: by mail-yw1-f182.google.com with SMTP id 00721157ae682-8b0dba37a7fso41551537b3.0
-        for <linux-rt-users@vger.kernel.org>; Tue, 03 Nov 2026 09:55:25 -0800 (PST)
+	dkim=pass (2048-bit key, unprotected) header.d=gmail.com header.i=@gmail.com header.a=rsa-sha256 header.s=20260707 header.b=MeI2RRpU
+Received: by mail-yx1-f50.google.com with SMTP id 956f58d0204a3-67583c777abso1262002d50.1
+        for <linux-rt-users@vger.kernel.org>; Tue, 03 Nov 2026 10:28:39 -0800 (PST)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20260707; t=1793728524; x=1794333324; darn=vger.kernel.org;
+        d=gmail.com; s=20260707; t=1793730519; x=1794335319; darn=vger.kernel.org;
         h=content-transfer-encoding:content-type:mime-version:references
          :in-reply-to:message-id:date:subject:cc:to:from:sender:from:to:cc
          :subject:date:message-id:reply-to:content-type;
-        bh=o/jcBChagKqvFY/K/V6UTzh9HQjRQjKi/q/iCF4A08Y=;
-        b=nbCRm7ManWaENP4fpg2jBVLxZ329vSEIqTSgm8xbGtIj8ciYoBoEoJbPsvqeLYF1lV
-         uoUlK8E0T6PuGrXgFk0K3jkYcHs3mJ2wJLPnWlGvNMGzY6wrAS/LtjoLNYsn1P9m7+5N
-         kBdsbXjVlW+9JZOLHYLN513OYKeVVSCyYgNO92uz0wxCN+xeo1y738uIk11jLoI5yB+M
-         Rfn8wI7ErLX73QoBvclxEFUIF1qq3jW8d+NYaBaSPpOdghgxiGgWLrNzyIdBGH3shItN
-         tHoyoLKXY4bC8kUG3vUP/dQSN1rTId18H2osYfdITDBI8A5idzNboE3N/8rnQK59k2Pv
-         Q05A==
+        bh=/P9l0XzUDKBxfbJYNFsurl3JtxLLNN6HBoUEFo1Tkp0=;
+        b=MeI2RRpUccgCWSooF/V4SIkoffmadDyKnngGeu3UPv9S6jBnFecSQG3QxZhvQWoLqU
+         xYFFapzhhyuqZqwGg6OVbxAlgLDmvwpcqWcRlaH0oh45WFzljuBxm4/i0EzH7A1N/XfZ
+         PKtMBojC0BXOQsYjCOirZY0qH8B6Wbr0UjtopswCjSK4jSg4WiEgkKp2G+lL7gKaGa7F
+         dyugk4MgGEeZkgFGJSRth17uEVpnCIg67Ml37cSquYxGbQiINerYIfEDuUCB2vXxvNta
+         LNoHsJxFnpuEhwRWg9tiVeYkud9tcK81Di7F9rQ3CSgbqrfRXLbeYvDIj8v/8hVPED/9
+         CgYQ==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20260707; t=1793728524; x=1794333324;
+        d=1e100.net; s=20260707; t=1793730519; x=1794335319;
         h=content-transfer-encoding:content-type:mime-version:references
          :in-reply-to:message-id:date:subject:cc:to:from:sender:x-gm-gg
          :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to
          :content-type;
-        bh=o/jcBChagKqvFY/K/V6UTzh9HQjRQjKi/q/iCF4A08Y=;
-        b=pWgRly3f0cM1y5B/M4OTdWHrjP4n95lswdDe9EsVXZXw0ndYE8uY6tW6RUDQZ33+ve
-         sc4N+crYCgnbdIHDq9yvjq7RbSPxePZaY0W1NZtg++vIw9ZjfwuovnWWmkhKcjRsexef
-         7gKKnPsKMN8w80P2HSAzccpdKGN1u0pxSF5fML3O0ydG9D2oWNqa3NxWxxeVAKEeSqbK
-         KyfF8B5AWzBtvZa18NAkNXZsYw09hBkaWa6fOQs3fBDK2oYo9PBgyfgt2pNHkPea86vM
-         PiIc0NHck1niYwT4Zwx5UldMnTLTh0HZwL7VNq/q9X/PGSFe4FatOB+U1Uupp25C9OBL
-         FHlQ==
-X-Gm-Message-State: APuU4Z/dl/f0eBo5+SQ1H6tLJzyAISR6vbAcPzxKJw2G+iy8o5E7vlHc
-	XfMUPmIugYMS2SEzCFPuL/oA5U/0mdlHnokrg/06bpqw7QTfMnFGX1fURGTiJw==
-X-Gm-Gg: AYBFou1/ASZx/HOjhw86UMAd2/G0IaPHUOObtNHcQoheMYOcrG40m1EncO4QEMc1Zq2
-	Mmz0EyWmK2IOxcqs+jYxWNJPyKwafeMBGeRA96IyK75dsexi9PAOe3PduKfF5+eg/ApT3gdlLwQ
-	GnYvXpCj8AgjABv8jWuNvx3F7ORyI033CqaE4r894+BIOpLS3cCF99oBIGzGolaGmyw8Uugrzn/
-	11qPp4Tbc5htsK5R1IHv/dlhaU9AZQgiL4a7WYlbjqWMPc8Hg5QI8Xkg0A/t6x2cIofE76FpamN
-	gu2ex+5ARXZeK7hchYHGZd19Rn/cqQ5weFxhRd8V/5zTY59cLiPfgBfD8BtRxtmTq5TJYTqXR4Y
-	JcYusEytESz3lZbP44eG+33bJHJ3VZNmAvyDdna0Hiltap5Mx0TNCpR3iwJ2KoGNAzn6MbmfEXL
-	IaMtEvxoQKYG6TIPlwPKCHIr6Pll/KqKuew5i16MoGgW0J27dh5DoQ9w9eySp7J8yfJXOKqlkEz
-	ZQNP65nXE+XWsp/1OvOQmQIcLtM94t+u0BorDUDeChcnB/S7xojTC7/Cr3CAWzwTV53z+DO1DYl
-	O1y7wNC1ymbSSSP0EP0Jnh0jDUp0AnupQKOI9j8Y/+q6rnnmQsg/vSzSY0+5jdTydXIsWSyY71n
-	tliI73ttRvVw7II8O1hOWFmVPzFhX03dzgFBW8AxHxCDffvErpGIyrEmDlrSJMwMh+0zR+gWG
-X-Received: by 2002:a05:690c:31a:b0:8b2:ff8c:63b5 with SMTP id 00721157ae682-8b2ff8c6834mr12398657b3.46.1793728524157;
-        Tue, 03 Nov 2026 09:55:24 -0800 (PST)
-Received: from fionn.home (bras-base-toroon01zb3-grc-09-70-50-116-123.dsl.bell.ca. [70.50.116.123])
-        by smtp.gmail.com with ESMTPSA id 00721157ae682-8b30997aa84sm1700707b3.29.2026.11.03.09.55.23
+        bh=/P9l0XzUDKBxfbJYNFsurl3JtxLLNN6HBoUEFo1Tkp0=;
+        b=kmQEHnnkb/LziSExLEWt7Esp/t6rCondhS7Z2Da7Bn/fOSLHhIhV9giyDwe7JpJ+b6
+         CGIm1vNg+hQl7MRxMYuga7JfcicKvAiEk+EagdD0ac3GP6IJJaxPpb8tSVSVYitXCNgp
+         oCAyNgwP8nIL4sBSjFESR/ghYoNDhW6Kz3veqjYHnUKx9zMzD68hYVEJqAreJ4AgFdRd
+         WZKafaqYMeyVeFUMVs3euaV/4Q7kHtUg6dMIY++ClHdwfs/hb6z4Sc3XvPYrsGnwnNXr
+         poU0ebp0sNmFevGcDBsTO3+h6og2Nt8Ywc37+SQBWJd+pbS6dVKPMi+7YGXvwj8u+BJ4
+         0+Qw==
+X-Gm-Message-State: APuU4Z9C+ke+i/1vYY+xvxv0a5UnhAiJcv9RMZd52pU6WN9V4LI1UnIb
+	sO9+cP2IXPyeQO3NARdFITf7h+Zzc6oJJ5PhJzfrUWoYYr5vM0HRT0MSaioq8w==
+X-Gm-Gg: AYBFou0q65x7I//J0gvEckVKP+MTr7ZNSd3iZubP4hdSD8C4Mf+3DPQUFcZdkjWjFk/
+	nbY55u0nOPnXRqx+wUuvhOEeknH7tCkdSOTpdsSahjn+ddXJ+ZDCLAqS3DTxbe8NgAQ5iiY2r6O
+	4iUjwd7dT1ydEp6cQxNZ2q5O/lPXFCDRaKBW1uVIhvoOvxxMSbFZPJ7ZKgtg57mUmneVBLVlcK6
+	YEDz47oCXwQy4BtBY3/NLpWO5cR3qPZ2OSuNSIHKLDTbyOS5E4qNJ0se09vQuJeVGqRl44lrSWK
+	ZxGb9sX7qL42E+TtGZzgBAPN6siGuJvDVcTtT2KO5a5uLYC14b34SOQgBEyuI57Vh+TTNAWFMmZ
+	u5mAji201nGgVgERGJc+0NxpTVM8Oou/vew1rz7jmE8a40nuTulDXU3P0ru4UWgZDQyHaPVBsHr
+	5OUv7phPMn56XiQPcV6sODPPwsd/zTZJLP686Ps669IYu93itps+7uL+iH7saDqB3wHDkBqjI8o
+	xNyW7sc9aT9ZO3SoH2JF1dOgpkPi342dq6Elj8DNskt81wW3Gh1nH1MI/rV68pZbW706E61w5aJ
+	RNSXkdE0xbjf4oEzGToHvv0igM8I7wWitjLF6l7dz5oEiLU44EBHSnEDRGUv8CsseSiXF4dODLV
+	7uQMl+Ncv
+X-Received: by 2002:a05:690e:191a:b0:679:ac65:487b with SMTP id 956f58d0204a3-67a8d396d2dmr12409465d50.15.1793730518564;
+        Tue, 03 Nov 2026 10:28:38 -0800 (PST)
+Received: from fionn.home ([70.50.116.123])
+        by smtp.gmail.com with ESMTPSA id 956f58d0204a3-67baf2701f8sm7500889d50.6.2026.11.03.10.28.37
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Tue, 03 Nov 2026 09:55:23 -0800 (PST)
+        Tue, 03 Nov 2026 10:28:38 -0800 (PST)
 Sender: John Kacur <jkacur@gmail.com>
 From: John Kacur <jkacur@redhat.com>
 To: Sana Sharma <sansshar@redhat.com>
 Cc: linux-rt-users@vger.kernel.org
-Subject: Re: [PATCH v1] rteval: Edited documentation for multistressor support
-Date: Tue,  3 Nov 2026 12:55:17 -0500
-Message-ID: <20261103175517.107723-3-jkacur@redhat.com>
+Subject: Re: [PATCH v2] rteval: Fixed hardcoded paths in class TestCpusetManagerCLIIntegration
+Date: Tue,  3 Nov 2026 13:28:23 -0500
+Message-ID: <20261103182823.120528-1-jkacur@redhat.com>
 X-Mailer: git-send-email 2.56.0
-In-Reply-To: <auSkiUhcFJAO2-_Y@fedora>
-References: <auSkiUhcFJAO2-_Y@fedora>
+In-Reply-To: <auI9GfqN-g0YtJhD@fedora>
+References: <auI9GfqN-g0YtJhD@fedora>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
 List-Post: <mailto:linux-rt-users@vger.kernel.org>
@@ -101,15 +101,46 @@ MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit
 
-On Fri, 30 Oct 2026 at 10:07:05 -0400, Sana Sharma wrote:
-> [PATCH v1] rteval: Edited documentation for multistressor support
+On Wed, 28 Oct 2026 at 14:21:13 -0400, Sana Sharma wrote:
+> [PATCH v2] rteval: Fixed hardcoded paths in class TestCpusetManagerCLIIntegration
 
-Looks good - thanks for dropping the stale --stressng-option /
---stressng-arg entries and documenting the new flags. The content matches
-the actual behaviour (workers default 0 = one per CPU).
+Thanks for the patch Sana. Good catch dropping the hardcoded
+/home/jkacur path - it would only ever have worked on my machine - and
+the switch to pathlib matches what we already do in
+tests/test_stressng.py. Two small things to fix, then I'll take it.
 
-Two tiny fixes for a v2:
- - the commit message says "docs/rteval.8"; the path is "doc/rteval.8".
- - typo: "specfically" -> "specifically".
+1. Don't compute the repo root twice.
+
+> +sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+...
+> +    srcdir = str(Path(__file__).resolve().parent.parent)
+
+The same str(Path(__file__).resolve().parent.parent) is evaluated once
+here and then again as the class attribute. Name it once at module scope
+and reuse it:
+
+    SRCDIR = str(Path(__file__).resolve().parent.parent)
+    sys.path.insert(0, SRCDIR)
+
+and in the class:
+
+    srcdir = SRCDIR
+
+It needs to stay at module level (not inside the class), because the
+sys.path.insert has to run before the top-of-file "from rteval ..."
+imports, and the class is not defined yet at that point.
+
+2. Extra space after the comma.
+
+> +            [sys.executable,  f"{self.srcdir}/rteval-cmd",
+
+There are two spaces after "sys.executable," in each of these calls; it
+should be one. pylint won't catch this (it dropped its whitespace checks
+a few releases ago), but a formatter like ruff or black will flag and fix
+it for you automatically, e.g.:
+
+    ruff format tests/test_cpusetmanager.py
+
+With those addressed I'm happy to apply it.
 
 John
