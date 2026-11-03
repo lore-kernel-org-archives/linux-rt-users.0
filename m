@@ -1,98 +1,95 @@
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=209.85.160.181
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=209.85.128.169
 ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1793656090;
-	b=qW9k/acb6O178D9YD6sFNB86yqbpkIPVW95xoAdKsjzroTCYpoEmNWHM0lperM+8MKrm
-	 /sC30q5VrZGsRUCT7qFmQF0YCJ7y6rOZgGX5MT8hDUWvddEqhY7F9DYhh9H7Tb445s7dX
-	 xtmlyMxxkhhA+tYLEJ9GnvAw08cU7L18WZmmjViUVimXoSGJlaI9/1QA9ymbgoLLVbneo
-	 X23z7Vt/iQe4V7U5u4bcwbBt2khnY7zXTnEF8BasiAnDu9ElFXqV5XEV9iZwCvRfJK+ys
-	 VD5wme13wiBPoIe/m+bsw9N0ft5lIiZUx6XEzes8l0W0htJ42g9PMHvGMdgKdmx+tAg==
+	t=1793728523;
+	b=dZ4ksVv0MHwXOeCRuBrxz02vdVUL9kLWVvJSXVclGMTJyyUwqoq3SRbgDpt0NTCxVtx7
+	 0t9X72vOn6iI5dJa2ZrMr0thyk9mA7Ew0fVXj3qGjNpBQrjj36sE2E7H2fWOxeuAK0aK8
+	 Agsg1dsIH5l6SO/Bp0CdGgqgZyg6Qk6QjX+KTsXMgSWrMD2enzVNWqsz0Z+tE0C3/a7kN
+	 jqjmC3h1mGMyXqFbhfJSImqC2Ld9ODjXlWRPolchyr6OPguf+za5kuJLHFnhF/0JdhlDY
+	 07H4sihaOXRJHFNsvYyNu/uNFEaaXXJ7v1STjHtou+svOMobunm0jr/0JiejcwB52vQ==
 ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1793656090;
+	a=rsa-sha256; c=relaxed/relaxed; t=1793728523;
 	h=DMARC-Filter:Received:DKIM-Signature:X-Google-DKIM-Signature:
 	 X-Gm-Message-State:X-Gm-Gg:X-Received:Received:Sender:From:To:Cc:
 	 Subject:Date:Message-ID:X-Mailer:In-Reply-To:References:MIME-Version:
 	 Content-Type:Content-Transfer-Encoding;
-	bh=HL8n4hM1jkSziOepCQ+JNi3Ux30Dn49fTFbbZh+6dLE=;
-	b=r68+L6LQ+w/HLK/92tndq0Iyl3T0ocQ4VtVmvkUSQHmKDGPjcm5BVopyQj+lR+0yUPcO
-	 +N9H7eLkvu8S0G2/4fnEhc9f9lwCpZnvDOL/wXoriu6n7ljEU4z2Wk9TfadziutqNgmCI
-	 47/RaV8iaMiN8df++petKqD8stBH7NJHthC2tgMaFQDwdBZc3rH4Cie+SL0LKXh6aVG7i
-	 YFqQPqoKf+BAVrk0YCp6v+tmznSrDUEkFm30ENLHUhOL5uhqon1ilfAMyKsqNrJAL5ZV+
-	 Gqipol+Jwa43pTZ47JARrNCXyfVsklZCTXc53GGzRZtQ5mqOoIiMd7ffdbIUqpvQdCw==
+	bh=hgC2jszRhcbrP1Ah6Vr19omv8g4IklUPg6gHa2W5Q9g=;
+	b=QUpYXl3EaCQcEcGunQ0PKWu7YemAZVCAGv/vC3xLE5m3IBym/MsMYISiFP6EIc6eaQ8X
+	 6gif1MgXJHaRMmZkGwOJoIfzhCpYUHPR4za6MInwprqMR/3t2EJAH1ohtS8KyM8F8b/Ve
+	 TRkl5Z1e8CDJs1tgvzjICYRYBZ/3OVX+sqZNCHgMmmBfP/YWPDOz3OTbDnQdZTphG7O49
+	 sSvbPCnLigH4tZpA+h7fT/GLszTSnc6IfySmv/6FxBh9NfhdRG7Gn7rx218kDSi2frwBq
+	 ZT4JvX+EU2osThxAzoTKLnm5wDrdExnbpBIW8lUDMcJCoEd8hgmTvRyqymq3TTrKZLw==
 ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
 	dmarc=fail header.from=redhat.com;
 	spf=pass smtp.mailfrom=gmail.com;
-	dkim=pass header.d=gmail.com header.i=@gmail.com header.a=rsa-sha256 header.s=20260707 header.b=MqA4M3Rp;
-	arc=none smtp.remote-ip=209.85.160.181
-Received: from mail-qt1-f181.google.com (mail-qt1-f181.google.com [209.85.160.181])
+	dkim=pass header.d=gmail.com header.i=@gmail.com header.a=rsa-sha256 header.s=20260707 header.b=A6WYB8Fk;
+	arc=none smtp.remote-ip=209.85.128.169
+Received: from mail-yw1-f169.google.com (mail-yw1-f169.google.com [209.85.128.169])
 	(using TLSv1.3 with cipher TLS_AES_128_GCM_SHA256 (128/128 bits)
 	 key-exchange X25519 server-signature ECDSA (prime256v1) server-digest SHA256)
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 960AE606A327
-	for <linux-rt-users@vger.kernel.org>; Mon,  2 Nov 2026 21:48:09 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 960AE606A327
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 2B2B2606A31B
+	for <linux-rt-users@vger.kernel.org>; Tue,  3 Nov 2026 17:55:23 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 2B2B2606A31B
 Authentication-Results: smtp.subspace.kernel.org; dmarc=fail (p=quarantine dis=none) header.from=redhat.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key, unprotected) header.d=gmail.com header.i=@gmail.com header.a=rsa-sha256 header.s=20260707 header.b=MqA4M3Rp
-Received: by mail-qt1-f181.google.com with SMTP id d75a77b69052e-533797e72e8so22551181cf.2
-        for <linux-rt-users@vger.kernel.org>; Mon, 02 Nov 2026 13:48:09 -0800 (PST)
+	dkim=pass (2048-bit key, unprotected) header.d=gmail.com header.i=@gmail.com header.a=rsa-sha256 header.s=20260707 header.b=A6WYB8Fk
+Received: by mail-yw1-f169.google.com with SMTP id 00721157ae682-8b0dba37a7fso41550997b3.0
+        for <linux-rt-users@vger.kernel.org>; Tue, 03 Nov 2026 09:55:23 -0800 (PST)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20260707; t=1793656088; x=1794260888; darn=vger.kernel.org;
+        d=gmail.com; s=20260707; t=1793728522; x=1794333322; darn=vger.kernel.org;
         h=content-transfer-encoding:content-type:mime-version:references
          :in-reply-to:message-id:date:subject:cc:to:from:sender:from:to:cc
          :subject:date:message-id:reply-to:content-type;
-        bh=HL8n4hM1jkSziOepCQ+JNi3Ux30Dn49fTFbbZh+6dLE=;
-        b=MqA4M3RpP6GU3Bg/kDkNIwMgSJzYy1CVEGPoKfoNbUWrFaYefT48NkwHvazE6UYAUh
-         UTEMeaC9m4EiBCM9dMbo/pUa633Jj3NCgJKkeBQTdi/MsO8hdsRCFYLj+taGp3AzDoK+
-         CVMLBmAa3xeLsgAdabj5+LEXG09bG1uXXRD5Tfv7gUPkcuWsSUNUa7m9rKxPsDK3cHWP
-         +tUV4RgO93TEQlctFnGuRfpp1Gj+rol6U119hdOjQtQ8s3GxvIVxt6cq6RYheca52hJz
-         0ZET5CMlTZ+pz4KACPfgJ3KgyfEsN9f5E+sz6NDlWs025lzy1vYUDQ+Nz55MxNm1t76J
-         H1xg==
+        bh=hgC2jszRhcbrP1Ah6Vr19omv8g4IklUPg6gHa2W5Q9g=;
+        b=A6WYB8FkX0i9b6cFJw6aXiEjSuN4jA+1oZvK3V+eHKJZ6AGcOSp+Pxg+xsJrvN3Uue
+         bp94j4c73o5oLJKoStFKeyBlSDr7QX/8/ATAs3JbV/VzHvi1XdbrTvJzeImY0ThOF56K
+         DKYTz8rwI1Wx93kMlRbzmdI/b/UZTs6OTdf8iWEoe9++FWFKUBZ6qOa1YnefEYgmdCle
+         3lQ7TBEBddrOy/lBkC3BTzmBleAARTJNoiW4iikNUWQRCsiPLk+Vy9UoPxCgeAXWkhK8
+         6MciuQx19jtZtuSzp+7UiayOO/FQz5k0rp9fbOAuzVBOU83+8t6m9Lyy+Sk1LRmTv38t
+         6IKQ==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20260707; t=1793656088; x=1794260888;
+        d=1e100.net; s=20260707; t=1793728522; x=1794333322;
         h=content-transfer-encoding:content-type:mime-version:references
          :in-reply-to:message-id:date:subject:cc:to:from:sender:x-gm-gg
          :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to
          :content-type;
-        bh=HL8n4hM1jkSziOepCQ+JNi3Ux30Dn49fTFbbZh+6dLE=;
-        b=U4FheISIYxV0PxwRjfMk95MX5wnQL8df6NMEG8R9Aj3g9fmw6ba68iNk7dhmvy9GJ0
-         ISR41fRXBNyO3zdFdHnkzB3Ma3jDmPO3iQ33Y3G7AQ96cpLkj1TrWuvkq31vExOZwQQQ
-         VlqZUbxWMklS0ADmThkqd2FTv04DWuZxI5hg2Vi2K1KeCNgt1CZoliIsk2HKWElenH8Z
-         dkQcPnCHaRk3d6TDOp4LymHRaG4F3a2wUkB8bkccWtLu3rUS6DZHyEVlqiEHVKmtXf6g
-         PNlykpg/J7LNUjeKbQ8YuhnnRC+Qa8K47KMRHGkBqeZfhP+Ehh+QNf/whYSBIP3gAhO9
-         gkDA==
-X-Gm-Message-State: APuU4Z9c6ScZX0rB09cv6uG5jq0dSsfHu4bVu169XkMCvYU3iUuooeDz
-	n3j9BoJ6ryhI0zLenRe4QHDNI3v6ZkqtWmyctsI+PFR26sg29mBmb5Z7
-X-Gm-Gg: AYBFou3vFO8ocrF2w4C8SV0hSBkRnbFOmdwFJ1Xj0VOEcTSAS5vNLzA1hAOwphTTHzw
-	ydell34mi3Nn7CP6Cqfdl2/w7+Inr8DDPqCz/LIiG//GUNrzb5nw/fo+32JvT0/Br/9Dg4740LQ
-	q2ASGuIHGfji3ydVQWH7PLL1k0YXb7nzdzUYnMMgnaTfI1WZ67XOUunHqNnOCy2Om3rg3QGEeop
-	iq/mLyyvoYM9N5mjqNPOoUAbcCh7I25FJ2V/QPuVPW7Y4RaGT+Ijyt+7J/rofPOVufjjYX5+hVb
-	x+9YJKnIhsKosrwsZwfCrL2VhSnMYxIaLAYfsXTs4Vh85v5lL+0OruQaHWGA4zywhOA9eK1UaTH
-	uXmK4FQJa7zwTw+idlK45GeunMmFOVHCzY/+tDUxYZnGBO7M16kyqN3TZeTDKhN6xjpYiiabCX5
-	MkEtTbPt1ew58AXy11PKpUgpdJe1/vVxEWbu2hzOA3HdwCAUEwQSp/OyLVFb9ASAEyHqU20Dmnp
-	VhEZKdyq4SGPEZ7KKplA+j8W6G8YYA3MgwcJ/sN5Z7St5KkDJBo/6jaV1bIp4Jo4p9xD+vsnETO
-	wnZQ3r5xjglTKJjMSdXBFQVlL55CHt7Vk6yZ2rgGXYAl5MxE2YOgiEglR9PT0O8Hn0pfZ0Y6Aza
-	FvwM8VO4oaDR7+y2D49Onlfs5YKUjcpes8Fh1vxNaGmbhmr4sRa9MzF08+Iebez0dHv8xQJ6okn
-	gwJeoTUNuPt9Br/lu0Ys+ujfzBoHQ=
-X-Received: by 2002:a05:622a:1247:b0:535:a5fa:ee02 with SMTP id d75a77b69052e-542b7dfcaa1mr191905521cf.66.1793656088417;
-        Mon, 02 Nov 2026 13:48:08 -0800 (PST)
-Received: from jkacur-thinkpadp1gen2.rmtcaon.csb (bras-base-toroon01zb3-grc-09-70-50-116-123.dsl.bell.ca. [70.50.116.123])
-        by smtp.gmail.com with ESMTPSA id 6a1803df08f44-91ca7f3f903sm100963826d6.17.2026.11.02.13.48.07
+        bh=hgC2jszRhcbrP1Ah6Vr19omv8g4IklUPg6gHa2W5Q9g=;
+        b=qhBiXNjFvqEbkSZegJ62U7wOLssQAJ/IlqqWOXazdTWwPTa9kjSTIxB2CHDBl4jvl6
+         4SXiKR1EYigYjsJmaihDWCZh1mHLkjFMAumio3w6k/6EyxC2lCzaMg/8xOMqxGkjIzbc
+         pXBPl8Wt5kiKkphEGMBKbJiQ/gKYubkCXHtLIEIJXyO66ewpp8VSpaLJ8epjVBlwX6X6
+         N0Q2AW2GmaleOLyesiksXuiCAoEN5cwDNzyngK8n0aeKYsTOGLVvgNX3nxHvmINQgKZV
+         OctJw+m4Ql2MkeZv1itsHAaO+qvfBxR5IR3T1Sz/bqsjgZ1PQzOBn8IpS6R6yrSTTvNd
+         rjMg==
+X-Gm-Message-State: APuU4Z/UnC79VRWQ2bgmmVwcRumkMlwDTaDRTvOBwe/6n7PxP7bBED6F
+	WHhAV25scgtWyy+43ltdX0na6T47BK/12GJ8jf2PJ/VnKb6hlg7MOa1oNeyOKQ==
+X-Gm-Gg: AYBFou0qlOzLeJSmtQI6SYMs6bWbLikZ48R/RWty0mjEt3dTA3K5NoWrAv66d2n1RRn
+	zrjX1qgBvTb3yn64iuGjWkngUKH689DPW/jTGf+yfCEVQJgRcgRAws2sPj0lCSsNh98XHJHVPbh
+	8zoIZU211SQFr0m15aRQ8YuHgLGFD/2H2kRlSWue1WMgmKD6YCEqIECaijJdIN2FRf244Tj9zvx
+	JQDe0fiYHkm9wIKuodYqLTbqZgS/zxPXO3TzkUIAGtZQ34nWfSshicOoJsq1UrnVSwwLyg1Dltj
+	Oq8Fixsz5Tv6fTxvgbOjjRBFpnDGVPyZiG+EXjxbnfMB80diuVwDaFO0ynHUI4mX/buhWARlfGq
+	7r/zS1Nj7dAbJyi9APvAeYZxCBybh4NXZlyhxT1p4mAKJLu+DVOz17rgSLQgJ5jucSC4uEm6RrB
+	q8E/TltHbDUJ+uazjjt85R4dOGGqhpe1BtXW68mvFH4Q00N5+VFs2AA/bWCeXRU3n0D45M+TInk
+	5caHvOe7TDUOIkSfx/sv0FwNgDnsl6nFEd0sIaN1FABiB7OHwiR91Izi3wXflsGLczZaubf3YhU
+	WTAdgFSFtQKIOoCqKMRy3aaRNeePIWtLVId/pcUvkFDERbTTaFMxFtYUPz8DHce7AEPmlkBR781
+	xRZoNNSxYjQZWOb+y/poj6dydapqq+K1BMao6Bm2yp4d9fkhQqT1T1WCXh+XN4NYd1xk9xrAc2A
+	==
+X-Received: by 2002:a05:690c:e192:20b0:8ae:a5b5:e97a with SMTP id 00721157ae682-8b2b66d26eemr57346977b3.13.1793728522178;
+        Tue, 03 Nov 2026 09:55:22 -0800 (PST)
+Received: from fionn.home (bras-base-toroon01zb3-grc-09-70-50-116-123.dsl.bell.ca. [70.50.116.123])
+        by smtp.gmail.com with ESMTPSA id 00721157ae682-8b30997aa84sm1700707b3.29.2026.11.03.09.55.21
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Mon, 02 Nov 2026 13:48:07 -0800 (PST)
+        Tue, 03 Nov 2026 09:55:21 -0800 (PST)
 Sender: John Kacur <jkacur@gmail.com>
 From: John Kacur <jkacur@redhat.com>
-To: Costa Shulyupin <costa.shul@redhat.com>
-Cc: linux-rt-users@vger.kernel.org,
-	Crystal Wood <crwood@redhat.com>,
-	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-	Bart Wensley <bartwensley@gmail.com>
-Subject: Re: [PATCH v3] rt-tests: hwlatdetect: Restore tracing parameters
-Date: Mon,  2 Nov 2026 16:48:03 -0500
-Message-ID: <20261102214803.100471-1-jkacur@redhat.com>
+To: Sana Sharma <sansshar@redhat.com>
+Cc: linux-rt-users@vger.kernel.org
+Subject: Re: [PATCH v1] rteval: Added multi stressor support
+Date: Tue,  3 Nov 2026 12:55:15 -0500
+Message-ID: <20261103175517.107723-1-jkacur@redhat.com>
 X-Mailer: git-send-email 2.56.0
-In-Reply-To: <20261020180339.1062486-1-costa.shul@redhat.com>
-References: <20261020180339.1062486-1-costa.shul@redhat.com>
+In-Reply-To: <arwPN52esmki-k_f@fedora>
+References: <arwPN52esmki-k_f@fedora>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
 List-Post: <mailto:linux-rt-users@vger.kernel.org>
@@ -105,12 +102,33 @@ MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit
 
-On Tue, 20 Oct 2026 at 21:03:39 +0300, Costa Shulyupin wrote:
-> rt-tests: hwlatdetect: Restore tracing parameters
+On Tue, 29 Sep 2026 at 15:19:19 -0400, Sana Sharma wrote:
+> [PATCH v1] rteval: Added multi stressor support
 
-Applied, thanks!
+Thanks Sana. The feature works - I ran it end to end
+(--stressng-stressor cpu, and --stressng-stressors cpu,vm) and it builds
+the right stress-ng command, with workers correctly defaulting to 0.
+A couple of small things to fix for a v2:
 
-The DebugFS/tracefs rework and the hwlat.txt refresh Sebastian mentioned are
-orthogonal to this fix and can be handled as separate patches.
+1. Drop the unused import.
 
-Signed-off-by: John Kacur <jkacur@redhat.com>
+> +import argparse
+
+argparse is not used anywhere in the file.
+
+2. Precedence when both flags are given.
+
+> +        if (hasattr(self.cfg, 'stressor') and self.cfg.stressor is not None):
+> +            setattr(self.cfg, 'stressors', list(self.cfg.stressor))
+
+If both --stressng-stressor and --stressng-stressors are passed, the
+--stressng-stressors value is silently dropped (the single-stressor form
+wins). I'd rather the multi form win: let --stressng-stressors take
+precedence, document it, and ideally warn when both are supplied.
+
+Minor: the `continue` at the end of the validate_stressors loop is a
+no-op and can be removed.
+
+With those addressed I'm happy to take it.
+
+John
