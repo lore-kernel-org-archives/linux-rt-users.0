@@ -1,94 +1,94 @@
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=74.125.224.50
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=209.85.219.47
 ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1793730520;
-	b=Oem4HLLeoMOMEu+NbiNw6EYupxtq4xKH/s6D2+om4SdkiE3Z2lTWq5ys9urOB1y53B1Y
-	 BKV7rUZ2PfECwDR6QzaYOG2uLIHEG9nxv3mK1AAFhOl7fCQjZYbrTkwMbRnrlUot9YGP4
-	 JMPlfuVotMcwjqSwdIm5echcrInlm0qjFpFqTfJm/LicWgqxvW1+lwkx0wUp1W8utBPRC
-	 H07sI6lQO2pNXyXzxg51DyziZW9cKOz2usuJREDyu7sZb2paEtfLGU+gz8GavXD3YHpR9
-	 k1UphQAOwpHMgfRMhKoZlBOrBQK70e+MSsU4+FP1BiOMPhtCUCF/TgxaWfyNAeVK9Wg==
+	t=1793824279;
+	b=4gY2Vy+ay7AfbdZr7Aq1hg2nMkLJTMqW/g44I1ZEj/sS21fkFUHAr6udMjMJD8nKlKME
+	 Qb6o4ssFInWq0SAc1bevOBlJ8FdgTGam20nQS0ME0W1l+iodjVQEMjjQaMuGGj+5L2xX9
+	 heQTrcibzhjt8S4oyfvoBJafLjAOhw3phXtsoLyB3vHh9hfH9H2frawqqRbqOtkaWfqds
+	 SG0mfy/2jdJcpcpiuZ4gWuPTaEHnR3GMY1E8H9BYBX0v0KxRJ0KwjTrqd7jBMEzmk/ejN
+	 nLOvrT8EhNRYA9pQLK7n4G8sqLlVY97gHEF1i6uxVAbawIJfmxCbRgcdlt/SjBAw3Hw==
 ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1793730520;
+	a=rsa-sha256; c=relaxed/relaxed; t=1793824279;
 	h=DMARC-Filter:Received:DKIM-Signature:X-Google-DKIM-Signature:
 	 X-Gm-Message-State:X-Gm-Gg:X-Received:Received:Sender:From:To:Cc:
 	 Subject:Date:Message-ID:X-Mailer:In-Reply-To:References:MIME-Version:
 	 Content-Type:Content-Transfer-Encoding;
-	bh=/P9l0XzUDKBxfbJYNFsurl3JtxLLNN6HBoUEFo1Tkp0=;
-	b=fOp8qZDWJule40UZ1RqkZJ27T14RtEuscVPSAMOaPmkF0fEJIpLeWaSo0Q4NVTE3I0NG
-	 EdEmOlcHUjMQGRvuC4D9bWx/t41VBdfwEIaE1i3oxRI0+LIZbooBZY9uN/V6kvI4FBtfy
-	 84Dh45jnK2yX7xoywJmxGeOlXOOtMQtdBCx1eO+dihUkq0Blj5PIRwKgCYBsv9okexvne
-	 CijMgg/nKbyIJLM2IEHWNH9eSU4IDVOBPgBcZzNgUCx9W/xuHALdmq89h0tXI2VJOBOvL
-	 dgtOhhEf6CxqJrsLu8VcaY4Bp4CyWeBJq7VgeKUCcVetFmDV9AEkzy7nDuKcLNkWbzA==
+	bh=HkIXGFYdcqcJD/ei25t609T370Ykg+QmRbltr9zpKaI=;
+	b=laU8aMfVJwHAb/Xh1ibvWlKrjOaszpqsLYaU7UYs8Jn2CB9gJK9sBKeRvvf16+Sj8o8J
+	 MzOzzyV/UY+lzhoaeCL4k3d8WT8TehqQ0liPlhT9zC7p5URzjNI39Q//Ujf4MxeykbMrY
+	 /69OvZvR48lqBh19lVF8fxUV83ascM9a4gTI90DQs0g9uXwzFjoi5HYZJ1Jo9u7uRO3LR
+	 Garcg5Kn0qSxJMjm2NuSIfos6ep2HnUwI/6J2bcnucYk4f9NVAGUNAEHYic/MhZthDR+A
+	 Lq70bdO5IpG1DdocN1FqOS5M6ZV5jv5Wux3gLvO+kGR3XAys5T+pR3ZqOvN2y0qRFtQ==
 ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
 	dmarc=fail header.from=redhat.com;
 	spf=pass smtp.mailfrom=gmail.com;
-	dkim=pass header.d=gmail.com header.i=@gmail.com header.a=rsa-sha256 header.s=20260707 header.b=MeI2RRpU;
-	arc=none smtp.remote-ip=74.125.224.50
-Received: from mail-yx1-f50.google.com (mail-yx1-f50.google.com [74.125.224.50])
+	dkim=pass header.d=gmail.com header.i=@gmail.com header.a=rsa-sha256 header.s=20260707 header.b="rWsL/fXb";
+	arc=none smtp.remote-ip=209.85.219.47
+Received: from mail-qv1-f47.google.com (mail-qv1-f47.google.com [209.85.219.47])
 	(using TLSv1.3 with cipher TLS_AES_128_GCM_SHA256 (128/128 bits)
 	 key-exchange X25519 server-signature ECDSA (prime256v1) server-digest SHA256)
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id AD555606A31B
-	for <linux-rt-users@vger.kernel.org>; Tue,  3 Nov 2026 18:28:39 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org AD555606A31B
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 069C76082BE0
+	for <linux-rt-users@vger.kernel.org>; Wed,  4 Nov 2026 20:31:18 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 069C76082BE0
 Authentication-Results: smtp.subspace.kernel.org; dmarc=fail (p=quarantine dis=none) header.from=redhat.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key, unprotected) header.d=gmail.com header.i=@gmail.com header.a=rsa-sha256 header.s=20260707 header.b=MeI2RRpU
-Received: by mail-yx1-f50.google.com with SMTP id 956f58d0204a3-67583c777abso1262002d50.1
-        for <linux-rt-users@vger.kernel.org>; Tue, 03 Nov 2026 10:28:39 -0800 (PST)
+	dkim=pass (2048-bit key, unprotected) header.d=gmail.com header.i=@gmail.com header.a=rsa-sha256 header.s=20260707 header.b=rWsL/fXb
+Received: by mail-qv1-f47.google.com with SMTP id 6a1803df08f44-91e7af9a67fso8834936d6.2
+        for <linux-rt-users@vger.kernel.org>; Wed, 04 Nov 2026 12:31:18 -0800 (PST)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20260707; t=1793730519; x=1794335319; darn=vger.kernel.org;
+        d=gmail.com; s=20260707; t=1793824278; x=1794429078; darn=vger.kernel.org;
         h=content-transfer-encoding:content-type:mime-version:references
          :in-reply-to:message-id:date:subject:cc:to:from:sender:from:to:cc
          :subject:date:message-id:reply-to:content-type;
-        bh=/P9l0XzUDKBxfbJYNFsurl3JtxLLNN6HBoUEFo1Tkp0=;
-        b=MeI2RRpUccgCWSooF/V4SIkoffmadDyKnngGeu3UPv9S6jBnFecSQG3QxZhvQWoLqU
-         xYFFapzhhyuqZqwGg6OVbxAlgLDmvwpcqWcRlaH0oh45WFzljuBxm4/i0EzH7A1N/XfZ
-         PKtMBojC0BXOQsYjCOirZY0qH8B6Wbr0UjtopswCjSK4jSg4WiEgkKp2G+lL7gKaGa7F
-         dyugk4MgGEeZkgFGJSRth17uEVpnCIg67Ml37cSquYxGbQiINerYIfEDuUCB2vXxvNta
-         LNoHsJxFnpuEhwRWg9tiVeYkud9tcK81Di7F9rQ3CSgbqrfRXLbeYvDIj8v/8hVPED/9
-         CgYQ==
+        bh=HkIXGFYdcqcJD/ei25t609T370Ykg+QmRbltr9zpKaI=;
+        b=rWsL/fXbeRZMhuFHqvBoky4w01CE+VrSVtGxBQdS9V+9An4+mgUsgwQGy6psjzlNni
+         snVewIaxIjopvc3Yt+aem97EIofwubWlcYqGVRiDQfekA6tV9rwZwHdrN9Nc1CN6E8nQ
+         XTJqLnsgr2MEvpmWcMIIisFDq4GBG7l+ez1FdZ1XMy4vVS0cBE+ajZp9T1X/fU3Ab2ZX
+         f4Xo+5rn8/Pbt4wHQHLhMyfZ7h8MjmVZjH/rwr2bkIUtLABXpu19Yk6/X4RiTnwvC4g0
+         ca66kby8ZbfZVXa1JCDFSd3m1VDhPQz8iv9qZjQxRJyvZXz9l8DfrGxc0Tjf4S1VkJ9s
+         1wvA==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20260707; t=1793730519; x=1794335319;
+        d=1e100.net; s=20260707; t=1793824278; x=1794429078;
         h=content-transfer-encoding:content-type:mime-version:references
          :in-reply-to:message-id:date:subject:cc:to:from:sender:x-gm-gg
          :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to
          :content-type;
-        bh=/P9l0XzUDKBxfbJYNFsurl3JtxLLNN6HBoUEFo1Tkp0=;
-        b=kmQEHnnkb/LziSExLEWt7Esp/t6rCondhS7Z2Da7Bn/fOSLHhIhV9giyDwe7JpJ+b6
-         CGIm1vNg+hQl7MRxMYuga7JfcicKvAiEk+EagdD0ac3GP6IJJaxPpb8tSVSVYitXCNgp
-         oCAyNgwP8nIL4sBSjFESR/ghYoNDhW6Kz3veqjYHnUKx9zMzD68hYVEJqAreJ4AgFdRd
-         WZKafaqYMeyVeFUMVs3euaV/4Q7kHtUg6dMIY++ClHdwfs/hb6z4Sc3XvPYrsGnwnNXr
-         poU0ebp0sNmFevGcDBsTO3+h6og2Nt8Ywc37+SQBWJd+pbS6dVKPMi+7YGXvwj8u+BJ4
-         0+Qw==
-X-Gm-Message-State: APuU4Z9C+ke+i/1vYY+xvxv0a5UnhAiJcv9RMZd52pU6WN9V4LI1UnIb
-	sO9+cP2IXPyeQO3NARdFITf7h+Zzc6oJJ5PhJzfrUWoYYr5vM0HRT0MSaioq8w==
-X-Gm-Gg: AYBFou0q65x7I//J0gvEckVKP+MTr7ZNSd3iZubP4hdSD8C4Mf+3DPQUFcZdkjWjFk/
-	nbY55u0nOPnXRqx+wUuvhOEeknH7tCkdSOTpdsSahjn+ddXJ+ZDCLAqS3DTxbe8NgAQ5iiY2r6O
-	4iUjwd7dT1ydEp6cQxNZ2q5O/lPXFCDRaKBW1uVIhvoOvxxMSbFZPJ7ZKgtg57mUmneVBLVlcK6
-	YEDz47oCXwQy4BtBY3/NLpWO5cR3qPZ2OSuNSIHKLDTbyOS5E4qNJ0se09vQuJeVGqRl44lrSWK
-	ZxGb9sX7qL42E+TtGZzgBAPN6siGuJvDVcTtT2KO5a5uLYC14b34SOQgBEyuI57Vh+TTNAWFMmZ
-	u5mAji201nGgVgERGJc+0NxpTVM8Oou/vew1rz7jmE8a40nuTulDXU3P0ru4UWgZDQyHaPVBsHr
-	5OUv7phPMn56XiQPcV6sODPPwsd/zTZJLP686Ps669IYu93itps+7uL+iH7saDqB3wHDkBqjI8o
-	xNyW7sc9aT9ZO3SoH2JF1dOgpkPi342dq6Elj8DNskt81wW3Gh1nH1MI/rV68pZbW706E61w5aJ
-	RNSXkdE0xbjf4oEzGToHvv0igM8I7wWitjLF6l7dz5oEiLU44EBHSnEDRGUv8CsseSiXF4dODLV
-	7uQMl+Ncv
-X-Received: by 2002:a05:690e:191a:b0:679:ac65:487b with SMTP id 956f58d0204a3-67a8d396d2dmr12409465d50.15.1793730518564;
-        Tue, 03 Nov 2026 10:28:38 -0800 (PST)
-Received: from fionn.home ([70.50.116.123])
-        by smtp.gmail.com with ESMTPSA id 956f58d0204a3-67baf2701f8sm7500889d50.6.2026.11.03.10.28.37
+        bh=HkIXGFYdcqcJD/ei25t609T370Ykg+QmRbltr9zpKaI=;
+        b=bAtBw84kTRpOfekggmTM7oyPYX+5pG3Dsn6GJanJUB2I1NMWEbXDtVhSImXtk/sGns
+         kj2VacNY7cqBVMYhcKpPqJz2U7FslZUXhG01LHfosO7q0HCALv5na1FJdgzKis1xeXsw
+         5EbIh64HFVNj0HznB4E8+KD6iC08sajZiLMyTPVJ4T8KHjhEyV95IfITMANsrKnBgZUR
+         dOaWSZT/5tqlT1jmo23Eq+BaslnXSDL0VQJHfrD2LdQ8jFmt2xDrlssQN8PjiwRAhPcr
+         z4VsU8m1wuxP2fhlODPubMj2JoTxUEq27xXbXV6uOhq9Icw19R3+1itI8M52cFTojUQS
+         Xs+g==
+X-Gm-Message-State: APuU4Z/8x0l0VD/gKVl9W13U0zSDAGSpXIiH3X9SavymyQmQP9/Ojgjx
+	x2GkhAHHetzOdUzS84jLe9Ehn0ILL9SU68fcobUM6LhxutI48+aXB6hB
+X-Gm-Gg: AYBFou0HRQMVL9tKNRer+Tz05eI+774i2HSxydERDZkcmDC0y52nk/D+KfBEzuoV26t
+	Y0H/RtkLhBj/ILlIXWsKdhMIt9ka66XVoDtsBFHSSNvy4kykbQ4kt10luF+HsPOkMepZPFeTA0C
+	ICjSbeVpnVA9G+LwlOQz6JVbkbw6swOLE/Qtmn2Wv8ldVyU+2NWA3HALfF3n3LOBpPbkcrLzI6J
+	hCCOWaAJkgVx0/JiWKn64JIznN5kTSemz8YcXmABO1IeTNUYit+mcALDTVemXRraYynnDuRGgoD
+	bgGKwnPsHM3fxK+6pHoTRBCz5i+nx6LF+XKxhA1iu4+Tq9Rp05sTsGZHRgyxFf7UwjFBOzdEdzS
+	LM8D2f8q9LGqJ814sYd0O9/ZWebZAeZOzlvnkAaao5C7QYW8C1hvPbs3ws+3NYB/8VGxqEi8EMA
+	MKq4K7r1rhH1WJj06rYDwFCiJMGY376CJNBvjuiiE0rHyGmxU3d0BKNgvdPSvC09AhX1LeZvhCf
+	adNSnK4dvaQYR2zUvJZgBIIiRe1oZwzMY/Wspc+6Jq3EQFsjPdnYbINg8TUZM0BC9dNiN3Fb3FR
+	x9wPlOvV1MZ1CHV+sbAOg9s7hpHXmpNw2Qudkg6WDNdmoOTGA8qLrYImzXf7KubQdBy9F254s48
+	hMhWZNKqcpLMPqWP7Nhkab5VdVFjepxDbXwH0bw==
+X-Received: by 2002:a05:620a:28c6:b0:93f:22be:8daa with SMTP id af79cd13be357-944215422a7mr2814090485a.11.1793824277816;
+        Wed, 04 Nov 2026 12:31:17 -0800 (PST)
+Received: from jkacur-thinkpadp1gen2.rmtcaon.csb ([70.53.46.49])
+        by smtp.gmail.com with ESMTPSA id af79cd13be357-945d4854ea2sm289853085a.32.2026.11.04.12.31.16
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Tue, 03 Nov 2026 10:28:38 -0800 (PST)
+        Wed, 04 Nov 2026 12:31:17 -0800 (PST)
 Sender: John Kacur <jkacur@gmail.com>
 From: John Kacur <jkacur@redhat.com>
-To: Sana Sharma <sansshar@redhat.com>
+To: Khem Raj <raj.khem@gmail.com>
 Cc: linux-rt-users@vger.kernel.org
-Subject: Re: [PATCH v2] rteval: Fixed hardcoded paths in class TestCpusetManagerCLIIntegration
-Date: Tue,  3 Nov 2026 13:28:23 -0500
-Message-ID: <20261103182823.120528-1-jkacur@redhat.com>
+Subject: Re: [PATCH] tuna: Do not import tuna from setup.py
+Date: Wed,  4 Nov 2026 15:31:02 -0500
+Message-ID: <20261104203102.49920-1-jkacur@redhat.com>
 X-Mailer: git-send-email 2.56.0
-In-Reply-To: <auI9GfqN-g0YtJhD@fedora>
-References: <auI9GfqN-g0YtJhD@fedora>
+In-Reply-To: <20261028061243.4061773-1-raj.khem@gmail.com>
+References: 
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
 List-Post: <mailto:linux-rt-users@vger.kernel.org>
@@ -101,46 +101,25 @@ MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit
 
-On Wed, 28 Oct 2026 at 14:21:13 -0400, Sana Sharma wrote:
-> [PATCH v2] rteval: Fixed hardcoded paths in class TestCpusetManagerCLIIntegration
+On Tue, 27 Oct 2026 at 11:12:43PM -0700, Khem Raj wrote:
+> tuna: Do not import tuna from setup.py
 
-Thanks for the patch Sana. Good catch dropping the hardcoded
-/home/jkacur path - it would only ever have worked on my machine - and
-the switch to pathlib matches what we already do in
-tests/test_stressng.py. Two small things to fix, then I'll take it.
+Thanks for the patch, but I'd prefer not to take this one.
 
-1. Don't compute the repo root twice.
+Keeping the version in setup.py is deliberate. A downstream build
+(RHEL9/CentOS Stream 9) still builds via the legacy setup.py path on
+setuptools 53, which predates PEP 621 and so does not read the dynamic
+version from pyproject.toml. Dropping "version=" from setup.py would
+leave that build without a version.
 
-> +sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
-...
-> +    srcdir = str(Path(__file__).resolve().parent.parent)
+The failure you hit is specific to a setuptools whose build_meta backend
+doesn't put the source dir on sys.path. It's easy to work around without
+changing setup.py:
 
-The same str(Path(__file__).resolve().parent.parent) is evaluated once
-here and then again as the class attribute. Name it once at module scope
-and reuse it:
+  - PYTHONPATH="$PWD" python3 -m build --no-isolation --wheel
+  - or build the legacy way: python3 setup.py bdist_wheel
+  - or use a newer setuptools, whose build_meta adds the project root to
+    sys.path and builds this unmodified.
 
-    SRCDIR = str(Path(__file__).resolve().parent.parent)
-    sys.path.insert(0, SRCDIR)
-
-and in the class:
-
-    srcdir = SRCDIR
-
-It needs to stay at module level (not inside the class), because the
-sys.path.insert has to run before the top-of-file "from rteval ..."
-imports, and the class is not defined yet at that point.
-
-2. Extra space after the comma.
-
-> +            [sys.executable,  f"{self.srcdir}/rteval-cmd",
-
-There are two spaces after "sys.executable," in each of these calls; it
-should be one. pylint won't catch this (it dropped its whitespace checks
-a few releases ago), but a formatter like ruff or black will flag and fix
-it for you automatically, e.g.:
-
-    ruff format tests/test_cpusetmanager.py
-
-With those addressed I'm happy to apply it.
-
+Thanks,
 John
