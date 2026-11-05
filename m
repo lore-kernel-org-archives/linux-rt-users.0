@@ -1,94 +1,109 @@
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=209.85.219.47
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=170.10.129.124
 ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1793824279;
-	b=4gY2Vy+ay7AfbdZr7Aq1hg2nMkLJTMqW/g44I1ZEj/sS21fkFUHAr6udMjMJD8nKlKME
-	 Qb6o4ssFInWq0SAc1bevOBlJ8FdgTGam20nQS0ME0W1l+iodjVQEMjjQaMuGGj+5L2xX9
-	 heQTrcibzhjt8S4oyfvoBJafLjAOhw3phXtsoLyB3vHh9hfH9H2frawqqRbqOtkaWfqds
-	 SG0mfy/2jdJcpcpiuZ4gWuPTaEHnR3GMY1E8H9BYBX0v0KxRJ0KwjTrqd7jBMEzmk/ejN
-	 nLOvrT8EhNRYA9pQLK7n4G8sqLlVY97gHEF1i6uxVAbawIJfmxCbRgcdlt/SjBAw3Hw==
+	t=1793906344;
+	b=mGjgz638pC8XvzmnHVwwxS8BKWGbouA64t0ewUDDmZxStuYcF+LGSTn/+xiF6+T/UR/5
+	 37eVx1c8eTqALdsHTzvjcph3cS4jcLjxa2p1A5rFboHPq5+qCg+a3URLEEQKvkr9DWthj
+	 MHqpHrevq45s4bpE+Bjn1Qq5rD60Eh8Q0tv+TFhFDJody/wDNsiV+jn5kyOuFKU0UyEPr
+	 Z9bdd/M5q3omZ+RTC7X9+MBcXvK+rtXCuN0PjmFGJrAaEj2aRADSWLDz9tCJnu4mm0ZqJ
+	 w6/V9EZl0afabwCskVMV+5din9NE2g1TUB3dmfiJMn9P54670I3FV3ZrYen3JhAEOsw==
 ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1793824279;
-	h=DMARC-Filter:Received:DKIM-Signature:X-Google-DKIM-Signature:
-	 X-Gm-Message-State:X-Gm-Gg:X-Received:Received:Sender:From:To:Cc:
-	 Subject:Date:Message-ID:X-Mailer:In-Reply-To:References:MIME-Version:
-	 Content-Type:Content-Transfer-Encoding;
-	bh=HkIXGFYdcqcJD/ei25t609T370Ykg+QmRbltr9zpKaI=;
-	b=laU8aMfVJwHAb/Xh1ibvWlKrjOaszpqsLYaU7UYs8Jn2CB9gJK9sBKeRvvf16+Sj8o8J
-	 MzOzzyV/UY+lzhoaeCL4k3d8WT8TehqQ0liPlhT9zC7p5URzjNI39Q//Ujf4MxeykbMrY
-	 /69OvZvR48lqBh19lVF8fxUV83ascM9a4gTI90DQs0g9uXwzFjoi5HYZJ1Jo9u7uRO3LR
-	 Garcg5Kn0qSxJMjm2NuSIfos6ep2HnUwI/6J2bcnucYk4f9NVAGUNAEHYic/MhZthDR+A
-	 Lq70bdO5IpG1DdocN1FqOS5M6ZV5jv5Wux3gLvO+kGR3XAys5T+pR3ZqOvN2y0qRFtQ==
+	a=rsa-sha256; c=relaxed/relaxed; t=1793906344;
+	h=DMARC-Filter:DKIM-Signature:Received:X-MC-Unique:
+	 X-Mimecast-MFC-AGG-ID:Received:DKIM-Signature:X-Google-DKIM-Signature:
+	 X-Gm-Message-State:X-Gm-Gg:X-Received:X-Received:Received:Date:From:
+	 To:Cc:Subject:Message-ID:Reply-To:MIME-Version:Content-Type:
+	 Content-Disposition;
+	bh=sCP9OVvGuR6l2KfTzs6YZOIcb6kM3priKNdcZ14AZ3U=;
+	b=2ezDHm/UuU5ilTCHdhnvrGac9HF5OA3P0dJ+G/gRVtLJshQ/RfiQxS4Sm2v0GMI11HBo
+	 CO10/Lx5fOtTrd00wFRN+NeJ5jMFgyO1A6cpAD+xShhnRWnH4muHNlrX4SVe835uvlONw
+	 RrIvpxW40BqYLHxqYOh27ZoIr2QEH1M1eLA8tmCx8+O7eN898jtUkNlcLRw3WMkZRe8sr
+	 dmZWv31Z3NJRVZsmVSHFgOzPM6OGqOYGZ7gBBG2Sb7DC2LyvjwAN1tnG6T6StXmSqnoRq
+	 TS127EsmAXmdf9FPkD9mOfHhL/yfoxCwhHDUEB57xI/bUz6m6Yi6xxfL8J/WllpIsAw==
 ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
-	dmarc=fail header.from=redhat.com;
-	spf=pass smtp.mailfrom=gmail.com;
-	dkim=pass header.d=gmail.com header.i=@gmail.com header.a=rsa-sha256 header.s=20260707 header.b="rWsL/fXb";
-	arc=none smtp.remote-ip=209.85.219.47
-Received: from mail-qv1-f47.google.com (mail-qv1-f47.google.com [209.85.219.47])
-	(using TLSv1.3 with cipher TLS_AES_128_GCM_SHA256 (128/128 bits)
+	dmarc=pass header.from=redhat.com;
+	spf=pass smtp.mailfrom=redhat.com;
+	dkim=pass header.d=redhat.com header.i=@redhat.com header.a=rsa-sha256 header.s=mimecast20190719 header.b=cG6tjOB8;
+	dkim=pass header.d=redhat.com header.i=@redhat.com header.a=rsa-sha256 header.s=google header.b=a3bVHTfo;
+	arc=none smtp.remote-ip=170.10.129.124
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature ECDSA (prime256v1) server-digest SHA256)
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 069C76082BE0
-	for <linux-rt-users@vger.kernel.org>; Wed,  4 Nov 2026 20:31:18 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 069C76082BE0
-Authentication-Results: smtp.subspace.kernel.org; dmarc=fail (p=quarantine dis=none) header.from=redhat.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 4762B606A31B
+	for <linux-rt-users@vger.kernel.org>; Thu,  5 Nov 2026 19:19:04 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 4762B606A31B
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key, unprotected) header.d=gmail.com header.i=@gmail.com header.a=rsa-sha256 header.s=20260707 header.b=rWsL/fXb
-Received: by mail-qv1-f47.google.com with SMTP id 6a1803df08f44-91e7af9a67fso8834936d6.2
-        for <linux-rt-users@vger.kernel.org>; Wed, 04 Nov 2026 12:31:18 -0800 (PST)
+	dkim=pass (1024-bit key, unprotected) header.d=redhat.com header.i=@redhat.com header.a=rsa-sha256 header.s=mimecast20190719 header.b=cG6tjOB8;
+	dkim=pass (2048-bit key, unprotected) header.d=redhat.com header.i=@redhat.com header.a=rsa-sha256 header.s=google header.b=a3bVHTfo
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1793906343;
+	h=from:from:reply-to:reply-to:subject:subject:date:date:
+	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
+	 content-type:content-type; bh=sCP9OVvGuR6l2KfTzs6YZOIcb6kM3priKNdcZ14AZ3U=;
+	b=cG6tjOB85tYjHHqTTq4iknWcwjrzkI+uTvuzjnO1J7bTgxxNB20Z4wgHBZ+/sROhR8Xifj
+	9KZYYMbhbWZMgUunq+I6HnI6hQyxQGZFmDelGScKiUT/3dWZPKBbkfGy1+70PWgZvFpLpB
+	2ojqIhD16OXAxmSi7aPsvqAtBGa6DW0=
+Received: from mail-yw1-f200.google.com (mail-yw1-f200.google.com
+ [209.85.128.200]) by relay.mimecast.com with ESMTP with STARTTLS
+ (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
+ us-mta-231-4ypiowpjOFq88dlnL0otXQ-1; Thu, 05 Nov 2026 14:19:01 -0500
+X-MC-Unique: 4ypiowpjOFq88dlnL0otXQ-1
+X-Mimecast-MFC-AGG-ID: 4ypiowpjOFq88dlnL0otXQ_1793906341
+Received: by mail-yw1-f200.google.com with SMTP id 00721157ae682-8b18d691d54so40089157b3.3
+        for <linux-rt-users@vger.kernel.org>; Thu, 05 Nov 2026 11:19:01 -0800 (PST)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20260707; t=1793824278; x=1794429078; darn=vger.kernel.org;
-        h=content-transfer-encoding:content-type:mime-version:references
-         :in-reply-to:message-id:date:subject:cc:to:from:sender:from:to:cc
-         :subject:date:message-id:reply-to:content-type;
-        bh=HkIXGFYdcqcJD/ei25t609T370Ykg+QmRbltr9zpKaI=;
-        b=rWsL/fXbeRZMhuFHqvBoky4w01CE+VrSVtGxBQdS9V+9An4+mgUsgwQGy6psjzlNni
-         snVewIaxIjopvc3Yt+aem97EIofwubWlcYqGVRiDQfekA6tV9rwZwHdrN9Nc1CN6E8nQ
-         XTJqLnsgr2MEvpmWcMIIisFDq4GBG7l+ez1FdZ1XMy4vVS0cBE+ajZp9T1X/fU3Ab2ZX
-         f4Xo+5rn8/Pbt4wHQHLhMyfZ7h8MjmVZjH/rwr2bkIUtLABXpu19Yk6/X4RiTnwvC4g0
-         ca66kby8ZbfZVXa1JCDFSd3m1VDhPQz8iv9qZjQxRJyvZXz9l8DfrGxc0Tjf4S1VkJ9s
-         1wvA==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20260707; t=1793824278; x=1794429078;
-        h=content-transfer-encoding:content-type:mime-version:references
-         :in-reply-to:message-id:date:subject:cc:to:from:sender:x-gm-gg
-         :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to
+        d=redhat.com; s=google; t=1793906341; x=1794511141; darn=vger.kernel.org;
+        h=content-disposition:content-type:mime-version:reply-to:message-id
+         :subject:cc:to:from:date:from:to:cc:subject:date:message-id:reply-to
          :content-type;
-        bh=HkIXGFYdcqcJD/ei25t609T370Ykg+QmRbltr9zpKaI=;
-        b=bAtBw84kTRpOfekggmTM7oyPYX+5pG3Dsn6GJanJUB2I1NMWEbXDtVhSImXtk/sGns
-         kj2VacNY7cqBVMYhcKpPqJz2U7FslZUXhG01LHfosO7q0HCALv5na1FJdgzKis1xeXsw
-         5EbIh64HFVNj0HznB4E8+KD6iC08sajZiLMyTPVJ4T8KHjhEyV95IfITMANsrKnBgZUR
-         dOaWSZT/5tqlT1jmo23Eq+BaslnXSDL0VQJHfrD2LdQ8jFmt2xDrlssQN8PjiwRAhPcr
-         z4VsU8m1wuxP2fhlODPubMj2JoTxUEq27xXbXV6uOhq9Icw19R3+1itI8M52cFTojUQS
-         Xs+g==
-X-Gm-Message-State: APuU4Z/8x0l0VD/gKVl9W13U0zSDAGSpXIiH3X9SavymyQmQP9/Ojgjx
-	x2GkhAHHetzOdUzS84jLe9Ehn0ILL9SU68fcobUM6LhxutI48+aXB6hB
-X-Gm-Gg: AYBFou0HRQMVL9tKNRer+Tz05eI+774i2HSxydERDZkcmDC0y52nk/D+KfBEzuoV26t
-	Y0H/RtkLhBj/ILlIXWsKdhMIt9ka66XVoDtsBFHSSNvy4kykbQ4kt10luF+HsPOkMepZPFeTA0C
-	ICjSbeVpnVA9G+LwlOQz6JVbkbw6swOLE/Qtmn2Wv8ldVyU+2NWA3HALfF3n3LOBpPbkcrLzI6J
-	hCCOWaAJkgVx0/JiWKn64JIznN5kTSemz8YcXmABO1IeTNUYit+mcALDTVemXRraYynnDuRGgoD
-	bgGKwnPsHM3fxK+6pHoTRBCz5i+nx6LF+XKxhA1iu4+Tq9Rp05sTsGZHRgyxFf7UwjFBOzdEdzS
-	LM8D2f8q9LGqJ814sYd0O9/ZWebZAeZOzlvnkAaao5C7QYW8C1hvPbs3ws+3NYB/8VGxqEi8EMA
-	MKq4K7r1rhH1WJj06rYDwFCiJMGY376CJNBvjuiiE0rHyGmxU3d0BKNgvdPSvC09AhX1LeZvhCf
-	adNSnK4dvaQYR2zUvJZgBIIiRe1oZwzMY/Wspc+6Jq3EQFsjPdnYbINg8TUZM0BC9dNiN3Fb3FR
-	x9wPlOvV1MZ1CHV+sbAOg9s7hpHXmpNw2Qudkg6WDNdmoOTGA8qLrYImzXf7KubQdBy9F254s48
-	hMhWZNKqcpLMPqWP7Nhkab5VdVFjepxDbXwH0bw==
-X-Received: by 2002:a05:620a:28c6:b0:93f:22be:8daa with SMTP id af79cd13be357-944215422a7mr2814090485a.11.1793824277816;
-        Wed, 04 Nov 2026 12:31:17 -0800 (PST)
-Received: from jkacur-thinkpadp1gen2.rmtcaon.csb ([70.53.46.49])
-        by smtp.gmail.com with ESMTPSA id af79cd13be357-945d4854ea2sm289853085a.32.2026.11.04.12.31.16
+        bh=sCP9OVvGuR6l2KfTzs6YZOIcb6kM3priKNdcZ14AZ3U=;
+        b=a3bVHTfoDInZDc6M3dGD6BFEqy+dFFlZ09iSMPRDp7A3EH/7rSyFG17RniG/O5Bbbl
+         WnjYotcEfc6YlUFuvVuyMTPverUIbAlDyabGzITnuL0tKJ+wp6Ib18vbkxWdOvwP/D01
+         /E05gFK5/Yo3fKqHSfHnQFb4nJPmN7/Ijj//M3xGj8wWU1iQNHwOhQ4NjWLCjZhi7Ti8
+         9hif5r3/0db7dUvyCiE/uB+NP8dOAPoG0VbUW00/E3Vitzk4/gNdQ1Nr62x+kIbLv1PS
+         0dQ8j3ufyhqUr6Ei4X04KPcmsIka1nyjBcYNf3ByEuH10IX+WPz50EVoE/pn0+elm9Bs
+         +LDQ==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20260707; t=1793906341; x=1794511141;
+        h=content-disposition:content-type:mime-version:reply-to:message-id
+         :subject:cc:to:from:date:x-gm-gg:x-gm-message-state:from:to:cc
+         :subject:date:message-id:reply-to:content-type;
+        bh=sCP9OVvGuR6l2KfTzs6YZOIcb6kM3priKNdcZ14AZ3U=;
+        b=SWm7bivuUYv3y1sZVpJ1jG6AMnsxN1uir8abtCaq2B6WghBVbY9HgLabYHsy0nvv3y
+         bcegdCjvUF9++EGReQ0XDyFyZL28fb+Ti0cYZ3qbFx+DS6ewlO85ljCG32KFpUIDHdsY
+         hCYo2rNd+8y4UfyIQsNm8LhuBb8vXcTFi8cDDPOKx0AHlf8jnNE0ZPHVHP5WceJ9lzPY
+         nV9MAuhEHn5XM1RkZ2QmubA3bzoNVxGJ3JJL8dc/SZx6moMSAnE/lTmGyTsoCXn7Vgxa
+         8mvcypjFSCD1DpeDs18Bhh4VmQgLND882PC31O8WQCiYoMdT8Z2LM0NdGCGaQSoxpqBq
+         G6FA==
+X-Gm-Message-State: APuU4Z84BB7ph3qJ55zDbVGhn1M504L3ADoHTxPtLzrC935nTnAZ6qzP
+	hBUZS/yHEFSIddRnH0HXE3QG1faVIIsN4bRG8id7c33iZM5drSW9aiRlar2QuH4tzlxq4/RenL3
+	OypoXazRUq6jQPbHJbxUwiIdtVFQPw/OWVjIjowPOhN6zyetIBddjQYi4gVaAig9Ag16spzWNbx
+	RDvSzuEBgF2y0K8dMik66p+F2cVF4g4cuHlg43KgkNHfgNcEeNA6+1pGo=
+X-Gm-Gg: AYBFou2MKB8GN1UBy3F1KercbR9STBubS0OPrdzj2Ubs2JXQYQ6FNqACJgvniG7ApW7
+	tOZHIaenWvNjz+cBFNfyRyDoDa3JfleHUfEhc5ye9tij9FX26vB5bA0FlaDq+qMUMn8RbJjtF4M
+	N6Hafb+WWHOS1KR6dVczbNhgMjwUvaXvuKrgmszQQVdSdZ2nb/FXqtr6yTZaalXdun1eXBugcsR
+	ekzl4wJfkXK1RoJRcX2P9cFs2zqFtmkFmivWN+wyfSbaRYNUw6Pzx8WCxtYN0jEtat70zOzl01Y
+	+b1ciTthgz0yL0xLxCM1HH9/p5bUH+SvbOHXvW6uGi1bYIMFS1yUan4YU/yUWbMZtLOBEFqkT22
+	QejbPrH1h65JlUin2qOCZQmSWMk/9jfQg8tPbiYAIXo/KfFBjb3zTCe+lETZ/9PSzMnTiL/KuQl
+	y6k8bnnQ==
+X-Received: by 2002:a05:690c:dd4:b0:8b0:a37a:b1d with SMTP id 00721157ae682-8b2b66fb17amr120752297b3.24.1793906341135;
+        Thu, 05 Nov 2026 11:19:01 -0800 (PST)
+X-Received: by 2002:a05:690c:dd4:b0:8b0:a37a:b1d with SMTP id 00721157ae682-8b2b66fb17amr120752227b3.24.1793906340569;
+        Thu, 05 Nov 2026 11:19:00 -0800 (PST)
+Received: from localhost (c-71-234-51-224.hsd1.ma.comcast.net. [71.234.51.224])
+        by smtp.gmail.com with ESMTPSA id 00721157ae682-8b33f770cc6sm2266287b3.9.2026.11.05.11.19.00
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Wed, 04 Nov 2026 12:31:17 -0800 (PST)
-Sender: John Kacur <jkacur@gmail.com>
-From: John Kacur <jkacur@redhat.com>
-To: Khem Raj <raj.khem@gmail.com>
-Cc: linux-rt-users@vger.kernel.org
-Subject: Re: [PATCH] tuna: Do not import tuna from setup.py
-Date: Wed,  4 Nov 2026 15:31:02 -0500
-Message-ID: <20261104203102.49920-1-jkacur@redhat.com>
-X-Mailer: git-send-email 2.56.0
-In-Reply-To: <20261028061243.4061773-1-raj.khem@gmail.com>
-References: 
+        Thu, 05 Nov 2026 11:19:00 -0800 (PST)
+Date: Thu, 5 Nov 2026 14:18:59 -0500
+From: Sana Sharma <sansshar@redhat.com>
+To: linux-rt-users@vger.kernel.org
+Cc: jkacur@redhat.com
+Subject: [PATCH v3] rteval: Fixed hardcoded paths in class
+ TestCpusetManagerCLIIntegration
+Message-ID: <auzWo66c2JavzMBW@sansshar-thinkpadp1gen4i.boston.csb>
+Reply-To: sansshar@redhat.com
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
 List-Post: <mailto:linux-rt-users@vger.kernel.org>
@@ -98,28 +113,122 @@ List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 List-Owner: <mailto:linux-rt-users+owner@vger.kernel.org>
 Precedence: list
 MIME-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: 8bit
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
 
-On Tue, 27 Oct 2026 at 11:12:43PM -0700, Khem Raj wrote:
-> tuna: Do not import tuna from setup.py
+This patch makes 2 changes to the tests/test_cpusetmanager.py file
+1. The hardcoded paths introduced in commit 6227294897b7 ("rteval:
+Add --housekeeping-isolated flag") have been made generic
+2. The os.path.dirname invocation has been replaced with a more
+modern pathlib module since I was importing it for the fix.
 
-Thanks for the patch, but I'd prefer not to take this one.
+Signed-off-by: Sana Sharma <sansshar@redhat.com>
+---
+Since v2, the spacing error has been fixed and the srcdir has een
+changes so that its defined only once.
 
-Keeping the version in setup.py is deliberate. A downstream build
-(RHEL9/CentOS Stream 9) still builds via the legacy setup.py path on
-setuptools 53, which predates PEP 621 and so does not read the dynamic
-version from pyproject.toml. Dropping "version=" from setup.py would
-leave that build without a version.
+ tests/test_cpusetmanager.py | 23 +++++++++++++----------
+ 1 file changed, 13 insertions(+), 10 deletions(-)
 
-The failure you hit is specific to a setuptools whose build_meta backend
-doesn't put the source dir on sys.path. It's easy to work around without
-changing setup.py:
+diff --git a/tests/test_cpusetmanager.py b/tests/test_cpusetmanager.py
+index 3f1c4b4..3da042d 100644
+--- a/tests/test_cpusetmanager.py
++++ b/tests/test_cpusetmanager.py
+@@ -13,10 +13,11 @@ import os
+ import sys
+ import subprocess
+ import tempfile
++from pathlib import Path
+ 
+ # Add parent directory to path for imports
+-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+-
++srcdir = str(Path(__file__).resolve().parent.parent)
++sys.path.insert(0, srcdir)
+ from rteval.cpusetmanager import CpusetManager
+ from rteval import cpuset
+ from rteval.Log import Log
+@@ -209,6 +210,8 @@ class TestCpusetManagerHousekeepingPartitions(unittest.TestCase):
+ class TestCpusetManagerCLIIntegration(unittest.TestCase):
+     """Test rteval-cmd integration with --housekeeping-isolated"""
+ 
++    srcdir = str(Path(__file__).resolve().parent.parent)
++
+     def setUp(self):
+         """Clean up before each test"""
+         try:
+@@ -226,7 +229,7 @@ class TestCpusetManagerCLIIntegration(unittest.TestCase):
+     def test_housekeeping_isolated_requires_cpusets(self):
+         """Test that --housekeeping-isolated requires --cpusets"""
+         result = subprocess.run(
+-            [sys.executable, '/home/jkacur/src/rteval/rteval-cmd',
++            [sys.executable, f"{self.srcdir}/rteval-cmd",
+              '--housekeeping', '0-1', '--housekeeping-isolated',
+              '--duration', '1', '--onlyload'],
+             capture_output=True,
+@@ -241,7 +244,7 @@ class TestCpusetManagerCLIIntegration(unittest.TestCase):
+     def test_measurement_member_requires_cpusets(self):
+         """Test that --measurement-member requires --cpusets"""
+         result = subprocess.run(
+-            [sys.executable, '/home/jkacur/src/rteval/rteval-cmd',
++            [sys.executable, f"{self.srcdir}/rteval-cmd",
+              '--measurement-member',
+              '--duration', '1', '--onlyload'],
+             capture_output=True,
+@@ -256,7 +259,7 @@ class TestCpusetManagerCLIIntegration(unittest.TestCase):
+     def test_measurement_member_help_text(self):
+         """Test that --measurement-member appears in help"""
+         result = subprocess.run(
+-            [sys.executable, '/home/jkacur/src/rteval/rteval-cmd', '--help'],
++            [sys.executable, f"{self.srcdir}/rteval-cmd", '--help'],
+             capture_output=True,
+             text=True
+         )
+@@ -270,7 +273,7 @@ class TestCpusetManagerCLIIntegration(unittest.TestCase):
+     def test_loads_cpuset_requires_cpusets(self):
+         """Test that --loads-cpuset requires --cpusets"""
+         result = subprocess.run(
+-            [sys.executable, '/home/jkacur/src/rteval/rteval-cmd',
++            [sys.executable, f"{self.srcdir}/rteval-cmd",
+              '--loads-cpuset',
+              '--duration', '1', '--onlyload'],
+             capture_output=True,
+@@ -285,7 +288,7 @@ class TestCpusetManagerCLIIntegration(unittest.TestCase):
+     def test_loads_cpuset_help_text(self):
+         """Test that --loads-cpuset appears in help"""
+         result = subprocess.run(
+-            [sys.executable, '/home/jkacur/src/rteval/rteval-cmd', '--help'],
++            [sys.executable, f"{self.srcdir}/rteval-cmd", '--help'],
+             capture_output=True,
+             text=True
+         )
+@@ -299,7 +302,7 @@ class TestCpusetManagerCLIIntegration(unittest.TestCase):
+     def test_housekeeping_isolated_requires_housekeeping(self):
+         """Test that --housekeeping-isolated requires --housekeeping"""
+         result = subprocess.run(
+-            [sys.executable, '/home/jkacur/src/rteval/rteval-cmd',
++            [sys.executable, f"{self.srcdir}/rteval-cmd",
+              '--cpusets', '--housekeeping-isolated',
+              '--duration', '1', '--onlyload'],
+             capture_output=True,
+@@ -314,7 +317,7 @@ class TestCpusetManagerCLIIntegration(unittest.TestCase):
+     def test_housekeeping_isolated_help_text(self):
+         """Test that --housekeeping-isolated appears in help"""
+         result = subprocess.run(
+-            [sys.executable, '/home/jkacur/src/rteval/rteval-cmd', '--help'],
++            [sys.executable, f"{self.srcdir}/rteval-cmd", '--help'],
+             capture_output=True,
+             text=True
+         )
+@@ -328,7 +331,7 @@ class TestCpusetManagerCLIIntegration(unittest.TestCase):
+     def test_housekeeping_help_text_accuracy(self):
+         """Test that --housekeeping help text is accurate (no longer says 'isolated CPUs')"""
+         result = subprocess.run(
+-            [sys.executable, '/home/jkacur/src/rteval/rteval-cmd', '--help'],
++            [sys.executable, f"{self.srcdir}/rteval-cmd", '--help'],
+             capture_output=True,
+             text=True
+         )
+-- 
+2.55.0
 
-  - PYTHONPATH="$PWD" python3 -m build --no-isolation --wheel
-  - or build the legacy way: python3 setup.py bdist_wheel
-  - or use a newer setuptools, whose build_meta adds the project root to
-    sys.path and builds this unmodified.
-
-Thanks,
-John
