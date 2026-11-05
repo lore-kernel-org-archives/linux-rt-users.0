@@ -1,108 +1,107 @@
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=170.10.129.124
 ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1793906344;
-	b=mGjgz638pC8XvzmnHVwwxS8BKWGbouA64t0ewUDDmZxStuYcF+LGSTn/+xiF6+T/UR/5
-	 37eVx1c8eTqALdsHTzvjcph3cS4jcLjxa2p1A5rFboHPq5+qCg+a3URLEEQKvkr9DWthj
-	 MHqpHrevq45s4bpE+Bjn1Qq5rD60Eh8Q0tv+TFhFDJody/wDNsiV+jn5kyOuFKU0UyEPr
-	 Z9bdd/M5q3omZ+RTC7X9+MBcXvK+rtXCuN0PjmFGJrAaEj2aRADSWLDz9tCJnu4mm0ZqJ
-	 w6/V9EZl0afabwCskVMV+5din9NE2g1TUB3dmfiJMn9P54670I3FV3ZrYen3JhAEOsw==
+	t=1793906915;
+	b=BUzGTk+rMyGvPTPgw9EXtMRaFF9w6xDde9xwfmInSG8Fw1gFgrZAWYFoEkbt89THAaUe
+	 1FEEInoU7C6RNd4ZecFgUFBjIa6mjJdV1fa4TLejMKWueHFmdCfUkUlBFZRG/LQIglh7d
+	 jAGuC4Jdu3KFCmA1QotDf4L+t/KHa//1lmns7xMbN5kvRAPB/PWw2g+i0TzJJ7Zr97J6p
+	 wlJweh/KJzMlM3bG06DgUsGf29f7+oQo3oPhLLu2ys2vFB6nBfEoXuyYpwN2UcCKch5yn
+	 jMf4DGmDEcZ+P3RE37sPIp2+3fb6+RD9mHbEq6FUV+RJMie8bksXDvbjpRrMMjgL4BQ==
 ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1793906344;
+	a=rsa-sha256; c=relaxed/relaxed; t=1793906915;
 	h=DMARC-Filter:DKIM-Signature:Received:X-MC-Unique:
 	 X-Mimecast-MFC-AGG-ID:Received:DKIM-Signature:X-Google-DKIM-Signature:
 	 X-Gm-Message-State:X-Gm-Gg:X-Received:X-Received:Received:Date:From:
 	 To:Cc:Subject:Message-ID:Reply-To:MIME-Version:Content-Type:
 	 Content-Disposition;
-	bh=sCP9OVvGuR6l2KfTzs6YZOIcb6kM3priKNdcZ14AZ3U=;
-	b=2ezDHm/UuU5ilTCHdhnvrGac9HF5OA3P0dJ+G/gRVtLJshQ/RfiQxS4Sm2v0GMI11HBo
-	 CO10/Lx5fOtTrd00wFRN+NeJ5jMFgyO1A6cpAD+xShhnRWnH4muHNlrX4SVe835uvlONw
-	 RrIvpxW40BqYLHxqYOh27ZoIr2QEH1M1eLA8tmCx8+O7eN898jtUkNlcLRw3WMkZRe8sr
-	 dmZWv31Z3NJRVZsmVSHFgOzPM6OGqOYGZ7gBBG2Sb7DC2LyvjwAN1tnG6T6StXmSqnoRq
-	 TS127EsmAXmdf9FPkD9mOfHhL/yfoxCwhHDUEB57xI/bUz6m6Yi6xxfL8J/WllpIsAw==
+	bh=iE12xid6OPg+wbKJdaXmqZSnSKLeHDsAdgGp/QIchmg=;
+	b=1aCIqOJHdycnTpAu44ZM2Kql41z7gvF2NdvuV9SESyJJwig4Q3Su11jw+wFgfMHNL0lG
+	 TLOG+OVdO7nyrss+2zzMGD6g+Bbl1tB584rBuXcMcJ4X7+oP8pft6DPB9Ttp3eRZHNiPP
+	 vnAU4Re4Pn3ZzcVWnv7eLdefCCD9oiBn0aydfIWy6iEVDRgyrFQAPejzoldDhp1eBWDTi
+	 /J9mRTnCx+xH8TRwRIKjJklWp2GOBgynQeTdfqmS682ANEc8mdSjYn+29tGapuEcRHlOY
+	 YNDAC+RumbSgRptz2XNmvyY+udlc/EkQk/hZ4uK2kyagFjdPbcvoTm0QWjvGGzu2kFA==
 ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
 	dmarc=pass header.from=redhat.com;
 	spf=pass smtp.mailfrom=redhat.com;
-	dkim=pass header.d=redhat.com header.i=@redhat.com header.a=rsa-sha256 header.s=mimecast20190719 header.b=cG6tjOB8;
-	dkim=pass header.d=redhat.com header.i=@redhat.com header.a=rsa-sha256 header.s=google header.b=a3bVHTfo;
+	dkim=pass header.d=redhat.com header.i=@redhat.com header.a=rsa-sha256 header.s=mimecast20190719 header.b=b9Xeez7M;
+	dkim=pass header.d=redhat.com header.i=@redhat.com header.a=rsa-sha256 header.s=google header.b=ILvwNpoZ;
 	arc=none smtp.remote-ip=170.10.129.124
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature ECDSA (prime256v1) server-digest SHA256)
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 4762B606A31B
-	for <linux-rt-users@vger.kernel.org>; Thu,  5 Nov 2026 19:19:04 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 4762B606A31B
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 1467E606A326
+	for <linux-rt-users@vger.kernel.org>; Thu,  5 Nov 2026 19:28:34 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 1467E606A326
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key, unprotected) header.d=redhat.com header.i=@redhat.com header.a=rsa-sha256 header.s=mimecast20190719 header.b=cG6tjOB8;
-	dkim=pass (2048-bit key, unprotected) header.d=redhat.com header.i=@redhat.com header.a=rsa-sha256 header.s=google header.b=a3bVHTfo
+	dkim=pass (1024-bit key, unprotected) header.d=redhat.com header.i=@redhat.com header.a=rsa-sha256 header.s=mimecast20190719 header.b=b9Xeez7M;
+	dkim=pass (2048-bit key, unprotected) header.d=redhat.com header.i=@redhat.com header.a=rsa-sha256 header.s=google header.b=ILvwNpoZ
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1793906343;
+	s=mimecast20190719; t=1793906913;
 	h=from:from:reply-to:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
-	 content-type:content-type; bh=sCP9OVvGuR6l2KfTzs6YZOIcb6kM3priKNdcZ14AZ3U=;
-	b=cG6tjOB85tYjHHqTTq4iknWcwjrzkI+uTvuzjnO1J7bTgxxNB20Z4wgHBZ+/sROhR8Xifj
-	9KZYYMbhbWZMgUunq+I6HnI6hQyxQGZFmDelGScKiUT/3dWZPKBbkfGy1+70PWgZvFpLpB
-	2ojqIhD16OXAxmSi7aPsvqAtBGa6DW0=
-Received: from mail-yw1-f200.google.com (mail-yw1-f200.google.com
- [209.85.128.200]) by relay.mimecast.com with ESMTP with STARTTLS
+	 content-type:content-type; bh=iE12xid6OPg+wbKJdaXmqZSnSKLeHDsAdgGp/QIchmg=;
+	b=b9Xeez7MM9ZPRGe0PVQzj+MLenCQA2W7jEBmhFWkifoVpHn6zmvHW5hT7DoZi9tjCWusRv
+	aMrAyshpZc0EfgERceoRS3FZrBsMVaaDDgzPrV2XgW/JISJ6LQ0Dh2sz68BnEhV3QXMoyL
+	4f0BFHR6rVU3z65B5FflIGdO4AkD+lc=
+Received: from mail-yx1-f71.google.com (mail-yx1-f71.google.com
+ [74.125.224.71]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
- us-mta-231-4ypiowpjOFq88dlnL0otXQ-1; Thu, 05 Nov 2026 14:19:01 -0500
-X-MC-Unique: 4ypiowpjOFq88dlnL0otXQ-1
-X-Mimecast-MFC-AGG-ID: 4ypiowpjOFq88dlnL0otXQ_1793906341
-Received: by mail-yw1-f200.google.com with SMTP id 00721157ae682-8b18d691d54so40089157b3.3
-        for <linux-rt-users@vger.kernel.org>; Thu, 05 Nov 2026 11:19:01 -0800 (PST)
+ us-mta-207-gLrU64juNHqCQ7uNuYx_3A-1; Thu, 05 Nov 2026 14:28:31 -0500
+X-MC-Unique: gLrU64juNHqCQ7uNuYx_3A-1
+X-Mimecast-MFC-AGG-ID: gLrU64juNHqCQ7uNuYx_3A_1793906911
+Received: by mail-yx1-f71.google.com with SMTP id 956f58d0204a3-67be4f2f42eso3585357d50.0
+        for <linux-rt-users@vger.kernel.org>; Thu, 05 Nov 2026 11:28:31 -0800 (PST)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=redhat.com; s=google; t=1793906341; x=1794511141; darn=vger.kernel.org;
+        d=redhat.com; s=google; t=1793906911; x=1794511711; darn=vger.kernel.org;
         h=content-disposition:content-type:mime-version:reply-to:message-id
          :subject:cc:to:from:date:from:to:cc:subject:date:message-id:reply-to
          :content-type;
-        bh=sCP9OVvGuR6l2KfTzs6YZOIcb6kM3priKNdcZ14AZ3U=;
-        b=a3bVHTfoDInZDc6M3dGD6BFEqy+dFFlZ09iSMPRDp7A3EH/7rSyFG17RniG/O5Bbbl
-         WnjYotcEfc6YlUFuvVuyMTPverUIbAlDyabGzITnuL0tKJ+wp6Ib18vbkxWdOvwP/D01
-         /E05gFK5/Yo3fKqHSfHnQFb4nJPmN7/Ijj//M3xGj8wWU1iQNHwOhQ4NjWLCjZhi7Ti8
-         9hif5r3/0db7dUvyCiE/uB+NP8dOAPoG0VbUW00/E3Vitzk4/gNdQ1Nr62x+kIbLv1PS
-         0dQ8j3ufyhqUr6Ei4X04KPcmsIka1nyjBcYNf3ByEuH10IX+WPz50EVoE/pn0+elm9Bs
-         +LDQ==
+        bh=iE12xid6OPg+wbKJdaXmqZSnSKLeHDsAdgGp/QIchmg=;
+        b=ILvwNpoZjUMc73U2rWSCTVQ3iuBuv+sz+0D2s4Q/shCRdJsKG4RY17tcg0mh1udxCa
+         ZHKr/+FvVeQb4u4+ckEZutOvRygiTINjwdAB0eUEPL/FXuyJY/5fqpbO1tmEuH1aC1Md
+         6S2tVrS7e0S7rNFwGUBgfhZtZZqC7rUGSijdZep+J6MRDBQ8HxTVApNltq/zxdRDQm67
+         LCRYLgAqfEVnAaqu6Zj4VI0Pfv408KUlr17gjX6xF1/xoHRuH5iQJd3xjgnSgwnTnE/b
+         mrM0eGlZOmGFTNhCY+vLOMNDkp+tI21DQ25P64bTCkDavnMVHbztaHXR3nxMvKfM+GDU
+         Y6gA==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20260707; t=1793906341; x=1794511141;
+        d=1e100.net; s=20260707; t=1793906911; x=1794511711;
         h=content-disposition:content-type:mime-version:reply-to:message-id
          :subject:cc:to:from:date:x-gm-gg:x-gm-message-state:from:to:cc
          :subject:date:message-id:reply-to:content-type;
-        bh=sCP9OVvGuR6l2KfTzs6YZOIcb6kM3priKNdcZ14AZ3U=;
-        b=SWm7bivuUYv3y1sZVpJ1jG6AMnsxN1uir8abtCaq2B6WghBVbY9HgLabYHsy0nvv3y
-         bcegdCjvUF9++EGReQ0XDyFyZL28fb+Ti0cYZ3qbFx+DS6ewlO85ljCG32KFpUIDHdsY
-         hCYo2rNd+8y4UfyIQsNm8LhuBb8vXcTFi8cDDPOKx0AHlf8jnNE0ZPHVHP5WceJ9lzPY
-         nV9MAuhEHn5XM1RkZ2QmubA3bzoNVxGJ3JJL8dc/SZx6moMSAnE/lTmGyTsoCXn7Vgxa
-         8mvcypjFSCD1DpeDs18Bhh4VmQgLND882PC31O8WQCiYoMdT8Z2LM0NdGCGaQSoxpqBq
-         G6FA==
-X-Gm-Message-State: APuU4Z84BB7ph3qJ55zDbVGhn1M504L3ADoHTxPtLzrC935nTnAZ6qzP
-	hBUZS/yHEFSIddRnH0HXE3QG1faVIIsN4bRG8id7c33iZM5drSW9aiRlar2QuH4tzlxq4/RenL3
-	OypoXazRUq6jQPbHJbxUwiIdtVFQPw/OWVjIjowPOhN6zyetIBddjQYi4gVaAig9Ag16spzWNbx
-	RDvSzuEBgF2y0K8dMik66p+F2cVF4g4cuHlg43KgkNHfgNcEeNA6+1pGo=
-X-Gm-Gg: AYBFou2MKB8GN1UBy3F1KercbR9STBubS0OPrdzj2Ubs2JXQYQ6FNqACJgvniG7ApW7
-	tOZHIaenWvNjz+cBFNfyRyDoDa3JfleHUfEhc5ye9tij9FX26vB5bA0FlaDq+qMUMn8RbJjtF4M
-	N6Hafb+WWHOS1KR6dVczbNhgMjwUvaXvuKrgmszQQVdSdZ2nb/FXqtr6yTZaalXdun1eXBugcsR
-	ekzl4wJfkXK1RoJRcX2P9cFs2zqFtmkFmivWN+wyfSbaRYNUw6Pzx8WCxtYN0jEtat70zOzl01Y
-	+b1ciTthgz0yL0xLxCM1HH9/p5bUH+SvbOHXvW6uGi1bYIMFS1yUan4YU/yUWbMZtLOBEFqkT22
-	QejbPrH1h65JlUin2qOCZQmSWMk/9jfQg8tPbiYAIXo/KfFBjb3zTCe+lETZ/9PSzMnTiL/KuQl
-	y6k8bnnQ==
-X-Received: by 2002:a05:690c:dd4:b0:8b0:a37a:b1d with SMTP id 00721157ae682-8b2b66fb17amr120752297b3.24.1793906341135;
-        Thu, 05 Nov 2026 11:19:01 -0800 (PST)
-X-Received: by 2002:a05:690c:dd4:b0:8b0:a37a:b1d with SMTP id 00721157ae682-8b2b66fb17amr120752227b3.24.1793906340569;
-        Thu, 05 Nov 2026 11:19:00 -0800 (PST)
+        bh=iE12xid6OPg+wbKJdaXmqZSnSKLeHDsAdgGp/QIchmg=;
+        b=tzlAoKRxqY3DJbEe11la+HAjBl2h7J03uPYneVIkYIGeBExEvvP1XzoY5TIOFz4eAC
+         Cf1UTKhE4mvjPaFhX8IwR/27ePfyK5CEeNqGhqYZfLSm099xC5bVtTuGUC5/PN1WEtgo
+         kWWJ+4Hs9CdBfLnP/QueWAfC3DBK32ho0yVAA6XRlhZdHfCQQWFFVIUlQcggP98dzhUS
+         9LqCElZ8Y3XmAqsapH57pQ1JieIxhDXK0lr1OgoALAVKaliTca1iCUderRhnER9AOXcw
+         TB03AadU6Oszue4xq1MByVfEdcvzAaDkFM1aJcTL2ZeWU2v6LB0Nn3GEqZgNxXdKmq+t
+         BjVQ==
+X-Gm-Message-State: APuU4Z+YW2h4G9t/8zPSRloNrxtWCPv12b9W64VnT1GI7XMksDZLXLw9
+	ue0iyH8aNEyUddnSlmg1R4WsAtqlfkkZIrI+TWZcOuahWI9KFC5A4CEyjepcqKwcxpGYu5Jr4lo
+	/kbTwndr2D2ztCJ84VTiij12GDd4TO46WHta3KjkPRQ4CIWBt8qpu01Fh6QuYnoHLSOwflsbj8H
+	bejcJjrTBQKSXZyEo1X+X2l3VSSVvU7uFQtPDch/jWgPND8JV0XJwwarI=
+X-Gm-Gg: AYBFou1WrkPvBvBgK2zDaOBsw1/kAi1sIyoQEi7Vc0AFGzk2wbtFg0pIsxHd2fu0qb2
+	1sfHkQoiU35cM+mkc3jlVb2NCYYtNqtQxucMfMGvJOt13Zhl+9IfGUzrVPz6eL8CTlCdu6zYpWw
+	4Oio3rrWMxvql5Qmq463Pcuz6nod6mOutREpvpatkIHOraTe9+9q4zOD0OwtE0bfDtgk1izSL7x
+	nlZwJfoATCM/tuaw2PknnT+s/J12sb9nbEL9Kuu0+IfpUnBr1vjxE+y/A4bLDb8BvcyHDl1wixi
+	O+V04kP8RrBkcr0p/mW6iHrhDjRUVIhyzOnQO6gLmVzadJz+aXO837NFJlNO1NMCu8xdcvqP5Kh
+	0ol+a1Lq5DH+xZqxNGcMQUayRcgBywg81tbwFIynGztRljg90+pgvjZnqGMDh4KlYZeaN72PW0G
+	SR8LrI6g==
+X-Received: by 2002:a53:df87:0:b0:67b:fd46:ef9b with SMTP id 956f58d0204a3-67c143c852bmr111548d50.47.1793906910949;
+        Thu, 05 Nov 2026 11:28:30 -0800 (PST)
+X-Received: by 2002:a53:df87:0:b0:67b:fd46:ef9b with SMTP id 956f58d0204a3-67c143c852bmr111530d50.47.1793906910108;
+        Thu, 05 Nov 2026 11:28:30 -0800 (PST)
 Received: from localhost (c-71-234-51-224.hsd1.ma.comcast.net. [71.234.51.224])
-        by smtp.gmail.com with ESMTPSA id 00721157ae682-8b33f770cc6sm2266287b3.9.2026.11.05.11.19.00
+        by smtp.gmail.com with ESMTPSA id 00721157ae682-8b33f884790sm2433467b3.41.2026.11.05.11.28.29
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Thu, 05 Nov 2026 11:19:00 -0800 (PST)
-Date: Thu, 5 Nov 2026 14:18:59 -0500
+        Thu, 05 Nov 2026 11:28:29 -0800 (PST)
+Date: Thu, 5 Nov 2026 14:28:28 -0500
 From: Sana Sharma <sansshar@redhat.com>
 To: linux-rt-users@vger.kernel.org
 Cc: jkacur@redhat.com
-Subject: [PATCH v3] rteval: Fixed hardcoded paths in class
- TestCpusetManagerCLIIntegration
-Message-ID: <auzWo66c2JavzMBW@sansshar-thinkpadp1gen4i.boston.csb>
+Subject: [PATCH v2] rteval: Edited documentation for multistressor support
+Message-ID: <auzY3JabpPCiiV1c@sansshar-thinkpadp1gen4i.boston.csb>
 Reply-To: sansshar@redhat.com
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
@@ -116,119 +115,73 @@ MIME-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Content-Disposition: inline
 
-This patch makes 2 changes to the tests/test_cpusetmanager.py file
-1. The hardcoded paths introduced in commit 6227294897b7 ("rteval:
-Add --housekeeping-isolated flag") have been made generic
-2. The os.path.dirname invocation has been replaced with a more
-modern pathlib module since I was importing it for the fix.
+Edited doc/rteval.8 to agree with recent code changes in stress-ng load
+module. This is specifically focused on the multistressor support
+changes.
 
+Assisted-by: Claude Opus 4.8
 Signed-off-by: Sana Sharma <sansshar@redhat.com>
 ---
-Since v2, the spacing error has been fixed and the srcdir has een
-changes so that its defined only once.
+Fixed typos in v1
 
- tests/test_cpusetmanager.py | 23 +++++++++++++----------
- 1 file changed, 13 insertions(+), 10 deletions(-)
+doc/rteval.8 | 35 +++++++++++++++++++++++++++++++----
+ 1 file changed, 31 insertions(+), 4 deletions(-)
 
-diff --git a/tests/test_cpusetmanager.py b/tests/test_cpusetmanager.py
-index 3f1c4b4..3da042d 100644
---- a/tests/test_cpusetmanager.py
-+++ b/tests/test_cpusetmanager.py
-@@ -13,10 +13,11 @@ import os
- import sys
- import subprocess
- import tempfile
-+from pathlib import Path
+diff --git a/doc/rteval.8 b/doc/rteval.8
+index 370bad9..660a0d0 100644
+--- a/doc/rteval.8
++++ b/doc/rteval.8
+@@ -160,12 +160,21 @@ Source tar ball (default: linux-6.17.7.tar.xz).
+ Number of working threads per core (default: 2).
  
- # Add parent directory to path for imports
--sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
--
-+srcdir = str(Path(__file__).resolve().parent.parent)
-+sys.path.insert(0, srcdir)
- from rteval.cpusetmanager import CpusetManager
- from rteval import cpuset
- from rteval.Log import Log
-@@ -209,6 +210,8 @@ class TestCpusetManagerHousekeepingPartitions(unittest.TestCase):
- class TestCpusetManagerCLIIntegration(unittest.TestCase):
-     """Test rteval-cmd integration with --housekeeping-isolated"""
+ .SS Stress-ng Load Module Options
++The stress-ng load module only runs when at least one stressor is specified via
++\fB\-\-stressng\-stressor\fR or \fB\-\-stressng\-stressors\fR. When it runs, it
++takes over as the exclusive load module (other load modules are not run).
++Stressor names are validated against the output of \fBstress\-ng \-\-stressors\fR.
+ .TP
+-.B \-\-stressng\-option \fIOPTION\fR
+-Stressor specific option.
++.B \-\-stressng\-stressor \fINAME\fR
++Stressor to run. Repeat the flag to run several stressors in parallel
++(e.g., \fB\-\-stressng\-stressor cpu \-\-stressng\-stressor vm\fR).
+ .TP
+-.B \-\-stressng\-arg \fIARG\fR
+-Stressor specific arg.
++.B \-\-stressng\-stressors \fILIST\fR
++Comma-separated list of stressors to run in parallel (e.g., \fIcpu,vm,io\fR).
++.TP
++.B \-\-stressng\-workers \fIN\fR
++Number of workers to start per stressor (default: 0, which starts one worker per
++available CPU).
+ .TP
+ .B \-\-stressng\-timeout \fIT\fR
+ Timeout after T seconds.
+@@ -238,6 +247,24 @@ sudo rteval -d 1800 --measurement-module timerlat \\
+ .RE
+ .fi
  
-+    srcdir = str(Path(__file__).resolve().parent.parent)
++.SS Multiple Stress-ng Stressors
++Run several stress-ng stressors in parallel as the system load:
++.PP
++.nf
++.RS
++sudo rteval -d 3600 \\
++       --stressng-stressor cpu --stressng-stressor vm
++.RE
++.fi
++.PP
++The same set of stressors can be given as a comma-separated list:
++.PP
++.nf
++.RS
++sudo rteval -d 3600 --stressng-stressors cpu,vm,io
++.RE
++.fi
 +
-     def setUp(self):
-         """Clean up before each test"""
-         try:
-@@ -226,7 +229,7 @@ class TestCpusetManagerCLIIntegration(unittest.TestCase):
-     def test_housekeeping_isolated_requires_cpusets(self):
-         """Test that --housekeeping-isolated requires --cpusets"""
-         result = subprocess.run(
--            [sys.executable, '/home/jkacur/src/rteval/rteval-cmd',
-+            [sys.executable, f"{self.srcdir}/rteval-cmd",
-              '--housekeeping', '0-1', '--housekeeping-isolated',
-              '--duration', '1', '--onlyload'],
-             capture_output=True,
-@@ -241,7 +244,7 @@ class TestCpusetManagerCLIIntegration(unittest.TestCase):
-     def test_measurement_member_requires_cpusets(self):
-         """Test that --measurement-member requires --cpusets"""
-         result = subprocess.run(
--            [sys.executable, '/home/jkacur/src/rteval/rteval-cmd',
-+            [sys.executable, f"{self.srcdir}/rteval-cmd",
-              '--measurement-member',
-              '--duration', '1', '--onlyload'],
-             capture_output=True,
-@@ -256,7 +259,7 @@ class TestCpusetManagerCLIIntegration(unittest.TestCase):
-     def test_measurement_member_help_text(self):
-         """Test that --measurement-member appears in help"""
-         result = subprocess.run(
--            [sys.executable, '/home/jkacur/src/rteval/rteval-cmd', '--help'],
-+            [sys.executable, f"{self.srcdir}/rteval-cmd", '--help'],
-             capture_output=True,
-             text=True
-         )
-@@ -270,7 +273,7 @@ class TestCpusetManagerCLIIntegration(unittest.TestCase):
-     def test_loads_cpuset_requires_cpusets(self):
-         """Test that --loads-cpuset requires --cpusets"""
-         result = subprocess.run(
--            [sys.executable, '/home/jkacur/src/rteval/rteval-cmd',
-+            [sys.executable, f"{self.srcdir}/rteval-cmd",
-              '--loads-cpuset',
-              '--duration', '1', '--onlyload'],
-             capture_output=True,
-@@ -285,7 +288,7 @@ class TestCpusetManagerCLIIntegration(unittest.TestCase):
-     def test_loads_cpuset_help_text(self):
-         """Test that --loads-cpuset appears in help"""
-         result = subprocess.run(
--            [sys.executable, '/home/jkacur/src/rteval/rteval-cmd', '--help'],
-+            [sys.executable, f"{self.srcdir}/rteval-cmd", '--help'],
-             capture_output=True,
-             text=True
-         )
-@@ -299,7 +302,7 @@ class TestCpusetManagerCLIIntegration(unittest.TestCase):
-     def test_housekeeping_isolated_requires_housekeeping(self):
-         """Test that --housekeeping-isolated requires --housekeeping"""
-         result = subprocess.run(
--            [sys.executable, '/home/jkacur/src/rteval/rteval-cmd',
-+            [sys.executable, f"{self.srcdir}/rteval-cmd",
-              '--cpusets', '--housekeeping-isolated',
-              '--duration', '1', '--onlyload'],
-             capture_output=True,
-@@ -314,7 +317,7 @@ class TestCpusetManagerCLIIntegration(unittest.TestCase):
-     def test_housekeeping_isolated_help_text(self):
-         """Test that --housekeeping-isolated appears in help"""
-         result = subprocess.run(
--            [sys.executable, '/home/jkacur/src/rteval/rteval-cmd', '--help'],
-+            [sys.executable, f"{self.srcdir}/rteval-cmd", '--help'],
-             capture_output=True,
-             text=True
-         )
-@@ -328,7 +331,7 @@ class TestCpusetManagerCLIIntegration(unittest.TestCase):
-     def test_housekeeping_help_text_accuracy(self):
-         """Test that --housekeeping help text is accurate (no longer says 'isolated CPUs')"""
-         result = subprocess.run(
--            [sys.executable, '/home/jkacur/src/rteval/rteval-cmd', '--help'],
-+            [sys.executable, f"{self.srcdir}/rteval-cmd", '--help'],
-             capture_output=True,
-             text=True
-         )
+ .SS Analyze Existing Reports
+ Summarize multiple existing XML reports:
+ .PP
 -- 
 2.55.0
 
