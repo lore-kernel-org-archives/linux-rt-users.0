@@ -1,107 +1,107 @@
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=170.10.129.124
 ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1793906915;
-	b=BUzGTk+rMyGvPTPgw9EXtMRaFF9w6xDde9xwfmInSG8Fw1gFgrZAWYFoEkbt89THAaUe
-	 1FEEInoU7C6RNd4ZecFgUFBjIa6mjJdV1fa4TLejMKWueHFmdCfUkUlBFZRG/LQIglh7d
-	 jAGuC4Jdu3KFCmA1QotDf4L+t/KHa//1lmns7xMbN5kvRAPB/PWw2g+i0TzJJ7Zr97J6p
-	 wlJweh/KJzMlM3bG06DgUsGf29f7+oQo3oPhLLu2ys2vFB6nBfEoXuyYpwN2UcCKch5yn
-	 jMf4DGmDEcZ+P3RE37sPIp2+3fb6+RD9mHbEq6FUV+RJMie8bksXDvbjpRrMMjgL4BQ==
+	t=1793908726;
+	b=Z8qSyyFDMKxSXj4yTHT5Wx04TUFGV1Sqym/uTV1UwebgIT7zV9EqAU0py5qM8WZs810/
+	 9VbRKBhmP5P8hk5vwsdwzTxIFVa1dlauZG615jb+3ETO0VV7exjx/m3IQ8DEclGW+qE9Z
+	 xByhtuaIAqly0dW97LVCfY76rQbnYTadmw1uec3gZ1UCWj6JodLAA6Gza2q9Pa9k+9BWJ
+	 VRuu2MnYaPD0WMNAnAH2Pg3kxpzl8UEN3qZZnxFMTGeBwVdOvSDz6dlEdsEECI1l5ZtQc
+	 WRkR/U56ILE+FPygq0MaGVYNifEvepGnewBcFLyTpM5Nci7GaNecU2EbjT7D8AnV+xA==
 ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1793906915;
+	a=rsa-sha256; c=relaxed/relaxed; t=1793908726;
 	h=DMARC-Filter:DKIM-Signature:Received:X-MC-Unique:
 	 X-Mimecast-MFC-AGG-ID:Received:DKIM-Signature:X-Google-DKIM-Signature:
 	 X-Gm-Message-State:X-Gm-Gg:X-Received:X-Received:Received:Date:From:
 	 To:Cc:Subject:Message-ID:Reply-To:MIME-Version:Content-Type:
 	 Content-Disposition;
-	bh=iE12xid6OPg+wbKJdaXmqZSnSKLeHDsAdgGp/QIchmg=;
-	b=1aCIqOJHdycnTpAu44ZM2Kql41z7gvF2NdvuV9SESyJJwig4Q3Su11jw+wFgfMHNL0lG
-	 TLOG+OVdO7nyrss+2zzMGD6g+Bbl1tB584rBuXcMcJ4X7+oP8pft6DPB9Ttp3eRZHNiPP
-	 vnAU4Re4Pn3ZzcVWnv7eLdefCCD9oiBn0aydfIWy6iEVDRgyrFQAPejzoldDhp1eBWDTi
-	 /J9mRTnCx+xH8TRwRIKjJklWp2GOBgynQeTdfqmS682ANEc8mdSjYn+29tGapuEcRHlOY
-	 YNDAC+RumbSgRptz2XNmvyY+udlc/EkQk/hZ4uK2kyagFjdPbcvoTm0QWjvGGzu2kFA==
+	bh=7RxPWEc+KuJASn+fWd41gY8hBHhuT8p88pNFFU+zD1w=;
+	b=Qz/3Zg2skedbSJeY5uWH72snWHnEejLkCXjr+S/FDaj/HRhwm6PTUQrJ5NAXN7cCjv4G
+	 vpD+a2bOkfJCLNoH7AxKoOW37q3ehTpNVfmUWuiOPyx2/sSty072IZHexQXqKVZPr6mSQ
+	 2RXIyFdbsTOrsDWzE57/uE7++ThliL5ev/0/zV8j3DRmKqvwG7OhURt/k6pcG5flwBKEL
+	 CkD/P09WyiwGoyM2E+BKjA3Kx0q49coXD65YU7GFn/1X3T1GDZa18SDa8Nw+lLSZOM0oA
+	 7v3Uu9eAjou6vsw5po7wg3hcSqKUuHbXYRy8qUPfXz6AVv2FJozWVoCLowz4QhA7A7g==
 ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
 	dmarc=pass header.from=redhat.com;
 	spf=pass smtp.mailfrom=redhat.com;
-	dkim=pass header.d=redhat.com header.i=@redhat.com header.a=rsa-sha256 header.s=mimecast20190719 header.b=b9Xeez7M;
-	dkim=pass header.d=redhat.com header.i=@redhat.com header.a=rsa-sha256 header.s=google header.b=ILvwNpoZ;
+	dkim=pass header.d=redhat.com header.i=@redhat.com header.a=rsa-sha256 header.s=mimecast20190719 header.b=TERfh+nK;
+	dkim=pass header.d=redhat.com header.i=@redhat.com header.a=rsa-sha256 header.s=google header.b=YalFmlhp;
 	arc=none smtp.remote-ip=170.10.129.124
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature ECDSA (prime256v1) server-digest SHA256)
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 1467E606A326
-	for <linux-rt-users@vger.kernel.org>; Thu,  5 Nov 2026 19:28:34 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 1467E606A326
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id B7DF3606A6D7
+	for <linux-rt-users@vger.kernel.org>; Thu,  5 Nov 2026 19:58:45 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org B7DF3606A6D7
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key, unprotected) header.d=redhat.com header.i=@redhat.com header.a=rsa-sha256 header.s=mimecast20190719 header.b=b9Xeez7M;
-	dkim=pass (2048-bit key, unprotected) header.d=redhat.com header.i=@redhat.com header.a=rsa-sha256 header.s=google header.b=ILvwNpoZ
+	dkim=pass (1024-bit key, unprotected) header.d=redhat.com header.i=@redhat.com header.a=rsa-sha256 header.s=mimecast20190719 header.b=TERfh+nK;
+	dkim=pass (2048-bit key, unprotected) header.d=redhat.com header.i=@redhat.com header.a=rsa-sha256 header.s=google header.b=YalFmlhp
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1793906913;
+	s=mimecast20190719; t=1793908724;
 	h=from:from:reply-to:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
-	 content-type:content-type; bh=iE12xid6OPg+wbKJdaXmqZSnSKLeHDsAdgGp/QIchmg=;
-	b=b9Xeez7MM9ZPRGe0PVQzj+MLenCQA2W7jEBmhFWkifoVpHn6zmvHW5hT7DoZi9tjCWusRv
-	aMrAyshpZc0EfgERceoRS3FZrBsMVaaDDgzPrV2XgW/JISJ6LQ0Dh2sz68BnEhV3QXMoyL
-	4f0BFHR6rVU3z65B5FflIGdO4AkD+lc=
-Received: from mail-yx1-f71.google.com (mail-yx1-f71.google.com
- [74.125.224.71]) by relay.mimecast.com with ESMTP with STARTTLS
+	 content-type:content-type; bh=7RxPWEc+KuJASn+fWd41gY8hBHhuT8p88pNFFU+zD1w=;
+	b=TERfh+nKo9lA+wExScn+I3FzpaB1UWRHJL2jda8ItmDTPm7tzfEpN2xTwVpVrYDQocSgH7
+	sLBb8xeC7eC6a8AQ1kCFR3M/7RemUiUhGTnNG/anQVzYXQdCWOfGlKyKJt6/ECBu0FX96M
+	rc2iYs9hVDZd6TBSGRDAonFd2eg+fbg=
+Received: from mail-yw1-f200.google.com (mail-yw1-f200.google.com
+ [209.85.128.200]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
- us-mta-207-gLrU64juNHqCQ7uNuYx_3A-1; Thu, 05 Nov 2026 14:28:31 -0500
-X-MC-Unique: gLrU64juNHqCQ7uNuYx_3A-1
-X-Mimecast-MFC-AGG-ID: gLrU64juNHqCQ7uNuYx_3A_1793906911
-Received: by mail-yx1-f71.google.com with SMTP id 956f58d0204a3-67be4f2f42eso3585357d50.0
-        for <linux-rt-users@vger.kernel.org>; Thu, 05 Nov 2026 11:28:31 -0800 (PST)
+ us-mta-215-eFIzeTHfO2mia7LNmy3l6g-1; Thu, 05 Nov 2026 14:58:43 -0500
+X-MC-Unique: eFIzeTHfO2mia7LNmy3l6g-1
+X-Mimecast-MFC-AGG-ID: eFIzeTHfO2mia7LNmy3l6g_1793908723
+Received: by mail-yw1-f200.google.com with SMTP id 00721157ae682-88322409239so36062497b3.1
+        for <linux-rt-users@vger.kernel.org>; Thu, 05 Nov 2026 11:58:43 -0800 (PST)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=redhat.com; s=google; t=1793906911; x=1794511711; darn=vger.kernel.org;
+        d=redhat.com; s=google; t=1793908723; x=1794513523; darn=vger.kernel.org;
         h=content-disposition:content-type:mime-version:reply-to:message-id
          :subject:cc:to:from:date:from:to:cc:subject:date:message-id:reply-to
          :content-type;
-        bh=iE12xid6OPg+wbKJdaXmqZSnSKLeHDsAdgGp/QIchmg=;
-        b=ILvwNpoZjUMc73U2rWSCTVQ3iuBuv+sz+0D2s4Q/shCRdJsKG4RY17tcg0mh1udxCa
-         ZHKr/+FvVeQb4u4+ckEZutOvRygiTINjwdAB0eUEPL/FXuyJY/5fqpbO1tmEuH1aC1Md
-         6S2tVrS7e0S7rNFwGUBgfhZtZZqC7rUGSijdZep+J6MRDBQ8HxTVApNltq/zxdRDQm67
-         LCRYLgAqfEVnAaqu6Zj4VI0Pfv408KUlr17gjX6xF1/xoHRuH5iQJd3xjgnSgwnTnE/b
-         mrM0eGlZOmGFTNhCY+vLOMNDkp+tI21DQ25P64bTCkDavnMVHbztaHXR3nxMvKfM+GDU
-         Y6gA==
+        bh=7RxPWEc+KuJASn+fWd41gY8hBHhuT8p88pNFFU+zD1w=;
+        b=YalFmlhp/7o2BET4cO7psIyhfJDckzwEvDfM9enP05RkHEUJUiwLDN9oumnInxB+hZ
+         urq3vR5ZcXGuVwc+0fYXrmQuCcjszwCwPB0dqpA+xZQX9koSzKHAxMJj5xhrGHuaf2+d
+         Obpne6XroD7pq0cihh8g5c32li5f5XYagjHN3QiayEIUEw5CMfYBy20TIaU9OJssjFM9
+         v6MznrKnYb8qe6l/U9LmC67YBjONz3CAK8ujbzMpogVbg5TWNA+7T0a/FzXBOpItYA4I
+         mF4aOH9MZhDGNhCK855l0Dx6/PrVdJIf6Dnjskfuv7Ask0zF+G8ZtgVvS5O22wOIRrvE
+         rQcw==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20260707; t=1793906911; x=1794511711;
+        d=1e100.net; s=20260707; t=1793908723; x=1794513523;
         h=content-disposition:content-type:mime-version:reply-to:message-id
          :subject:cc:to:from:date:x-gm-gg:x-gm-message-state:from:to:cc
          :subject:date:message-id:reply-to:content-type;
-        bh=iE12xid6OPg+wbKJdaXmqZSnSKLeHDsAdgGp/QIchmg=;
-        b=tzlAoKRxqY3DJbEe11la+HAjBl2h7J03uPYneVIkYIGeBExEvvP1XzoY5TIOFz4eAC
-         Cf1UTKhE4mvjPaFhX8IwR/27ePfyK5CEeNqGhqYZfLSm099xC5bVtTuGUC5/PN1WEtgo
-         kWWJ+4Hs9CdBfLnP/QueWAfC3DBK32ho0yVAA6XRlhZdHfCQQWFFVIUlQcggP98dzhUS
-         9LqCElZ8Y3XmAqsapH57pQ1JieIxhDXK0lr1OgoALAVKaliTca1iCUderRhnER9AOXcw
-         TB03AadU6Oszue4xq1MByVfEdcvzAaDkFM1aJcTL2ZeWU2v6LB0Nn3GEqZgNxXdKmq+t
-         BjVQ==
-X-Gm-Message-State: APuU4Z+YW2h4G9t/8zPSRloNrxtWCPv12b9W64VnT1GI7XMksDZLXLw9
-	ue0iyH8aNEyUddnSlmg1R4WsAtqlfkkZIrI+TWZcOuahWI9KFC5A4CEyjepcqKwcxpGYu5Jr4lo
-	/kbTwndr2D2ztCJ84VTiij12GDd4TO46WHta3KjkPRQ4CIWBt8qpu01Fh6QuYnoHLSOwflsbj8H
-	bejcJjrTBQKSXZyEo1X+X2l3VSSVvU7uFQtPDch/jWgPND8JV0XJwwarI=
-X-Gm-Gg: AYBFou1WrkPvBvBgK2zDaOBsw1/kAi1sIyoQEi7Vc0AFGzk2wbtFg0pIsxHd2fu0qb2
-	1sfHkQoiU35cM+mkc3jlVb2NCYYtNqtQxucMfMGvJOt13Zhl+9IfGUzrVPz6eL8CTlCdu6zYpWw
-	4Oio3rrWMxvql5Qmq463Pcuz6nod6mOutREpvpatkIHOraTe9+9q4zOD0OwtE0bfDtgk1izSL7x
-	nlZwJfoATCM/tuaw2PknnT+s/J12sb9nbEL9Kuu0+IfpUnBr1vjxE+y/A4bLDb8BvcyHDl1wixi
-	O+V04kP8RrBkcr0p/mW6iHrhDjRUVIhyzOnQO6gLmVzadJz+aXO837NFJlNO1NMCu8xdcvqP5Kh
-	0ol+a1Lq5DH+xZqxNGcMQUayRcgBywg81tbwFIynGztRljg90+pgvjZnqGMDh4KlYZeaN72PW0G
-	SR8LrI6g==
-X-Received: by 2002:a53:df87:0:b0:67b:fd46:ef9b with SMTP id 956f58d0204a3-67c143c852bmr111548d50.47.1793906910949;
-        Thu, 05 Nov 2026 11:28:30 -0800 (PST)
-X-Received: by 2002:a53:df87:0:b0:67b:fd46:ef9b with SMTP id 956f58d0204a3-67c143c852bmr111530d50.47.1793906910108;
-        Thu, 05 Nov 2026 11:28:30 -0800 (PST)
+        bh=7RxPWEc+KuJASn+fWd41gY8hBHhuT8p88pNFFU+zD1w=;
+        b=05vMlSWSKPTmeZURtlvtGTalJsJrZk7zppfiMMV1NbUGyGk1+H07d9jjhEo+kVu/b1
+         926LfiGUu9xHywQebTS9d+lGzRirGeCOrkEfttuUBGZsFLIpotR1l4gDVhc32/O5Wlhb
+         kgwtJ7F3S/MrQ9KhsweyeKQMX8o2zOTBScmIB0TS1qtY0y3WWbFvMWYm4c9NlYmaNqqG
+         AgBDyR24zL3o1z/pVFGZqfoyTaOcXLIaLQ1QEwxgCUPFt23UYJFk+cVZ4HMevDWr5HRJ
+         uyEA7vbei20vBQ1PFRGdFNdjPn4FR7L8XHWJbERCGli/uvkylTnpucLYwQxlZKtZHjHn
+         tiOw==
+X-Gm-Message-State: APuU4Z8V5Hr9mBztgWMmKhVD/LYmteV8LaIIJdCBV5O85wYBF0iNFzqm
+	PYPm/Vtvk/8O3K9DICi+MFWORUjICgZ5+4GAtDQQOwN42HFptcKmas9DHe0JEwxc1khHgQIBDiB
+	iq4e4kwjB6LeAjlg/8RL2AytfR8vfQhq6n8d6e+69PdrIBw7smoOvw4vS3U0GYSJ+sv/2Sr0rqX
+	y66L28Pmsm/imEjPgxn234i9cp1auu+TXmuMYeJsqz42iYg14vv+ibzdg=
+X-Gm-Gg: AYBFou1fQXST7rKK0QAxhLAZXwKFz8jzs33Fznp5qpvhXP5t2C83yKw6IngrE0CVA1W
+	gEtYzgFFXdC2NOx7qYHg756Nmt1roKXOJMSlxHfngU1OOgRyBO+hSN6MNSgnqrqV3Tq6zGEoDs0
+	FCsLR5h7QR12iJETFnjhvatfa9DWHHD5xM31mLvMleerry8am/XqVFPGSAp33zR8Fq04RwKB5sh
+	dP+3SADrs0SDHq1hOVkAifoEBP/hP3XW43RDRxtU46uFAlByjxm19+d1VrHv+ENdSfZEMsOr8+X
+	xPdkQb1fXokU80HWdxGT1ok3+xnmgNiFWb+wVt/uFny0ePnyjEvehVQVBnVjdiAUAYpeY9TGvP/
+	J3iJwyhE3cJ2nWJmC9UYpa9lUrquE5cU91OohzIHrmU3nH+gu6BwjG2hfwvTvd6FXyO/CD/aG5s
+	ECqpVYdg==
+X-Received: by 2002:a05:690c:39d:b0:8a8:8456:a96a with SMTP id 00721157ae682-8b341960176mr397897b3.28.1793908722626;
+        Thu, 05 Nov 2026 11:58:42 -0800 (PST)
+X-Received: by 2002:a05:690c:39d:b0:8a8:8456:a96a with SMTP id 00721157ae682-8b341960176mr397647b3.28.1793908722080;
+        Thu, 05 Nov 2026 11:58:42 -0800 (PST)
 Received: from localhost (c-71-234-51-224.hsd1.ma.comcast.net. [71.234.51.224])
-        by smtp.gmail.com with ESMTPSA id 00721157ae682-8b33f884790sm2433467b3.41.2026.11.05.11.28.29
+        by smtp.gmail.com with ESMTPSA id 00721157ae682-8b33f3c9730sm3497147b3.0.2026.11.05.11.58.41
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Thu, 05 Nov 2026 11:28:29 -0800 (PST)
-Date: Thu, 5 Nov 2026 14:28:28 -0500
+        Thu, 05 Nov 2026 11:58:41 -0800 (PST)
+Date: Thu, 5 Nov 2026 14:58:37 -0500
 From: Sana Sharma <sansshar@redhat.com>
 To: linux-rt-users@vger.kernel.org
 Cc: jkacur@redhat.com
-Subject: [PATCH v2] rteval: Edited documentation for multistressor support
-Message-ID: <auzY3JabpPCiiV1c@sansshar-thinkpadp1gen4i.boston.csb>
+Subject: [PATCH v2] rteval: Added multi stressor support
+Message-ID: <auzf7RDoKWQI9mvP@sansshar-thinkpadp1gen4i.boston.csb>
 Reply-To: sansshar@redhat.com
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
@@ -115,73 +115,194 @@ MIME-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Content-Disposition: inline
 
-Edited doc/rteval.8 to agree with recent code changes in stress-ng load
-module. This is specifically focused on the multistressor support
-changes.
+Added the ability for rteval to take multiple stressors in one
+command. The syntax works as follows:
 
-Assisted-by: Claude Opus 4.8
+--stressng-stressor cpu --stressng-stressor vm --stressng-workers 2
+will use 2 workers for each  stressor (in this case cpu and vm)
+
+--stressng-stressors cpu,vm --stressng-workers 2
+will use 2 workers for each stressor as in the above example
+
+The second option exists to allow the user to access multiple
+stressors in an easier way.
+
+The tests/test_stressng file has also been updated to reflect
+these changes.
+
 Signed-off-by: Sana Sharma <sansshar@redhat.com>
 ---
-Fixed typos in v1
+Since v1, the extraneous import has been deleted and stressors now takes
+precedence over stressor in case both are supplied and a warning is
+generated in this case.
+ rteval/modules/__init__.py       |  4 +--
+ rteval/modules/loads/stressng.py | 62 ++++++++++++++++++++++++--------
+ tests/test_stressng.py           |  7 ++--
+ 3 files changed, 52 insertions(+), 21 deletions(-)
 
-doc/rteval.8 | 35 +++++++++++++++++++++++++++++++----
- 1 file changed, 31 insertions(+), 4 deletions(-)
-
-diff --git a/doc/rteval.8 b/doc/rteval.8
-index 370bad9..660a0d0 100644
---- a/doc/rteval.8
-+++ b/doc/rteval.8
-@@ -160,12 +160,21 @@ Source tar ball (default: linux-6.17.7.tar.xz).
- Number of working threads per core (default: 2).
+diff --git a/rteval/modules/__init__.py b/rteval/modules/__init__.py
+index 183efd8..abd88b6 100644
+--- a/rteval/modules/__init__.py
++++ b/rteval/modules/__init__.py
+@@ -6,7 +6,6 @@
+ import time
+ from datetime import datetime
+ import threading
+-import argparse
+ import libxml2
+ from rteval.Log import Log
+ from rteval.rtevalConfig import rtevalCfgSection
+@@ -356,6 +355,7 @@ reference from the first import"""
+             for (o, s) in list(opts.items()):
+                 descr = 'descr' in s and s['descr'] or ""
+                 metavar = 'metavar' in s and s['metavar'] or None
++                action = 'action' in s and s['action'] or 'store'
  
- .SS Stress-ng Load Module Options
-+The stress-ng load module only runs when at least one stressor is specified via
-+\fB\-\-stressng\-stressor\fR or \fB\-\-stressng\-stressors\fR. When it runs, it
-+takes over as the exclusive load module (other load modules are not run).
-+Stressor names are validated against the output of \fBstress\-ng \-\-stressors\fR.
- .TP
--.B \-\-stressng\-option \fIOPTION\fR
--Stressor specific option.
-+.B \-\-stressng\-stressor \fINAME\fR
-+Stressor to run. Repeat the flag to run several stressors in parallel
-+(e.g., \fB\-\-stressng\-stressor cpu \-\-stressng\-stressor vm\fR).
- .TP
--.B \-\-stressng\-arg \fIARG\fR
--Stressor specific arg.
-+.B \-\-stressng\-stressors \fILIST\fR
-+Comma-separated list of stressors to run in parallel (e.g., \fIcpu,vm,io\fR).
-+.TP
-+.B \-\-stressng\-workers \fIN\fR
-+Number of workers to start per stressor (default: 0, which starts one worker per
-+available CPU).
- .TP
- .B \-\-stressng\-timeout \fIT\fR
- Timeout after T seconds.
-@@ -238,6 +247,24 @@ sudo rteval -d 1800 --measurement-module timerlat \\
- .RE
- .fi
+                 try:
+                     default = cfg and getattr(cfg, o) or None
+@@ -369,7 +369,7 @@ reference from the first import"""
  
-+.SS Multiple Stress-ng Stressors
-+Run several stress-ng stressors in parallel as the system load:
-+.PP
-+.nf
-+.RS
-+sudo rteval -d 3600 \\
-+       --stressng-stressor cpu --stressng-stressor vm
-+.RE
-+.fi
-+.PP
-+The same set of stressors can be given as a comma-separated list:
-+.PP
-+.nf
-+.RS
-+sudo rteval -d 3600 --stressng-stressors cpu,vm,io
-+.RE
-+.fi
+                 grparser.add_argument(f'--{shortmod}-{o}',
+                                          dest=f"{shortmod}___{o}",
+-                                         action='store',
++                                         action=action,
+                                          help='%s%s' % (descr,
+                                                         default and ' (default: %s)' % default or ''),
+                                          default=default,
+diff --git a/rteval/modules/loads/stressng.py b/rteval/modules/loads/stressng.py
+index 564e798..83f9914 100644
+--- a/rteval/modules/loads/stressng.py
++++ b/rteval/modules/loads/stressng.py
+@@ -6,12 +6,39 @@ import time
+ import subprocess
+ import signal
+ import sys
++import warnings
+ from rteval.modules.loads import CommandLineLoad
+ from rteval.Log import Log
+ from rteval.systopology import SysTopology
+ from rteval.cpulist_utils import CpuList
+ from rteval.cpuset import cpuset_preexec
+ 
++def validate_stressors(stressor_list):
++    """Validate multiple stressor names.
 +
- .SS Analyze Existing Reports
- Summarize multiple existing XML reports:
- .PP
++    Args:
++        stressor_list: stressor names to validate, either as a list
++                       (from repeated --stressng-stressor) or a
++                       comma-separated string (from --stressng-stressors)
++
++    Raises:
++        ValueError: If any stressor is invalid
++    """
++    valid = get_valid_stressors()
++    if isinstance(stressor_list, str):
++        stressor_list = stressor_list.split(",")
++    stressors = [word.strip() for word in stressor_list]
++    invalid = []
++    for stressor in stressors:
++        if stressor not in valid:
++            invalid.append(stressor)
++            continue
++
++    if invalid:
++        raise ValueError(f"Invalid stress-ng stressors: {', '.join(invalid)}. "
++                        f"Run 'stress-ng --stressors' to see valid options.")
++    return stressors
++
+ def get_valid_stressors():
+     """Query stress-ng for list of valid stressor names."""
+     try:
+@@ -25,14 +52,6 @@ def get_valid_stressors():
+         print(f"Failed to query stress-ng stressors: {e}")
+         sys.exit(1)
+ 
+-def validate_stressor(stressor_name):
+-    """Validate a single stressor name against stress-ng's available stressors."""
+-    valid = get_valid_stressors()
+-    if stressor_name not in valid:
+-        print(f"Invalid stress-ng stressor: '{stressor_name}'. "
+-              f"Run 'stress-ng --stressors' to see valid options.")
+-        sys.exit(1)
+-
+ class Stressng(CommandLineLoad):
+     " This class creates a load module that runs stress-ng "
+     def __init__(self, config, logger):
+@@ -46,11 +65,18 @@ class Stressng(CommandLineLoad):
+         self.__err = None
+         self.__nullfp = None
+         self.args = None
++        " Warn if both stressor and stressors are invoked "
++        if (hasattr(self.cfg, 'stressors') and hasattr(self.cfg, 'stressor')):
++            warnings.warn("In cases where stressng-stressor and stressng-stressors are both invoked, rteval will choose only stressors")
+         " Only run this module if the user specifies an stressor "
+-        if self.cfg.stressor is not None:
++        if (hasattr(self.cfg, 'stressors') and self.cfg.stressors is not None):
++            self._donotrun = False
++        elif (hasattr(self.cfg, 'stressor') and self.cfg.stressor is not None):
++            setattr(self.cfg, 'stressors', list(self.cfg.stressor))
+             self._donotrun = False
+         else:
+             self._donotrun = True
++
+         # When this module runs, other load modules should not
+         self.set_exclusive()
+ 
+@@ -74,10 +100,10 @@ class Stressng(CommandLineLoad):
+ 
+         # stress-ng is only run if the user specifies an stressor
+         self.args = ['stress-ng']
+-        validate_stressor(self.cfg.stressor)
+-        self.args.append(f'--{str(self.cfg.stressor)}')
+-        if self.cfg.workers is not None:
+-            self.args.append(self.cfg.workers) #default is 0
++        stressors = validate_stressors(self.cfg.stressors)
++        workers = str(self.cfg.workers)  # defaults to '0'
++        for stressor in stressors:
++            self.args.extend([f'--{stressor}', workers])
+         if self.cfg.timeout is not None:
+             self.args.append('--timeout')
+             self.args.append(self.cfg.timeout)
+@@ -164,8 +190,14 @@ def ModuleParameters():
+     """ Commandline options for Stress-ng """
+     return {
+         "stressor": {
+-            "descr": "stressor name (eg. vm, cpu)",
+-            "metavar": "STRESSOR"
++            "descr": "stressor to run; repeat the flag to run several in parallel "
++                     "(e.g., --stressng-stressor cpu --stressng-stressor vm)",
++            "action": "append",
++            "metavar": "NAME"
++        },
++        "stressors": {
++            "descr": "comma-separated stressors to run in parallel (e.g., cpu,vm,io)",
++            "metavar": "LIST"
+         },
+         "workers": {
+             "descr": "number of workers(default: 0 = one per CPU)",
+diff --git a/tests/test_stressng.py b/tests/test_stressng.py
+index 6211fb3..5961ee2 100644
+--- a/tests/test_stressng.py
++++ b/tests/test_stressng.py
+@@ -41,15 +41,14 @@ class TestValidateStressor(unittest.TestCase):
+            return_value=['cpu', 'vm'])
+     def test_valid_passes(self, _):
+         """Test that a valid stressor is accepted"""
+-        stressng.validate_stressor('cpu')   # should not raise
++        stressng.validate_stressors('cpu, vm')   # should not raise
+ 
+     @patch('rteval.modules.loads.stressng.get_valid_stressors',
+            return_value=['cpu', 'vm'])
+     def test_invalid_exits(self, _):
+         """Test that an invalid stressor is rejected"""
+-        with self.assertRaises(SystemExit) as cm:
+-            stressng.validate_stressor('bogus')
+-        self.assertEqual(cm.exception.code, 1)
++        with self.assertRaises(ValueError):
++            stressng.validate_stressors('bogus')
+ 
+ def main():
+     """Run the test suite"""
 -- 
 2.55.0
 
