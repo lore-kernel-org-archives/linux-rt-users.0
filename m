@@ -1,94 +1,77 @@
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=209.85.219.44
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=170.10.133.124
 ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1794000616;
-	b=QrqxaJxa7oYa8tbdOdqkkWOa2yx2856/0lIqWX3x9onwFXFwekkFIvXBULpQMdpR/oOR
-	 ueA9AkI0z5QhlYrvvqUIZubGOXFFJgX3L/3DknP8J7B+87CBoCQXF1MSmKR0W0SUXsQJp
-	 Lw12JvYDPz8lr8TlWIPTLl+CaJ5CLTiVcg15goTgfUIVn2k7zFQguBoQA976JF+pcPEGt
-	 7I4rsPdEyIDxpY3ELBy3C0Ec7A3/btIrV1MqRQ0RAP/V9NRF/odHvGHmhjVjx/oBa6pKR
-	 QzhRmpkxxqX5Fjz22/fitRYl40Vga/LQPJ0v+Hnsf16z/A9WDK9d1Vi6kVx5gK8C5GQ==
+	t=1794053975;
+	b=kOWIOTa1fsB+u7o+NaOMhiSRND6PdSsUmWzC6eD0BfrMhcyHmxn2L6lHgYInF3QTzMwt
+	 9vZMJVmvxVTYng6EuRSC6MqMljetlvt4aC6WR8IKDXsC54WoxaAKNJuO/KVK6ikN7hcmu
+	 peGc5xvp3R287SS2/6O9kqgK7+atF2Ts+zWiMN1LwY+eDAwuIC0dBjG1vzZUIgkQojV49
+	 91Pjk8umHeR8nCnR6cFOeXIIqJsKHyLKk3PRO6pIIChzRBUrlfXfyhLL96oklZ8d29dAs
+	 ROrPfAg+cQDT0UV85Rc1Ptiyk306Pb9RiENnxpu7ZPIq2Xe5t6i+jpcKcrt00+TdinA==
 ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1794000616;
-	h=DMARC-Filter:Received:DKIM-Signature:X-Google-DKIM-Signature:
-	 X-Gm-Message-State:X-Gm-Gg:X-Received:Received:Sender:From:To:Cc:
-	 Subject:Date:Message-ID:X-Mailer:In-Reply-To:References:MIME-Version:
-	 Content-Type:Content-Transfer-Encoding;
-	bh=fVpPWmfC7LQIYam5qQvo3JLu/NjVNTLzQraft8aLJeM=;
-	b=aE5yELElVi2EJ4E+ZkGa/R0ngQ/MdLcnzUkqLVwPmpgmWD6r7kGZsH//TMPddXaqrxiH
-	 XjVZwqwwltSqCUc9PV8yH8OLitwIRjQcg5tLH8w41wik+YVvw6lIwqsls1hcqC6MZzqaV
-	 8HAAhUo1k+2mmUXL7U74mOHftiq5wDY6UkJuNksjyEXZFYEk4neVHebCkMVj75oCtRwfu
-	 y86FW04I0SIjqXl1/j4uvnpcGYYaZDXVlmRY1x1cct1vru0N8MiwhCMGp90AfuMzXBjGc
-	 x9ZWK80scCBLb6Tfuqg+C7G5+8l8LI0AWQBsM1P/pu3CSAcDlpQ7NAzfP2uUhsx+IAQ==
+	a=rsa-sha256; c=relaxed/relaxed; t=1794053975;
+	h=DMARC-Filter:DKIM-Signature:Received:X-MC-Unique:
+	 X-Mimecast-MFC-AGG-ID:Received:Received:Date:From:To:Subject:
+	 Message-ID:MIME-Version:Content-Type:Content-Disposition:
+	 X-Scanned-By;
+	bh=G1d8k563YQDJ71mmcda6Rwptt0xRXOtWeCJDb9Kk1Vw=;
+	b=3O6ecAelfdbQ7er0xYsKBut7PRDecCGCKIeDWGbHqNziOS2M5JZMlRRUOibb2lygumpb
+	 vW/NfIh82/tBvAWHMSj2u2YbTMz7s4Qk21Ux6nEt9pESab89cgnkTSN7ZHg3FpSit+2EM
+	 ggU1YDE2MAzBPgG9u0OBB4xbxgtdQFW23I8PI6li/it9OwJ+4YmrCyrP0VZUjW1g9RBDV
+	 q4xNBPnFStWNQRmAOXOBJ07CU9yp6KYBH+LLq/SXXSo2giJG2QH2j3YSSI64VfrdGrV3/
+	 OVzmG4hYb5Ni58eFDkjpF6t3q+IQPyE33LqtRjog2xtfm+S26ZDMmGzKB6Qq4kB5maw==
 ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
-	dmarc=fail header.from=redhat.com;
-	spf=pass smtp.mailfrom=gmail.com;
-	dkim=pass header.d=gmail.com header.i=@gmail.com header.a=rsa-sha256 header.s=20260707 header.b="nKy/LxHf";
-	arc=none smtp.remote-ip=209.85.219.44
-Received: from mail-qv1-f44.google.com (mail-qv1-f44.google.com [209.85.219.44])
-	(using TLSv1.3 with cipher TLS_AES_128_GCM_SHA256 (128/128 bits)
+	dmarc=pass header.from=redhat.com;
+	spf=pass smtp.mailfrom=redhat.com;
+	dkim=pass header.d=redhat.com header.i=@redhat.com header.a=rsa-sha256 header.s=mimecast20190719 header.b="BV/LdLhZ";
+	arc=none smtp.remote-ip=170.10.133.124
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature ECDSA (prime256v1) server-digest SHA256)
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 539FD606A330
-	for <linux-rt-users@vger.kernel.org>; Fri,  6 Nov 2026 21:30:16 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 539FD606A330
-Authentication-Results: smtp.subspace.kernel.org; dmarc=fail (p=quarantine dis=none) header.from=redhat.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 58B21606A326
+	for <linux-rt-users@vger.kernel.org>; Sat,  7 Nov 2026 12:19:34 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 58B21606A326
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key, unprotected) header.d=gmail.com header.i=@gmail.com header.a=rsa-sha256 header.s=20260707 header.b=nKy/LxHf
-Received: by mail-qv1-f44.google.com with SMTP id 6a1803df08f44-91e7fc8265aso15112996d6.0
-        for <linux-rt-users@vger.kernel.org>; Fri, 06 Nov 2026 13:30:16 -0800 (PST)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20260707; t=1794000615; x=1794605415; darn=vger.kernel.org;
-        h=content-transfer-encoding:content-type:mime-version:references
-         :in-reply-to:message-id:date:subject:cc:to:from:sender:from:to:cc
-         :subject:date:message-id:reply-to:content-type;
-        bh=fVpPWmfC7LQIYam5qQvo3JLu/NjVNTLzQraft8aLJeM=;
-        b=nKy/LxHfWeKvLZTiu6iKFUW9O+HkYeF31WFITe4hgJ5Gxyng9OlHzYZXg8di+Xawnt
-         jO/JA//93SC+DbELGqpR+HxAeXoTztIUxK14Cm1XIenmmNsKqYAWlImlTEbhRSoMszq5
-         aJBAviOxm7GstfplAfZeKkH98mIJ9Vo2Z5NQ1lkCC6yIuChj0O91B3b7yC5dK9/jTtHp
-         WrIlsHfE6+c1VpbIjSnPy/6P4uxrX6uoyKicNHbRA/7TLssuZdnPH8XRHqcOVFvDDbnt
-         uuf3RXXJT60vwKb8dK5pqY6ZmjZuyrSrUixiTES7dvB9jPXCcRkVWuP8PPWyhCg1zpqv
-         qvFQ==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20260707; t=1794000615; x=1794605415;
-        h=content-transfer-encoding:content-type:mime-version:references
-         :in-reply-to:message-id:date:subject:cc:to:from:sender:x-gm-gg
-         :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to
-         :content-type;
-        bh=fVpPWmfC7LQIYam5qQvo3JLu/NjVNTLzQraft8aLJeM=;
-        b=vZtloFcu3ImLXx+LNAfPzNgAjWARsvNE/FRrnCESwu2ftk12JyTU2/F1vH5e2sguWo
-         A/sm3P/BH85CI1FRA9RbO/ipqAt8s2UY67y2gnDexAfbqESwqj41IxvkfyB1Rn7z+R0h
-         OM9ogD88epMeuKYuYflGG0d+N7je+z5M+y9bQnBnJ2YL9W5oH9A/JQPVj6qUfVf1YsHj
-         JZQ4Kd0Rx1nceFHhhl5vAqM/FWwwlPTMYStd1PW561RYLerESh5cgUcwYu/nI+g/tIz5
-         Oih+QqJAi0A8wOkcydjO1ufEbCxwEavokhlyq/Q9QWeqGYeOxOwkivg4riE6PnGzGtbF
-         aP0A==
-X-Gm-Message-State: APuU4Z9mvUrFix9hF+nkw5hfHVzzN91KKq4BxluqBEmidvc995B6jkdv
-	xcCNgErY99z57Le2NbB7W3UPO0mWc9bncnu/7zH/oByBhebZM7MfpWJJCP/QGg==
-X-Gm-Gg: AYBFou1W1QGm9dKxz4i37NA4SyQ9eDf1UOI6jRzG0lWr6e/c9OY5PTcXW9/R4De5MiV
-	L7Zvxux1ieIMj1x8khxsD/fDeQKtjOfxDhaAPdE9K1nHTo/bov6pcsnX0iydfEVs/DAen879vPO
-	e5ZCFqUaEE9W/x1EPFQRcJKr5Yi4KxqsTqDwLSXX1o7ntes38loXPHyNJgegZ2zT3neotj/B8EZ
-	hDwsIWCBnfw3gPbEDmONMbNHI63Ski1smh+nG1ioivAGfNpmp2BAO2jU84ZYUhRWuZ9kPInd4QU
-	CWNYW9Iu7cyLnzH472WOvqEBH1vOM6Xu/XIKHYOoJd+9HeX9wjGOM1ZOR1gs6ry3bmfR5UxMjro
-	//s1WDdv2Pa8gAI8HyH5SQsK/aI2n37ZlyxG1gsnVhm6Gsiort0+1NEiDvOwvWqWg4gpUw4bryl
-	NaavxAvrTkWW8JBDJb2xt5YYyqRGSIteMA6Tk4FTeuAPEbdW0FhkEiSlMntoNeTXozodswIwi+C
-	xmtrLpe/dHE7pE1krv/MGL5DT6X+seMntNFC3i/Q5RrFlUE4hFMjB1o78u5P2kt1OYMFLgnshM9
-	rK7pi63tWmK/cR2+8/bidi1DD+FEkJyWKZym6CoWIywXplO729udxQI2Xgxvt4Epb6X6xzP7STM
-	8rNA828NauNOWZbC8VD7Ma4WumerYUuCyg5e6KEZ9BFI+1z9mEiaOxewPTQ==
-X-Received: by 2002:ad4:5de2:0:b0:91b:5d39:e13d with SMTP id 6a1803df08f44-91ea98488b0mr57723266d6.50.1794000615086;
-        Fri, 06 Nov 2026 13:30:15 -0800 (PST)
-Received: from jkacur-thinkpadp1gen2.rmtcaon.csb ([70.53.46.49])
-        by smtp.gmail.com with ESMTPSA id 6a1803df08f44-91ea6900b00sm29531346d6.4.2026.11.06.13.30.14
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Fri, 06 Nov 2026 13:30:14 -0800 (PST)
-Sender: John Kacur <jkacur@gmail.com>
-From: John Kacur <jkacur@redhat.com>
-To: Sana Sharma <sansshar@redhat.com>
-Cc: linux-rt-users@vger.kernel.org
-Subject: Re: [PATCH v3] rteval: Fixed hardcoded paths in class TestCpusetManagerCLIIntegration
-Date: Fri,  6 Nov 2026 16:29:58 -0500
-Message-ID: <20261106212958.123383-1-jkacur@redhat.com>
-X-Mailer: git-send-email 2.56.0
-In-Reply-To: <auzWo66c2JavzMBW@sansshar-thinkpadp1gen4i.boston.csb>
-References: 
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.a=rsa-sha256 header.s=mimecast20190719 header.b=BV/LdLhZ
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1794053973;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:mime-version:mime-version:content-type:content-type;
+	bh=G1d8k563YQDJ71mmcda6Rwptt0xRXOtWeCJDb9Kk1Vw=;
+	b=BV/LdLhZwZLLlLk0ph6ffSLKwCQXILwLELose7fJj2IV5nz595KBBzcvLO/DziUrYz6rp2
+	em8T6WifTNV22w33N39OWAett/MR6UxIx5BDgitn4K/Di/fjmdGiWUxqghloWcSG9uAeIy
+	ZQ31KG5k5YCTgR1Q15/3HQ15JlcF8P4=
+Received: from mx-prod-mc-06.mail-002.prod.us-west-2.aws.redhat.com
+ (ec2-35-165-154-97.us-west-2.compute.amazonaws.com [35.165.154.97]) by
+ relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-70-RmDsp9HPNe-eInhw8J_KWQ-1; Sat,
+ 07 Nov 2026 07:19:29 -0500
+X-MC-Unique: RmDsp9HPNe-eInhw8J_KWQ-1
+X-Mimecast-MFC-AGG-ID: RmDsp9HPNe-eInhw8J_KWQ_1794053968
+Received: from mx-prod-int-01.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-01.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.4])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
+	(No client certificate requested)
+	by mx-prod-mc-06.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id AAD0418002A7;
+	Sat,  7 Nov 2026 12:19:27 +0000 (UTC)
+Received: from localhost (headnet04.pony-001.prod.iad2.dc.redhat.com [10.2.32.116])
+	by mx-prod-int-01.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTP id 4CFBE3001DA8;
+	Sat,  7 Nov 2026 12:19:26 +0000 (UTC)
+Date: Sat, 7 Nov 2026 09:19:24 -0300
+From: "Luis Claudio R. Goncalves" <lgoncalv@redhat.com>
+To: Joseph Salisbury <jsalisbury@kernel.org>,
+	LKML <linux-kernel@vger.kernel.org>,
+	linux-rt-users <linux-rt-users@vger.kernel.org>,
+	Steven Rostedt <rostedt@goodmis.org>,
+	Thomas Gleixner <tglx@linutronix.de>,
+	Carsten Emde <C.Emde@osadl.org>, John Kacur <jkacur@redhat.com>,
+	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+	Daniel Wagner <daniel.wagner@suse.com>,
+	Clark Williams <williams@redhat.com>, Pavel Machek <pavel@denx.de>,
+	Luis Goncalves <lgoncalv@redhat.com>
+Subject: [ANNOUNCE] 5.15.222-rt104
+Message-ID: <au8XTBJ-xFngrtZs@redhat.com>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
 List-Post: <mailto:linux-rt-users@vger.kernel.org>
@@ -98,12 +81,47 @@ List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 List-Owner: <mailto:linux-rt-users+owner@vger.kernel.org>
 Precedence: list
 MIME-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: 8bit
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+X-Scanned-By: MIMEDefang 3.4.1 on 10.30.177.4
 
-On Thu, 05 Nov 2026 at 14:18:59 -0500, Sana Sharma wrote:
-> [PATCH v3] rteval: Fixed hardcoded paths in class TestCpusetManagerCLIIntegration
+Hello RT-list!
 
-Applied, thanks!
+Joseph, copied here, asked me to perform the v5.15-rt release this cicle.
 
-Signed-off-by: John Kacur <jkacur@redhat.com>
+I'm pleased to announce the 5.15.222-rt104 stable release.
+
+This release is just an update to the new stable 5.15.222 version and
+no RT-specific changes have been made.
+
+You can get this release via the git tree at:
+
+  git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
+
+  branch: v5.15-rt
+  Head SHA1: f63f7e53a7d5b10e9074bfb35abe9dff68a5cd22
+
+Or to build 5.15.222-rt104 directly, the following patches should be applied:
+
+  https://www.kernel.org/pub/linux/kernel/v5.x/linux-5.15.tar.xz
+
+  https://www.kernel.org/pub/linux/kernel/v5.x/patch-5.15.222.xz
+
+  https://www.kernel.org/pub/linux/kernel/projects/rt/5.15/older/patch-5.15.222-rt104.patch.xz
+
+This release has been tested under KernelCI as:
+
+  https://dashboard.kernelci.org/tree/stable-rt/v5.15-rt-next/v5.15.222-rt104-rc1
+
+Signing key fingerprint:
+
+  9354 0649 9972 8D31 D464  D140 F394 A423 F8E6 7C26
+
+All keys used for the above files and repositories can be found on the
+following git repository:
+
+   git://git.kernel.org/pub/scm/docs/kernel/pgpkeys.git
+
+Enjoy!
+Luis
+
