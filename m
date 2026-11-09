@@ -1,108 +1,95 @@
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=170.10.133.124
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=209.85.160.180
 ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1794249934;
-	b=zC0qCR0jzzrZDLhZKV1Ialntug8RjdqUmgfLlol97D4dG2e3iRrq/nRPJjH2xxFTr/Vx
-	 dfWX0YW4kAtctLS3RS3MeKpYALrntdtWHNWOE/DZRjGh/S25gjDIc4sooaPxjEanKi2be
-	 KQ5uy3H6fxcDgP7g3/yRjpiBf9IwtKZiDSe+SN8fWTQlOfi6ZISrJYJ6l7fgt22ewuP6Q
-	 1GQY9ykC1VIqZD7Q/a1TzbulSzU6FsDbkoijuh30Bev+MedDa0hTCniV1QGK/90Kt7ucG
-	 GokAX+zgiVQJhfEC2uGvr2GnBBPzrVoIKmZCvfS8qrhBRFf8D9m4NBQIXBz8/9v5rWQ==
+	t=1794259439;
+	b=hUhPnrPPLLpsqY57qLSOkgfTSXdYPjkCSo/d2GhS5CQq5A/XHCsnQQP5Jv4rgcniJ5y7
+	 4tCIoiK6s+yeP0G/edOHaoAh8fZ/d6x2tcAiSmndxBVfjA6rEg+TdyV3wnDX0o6JIu9XD
+	 D/82ulCWL5Z+mR4YJTvI5wE+KcQPPJb3xI8dNgXP9Y7qYnMOCjxY4+ABMIZQnoIwjEa+M
+	 jpyJpPejPFJxIxR/86VYdMCAVO/eBntkH/04QSU1kBksYwDHlZhfHKxPagkyd9ErgI/Jg
+	 dKbPmDYVDCCR6qIpoQgtwWvGUQoFSm6u5AKh9QriQPt/9unNN+y+c7qFssRjObj/fZw==
 ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1794249934;
-	h=DMARC-Filter:DKIM-Signature:Received:X-MC-Unique:
-	 X-Mimecast-MFC-AGG-ID:Received:DKIM-Signature:X-Google-DKIM-Signature:
-	 X-Gm-Message-State:X-Gm-Gg:X-Received:X-Received:Received:Date:From:
-	 To:Cc:Subject:Message-ID:Reply-To:MIME-Version:Content-Type:
-	 Content-Disposition;
-	bh=pSqum1gjSHyKgFJcvVz0649cYAAwpDXkPUFJYAxFkqU=;
-	b=KbaM9JLvLr/ettHXDZ9hVMM7nc+HX5aIzqlC+uOAvsaJMvKnD1YbPbOm/hjRlPyTAHJY
-	 27JvTRci3mZx9dfcWE/dm6kFlcgKruKg+iKMoAmrsHEXTyPQ4wSTdCZ4Oq/jdFSj+Q+b+
-	 te6IxyQtad6hdt9boQTGvMHq0V7npx6g5DB8NJhZyTUvAu0dcudg1XmB76GRgacVgtXB3
-	 SomoCdvICvFofKS1hwYDlRf6GlBHB87prbASNMM1fmCR4LwXSJkqMe5eGO0yP0+l3bSbq
-	 aZEi4llkgvqROG4nQHR7VB7FDn1+I4A311wMXqqgh5hguBNRqtYjjuOmwJpLaqVj7XQ==
+	a=rsa-sha256; c=relaxed/relaxed; t=1794259439;
+	h=DMARC-Filter:Received:DKIM-Signature:X-Google-DKIM-Signature:
+	 X-Gm-Message-State:X-Gm-Gg:X-Received:Received:Sender:From:To:Cc:
+	 Subject:Date:Message-ID:X-Mailer:In-Reply-To:References:MIME-Version:
+	 Content-Type:Content-Transfer-Encoding;
+	bh=twI4GrTKIw6M/tjJlQZdbys0xNVMJzvnklabRPZ2m44=;
+	b=rp0I0Egu4PFu16nGe8c8Upc54upk1ggc0wlfvsXkwVCNQES+vfFMu7x2A+sHjye5FtHQ
+	 B70lG++zkIYRuppfdMk2rjj4j+r/jBxzWbxoNzPXTVqUQrt5C5fGoB9UqXi9IEmEYbdpT
+	 +ZNseK/i1u/XijZg0+W3d3UPHlpQcG7aA0l9WHQ7ZAA1SZf5g7xbtEFwVU3lINA2f7ZOp
+	 NxAaYVgJyR/mzMzbuMYh4YL0qxFb3sqBc5sQRmqXQS70xO6YhFu7JKFTo9J9wp61eg6OW
+	 oeaSEAl0n1JRlHDwc4BVuGhtTM3slBYbWSG2m1qhRS2Qcs3s14kmCtHwJz1fzcapsbg==
 ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
-	dmarc=pass header.from=redhat.com;
-	spf=pass smtp.mailfrom=redhat.com;
-	dkim=pass header.d=redhat.com header.i=@redhat.com header.a=rsa-sha256 header.s=mimecast20190719 header.b=VM3yZdP6;
-	dkim=pass header.d=redhat.com header.i=@redhat.com header.a=rsa-sha256 header.s=google header.b=A4MQycKP;
-	arc=none smtp.remote-ip=170.10.133.124
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	dmarc=fail header.from=redhat.com;
+	spf=pass smtp.mailfrom=gmail.com;
+	dkim=pass header.d=gmail.com header.i=@gmail.com header.a=rsa-sha256 header.s=20260707 header.b=p4HR8fei;
+	arc=none smtp.remote-ip=209.85.160.180
+Received: from mail-qt1-f180.google.com (mail-qt1-f180.google.com [209.85.160.180])
+	(using TLSv1.3 with cipher TLS_AES_128_GCM_SHA256 (128/128 bits)
 	 key-exchange X25519 server-signature ECDSA (prime256v1) server-digest SHA256)
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id E0AEF606A31C
-	for <linux-rt-users@vger.kernel.org>; Mon,  9 Nov 2026 18:45:33 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org E0AEF606A31C
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id B7B3B606A31C
+	for <linux-rt-users@vger.kernel.org>; Mon,  9 Nov 2026 21:23:58 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org B7B3B606A31C
+Authentication-Results: smtp.subspace.kernel.org; dmarc=fail (p=quarantine dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.a=rsa-sha256 header.s=mimecast20190719 header.b=VM3yZdP6;
-	dkim=pass (2048-bit key) header.d=redhat.com header.i=@redhat.com header.a=rsa-sha256 header.s=google header.b=A4MQycKP
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1794249932;
-	h=from:from:reply-to:reply-to:subject:subject:date:date:
-	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
-	 content-type:content-type; bh=pSqum1gjSHyKgFJcvVz0649cYAAwpDXkPUFJYAxFkqU=;
-	b=VM3yZdP6zEis5uT6AQn43vkmeHZLWDQ5fBkmaFmsyn+PcnmMMimQxYeU8v84qzK7D4DIiG
-	2D+j7/Tkcbgi51zY6wQJ/BGOPWMZzg4ys9bL+FRutOusdVKQ4GUB9C0AYPlAOg1wycfick
-	Hr8R7zaPWx+oL3XOs3uu4ej73oyYQRg=
-Received: from mail-qt1-f198.google.com (mail-qt1-f198.google.com
- [209.85.160.198]) by relay.mimecast.com with ESMTP with STARTTLS
- (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
- us-mta-636--SylVen-PqiSXqj-72wHoQ-1; Mon, 09 Nov 2026 13:45:31 -0500
-X-MC-Unique: -SylVen-PqiSXqj-72wHoQ-1
-X-Mimecast-MFC-AGG-ID: -SylVen-PqiSXqj-72wHoQ_1794249930
-Received: by mail-qt1-f198.google.com with SMTP id d75a77b69052e-54e98c9e752so30974111cf.2
-        for <linux-rt-users@vger.kernel.org>; Mon, 09 Nov 2026 10:45:30 -0800 (PST)
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.a=rsa-sha256 header.s=20260707 header.b=p4HR8fei
+Received: by mail-qt1-f180.google.com with SMTP id d75a77b69052e-53e1d40628eso16610721cf.0
+        for <linux-rt-users@vger.kernel.org>; Mon, 09 Nov 2026 13:23:58 -0800 (PST)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=redhat.com; s=google; t=1794249930; x=1794854730; darn=vger.kernel.org;
-        h=content-disposition:content-type:mime-version:reply-to:message-id
-         :subject:cc:to:from:date:from:to:cc:subject:date:message-id:reply-to
-         :content-type;
-        bh=pSqum1gjSHyKgFJcvVz0649cYAAwpDXkPUFJYAxFkqU=;
-        b=A4MQycKPMR2ylltCx47iIu0GjDPIRq6KvZY1sry457Xw7ezbS5kIkZWfABstdPHlLa
-         DLBt4gQmnCLlJYMLOFk33jGr76C75vSB01vu6wHDDWoo2ytKFOQGFS1h5iaRwlEnneBd
-         FXYLlTkZuJw0L08gTQEimZgaEbo28QHem72rokyStUobqjHRE1f5waUynFUeLu+WFn9H
-         rnQN7oDxfIN0wCAMJLZ6eZ7dWczejYWngHcb5FCp+awPqLGtaxCWZgm6+jBRwcX8cP0E
-         Y1WrCtyegxkyjQfqTQJ23spu3FlNsDuOu0fXGe3g7IvleAAa8tWJrVPmUZ+oVqoKtyA6
-         AsUA==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20260707; t=1794249930; x=1794854730;
-        h=content-disposition:content-type:mime-version:reply-to:message-id
-         :subject:cc:to:from:date:x-gm-gg:x-gm-message-state:from:to:cc
+        d=gmail.com; s=20260707; t=1794259438; x=1794864238; darn=vger.kernel.org;
+        h=content-transfer-encoding:content-type:mime-version:references
+         :in-reply-to:message-id:date:subject:cc:to:from:sender:from:to:cc
          :subject:date:message-id:reply-to:content-type;
-        bh=pSqum1gjSHyKgFJcvVz0649cYAAwpDXkPUFJYAxFkqU=;
-        b=omLML2pOtmzaWEqfIoprIpm4+ue7nU98dfimQQvWHyIEfzgINrDl6WKr8T4JUwuLv+
-         pqPjNLOryyvKzTMvmCBzyeOQX7r2FHHZiUjDxK1J7FrCL48hEACxkHuOB0CI68rKfTkk
-         xEm0+CBZ4PRINqwPDo09TxZDhhY330wNNFUcq0GJRBvomoGh1DpgmtxyHD9eyhPrNbkg
-         CRUgRl+nJiLsVrm4RMrxNS++I0hIpYqF7udjUw65vScgrHKELtpJsUyVAPboX25GAIqW
-         Ekp+FweVgAKBQciDmwogjfj2SpefUE2Ab21MAVZ6rS9vjZZG9XZPE3Ektgb8P5ABfaSd
-         6xcQ==
-X-Gm-Message-State: APuU4Z+pJjcKkMzyCpvcqfTe409aF4B5R1ZgX7F3i0uVZrG8whMiDlrt
-	LRh6TjpnqLSfs0Jftd56Yn16E31sc2eRkzVk1HKTnh6SEwnGcVUDV8IzD7o6zItlZKHlt7hvlah
-	Dm9vM/plcBxtwGScBNGOt7jBhbohFJqsGZLDV7pgoAQX9wcVIBzxtnsAzhJpg/1U/nQ61Tlvk0X
-	vSAxK9ejwceZiHw2llc7IH43DfOGMpkRWB7zHYdToziEu2RRqFF0bXOiZ42Q==
-X-Gm-Gg: AYBFou1aYV2J4DRF7UCtepAOOO59GXhPlaK1tQBFr+oBgZBeM1Vvzb38J5UgXA4PH5p
-	Ico2NtwEK30ODJPm+y08PfNpmt4owA9b0izeXpiYzS/3fzLopgxOAtTKzgJg35/FH2dGJ+o3ung
-	YFcYfJgkaYfxsblPuKUPIF2vGnLrXxNF1irdQnAUD70DYvRWbNcLgmw8ClT3qwpPHk9rxQov7TJ
-	trBNzqTqnREm4PzyS9PmSUlBr6OSIplll5gBCTSdRrogpD/fQF70tmD0YLBkuA4VxgFv3CnoAsC
-	nIi4DOo1HKvR4tGLdwUFtP05VDZJKysiFc9Pvo0cCcrbMLV011MBgULjoL2JcPJHmqXtiU0a9eZ
-	Udb+JsuMR1Z9PWI3oIAxJNvYFGpP6VKyX741uYIxQ2IwrNS5sUEueiSpyhAyHhHXSNySPggaqQh
-	qzf6o8UA==
-X-Received: by 2002:a05:622a:5512:b0:536:4df9:d95a with SMTP id d75a77b69052e-55529f6f869mr2552731cf.40.1794249929701;
-        Mon, 09 Nov 2026 10:45:29 -0800 (PST)
-X-Received: by 2002:a05:622a:5512:b0:536:4df9:d95a with SMTP id d75a77b69052e-55529f6f869mr2552131cf.40.1794249928910;
-        Mon, 09 Nov 2026 10:45:28 -0800 (PST)
-Received: from localhost (c-71-234-51-224.hsd1.ma.comcast.net. [71.234.51.224])
-        by smtp.gmail.com with ESMTPSA id 6a1803df08f44-91ef04f89c1sm2249416d6.23.2026.11.09.10.45.28
+        bh=twI4GrTKIw6M/tjJlQZdbys0xNVMJzvnklabRPZ2m44=;
+        b=p4HR8fei7q49/n6bKTUxjd8F89RiP41Mwnx7buhGzso2c9kLObT8FwzfhqT57tptJY
+         La+HAGyiBJapkwrg93AO77ySjv8LK13IRvw+mnS+Gk236HlqxboTxwYMUWh3tyiK6rIa
+         L815HPo7M3GMVrE1hBaaXaQOAyJjAG7K8LmV/HLgK6HeSTmMyHLj0tCRisqzdGJKT6HF
+         BIVt7EvOiXpWkZMwXFMdPU1QPtXGfjQlRmdnyWQKJJ2kn0/vHLGdyP9N7qvXLdKHVvEG
+         CKTNfO6Z6AOZtvS5ogaFV6Y28s2UD4G5k3d9/pzUFUInepWnQPDDGKwK1UkRSW8hi5jT
+         QStQ==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20260707; t=1794259438; x=1794864238;
+        h=content-transfer-encoding:content-type:mime-version:references
+         :in-reply-to:message-id:date:subject:cc:to:from:sender:x-gm-gg
+         :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to
+         :content-type;
+        bh=twI4GrTKIw6M/tjJlQZdbys0xNVMJzvnklabRPZ2m44=;
+        b=JkgVtJrkBxJJEljRlALEZPL0VVXOZ/Lps0E6W3RtCX06yqSeU7Qz8qEEJgqc7GQjB8
+         kR3Kkm+KUZv0KAsWf9g2MOL71y1TM4+L4fA/X7Ms703nnGjgtFeqQM5Lpu0L8f4vy3Kn
+         9iFYYhZ2CL+e9Wl6qPaepmhxs9UpDG5kyoWjp6LdnDOffOS99++IhdjUZBuRioQz4F/p
+         gKxBXLghukr5s8kBi7azdGIX9g875uNQG2KDdOe0ZRc9WoHdKEJZoSNNE3Zd3kCnugu2
+         Za/7sAJJG9ax6AKDmfz1scLAP6vupyYZWgfi77HS78OvY/EHGrrQXI7ls5EK7mZ79f0x
+         hyOw==
+X-Gm-Message-State: APuU4Z/IYwyoBkMdgCqKgHRMWMJhdXTiZVnsGtgWwuWhFr+cFN7Kf1jo
+	4ln9d5vf/iP4HjEA44DQ6oH3aRQ9K9192gykXAIrpYnIZpNeQ853nRLq
+X-Gm-Gg: AYBFou0OyaMIt0ZWJBR3GGWQm0L2H2HXOZUnD5XweZZ3gJyKbXx1epLnz/y7U4JeMs7
+	HDqYPijESdGfzcJaflUuSMZhEB7vyd/Qf8Rdy9pBymUizw796yUG6pOqKKkAct929vqD77ZMOrR
+	gf9k/XFiIYVoiQ51QfeuRiqqc7lQwfjv3LtkRsH3e/T80U/0CwHs5W078TF/NP8AUav83+Rnfau
+	VL5bNXxw2NKm+KnLCXHu4nZyLXM/kl4QGm4M9r4gRdaTUtjyfAm7fOPmZBNbkfflo5DTJXO1Txv
+	rtXIx+MufHPThKRBsY4B76bP86JKGnCeK5yQwX5ZD2XUpZVTm3zwCbF6w7//4y/DBou3rLltEhM
+	apIpURYIDx9YggoCMxCKhH6XnbIi9pv7ac/hBYd7JL6SavTcr//aQHu1td7NlZA606lXPjBqOp9
+	zB6cV62xPr+FJUmoPAVClNiIncjuBZbFqtNLNQC2dxle3vH00IqnGc9rfoc3mb5votCmIoDjcNR
+	tMSzC/xfkhXvc2qOtOR9VZ7BWC6OkJ2TjPvWLUTMy6Ly4L6/QVbR7y1yjtpTDtjPXoHP2I5Epti
+	Ts59s9Zayd8wObd9tEIfIAlBkgSGJbNqSJCK9SQacEJt2I0gSyLqbOxqLWa7gZdJK86iUdx2kHa
+	rJ+8HPbFxGXtnzQ94MXSksgeVIacbBmnxC+5I
+X-Received: by 2002:ac8:6543:0:b0:536:5a2:76e6 with SMTP id d75a77b69052e-55518dae3e3mr12605211cf.7.1794259437464;
+        Mon, 09 Nov 2026 13:23:57 -0800 (PST)
+Received: from jkacur-thinkpadp1gen2.rmtcaon.csb ([70.53.46.49])
+        by smtp.gmail.com with ESMTPSA id 6a1803df08f44-91ef0500dffsm5341186d6.28.2026.11.09.13.23.56
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Mon, 09 Nov 2026 10:45:28 -0800 (PST)
-Date: Mon, 9 Nov 2026 13:45:27 -0500
-From: Sana Sharma <sansshar@redhat.com>
-To: linux-rt-users@vger.kernel.org
-Cc: jkacur@redhat.com, darwi@linutronix.de
-Subject: [PATCH v4] rteval: Added multi stressor support
-Message-ID: <avIUxy2lpHlwtb4L@sansshar-thinkpadp1gen4i.boston.csb>
-Reply-To: sansshar@redhat.com
+        Mon, 09 Nov 2026 13:23:56 -0800 (PST)
+Sender: John Kacur <jkacur@gmail.com>
+From: John Kacur <jkacur@redhat.com>
+To: Sana Sharma <sansshar@redhat.com>
+Cc: linux-rt-users@vger.kernel.org,
+	darwi@linutronix.de
+Subject: Re: [PATCH v4] rteval: Added multi stressor support
+Date: Mon,  9 Nov 2026 16:23:42 -0500
+Message-ID: <20261109212342.147143-1-jkacur@redhat.com>
+X-Mailer: git-send-email 2.56.0
+In-Reply-To: <avIUxy2lpHlwtb4L@sansshar-thinkpadp1gen4i.boston.csb>
+References: 
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
 List-Post: <mailto:linux-rt-users@vger.kernel.org>
@@ -112,189 +99,96 @@ List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 List-Owner: <mailto:linux-rt-users+owner@vger.kernel.org>
 Precedence: list
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
 
-Add the ability for rteval to take multiple stressors in one
-command to improve interface. The syntax works as follows:
+On Mon, 09 Nov 2026 at 01:45:27PM -0500, Sana Sharma wrote:
+> [PATCH v4] rteval: Added multi stressor support
 
---stressng-stressor cpu --stressng-stressor vm --stressng-workers 2
-will use 2 workers for each  stressor (in this case cpu and vm)
+Thanks for the v4, Sana. The warning/log cleanup and the revert back to
+print() + sys.exit(1) in validate_stressors() all look good. A few things
+still need fixing before this can go in.
 
---stressng-stressors cpu,vm --stressng-workers 2
-will use 2 workers for each stressor as in the above example
+1) _WorkloadPrepare() will crash on every run - 'workers' is used before
+   it is assigned:
 
-The second option exists to allow the user to access multiple
-stressors in an easier way.
+> +        stressors = validate_stressors(self.cfg.stressors)
+> +        if workers is not None:
+> +            workers = str(self.cfg.workers)  # defaults to '0'
+> +        for stressor in stressors:
+> +            self.args.extend([f'--{stressor}', workers])
 
-Update the tests/test_stressng file to reflect these changes.
+   There is no `workers = self.cfg.workers` before the guard, so
+   `if workers is not None:` raises UnboundLocalError (workers is a local,
+   only ever assigned inside the if). This fires regardless of the value,
+   so the module never runs. It needs to read self.cfg.workers first, e.g.:
 
-Signed-off-by: Sana Sharma <sansshar@redhat.com>
----
-Fixed the commit message to use imperative language and reverted some
-changes from v3 (added back the sys.exit in validate stressors and the
-workers is not None check)
+        workers = self.cfg.workers
+        if workers is not None:
+            workers = str(workers)
+        for stressor in self.cfg.stressors:
+            self.args.append(f'--{stressor}')
+            if workers is not None:
+                self.args.append(workers)
 
- rteval/modules/__init__.py       |  4 +--
- rteval/modules/loads/stressng.py | 62 ++++++++++++++++++++++++--------
- tests/test_stressng.py           |  4 +--
- 3 files changed, 51 insertions(+), 19 deletions(-)
+2) The error message won't parse on Python 3.10/3.11:
 
-diff --git a/rteval/modules/__init__.py b/rteval/modules/__init__.py
-index 183efd8..abd88b6 100644
---- a/rteval/modules/__init__.py
-+++ b/rteval/modules/__init__.py
-@@ -6,7 +6,6 @@
- import time
- from datetime import datetime
- import threading
--import argparse
- import libxml2
- from rteval.Log import Log
- from rteval.rtevalConfig import rtevalCfgSection
-@@ -356,6 +355,7 @@ reference from the first import"""
-             for (o, s) in list(opts.items()):
-                 descr = 'descr' in s and s['descr'] or ""
-                 metavar = 'metavar' in s and s['metavar'] or None
-+                action = 'action' in s and s['action'] or 'store'
- 
-                 try:
-                     default = cfg and getattr(cfg, o) or None
-@@ -369,7 +369,7 @@ reference from the first import"""
- 
-                 grparser.add_argument(f'--{shortmod}-{o}',
-                                          dest=f"{shortmod}___{o}",
--                                         action='store',
-+                                         action=action,
-                                          help='%s%s' % (descr,
-                                                         default and ' (default: %s)' % default or ''),
-                                          default=default,
-diff --git a/rteval/modules/loads/stressng.py b/rteval/modules/loads/stressng.py
-index 564e798..c586965 100644
---- a/rteval/modules/loads/stressng.py
-+++ b/rteval/modules/loads/stressng.py
-@@ -12,6 +12,32 @@ from rteval.systopology import SysTopology
- from rteval.cpulist_utils import CpuList
- from rteval.cpuset import cpuset_preexec
- 
-+def validate_stressors(stressor_list):
-+    """Validate multiple stressor names.
-+
-+    Args:
-+        stressor_list: stressor names to validate, either as a list
-+                       (from repeated --stressng-stressor) or a
-+                       comma-separated string (from --stressng-stressors)
-+
-+    Raises:
-+        ValueError: If any stressor is invalid
-+    """
-+    valid = get_valid_stressors()
-+    if isinstance(stressor_list, str):
-+        stressor_list = stressor_list.split(",")
-+    stressors = [word.strip() for word in stressor_list]
-+    invalid = []
-+    for stressor in stressors:
-+        if stressor not in valid:
-+            invalid.append(stressor)
-+
-+    if invalid:
-+        print(f"Invalid stress-ng stressor: '{" ".join(invalid)}'. "
-+               f"Run 'stress-ng --stressors' to see valid options.")
-+        sys.exit(1)
-+    return stressors
-+
- def get_valid_stressors():
-     """Query stress-ng for list of valid stressor names."""
-     try:
-@@ -25,14 +51,6 @@ def get_valid_stressors():
-         print(f"Failed to query stress-ng stressors: {e}")
-         sys.exit(1)
- 
--def validate_stressor(stressor_name):
--    """Validate a single stressor name against stress-ng's available stressors."""
--    valid = get_valid_stressors()
--    if stressor_name not in valid:
--        print(f"Invalid stress-ng stressor: '{stressor_name}'. "
--              f"Run 'stress-ng --stressors' to see valid options.")
--        sys.exit(1)
--
- class Stressng(CommandLineLoad):
-     " This class creates a load module that runs stress-ng "
-     def __init__(self, config, logger):
-@@ -46,11 +64,18 @@ class Stressng(CommandLineLoad):
-         self.__err = None
-         self.__nullfp = None
-         self.args = None
-+        " Warn if both stressor and stressors are invoked "
-+        if (self.cfg.stressors is not None and self.cfg.stressor is not None):
-+            self._log(Log.WARN,"In cases where stressng-stressor and stressng-stressors are both invoked, rteval will choose only stressors")
-         " Only run this module if the user specifies an stressor "
--        if self.cfg.stressor is not None:
-+        if (self.cfg.stressors is not None):
-+            self._donotrun = False
-+        elif (self.cfg.stressor is not None):
-+            setattr(self.cfg, 'stressors', list(self.cfg.stressor))
-             self._donotrun = False
-         else:
-             self._donotrun = True
-+
-         # When this module runs, other load modules should not
-         self.set_exclusive()
- 
-@@ -74,10 +99,11 @@ class Stressng(CommandLineLoad):
- 
-         # stress-ng is only run if the user specifies an stressor
-         self.args = ['stress-ng']
--        validate_stressor(self.cfg.stressor)
--        self.args.append(f'--{str(self.cfg.stressor)}')
--        if self.cfg.workers is not None:
--            self.args.append(self.cfg.workers) #default is 0
-+        stressors = validate_stressors(self.cfg.stressors)
-+        if workers is not None:
-+            workers = str(self.cfg.workers)  # defaults to '0'
-+        for stressor in stressors:
-+            self.args.extend([f'--{stressor}', workers])
-         if self.cfg.timeout is not None:
-             self.args.append('--timeout')
-             self.args.append(self.cfg.timeout)
-@@ -164,8 +190,14 @@ def ModuleParameters():
-     """ Commandline options for Stress-ng """
-     return {
-         "stressor": {
--            "descr": "stressor name (eg. vm, cpu)",
--            "metavar": "STRESSOR"
-+            "descr": "stressor to run; repeat the flag to run several in parallel "
-+                     "(e.g., --stressng-stressor cpu --stressng-stressor vm)",
-+            "action": "append",
-+            "metavar": "NAME"
-+        },
-+        "stressors": {
-+            "descr": "comma-separated stressors to run in parallel (e.g., cpu,vm,io)",
-+            "metavar": "LIST"
-         },
-         "workers": {
-             "descr": "number of workers(default: 0 = one per CPU)",
-diff --git a/tests/test_stressng.py b/tests/test_stressng.py
-index 6211fb3..9da3bcb 100644
---- a/tests/test_stressng.py
-+++ b/tests/test_stressng.py
-@@ -41,14 +41,14 @@ class TestValidateStressor(unittest.TestCase):
-            return_value=['cpu', 'vm'])
-     def test_valid_passes(self, _):
-         """Test that a valid stressor is accepted"""
--        stressng.validate_stressor('cpu')   # should not raise
-+        stressng.validate_stressors('cpu, vm')   # should not raise
- 
-     @patch('rteval.modules.loads.stressng.get_valid_stressors',
-            return_value=['cpu', 'vm'])
-     def test_invalid_exits(self, _):
-         """Test that an invalid stressor is rejected"""
-         with self.assertRaises(SystemExit) as cm:
--            stressng.validate_stressor('bogus')
-+            stressng.validate_stressors('bogus')
-         self.assertEqual(cm.exception.code, 1)
- 
- def main():
--- 
-2.56.0
+> +        print(f"Invalid stress-ng stressor: '{" ".join(invalid)}'. "
 
+   Re-using the same quote character inside an f-string only became legal
+   in Python 3.12 (PEP 701). pyproject.toml declares requires-python
+   ">=3.10", so on 3.10/3.11 the module fails to import with a SyntaxError.
+   Use single quotes inside:
+
+        print(f"Invalid stress-ng stressor: '{' '.join(invalid)}'. "
+              "Run 'stress-ng --stressors' to see valid options.")
+
+3) This one is on me - my v3 review asked you to put sys.exit(1) back, but
+   that is not actually enough, and it is worth understanding why.
+
+   validate_stressors() is called from _WorkloadPrepare(), which runs on the
+   load module's worker thread (rtevalModulePrototype is a threading.Thread
+   and _WorkloadPrepare() is reached via run()). sys.exit(1) raises
+   SystemExit, but SystemExit is a BaseException, not an Exception, so
+   rteval's run() wrapper (except Exception: self._setRuntimeError(); raise)
+   never catches it, the runtime-error flag is never set, and threading's
+   default excepthook silently ignores SystemExit. The net effect for a bad
+   stressor name is that the load thread quietly disappears and rteval runs
+   the whole measurement with no load and exits 0 - worse than the v3
+   traceback, which was at least visible.
+
+   The fix is to validate on the main thread, before any workload thread
+   starts. The natural spot is __init__ (which already reads cfg.stressor /
+   cfg.stressors to set _donotrun), where sys.exit(1) actually terminates
+   rteval cleanly. Something like:
+
+        if self.cfg.stressors is not None:
+            requested = self.cfg.stressors        # comma-separated string
+        elif self.cfg.stressor is not None:
+            requested = self.cfg.stressor         # list (action='append')
+        else:
+            requested = None
+
+        if requested is None:
+            self._donotrun = True
+        else:
+            self.cfg.stressors = validate_stressors(requested)
+            self._donotrun = False
+
+   Then _WorkloadPrepare() just consumes the already-validated
+   self.cfg.stressors list and never needs to validate (or exit) itself.
+
+Minor:
+
+ - Commit subject should be imperative mood: "rteval: Add multi stressor
+   support" rather than "Added".
+
+ - Please add a unit test that drives _WorkloadPrepare()'s arg building with
+   and without --stressng-workers. The current tests only cover
+   validate_stressors(), so the crash in (1) slipped through green. This can
+   come as a separate patch.
+
+With 1-3 addressed I think this is in good shape. Thanks again for sticking
+with it.
+
+John
