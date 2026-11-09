@@ -1,111 +1,58 @@
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=170.10.129.124
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=49.12.199.46
 ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1794239274;
-	b=wd8QL6kiwwErUaItgr9Lrjj2XOe4kMBG0q3YrzYLzb3ntFCNxl5laVOm/1IhuSA800AB
-	 svFS/CRpuZtYJgf+5aTtbwQd00pY/FgLyODP7WChBfcvmSXrqH+z/zvdxTRObw9avU5AY
-	 nY+oajXVvPyFtWl3W692IM9VVtL6gWIELYKRzRBSY7l90dqQfsf9iQB8l9/sCEFO9dCfM
-	 qmdeZA6i3suYNa/jC6J0HRMqpo0YxC+NAno+vsdIPuJPuEW8r/pH4+wXLGh6zr5/ySuMO
-	 rkN+cyeRS4vAYzTOQezT9vq/+8KaO5JtnVUgMNEY2vWJCfcpx4i3WBjhNBf0HS+mgNA==
+	t=1794243871;
+	b=f3WoJdtOOGjzhUarlK3w//+9rdv5cJMAn28wkPUrjCh4vlwYuu60dZrYANkAzQrfBwPe
+	 Z2uw/0FFcuObZRKir5v7E0s/2Og6Ji9KSw5Qt01MIaSHTKoGuPoxRIOnVVGIpmdYPUA+s
+	 bMWTqNoGlJGDAPWBqhZQftHG59vy9oHbEb/YfdR6s0ew9SMFnQ2oF4T9yntyYVudFuEjl
+	 9LQw/YnWlBpCyZVAQrERAs+CpKtltTKyiFA3kcou9xCRzc3UlfU59PCEz4hMtAkdngLwL
+	 5nxTnVUnB7dnVO2uOHjYVC89ws3d3gfir301pLhqlHlrsQ6T9Me/oMG6rmxLmA4SqIw==
 ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1794239274;
-	h=DMARC-Filter:DKIM-Signature:Received:X-MC-Unique:
-	 X-Mimecast-MFC-AGG-ID:Received:DKIM-Signature:X-Google-DKIM-Signature:
-	 X-Gm-Message-State:X-Gm-Gg:X-Received:X-Received:Received:Date:From:
-	 To:Cc:Subject:Message-ID:Reply-To:References:MIME-Version:
-	 Content-Type:Content-Disposition:In-Reply-To;
-	bh=XorZuwEOvBa7EvLEBlorG40GcEZpUrSdYSnIigmrxrQ=;
-	b=OalwZTadx6MSjlXC7G4ZWvwnt0eqOp5ehWEJS4CcYL24Ltt4agPtfiqCFXgVPkOj2L39
-	 dPBcoiLLRbH5f/9Nz6nzzPzS/6XshhAM4MXBar1DnmndLnPFhDab5k8EeDCUOsPWqOMnw
-	 NhZ+NJrKpff2zt8OVjfmlP+hpeVukcTEmlJ5JXxsQ+6LsqH68RkyNHKZoKRsSGHfDcEVh
-	 JgV1MLa0Mkb/KL0+MaMBcB9yEdJS0hCtLaZp+n5P3S1gaJ76duSOO8yh7LMQFUx83JETE
-	 zVNCsfnGVqkBq41AXW3VjEH1iyb/X7Qs2aUavzSjbKXscOpRUieIR5E38DZOXnUZGTQ==
+	a=rsa-sha256; c=relaxed/relaxed; t=1794243871;
+	h=DMARC-Filter:DKIM-Signature:DKIM-Signature:Date:From:To:Subject:
+	 Message-ID:MIME-Version:Content-Type:Content-Disposition;
+	bh=BjzF+OV9KrwDhT+7SIROb6R2QHteuy74+xxIjAz9HGk=;
+	b=Y2SwAGR4vCl+SUWOkmNCEwrL7o41cuicFMIrt9yDa7RkZuGKi2v4g4J5j4sy3Ix1HwKc
+	 d0ysuoWjuF5/EOLb9kWFfCbO0PCInvs70Id3Y9LmVc2aUq0jeL9XY8Yyoq8HOR8/qNztC
+	 wEKxS/s0pNATKpUwatlZuAuPEvz6OEPi+vXEFmsO8ScirAHvgzhDOxuSBnTeqE2byvYTY
+	 pxkeDakPAlzH9u/Ytwb1/4X5X3l2qQuTphLDt7dF343L2SONhKHqi4HfJB4xrqLweOH0T
+	 wWFDkWYxXwiMboiAxSdUcEGwvdHgzLZk2EdzreIxQ398gKI/NJ2TwsNMF4gZqokxgOg==
 ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
-	dmarc=pass header.from=redhat.com;
-	spf=pass smtp.mailfrom=redhat.com;
-	dkim=pass header.d=redhat.com header.i=@redhat.com header.a=rsa-sha256 header.s=mimecast20190719 header.b=DCsHDGul;
-	dkim=pass header.d=redhat.com header.i=@redhat.com header.a=rsa-sha256 header.s=google header.b=cJvf3Dkh;
-	arc=none smtp.remote-ip=170.10.129.124
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+	dmarc=pass header.from=monom.org;
+	spf=pass smtp.mailfrom=monom.org;
+	dkim=pass header.d=monom.org header.i=@monom.org header.a=ed25519-sha256 header.s=v1-ed25519-20260726 header.b=z8s1Vhjg;
+	dkim=pass header.d=monom.org header.i=@monom.org header.a=rsa-sha256 header.s=v1-rsa-20260726 header.b=ksUeWPGp;
+	arc=none smtp.remote-ip=49.12.199.46
+Received: from mail.nearlyone.de (mail.nearlyone.de [49.12.199.46])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature ECDSA (prime256v1) server-digest SHA256)
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 7EDA0606A321
-	for <linux-rt-users@vger.kernel.org>; Mon,  9 Nov 2026 15:47:53 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 7EDA0606A321
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id A3333606EE96;
+	Mon,  9 Nov 2026 17:04:30 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org A3333606EE96
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=monom.org
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=monom.org
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.a=rsa-sha256 header.s=mimecast20190719 header.b=DCsHDGul;
-	dkim=pass (2048-bit key, unprotected) header.d=redhat.com header.i=@redhat.com header.a=rsa-sha256 header.s=google header.b=cJvf3Dkh
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1794239272;
-	h=from:from:reply-to:reply-to:subject:subject:date:date:
-	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
-	 content-type:content-type:in-reply-to:in-reply-to:  references:references;
-	bh=XorZuwEOvBa7EvLEBlorG40GcEZpUrSdYSnIigmrxrQ=;
-	b=DCsHDGulVVtmJPlJSmLsG3AhpSOq5EduCmaPF6WRVPTEElGs+tlPPpKwBQT3uaQbzqazED
-	cUwF5NRasbLOpKoNAliLF2HDxQYhmRCHwYZSvE2CqJ+4It/fwDcDkAsmaEz9SAFOBInHIV
-	FWgoQfh72SsotRVkRvv8ggFfDB0ZhuU=
-Received: from mail-qt1-f197.google.com (mail-qt1-f197.google.com
- [209.85.160.197]) by relay.mimecast.com with ESMTP with STARTTLS
- (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
- us-mta-509-G1M7qG8sO_aE3EFMAcfY2A-1; Mon, 09 Nov 2026 10:47:49 -0500
-X-MC-Unique: G1M7qG8sO_aE3EFMAcfY2A-1
-X-Mimecast-MFC-AGG-ID: G1M7qG8sO_aE3EFMAcfY2A_1794239269
-Received: by mail-qt1-f197.google.com with SMTP id d75a77b69052e-5364605e74bso29060631cf.3
-        for <linux-rt-users@vger.kernel.org>; Mon, 09 Nov 2026 07:47:49 -0800 (PST)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=redhat.com; s=google; t=1794239269; x=1794844069; darn=vger.kernel.org;
-        h=in-reply-to:content-disposition:content-type:mime-version
-         :references:reply-to:message-id:subject:cc:to:from:date:from:to:cc
-         :subject:date:message-id:reply-to:content-type;
-        bh=XorZuwEOvBa7EvLEBlorG40GcEZpUrSdYSnIigmrxrQ=;
-        b=cJvf3DkhCOKtI608aK3C0kpAYOd+PokqIwRhiMup+7r74Hv/IjoftcspDtXiNZws0F
-         mnP4LKopGqbv5l/Bi50zhtkK580KESP0Yx8VimkPGk30HkcxEp11cAvdhIjk+0GDDRWS
-         sMOFE65d/V98l2SeLPY8nRuVUUEj+HcmozYqQfb7TuYphEDedwTjfTFfjT25fIvotuC9
-         TXOuIKQIlTf1u9G/rDW4uOYM4Ze93dgOx0iXndEILyLp0c1FtVm748iOkVgoY7hvEzLY
-         VqStPAoQdnIdxfvU5HHyuxstJP2+RLjAqwdcWJ1Hi+df2dJZ+UQ3Qb7888+XF6p+nFIp
-         QE7w==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20260707; t=1794239269; x=1794844069;
-        h=in-reply-to:content-disposition:content-type:mime-version
-         :references:reply-to:message-id:subject:cc:to:from:date:x-gm-gg
-         :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to
-         :content-type;
-        bh=XorZuwEOvBa7EvLEBlorG40GcEZpUrSdYSnIigmrxrQ=;
-        b=ENx0Fm2Ta3p9Xh6j6GBMtKJgX3AVTqtjFp/vMVZeQ9DE2TND6fk6cBv0OT17H4jxmr
-         +Z9PaTiUwliwhH+C3BHZar3b27uxoJDVNEcAW10mnqTTkzjPeXn05AIc/a7Y8qihbbhF
-         wIV7ea2jqz1GXqq3Hzm6DQPL6kNPl+8h8lnUjSRtWdUCrhYsCFn7L8cfn/KwXnYn3+BI
-         9lzAz4L6KzPAnPkCiFdkBin6CVSx5EoqnPsTANPxlv2PclyvvPiReKa9TYrfOY4IIoz9
-         40n2P5/PVasIKmV19Co+ZuOILRWF7myRcVhI/UQu4iHipaVtB7AoVtIE9HlEeBn4BEG8
-         M0Eg==
-X-Gm-Message-State: APuU4Z/R9vhkHbM+oqlIMNT/Jb9Eai0oEluYnCY5njgXpE1qYtxMcEHw
-	nGHUBCLsS+DMY9ydW4xETFWaHlWVdq7DUZfl75yiv+i//eeHAbwDCrHk1gaS7iSuJyFWII1fxoA
-	OLLwRIV8TwwIyFFeb46XElAastWt8L9ATZs3kTnNFAtiUHiPRJ5A9TGQkueAuoS0Tf07/
-X-Gm-Gg: AYBFou2yGyvNrAHp7g0kuSjqDzdW/b95DuSJYDuajHO03+GKmLZzhCt922bzaOlYi+6
-	xHs/11ZBRg3UUaR9/THzF7Hph3FDMRy13GTGsGogfHnMrfsdko9PuM9eH+xuh6rU8PMIeMM6Gxh
-	E+Blz1Bxbn5XEFWu4C7lYVo+9xiHnXH6PFIh+p9m4ykDm50/49JOGdZE3F4WiRIHfsYvJULyPuj
-	h6vt2jwHfRsHOteZC8CCxjyuCSm2tm7lD71mWsZunETwAhREOIb2r4puPlR/DEjzVsuPgmATrGi
-	Verw8mw4HxVEEkAMNeqfXPVg10eS7LdpCyx+p8UD4WpiGevsXu2btb7TxF/gkhiklRoTp+CxqtM
-	7pcvah/+ghKuZr9i/Hzc6YH2+ifiXgpC3kDLy/OQOzr6HTsM3QLHApoBn3CuDNeLwwbzwSF0bzb
-	c2kkm23w==
-X-Received: by 2002:a05:622a:1904:b0:54f:863d:92c0 with SMTP id d75a77b69052e-552a6148a95mr72783091cf.65.1794239269133;
-        Mon, 09 Nov 2026 07:47:49 -0800 (PST)
-X-Received: by 2002:a05:622a:1904:b0:54f:863d:92c0 with SMTP id d75a77b69052e-552a6148a95mr72782671cf.65.1794239268634;
-        Mon, 09 Nov 2026 07:47:48 -0800 (PST)
-Received: from localhost (c-71-234-51-224.hsd1.ma.comcast.net. [71.234.51.224])
-        by smtp.gmail.com with ESMTPSA id d75a77b69052e-5550bd33340sm89621cf.21.2026.11.09.07.47.47
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Mon, 09 Nov 2026 07:47:48 -0800 (PST)
-Date: Mon, 9 Nov 2026 10:47:47 -0500
-From: Sana Sharma <sansshar@redhat.com>
-To: "Ahmed S. Darwish" <darwi@linutronix.de>
-Cc: linux-rt-users@vger.kernel.org, jkacur@redhat.com
-Subject: Re: [PATCH v1] rteval: Covering edge cases in multi-stressor support
-Message-ID: <avHrIx7yc1xSE7EE@sansshar-thinkpadp1gen4i.boston.csb>
-Reply-To: sansshar@redhat.com
-References: <au4t5C1-WpgWChOm@sansshar-thinkpadp1gen4i.boston.csb>
- <avGz940EAsx6-GvX@lx-t490>
+	dkim=pass header.d=monom.org header.i=@monom.org header.a=ed25519-sha256 header.s=v1-ed25519-20260726 header.b=z8s1Vhjg;
+	dkim=pass (2048-bit key, unprotected) header.d=monom.org header.i=@monom.org header.a=rsa-sha256 header.s=v1-rsa-20260726 header.b=ksUeWPGp
+DKIM-Signature: v=1; a=ed25519-sha256; s=v1-ed25519-20260726; d=monom.org; c=relaxed/relaxed; r=y;
+	h=Message-ID:Subject:To:From:Date; t=1794243843; bh=BjzF+OV9KrwDhT+7SIROb6R
+	2QHteuy74+xxIjAz9HGk=; b=z8s1VhjgdNEhZ5qkc6yeJkIGI3Fvg9+MesP3I2Q5syeproFxj5
+	nXf0l6FlVFEYE6qDLuLyZ7Y7fIxl+HZcgqBg==;
+DKIM-Signature: v=1; a=rsa-sha256; s=v1-rsa-20260726; d=monom.org; c=relaxed/relaxed; r=y;
+	h=Message-ID:Subject:To:From:Date; t=1794243843; bh=BjzF+OV9KrwDhT+7SIROb6R
+	2QHteuy74+xxIjAz9HGk=; b=ksUeWPGp4q3yMzvKba5jrV4xK8O7Czs+0lk/9q+k0S/CYHX+L1
+	BpHxSsQaQARg+R4O31Ae0OlCMIviB+b/qCt6QKF2ELINNY2yXgb5l3P7x8wwg6FKakcVnrlE9e+
+	qeh6UROZngf2owYIfgzGbXkVrNWiXBJgPfM+vlfnO2Z0AI1U5x2J0TeqfUGh9to1EiKx6oTKsmJ
+	yowA+Aw0mtoz97dvpTVV07zu7A/vhiH+XDcWqvcqWWOZ0NwFSPLeoih9TorXrnMi+0MrsRby8+b
+	EHnpnAL4vpBKLATzR06XxYgcAPtmtDCG+WSA0wc+mIonVcxKZVwdvcI8j5XsElVE9bg==;
+Date: Mon, 9 Nov 2026 18:04:03 +0100
+From: Daniel Wagner <wagi@monom.org>
+To: LKML <linux-kernel@vger.kernel.org>, linux-rt-users@vger.kernel.org, 
+	stable-rt@vger.kernel.org, Steven Rostedt <rostedt@goodmis.org>, 
+	Thomas Gleixner <tglx@linutronix.de>, Sebastian Andrzej Siewior <bigeasy@linutronix.de>, 
+	Clark Williams <williams@redhat.com>
+Subject: [ANNOUNCE] v6.12.116-rt22
+Message-ID: <62f9ba32-b008-4014-aa5e-061595654505@monom.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
 List-Post: <mailto:linux-rt-users@vger.kernel.org>
@@ -117,43 +64,46 @@ Precedence: list
 MIME-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Content-Disposition: inline
-In-Reply-To: <avGz940EAsx6-GvX@lx-t490>
 
-On Mon, Nov 09, 2026 at 12:52:23PM +0100, Ahmed S. Darwish wrote:
-> Hi Sana,
-> 
-> On Fri, 06 Nov 2026, Sana Sharma wrote:
-> >
-> > Added a number of unit and integration tests for edga case coverage
-> > Also added some logic to multi-stressor support to de-duplicate values
-> > and cleans up trailing spaces and commas.
-> >
-> 
-> For both the subject line and the changelog, please avoid passive language.
-> 
-> Per linux/Documentation/process/submitting-patches.rst:
-> 
->   Describe your changes in imperative mood, e.g. "make xyzzy do frotz"
->   instead of "[This patch] makes xyzzy do frotz" or "[I] changed xyzzy to
->   do frotz", as if you are giving orders to the codebase to change its
->   behaviour.
-> 
-> I did not look into the actual patch, but in general your description text
-> should've been something like:
-> 
->   Subject: rteval: Cover multi-sressor edge cases
-> 
->   Add unit and integration tests for better edge cases coverage.
-> 
->   Add multi-stressor support for values de-duplication and stylistic
->   clean-ups.
-> 
-> Note the imperative language change.
->
-Thank you so much for your corrections and feedback. I will incorporate 
-this moving forward.
+Hello RT-list!
 
-Best,
-Sana Sharma
-Red Hat
+I'm pleased to announce the 6.12.116-rt22 stable release.
 
+Changes since 6.12.111-rt21:
+
+  - none
+
+In the last release, I reported seeing some very high cyclictest maximum
+latency numbers.
+
+After some debugging, it turned out that the SMI watchdog was not being
+handled correctly, the iTCO_wdt driver was missing, and a few other
+tunings (such as fixing the clock frequencies) were needed.
+
+Everything looks good again in my lab.
+
+You can get this release via the git tree at:
+
+  https://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git v6.12.116-rt22
+
+  branch: v6.12-rt
+
+Or to build 6.12.116-rt22 directly, the following patches should be applied:
+
+  https://www.kernel.org/pub/linux/kernel/v6.x/linux-6.12.tar.xz
+
+  https://www.kernel.org/pub/linux/kernel/v6.x/patch-6.12.116.xz
+
+  https://www.kernel.org/pub/linux/kernel/projects/rt/6.12/older/patch-6.12.116-rt22.patch.xz
+
+Signing key fingerprint:
+
+  5BF6 7BC5 0826 72CA BB45  ACAE 587C 5ECA 5D0A 306C
+
+All keys used for the above files and repositories can be found on the
+following git repository:
+
+   https://git.kernel.org/pub/scm/docs/kernel/pgpkeys.git
+
+Enjoy!
+Daniel
