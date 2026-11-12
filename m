@@ -1,108 +1,95 @@
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=170.10.133.124
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=209.85.160.171
 ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1794426929;
-	b=B0WHGPYrwVuSQzKTzUZv/LMG4bU8Oiyn7v5WMMmK/Tz7G4hIp3GeVu4Jro3sdenwIH0I
-	 hA6cF5lG1T8s0UwnVzGFqQws2hs9FyNztPxucoZMfbTynX0QcYSJXwaOxx/0femqIKc17
-	 970G17y1uhujlfsa4UZMPoALCXnN4qI6x8oN+nZfuSOiHNpdDueUGX2u82rbGF8eE96u5
-	 cGv3aO4U7Cp3MummzLsPgygb7QExKZqROIjAwIFBYAxq10FAOIijw3QynZIIDGkqp9uQL
-	 M9rS5FcanFLD/sv+R8gWpuNyById0zU8y69PDcVeJ05wRUf27ehoczoVNZccXWQnAYA==
+	t=1794510536;
+	b=0xLELnWYZ+9bUuQ2DiigRKw/XdjSehD8Tbst4iXLvasoXpdPgan49z/vu/bxy5/hwhei
+	 ZSuZC8C2oMKHpMcgRtA8jHZPKokjk/85uuOLS9oKG3HwHt99B/zvOVvIXazXhrbfe9c6F
+	 oduHoisxdZALWnGBEYbHwrv18R+nMVxFXB/rUXt0IGnIGghMv2knaPgo9BwlZXSYyvt3t
+	 kF7Aw6bvQFf443PlKsz7g9R6WuAttKltydkSJWPTOVT/kgOxCvxEJhVmnsiIB/ua/l9Im
+	 vqUc60tYw4Y60B2x8cGoRU9OH4XeKTaF2Wg0uTps8pCiCn0e56uD+cMaMmzlfbnaglg==
 ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1794426929;
-	h=DMARC-Filter:DKIM-Signature:Received:X-MC-Unique:
-	 X-Mimecast-MFC-AGG-ID:Received:DKIM-Signature:X-Google-DKIM-Signature:
-	 X-Gm-Message-State:X-Gm-Gg:X-Received:X-Received:Received:Date:From:
-	 To:Cc:Subject:Message-ID:Reply-To:MIME-Version:Content-Type:
-	 Content-Disposition;
-	bh=crtnoGY+nCOaAobJdOXOox8pAfq8GQjfKtLjwKWPQsw=;
-	b=NqE4r2zlQ+1FTv2J2PrRSZFNDMx26wI8tMmPErYHPo0jNsv5iuGK0XgaIX8Q0HcKkfcu
-	 IKB+CwGSkf9ESSbkZ/a3R/ZqkmTMqDoQwVPmuHXe4A3bNt/Gmvz5/zK+S3g5vnJRHFfYG
-	 2YiNAUiA60pGPZis9UZb8GbkzlELZbaDoI2ZdEb5q3PdtTsybMP3JLJdZUeySQgQl2HkK
-	 ToArTWaiJlZbr93nvL9er7Yv3G78VVBoqQQ0uFYdg5k62CouFC9UN3o3XDSemM9eHZdoO
-	 sHS8l03wCxeOBO+7cDUfjVOXELO3Z4B/1dQ6dLVD2V1Y2VEL64IKpX15AUQSACvlFHA==
+	a=rsa-sha256; c=relaxed/relaxed; t=1794510536;
+	h=DMARC-Filter:Received:DKIM-Signature:X-Google-DKIM-Signature:
+	 X-Gm-Message-State:X-Gm-Gg:X-Received:Received:Sender:From:To:Cc:
+	 Subject:Date:Message-ID:X-Mailer:In-Reply-To:References:MIME-Version:
+	 Content-Type:Content-Transfer-Encoding;
+	bh=RjhvmF5HEb05/Yvpj4XGwv2fVmIKxeIWCKHqFD2OJeQ=;
+	b=NJtNr87VZVw7srMfzZN+N4L3xa7dyRFHobUVyo8o+D+gidmRo7cHihCVg90GAICiwcKo
+	 9VoOWtZZy5CadxelK3MNN1f0qgr4keZ29D+vdTImUYzKCZuYNGJtPhlLD0l0L1/K1WOtl
+	 fvrW2QJ/8qd2TuxfCDn3XrEwxfCtxuyjtvr8okRmlqEWvAVaib5pvjAO/R7Tjf/LfmfzW
+	 hZ3zBWg6ZKbTzhKSM2CD0dP1BqxGqnKirMYCUdZnoRTZ2LPl8QfqhW2Th5I2bPOxqaRrJ
+	 TU+pQgjpfpCUV5X9XFqI8OHmH7kA9yv2KmPoD9nfzLwQOlYAeR0PkUffy6GluAkmrBw==
 ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
-	dmarc=pass header.from=redhat.com;
-	spf=pass smtp.mailfrom=redhat.com;
-	dkim=pass header.d=redhat.com header.i=@redhat.com header.a=rsa-sha256 header.s=mimecast20190719 header.b=TeCyx1VX;
-	dkim=pass header.d=redhat.com header.i=@redhat.com header.a=rsa-sha256 header.s=google header.b=EStr2xj3;
-	arc=none smtp.remote-ip=170.10.133.124
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	dmarc=fail header.from=redhat.com;
+	spf=pass smtp.mailfrom=gmail.com;
+	dkim=pass header.d=gmail.com header.i=@gmail.com header.a=rsa-sha256 header.s=20260707 header.b=RDsVtmdc;
+	arc=none smtp.remote-ip=209.85.160.171
+Received: from mail-qt1-f171.google.com (mail-qt1-f171.google.com [209.85.160.171])
+	(using TLSv1.3 with cipher TLS_AES_128_GCM_SHA256 (128/128 bits)
 	 key-exchange X25519 server-signature ECDSA (prime256v1) server-digest SHA256)
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 4FD3E606A31C
-	for <linux-rt-users@vger.kernel.org>; Wed, 11 Nov 2026 19:55:29 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 4FD3E606A31C
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 1C9C6606A321
+	for <linux-rt-users@vger.kernel.org>; Thu, 12 Nov 2026 19:08:56 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 1C9C6606A321
+Authentication-Results: smtp.subspace.kernel.org; dmarc=fail (p=quarantine dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.a=rsa-sha256 header.s=mimecast20190719 header.b=TeCyx1VX;
-	dkim=pass (2048-bit key, unprotected) header.d=redhat.com header.i=@redhat.com header.a=rsa-sha256 header.s=google header.b=EStr2xj3
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1794426928;
-	h=from:from:reply-to:reply-to:subject:subject:date:date:
-	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
-	 content-type:content-type; bh=crtnoGY+nCOaAobJdOXOox8pAfq8GQjfKtLjwKWPQsw=;
-	b=TeCyx1VXIJSOjiDiksdlOgnpad7S/xs0hlC6py8ocVBwh6s4MXwVQfNknWp+GBGkjC5Hm0
-	wmazJw0UneDtjP+Pmo8pwjfNZU4Nb5hHcbQw3xM6wTNQMVJ+tCT6FpbH5K0Pn1tjiqh1vn
-	QE6NtYxynX9TfvDhURXZ6PTaKmGSoO8=
-Received: from mail-qv1-f71.google.com (mail-qv1-f71.google.com
- [209.85.219.71]) by relay.mimecast.com with ESMTP with STARTTLS
- (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
- us-mta-180-9d7DStwyOcSFCCAPbiywJw-1; Wed, 11 Nov 2026 14:55:26 -0500
-X-MC-Unique: 9d7DStwyOcSFCCAPbiywJw-1
-X-Mimecast-MFC-AGG-ID: 9d7DStwyOcSFCCAPbiywJw_1794426926
-Received: by mail-qv1-f71.google.com with SMTP id 6a1803df08f44-91edde88d16so47952346d6.1
-        for <linux-rt-users@vger.kernel.org>; Wed, 11 Nov 2026 11:55:26 -0800 (PST)
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.a=rsa-sha256 header.s=20260707 header.b=RDsVtmdc
+Received: by mail-qt1-f171.google.com with SMTP id d75a77b69052e-53fdd2fb171so489091cf.2
+        for <linux-rt-users@vger.kernel.org>; Thu, 12 Nov 2026 11:08:55 -0800 (PST)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=redhat.com; s=google; t=1794426926; x=1795031726; darn=vger.kernel.org;
-        h=content-disposition:content-type:mime-version:reply-to:message-id
-         :subject:cc:to:from:date:from:to:cc:subject:date:message-id:reply-to
-         :content-type;
-        bh=crtnoGY+nCOaAobJdOXOox8pAfq8GQjfKtLjwKWPQsw=;
-        b=EStr2xj3p6K5ngSMF1YVbwQQlO9oThvXtKhW/iXf00R/coalOXS7TDrBLDLzuPQvJ3
-         w5xQAP+XCA9+QQyH2SsccJ0wM7HgyvuM1PhxzPmPhPUGNZfaExXALclvL4NSjsUSzoOB
-         ys37zmP7tTx1GaMgFA1Ucf4nEIgtEk9yWlYpFkOD18MeyJpNvfhf4Y58OGZcOWIpo1jr
-         b5EMSvIeewZ2kMBvMhSVsSDW0VsCwBJ4NiaBNADBuqXLfvPnVfTR1+qJoraSiDqXIFMN
-         2gYiGmRWg1VGpKlsABW+Vbb1dsrPIn6mvDSV9Invd2rpiJdnDnDycKqQSTNREZ7vuwNq
-         jQ1A==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20260707; t=1794426926; x=1795031726;
-        h=content-disposition:content-type:mime-version:reply-to:message-id
-         :subject:cc:to:from:date:x-gm-gg:x-gm-message-state:from:to:cc
+        d=gmail.com; s=20260707; t=1794510535; x=1795115335; darn=vger.kernel.org;
+        h=content-transfer-encoding:content-type:mime-version:references
+         :in-reply-to:message-id:date:subject:cc:to:from:sender:from:to:cc
          :subject:date:message-id:reply-to:content-type;
-        bh=crtnoGY+nCOaAobJdOXOox8pAfq8GQjfKtLjwKWPQsw=;
-        b=HOI2Uw2wTOlQ2jDxc0yZE2h8lGftshiBgDI/CuaVNTNS3wv8jkdw5f634uRSoQGu4f
-         iYK1pLWxOYbpUAc/d+eg3jHbEVFV2CtLzl9dg8Cchkluvi75ZsJy9LiFrJiNfY4JbGbg
-         GiXOIZriqvs6vm+7xIR/L5Cj84y9FwRoj7+SImye0llA8BFwcxGxsmxK3arNK2N4DjiG
-         xEbwIG7ANnLomEus2yKajjbjzFbT/UrPOs4zBtg+cWDKW4RQro+ExuPndHdK9eKkk2q+
-         bsPLZiT5np2qQfjFaxpjXVEDs1vl06fmXt30i1vAzzT/iH6bkzADYKpDDvMvyCXg1vxW
-         LHcQ==
-X-Gm-Message-State: APuU4Z8+0Bdl31bJYWIjhTmXnwh4Qp9lPSup9wPvF+UVftdzxaLwcRff
-	2IqnzNp5JyqII4HiE35ayVC/Nz0gdFWz/QROU9hWrdcqmOog1VmiXQNYu6+OcUokDbiV9QFknjw
-	c8v7rCRU5RpDmSA7FsJJEfjp3FlBzns+C5a1bcedtCrY6NUxhmpeU1+VS6d/prne3J/VSLUGFf4
-	J9EzJMgjm1tAAkTkfLdO0aU6kgtAZLFv0KN41J09fSywKm5lmwt3yw3SM=
-X-Gm-Gg: AYBFou2cWR5y+i4HwiAW0ZOT3jFjvdUe3qVZfuHGkUF0tSGi6wTV7/p//nT335kjjSG
-	XOF88OG4qcSnNkUJVfOV4RcBCPZmpH7mJvDEFKjkil2LeK5bkmMFcGc51zGpni3RkvvojzNiZml
-	+bL7/67N2+eajDcZa2kAjb9ZhRMPJVvP7D2bTFQtwdI5YZ7dz9nC/Tb4o2mcHcsz2+p2tzQLDlv
-	5qOVALytrc9bp3n1IRLl5kNe/3qq7oLGqtuWoKty2Z/ulGH8YUco6sDqolKKRLP2kHXWFuZTge4
-	Xd1ksarTY+7Ne8zi90wW/Q9Mi+5s7A42vevg1azxXf/kaY0Ux7wndPYL8TS31mo0Oft2Yhs1F++
-	V2mCUfI1VrPjpEYWF10Wz0s882HRSy16VVwsWK8u/kh3sJXuHyJJCGUlshdp4xzbBKycAlJhx5u
-	MroSN9B5A=
-X-Received: by 2002:a05:6214:2623:b0:91e:9469:1b91 with SMTP id 6a1803df08f44-91f0418dc2emr58182706d6.50.1794426925738;
-        Wed, 11 Nov 2026 11:55:25 -0800 (PST)
-X-Received: by 2002:a05:6214:2623:b0:91e:9469:1b91 with SMTP id 6a1803df08f44-91f0418dc2emr58181986d6.50.1794426924920;
-        Wed, 11 Nov 2026 11:55:24 -0800 (PST)
-Received: from localhost (c-71-234-51-224.hsd1.ma.comcast.net. [71.234.51.224])
-        by smtp.gmail.com with ESMTPSA id 6a1803df08f44-91f046e42a7sm27162406d6.31.2026.11.11.11.55.23
+        bh=RjhvmF5HEb05/Yvpj4XGwv2fVmIKxeIWCKHqFD2OJeQ=;
+        b=RDsVtmdcQzuLR6P+4cazN+yJLspwjYkpsI0ThFP6bVRhw6rMg023Pvs09dyB9QnD3B
+         N+ZNjwwVqgOcd12zVINaNJi18a8ANO6F5H6HVNokChUbYSSASQXcgYRRGD7VIkGl/P8P
+         k6nMQE88adv8P59MRSXuhaVue6a5sWuoQhfDC0/1fXnwSLcpNGY5dYEtkJfaApzDxJMo
+         juKTOJug5GIaTh0qJLjJfMTdCDbDTu+ZRAGKE9sAGCzbtVvEsXnI13Dm+yVtAoG7T0I2
+         WZ5fQAol7UEqgP6zXSMhOG0WpSEVvFV0mymtp9lOB+HDS+Kv7QZRldSjxPUCiNVjOcEU
+         XZNw==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20260707; t=1794510535; x=1795115335;
+        h=content-transfer-encoding:content-type:mime-version:references
+         :in-reply-to:message-id:date:subject:cc:to:from:sender:x-gm-gg
+         :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to
+         :content-type;
+        bh=RjhvmF5HEb05/Yvpj4XGwv2fVmIKxeIWCKHqFD2OJeQ=;
+        b=o89YV9mS0ptiLS0k/n9nRfbu6wQvf8TqaY4KZ2npL7d3jFeVV9qxa7KRLGawCs+sqB
+         X7yqLlqdOyqPMtGRyDBHovaBhCBLelnI8McNv59JWgZD8KgXlG2R5EEdzo5/NbS05ZPn
+         eforU49v2eohENVRMuZyv9mycKJrDqKuc+FiSc+zT+3RpCYTfIraR8CPjWomi0gJ9K9g
+         4YPPu9wUFwoM61EHGACb/xFAFTvOtR//lRm2VuOSUj1qaAQGgTRh3y6WISv7+NghjDnL
+         IvNkXmZfH74FrbafXgz6AE0Sx6F8PM2cKjjXXDgzX49bEHMvvboTCd8KPgm4SDJj52cK
+         O3dg==
+X-Gm-Message-State: APuU4Z+FLjBwLPC066/2hj6yKnx7Ojmaj8xJoCe8ysZALj8rnklgvO7v
+	W8CHGez4kp65Uwf2KFB7MITga9ERIN6+LXpgQ02I1fRZ127zCVZ3XzQrVdCQIw==
+X-Gm-Gg: AYBFou3sgs5M3L6P0Gcj+2Iav2Hx9ZH9XUEQecC5F1p1ysnIyShpp8rR1eIaTv7NZQ7
+	GHBlXTkHgwSDfgsiEzs/EYYVdigiFyDXvuxd9TZduW2RAC+GoJ/LxvhPcdGEMq5uSphvYeR/9+8
+	NaXQ7x9ON43cUslRTyc9snb1Wg223wrd9MZ6J6uQJ0rmHeptnoXvNZPrZSCi3pibI2o3IJKPTlY
+	HfIHzkjw+d0X+3SvXGMOdOabp6pOj3CBUJRit7l71RuljipY+l8LUtzE5QcyTAkodk+RVSqfuVV
+	OUXaZk+qjpLsQDCwW/ZAT/q6GhrtMDSv2BxTogTr6iI9zsfPXkQNQqDT5YfVyIfFEgfQZ2LRbea
+	EYImZEhzBa6ig00ytUkGfyjoD/t93rpcIOBks896s+JpCSx/BPfE/YtGJpzVzi8aZXIzUxu2BiB
+	pf8K139MxePcigfiPwVD5+oPEAQTzizG6FuWAY2oDE3ujwsX+XBaJ7Y0NchcnIfbz3vjO8X54ca
+	6jX5wOgokWUojbjQD5rTxG27E1Ra4jTNRKedxC2HRIsqlkzl21B0pN9BJUXFSoF9T4VduxXSE+k
+	KoTIiPXBuf4hFcgO2XIY40PE9g9wb1l1/5xw2mZ3eVBqzvbxW/enjmVX3kk//Hyu7UVLq+G9hQj
+	PylobLmqC1xDZd0w=
+X-Received: by 2002:a05:622a:e144:10b0:55a:df3b:38d4 with SMTP id d75a77b69052e-55adf3b74d2mr976781cf.75.1794510535008;
+        Thu, 12 Nov 2026 11:08:55 -0800 (PST)
+Received: from fionn.redhat.corp ([70.53.46.49])
+        by smtp.gmail.com with ESMTPSA id d75a77b69052e-55ad0534196sm1604811cf.9.2026.11.12.11.08.54
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Wed, 11 Nov 2026 11:55:23 -0800 (PST)
-Date: Wed, 11 Nov 2026 14:55:14 -0500
-From: Sana Sharma <sansshar@redhat.com>
-To: linux-rt-users@vger.kernel.org
-Cc: jkacur@redhat.com
-Subject: [PATCH v5] rteval: Add multi stressor support
-Message-ID: <avTIInVsSYe4YhSa@sansshar-thinkpadp1gen4i.boston.csb>
-Reply-To: sansshar@redhat.com
+        Thu, 12 Nov 2026 11:08:54 -0800 (PST)
+Sender: John Kacur <jkacur@gmail.com>
+From: John Kacur <jkacur@redhat.com>
+To: Sana Sharma <sansshar@redhat.com>
+Cc: linux-rt-users@vger.kernel.org,
+	darwi@linutronix.de
+Subject: Re: [PATCH v5] rteval: Add multi stressor support
+Date: Thu, 12 Nov 2026 14:08:39 -0500
+Message-ID: <20261112190839.71376-1-jkacur@redhat.com>
+X-Mailer: git-send-email 2.56.0
+In-Reply-To: <avTIInVsSYe4YhSa@sansshar-thinkpadp1gen4i.boston.csb>
+References: 
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
 List-Post: <mailto:linux-rt-users@vger.kernel.org>
@@ -112,201 +99,109 @@ List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 List-Owner: <mailto:linux-rt-users+owner@vger.kernel.org>
 Precedence: list
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
 
-Add the ability for rteval to take multiple stressors in one
-command to improve interface. The syntax works as follows:
+On Wed, 11 Nov 2026 at 02:55:14PM -0500, Sana Sharma wrote:
+> [PATCH v5] rteval: Add multi stressor support
 
---stressng-stressor cpu --stressng-stressor vm --stressng-workers 2
-will use 2 workers for each  stressor (in this case cpu and vm)
+Thanks for the v5, Sana. Moving validation into __init__ so sys.exit(1)
+runs on the main thread, the clean exit in validate_stressors(), and the
+subject fix all look good. Unfortunately the new 'workers' handling in
+__init__ introduces a regression that breaks the default run, so this
+needs another spin.
 
---stressng-stressors cpu,vm --stressng-workers 2
-will use 2 workers for each stressor as in the above example
+1) stressng now runs on every rteval invocation, even when no stressor was
+   requested - and then crashes.
 
-The second option exists to allow the user to access multiple
-stressors in an easier way.
+   'workers' has a default of "0" in ModuleParameters(), and
+   SetupModuleOptions() registers the option before argparse runs, so
+   self.cfg.workers is "0" on every run whether or not the user asked for
+   stress-ng. This block then unconditionally clears _donotrun:
 
-Update the tests/test_stressng file to reflect these changes.
+> +        if self.cfg.workers is not None:
+> +            try:
+> +                val = int(self.cfg.workers)
+> +                if val >= 0:
+> +                    workers = str(val)
+> +                    self._donotrun = False
+> +            except (ValueError, TypeError):
+> +                self._log(Log.WARN,"Stress-ng workers must be an int >= 0")
+> +                self._donotrun = True
 
-Signed-off-by: Sana Sharma <sansshar@redhat.com>
----
- rteval/modules/__init__.py       |  4 +-
- rteval/modules/loads/stressng.py | 79 +++++++++++++++++++++++++-------
- tests/test_stressng.py           |  4 +-
- 3 files changed, 67 insertions(+), 20 deletions(-)
+   So with no --stressng-stressor/--stressng-stressors, the stressor block
+   above correctly sets _donotrun = True, and then this block immediately
+   sets it back to False. Two consequences:
 
-diff --git a/rteval/modules/__init__.py b/rteval/modules/__init__.py
-index 183efd8..abd88b6 100644
---- a/rteval/modules/__init__.py
-+++ b/rteval/modules/__init__.py
-@@ -6,7 +6,6 @@
- import time
- from datetime import datetime
- import threading
--import argparse
- import libxml2
- from rteval.Log import Log
- from rteval.rtevalConfig import rtevalCfgSection
-@@ -356,6 +355,7 @@ reference from the first import"""
-             for (o, s) in list(opts.items()):
-                 descr = 'descr' in s and s['descr'] or ""
-                 metavar = 'metavar' in s and s['metavar'] or None
-+                action = 'action' in s and s['action'] or 'store'
- 
-                 try:
-                     default = cfg and getattr(cfg, o) or None
-@@ -369,7 +369,7 @@ reference from the first import"""
- 
-                 grparser.add_argument(f'--{shortmod}-{o}',
-                                          dest=f"{shortmod}___{o}",
--                                         action='store',
-+                                         action=action,
-                                          help='%s%s' % (descr,
-                                                         default and ' (default: %s)' % default or ''),
-                                          default=default,
-diff --git a/rteval/modules/loads/stressng.py b/rteval/modules/loads/stressng.py
-index 564e798..dd71387 100644
---- a/rteval/modules/loads/stressng.py
-+++ b/rteval/modules/loads/stressng.py
-@@ -12,6 +12,33 @@ from rteval.systopology import SysTopology
- from rteval.cpulist_utils import CpuList
- from rteval.cpuset import cpuset_preexec
- 
-+
-+def validate_stressors(stressor_list):
-+    """Validate multiple stressor names.
-+
-+    Args:
-+        stressor_list: stressor names to validate, either as a list
-+                       (from repeated --stressng-stressor) or a
-+                       comma-separated string (from --stressng-stressors)
-+
-+    Raises:
-+        ValueError: If any stressor is invalid
-+    """
-+    valid = get_valid_stressors()
-+    if isinstance(stressor_list, str):
-+        stressor_list = stressor_list.split(",")
-+    stressors = [word.strip() for word in stressor_list]
-+    invalid = []
-+    for stressor in stressors:
-+        if stressor not in valid:
-+            invalid.append(stressor)
-+
-+    if invalid:
-+        print(f"Invalid stress-ng stressor: '{' '.join(invalid)}'. "
-+               f"Run 'stress-ng --stressors' to see valid options.")
-+        sys.exit(1)
-+    return stressors
-+
- def get_valid_stressors():
-     """Query stress-ng for list of valid stressor names."""
-     try:
-@@ -25,14 +52,6 @@ def get_valid_stressors():
-         print(f"Failed to query stress-ng stressors: {e}")
-         sys.exit(1)
- 
--def validate_stressor(stressor_name):
--    """Validate a single stressor name against stress-ng's available stressors."""
--    valid = get_valid_stressors()
--    if stressor_name not in valid:
--        print(f"Invalid stress-ng stressor: '{stressor_name}'. "
--              f"Run 'stress-ng --stressors' to see valid options.")
--        sys.exit(1)
--
- class Stressng(CommandLineLoad):
-     " This class creates a load module that runs stress-ng "
-     def __init__(self, config, logger):
-@@ -46,11 +65,33 @@ class Stressng(CommandLineLoad):
-         self.__err = None
-         self.__nullfp = None
-         self.args = None
-+        " Warn if both stressor and stressors are invoked "
-+        if (self.cfg.stressors is not None and self.cfg.stressor is not None):
-+            self._log(Log.WARN,"In cases where stressng-stressor and stressng-stressors are both invoked, rteval will choose only stressors")
-         " Only run this module if the user specifies an stressor "
--        if self.cfg.stressor is not None:
--            self._donotrun = False
-+        if (self.cfg.stressors is not None):
-+            requested = self.cfg.stressors
-+        elif (self.cfg.stressor is not None):
-+            requested = list(self.cfg.stressor)
-         else:
-+            requested = None
-+
-+        if requested is None:
-             self._donotrun = True
-+        else:
-+            self.cfg.stressors = validate_stressors(requested)
-+            self._donotrun = False
-+
-+        if self.cfg.workers is not None:
-+            try:
-+                val = int(self.cfg.workers)
-+                if val >= 0:
-+                    workers = str(val)
-+                    self._donotrun = False
-+            except (ValueError, TypeError):
-+                self._log(Log.WARN,"Stress-ng workers must be an int >= 0")
-+                self._donotrun = True
-+
-         # When this module runs, other load modules should not
-         self.set_exclusive()
- 
-@@ -74,10 +115,10 @@ class Stressng(CommandLineLoad):
- 
-         # stress-ng is only run if the user specifies an stressor
-         self.args = ['stress-ng']
--        validate_stressor(self.cfg.stressor)
--        self.args.append(f'--{str(self.cfg.stressor)}')
--        if self.cfg.workers is not None:
--            self.args.append(self.cfg.workers) #default is 0
-+        stressors = self.cfg.stressors
-+        workers = self.cfg.workers
-+        for stressor in stressors:
-+            self.args.extend([f'--{stressor}', workers])
-         if self.cfg.timeout is not None:
-             self.args.append('--timeout')
-             self.args.append(self.cfg.timeout)
-@@ -164,8 +205,14 @@ def ModuleParameters():
-     """ Commandline options for Stress-ng """
-     return {
-         "stressor": {
--            "descr": "stressor name (eg. vm, cpu)",
--            "metavar": "STRESSOR"
-+            "descr": "stressor to run; repeat the flag to run several in parallel "
-+                     "(e.g., --stressng-stressor cpu --stressng-stressor vm)",
-+            "action": "append",
-+            "metavar": "NAME"
-+        },
-+        "stressors": {
-+            "descr": "comma-separated stressors to run in parallel (e.g., cpu,vm,io)",
-+            "metavar": "LIST"
-         },
-         "workers": {
-             "descr": "number of workers(default: 0 = one per CPU)",
-diff --git a/tests/test_stressng.py b/tests/test_stressng.py
-index 6211fb3..9da3bcb 100644
---- a/tests/test_stressng.py
-+++ b/tests/test_stressng.py
-@@ -41,14 +41,14 @@ class TestValidateStressor(unittest.TestCase):
-            return_value=['cpu', 'vm'])
-     def test_valid_passes(self, _):
-         """Test that a valid stressor is accepted"""
--        stressng.validate_stressor('cpu')   # should not raise
-+        stressng.validate_stressors('cpu, vm')   # should not raise
- 
-     @patch('rteval.modules.loads.stressng.get_valid_stressors',
-            return_value=['cpu', 'vm'])
-     def test_invalid_exits(self, _):
-         """Test that an invalid stressor is rejected"""
-         with self.assertRaises(SystemExit) as cm:
--            stressng.validate_stressor('bogus')
-+            stressng.validate_stressors('bogus')
-         self.assertEqual(cm.exception.code, 1)
- 
- def main():
--- 
-2.56.0
+     - stressng calls set_exclusive(), so once it is "will run", Start()
+       calls set_donotrun() on the other loads - kcompile and hackbench get
+       disabled.
+     - _WorkloadPrepare() then does `for stressor in self.cfg.stressors`
+       with stressors=None -> TypeError: 'NoneType' object is not iterable,
+       and the load thread dies.
 
+   The net effect is that a plain `rteval -d ...` (and `make runit`) with
+   the default config no longer runs its normal loads. On main the
+   no-stressor case leaves _donotrun = True and stressng simply opts out.
+
+   _donotrun should be decided only by whether a stressor was requested.
+   The workers check should validate the value and, at most, set
+   _donotrun = True on bad input - never clear it. Something like:
+
+        if requested is None:
+            self._donotrun = True
+        else:
+            self.cfg.stressors = validate_stressors(requested)
+            self._donotrun = False
+
+        if self.cfg.workers is not None:
+            try:
+                if int(self.cfg.workers) < 0:
+                    raise ValueError
+            except (ValueError, TypeError):
+                self._log(Log.WARN, "Stress-ng workers must be an int >= 0")
+                self._donotrun = True
+
+   Note int() already rejects a negative only if you check it - the v5
+   `if val >= 0:` has no else, so --stressng-workers -1 passes silently and
+   -1 is handed to stress-ng. The raise above closes that.
+
+2) The 'workers is not None' guard I wrote out last time is still missing in
+   _WorkloadPrepare():
+
+> +        stressors = self.cfg.stressors
+> +        workers = self.cfg.workers
+> +        for stressor in stressors:
+> +            self.args.extend([f'--{stressor}', workers])
+
+   If workers is ever None, self.args gets a None element, and the
+   `" ".join(self.args)` in _WorkloadTask() raises TypeError (not caught by
+   the `except OSError` there). The "0" default happens to mask this today,
+   but it is fragile - please guard it as before:
+
+        workers = self.cfg.workers
+        for stressor in stressors:
+            self.args.append(f'--{stressor}')
+            if workers is not None:
+                self.args.append(workers)
+
+   Relatedly, the `workers = str(val)` computed in __init__ is dead - it is
+   a local that is never read, since _WorkloadPrepare() goes back to
+   self.cfg.workers. Either use the sanitized value or drop the assignment.
+
+Minor:
+
+ - validate_stressors() docstring still says "Raises: ValueError", but it
+   now prints and sys.exit(1)s. Please update it.
+
+With (1) and (2) sorted this is close. Thanks again.
+
+To make this easier to check against, I'm sending a test patch as a
+follow-up to this mail - it adds tests to tests/test_stressng.py that drive
+the Stressng class directly (not just the module functions), covering the
+_donotrun opt-out logic and the _WorkloadPrepare() arg building. Three of
+them fail on v5 as it stands and pin exactly (1) and (2) above; please fold
+them into your v6 and make them pass. The multi-stressor arg test already
+passes - it just keeps that behaviour from regressing later.
+
+John
