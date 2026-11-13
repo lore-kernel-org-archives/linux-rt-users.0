@@ -1,72 +1,72 @@
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=170.10.129.124
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=170.10.133.124
 ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1794613590;
-	b=gu7aKPW9v9u9FspZJV4Lm8lmB/626phqz+/oX9IDHMzGUWjFjBkOPzrv5JkWAfcnW37x
-	 KHAo1THPxJLJOKbgHhSMqJ2RzJrB4RWB/9EmXxEbYRw8td0m40KM/el5g5fkFxw+/AhId
-	 RLlrxcDbmwejT5iGQkhq1Mvyux505clv9tw66a8yOoZkIdOUo8P7/svnP+YRg3o53Ryk6
-	 Oi3tPcOUqSuGa9goqZW51NcMI+4l519gTOtPdMW2m89/Uxz9OcB4k9RyXfHPUSAnCMO1W
-	 8A/lWi9/9sPqRl1pRArrgyKwBL7yeznYjKuJGUpJQbeKTVNG9emYbYutSfJQLfJJ7yw==
+	t=1794613594;
+	b=26YtG/vsXNkX90R/smNCmeO/651qXDL4MfPL4yjiw02opPiIgDjRFnxdrW5hE/oWFtPD
+	 P8s42sNGm7cd3ZwGaKYFVPX5nO7khSfvSpqFVfVjU2R1KqNkqvEdMqr7lq8cSNHapZZO+
+	 UMomus2jfXkAcxWcs9AtV6H17+wwG4g95ZDHi84OU3B+8nqUkw35c1bjOl6O4DtovSzbt
+	 NKF2zyDZ1bQ4FBxKk0g7AM5WIpyUaCiQXiOc7+XwK7kzis5S3qZg2COwN4XrZdPYlVQo1
+	 Rw4OqqB3OGQv2fqLCkhGr/eOPZYXabqc9D6fbNQtuEwLH7exCo26wr28QI5n3nbPDSw==
 ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1794613590;
+	a=rsa-sha256; c=relaxed/relaxed; t=1794613594;
 	h=DMARC-Filter:DKIM-Signature:Received:X-MC-Unique:
 	 X-Mimecast-MFC-AGG-ID:Received:Received:From:To:Cc:Subject:Date:
 	 Message-ID:In-Reply-To:References:MIME-Version:
 	 Content-Transfer-Encoding:X-Scanned-By;
-	bh=Ns8rNFFaE9GD7F1mN3+M+ynDzvBlb52fgE+rQ1XFj08=;
-	b=S/PM5h1alWEI0F7mCLuKc9t3A4oxC4E2FsB8BiovBO7QuFq+1dEvWm6YgWTM4u/5pJYo
-	 wkGveH7Cy24PXdRbQ+JKZOUlpa1bSvKsmGFiObilbBSnU4NJZ/ItDnzMVQskrLe209OZ2
-	 5ri0nTbawbbxC/cDkCiRsXzN1MT538jcsx3DpxVhrdC/EE7uq9a1krHd/7Nxff7V4Eb7W
-	 jKpDRAaUfSWK19Kv/MHmLJCNqJ5U0pb0KBBVdZtA9CblelvDt+EenIaWU1qMalureI5pe
-	 eIp18idRhZCVpwSakSfwna5RLfCopaZ+QspEGAzpYjYMyyI5fAEI69oxKbr1vFdm9DQ==
+	bh=AMOFwkHvyPX4lDRFu4DxB++uB46cPPm4kV8iRbIsW4U=;
+	b=fi/S98RQspq81LbjqBI+a1gqd4CNehGV7X6173cMM5yiqcZ7uGwt7xIv1y6yV6Mti67M
+	 hCadkbz9i8W9iTKNoT0mDxCQ/Qh8+FHAFwll0xazR1DndFOLcTgqNPknEp91TDo5NRu+i
+	 9UE0YDcJ2/ycwYS7UlGUNzfZWphZgppjfm8NRwQZ57lsJpYgS/1PGEaXpEFvjdQ2X0IA0
+	 Yl4GPy4fGfYPBMtsnuFIY+9DjCfpy1+55HNeII9xBajGX45cV/WD+kbPJswmAssdCmAs7
+	 zMdT34c3OGt9OQWq7zSuUIdJ3NpMkL5otq7JJ9lHTXp6CZW0fZAWTdkbU2by5F/XhAg==
 ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
 	dmarc=pass header.from=redhat.com;
 	spf=pass smtp.mailfrom=redhat.com;
-	dkim=pass header.d=redhat.com header.i=@redhat.com header.a=rsa-sha256 header.s=mimecast20190719 header.b=IVLMGUCi;
-	arc=none smtp.remote-ip=170.10.129.124
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+	dkim=pass header.d=redhat.com header.i=@redhat.com header.a=rsa-sha256 header.s=mimecast20190719 header.b=YQ+73n5h;
+	arc=none smtp.remote-ip=170.10.133.124
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature ECDSA (prime256v1) server-digest SHA256)
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id AB3ED606A33E
-	for <linux-rt-users@vger.kernel.org>; Fri, 13 Nov 2026 23:46:29 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org AB3ED606A33E
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 8E383606A333
+	for <linux-rt-users@vger.kernel.org>; Fri, 13 Nov 2026 23:46:33 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 8E383606A333
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.a=rsa-sha256 header.s=mimecast20190719 header.b=IVLMGUCi
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.a=rsa-sha256 header.s=mimecast20190719 header.b=YQ+73n5h
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1794613589;
+	s=mimecast20190719; t=1794613592;
 	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
 	 to:to:cc:cc:mime-version:mime-version:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references;
-	bh=Ns8rNFFaE9GD7F1mN3+M+ynDzvBlb52fgE+rQ1XFj08=;
-	b=IVLMGUCiUAKQHufiMfwqIijj3gOfN7KsMwkTa0KfpdP/rdNuFbCOhqmFAbSSYbQpv+LELi
-	cnA/SXDLTy3d2/etctp/9XFjLfauMxkp676au45AAQoSp7cN/lz69ge8Wj4aSnwNfVa2cu
-	H8NBAH090IJyeFe13xJOA4kdcoPofyM=
-Received: from mx-prod-mc-01.mail-002.prod.us-west-2.aws.redhat.com
+	bh=AMOFwkHvyPX4lDRFu4DxB++uB46cPPm4kV8iRbIsW4U=;
+	b=YQ+73n5hk0lQqnrG30wH/2k4V3b4pV7raskWPRU8DyIc0sPNkGZjOYvxkHMSy8KOrbDyKl
+	OUYWXouTK+b3ruJJ82jL/6BaSYxBX4+EiGKj13wgdKutVeRf/Wb1RrNxfV8cBXZ4rH+E4G
+	De3KfOLy3ODgn/N+uCXmmUP7L1r5LCU=
+Received: from mx-prod-mc-05.mail-002.prod.us-west-2.aws.redhat.com
  (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
  relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-37-1nsUmBSeM0GuPPSQJHXWZA-1; Fri,
- 13 Nov 2026 18:46:27 -0500
-X-MC-Unique: 1nsUmBSeM0GuPPSQJHXWZA-1
-X-Mimecast-MFC-AGG-ID: 1nsUmBSeM0GuPPSQJHXWZA_1794613586
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-206-aJMvwSA1NJaXqnFeMaJ9mQ-1; Fri,
+ 13 Nov 2026 18:46:30 -0500
+X-MC-Unique: aJMvwSA1NJaXqnFeMaJ9mQ-1
+X-Mimecast-MFC-AGG-ID: aJMvwSA1NJaXqnFeMaJ9mQ_1794613589
 Received: from mx-prod-int-01.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-01.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.4])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
 	(No client certificate requested)
-	by mx-prod-mc-01.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 96961195605A
-	for <linux-rt-users@vger.kernel.org>; Fri, 13 Nov 2026 23:46:26 +0000 (UTC)
+	by mx-prod-mc-05.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 2C2631956064
+	for <linux-rt-users@vger.kernel.org>; Fri, 13 Nov 2026 23:46:29 +0000 (UTC)
 Received: from dev-workstation (headnet04.pony-001.prod.iad2.dc.redhat.com [10.2.32.116])
-	by mx-prod-int-01.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTP id A3ED430001B9;
-	Fri, 13 Nov 2026 23:46:25 +0000 (UTC)
+	by mx-prod-int-01.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTP id 2E6A930001B9;
+	Fri, 13 Nov 2026 23:46:28 +0000 (UTC)
 From: Chris White <chwhite@redhat.com>
 To: jkacur@redhat.com
 Cc: linux-rt-users@vger.kernel.org,
 	Chris White <chwhite@redhat.com>
-Subject: [PATCH 3/5] tuna: Handle thread EBUSY/EPERM and aggregate unmovable IRQ warnings
-Date: Fri, 13 Nov 2026 15:46:18 -0800
-Message-ID: <20261113234620.1608227-4-chwhite@redhat.com>
+Subject: [PATCH 5/5] tuna: Demote partition and retry rmdir on EBUSY in destroy_cpuset
+Date: Fri, 13 Nov 2026 15:46:20 -0800
+Message-ID: <20261113234620.1608227-6-chwhite@redhat.com>
 In-Reply-To: <20261113234620.1608227-1-chwhite@redhat.com>
 References: <20261113234620.1608227-1-chwhite@redhat.com>
 X-Mailing-List: linux-rt-users@vger.kernel.org
@@ -81,296 +81,336 @@ MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 X-Scanned-By: MIMEDefang 3.4.1 on 10.30.177.4
 
-In isolate_cpus(), the process loop catches EBUSY and EPERM when
-modifying affinity, printing a warning and continuing with the remaining
-tasks. However, the inner thread loop did not handle EBUSY or EPERM,
-causing any thread that rejects an affinity update (e.g. pinned or
-permission-restricted thread) to terminate isolation mid-run.
+When destroying an isolated cpuset partition, demote it to 'member'
+first so that the isolated CPUs are immediately released back to the
+root cgroup. Furthermore, retry os.rmdir() on EBUSY with a 1-second
+bounded backoff to allow terminating or migrating tasks to finish
+draining out of the cgroup.
 
-Additionally, IRQ affinity updates that fail (such as kernel managed
-IRQs on multi-queue NICs or NVMe controllers) previously failed silently
-or raised on write error before close.
+Put this in one helper used by both teardown paths: destroy_cpuset()
+and Cpuset.destroy(), the latter being what the auto_destroy context
+manager calls. Fixing only the CLI path would have left anything using
+the context manager with the old immediate-rmdir behaviour.
 
-Add EBUSY and EPERM handling to the thread loop to match the process
-loop. Collect IRQs whose affinity could not be changed and report them
-in a single aggregated warning on stderr without aborting isolation.
-
-Keeping the report to a single line also makes it usable by callers
-that need to know which IRQs stayed put: SameStack's runtime isolation
-lease parses this warning to journal the residual IRQs for each run,
-instead of having to re-read every /proc/irq entry afterwards.
-
-While here, take the pre-isolation IRQ masks from /proc/irq/<n>/
-smp_affinity instead of procfs's parsed copy. procfs parses
-/proc/interrupts with one column per online CPU, so a mask that also
-references offline CPUs is silently truncated; callers that save and
-restore affinities read the file at the runtime CPU count, and the two
-widths have to agree or a mask that never moved looks modified. On a
-host with offline CPUs this made every unmovable managed IRQ look like
-a failed restore. An IRQ that disappears between interrupts() and this
-read keeps the procfs value rather than aborting.
+The EBUSY case is reproducible: SameStack's runtime isolation lease
+destroyed the partition right after its workload processes exited and
+hit EBUSY often enough that it carried its own 20 x 50 ms retry around
+'tuna cpuset destroy' to stop a rep from failing. This moves the retry
+into tuna, where the drain actually happens.
 
 This was tested and verified by running tuna isolation scenarios with
 SameStack: the B-tuna campaign on realtime-04 and a 40-round soak on
-centos-dev hit both paths on real hardware (pinned threads, and
-per-queue NIC IRQs that cannot be moved), and isolation completed with
-the IRQs reported rather than aborting.
+centos-dev tear the partition down through this path after every rep,
+and the demote-first order was confirmed to release the isolated CPUs
+before the rmdir.
+
+Tests cover both entry points: the demote-before-rmdir ordering, a
+successful retry after EBUSY, propagation of other errno values without
+a retry, the bounded give-up when EBUSY never clears, and that leaving
+an auto_destroy block demotes the partition. They use a temporary
+directory, so they do not need root.
 
 Assisted-by: Apogee
 Signed-off-by: Chris White <chwhite@redhat.com>
 ---
- tests/test_isolate_errors.py | 174 +++++++++++++++++++++++++++++++++++
- tuna/tuna.py                 |  35 ++++++-
- 2 files changed, 207 insertions(+), 2 deletions(-)
- create mode 100644 tests/test_isolate_errors.py
+ tests/test_cpuset_errors.py | 192 ++++++++++++++++++++++++++++++++++++
+ tuna/cpuset.py              |  55 ++++++++++-
+ 2 files changed, 242 insertions(+), 5 deletions(-)
 
-diff --git a/tests/test_isolate_errors.py b/tests/test_isolate_errors.py
-new file mode 100644
-index 0000000..4bc7e6f
---- /dev/null
-+++ b/tests/test_isolate_errors.py
-@@ -0,0 +1,174 @@
-+#!/usr/bin/python3
-+# -*- coding: utf-8 -*-
-+# SPDX-License-Identifier: GPL-2.0-only
-+"""
-+isolate_cpus() must keep going when single threads or IRQs cannot be moved.
+diff --git a/tests/test_cpuset_errors.py b/tests/test_cpuset_errors.py
+index 8636bdc..5abe33a 100644
+--- a/tests/test_cpuset_errors.py
++++ b/tests/test_cpuset_errors.py
+@@ -180,6 +180,198 @@ class TestCreateCpusetCleanup(unittest.TestCase):
+         self.assertIn('cannot enable cpuset', str(ctx.exception))
+ 
+ 
++class TestDestroyCpuset(unittest.TestCase):
++    """destroy_cpuset() must demote the partition and drain lingering tasks"""
 +
-+procfs, the affinity syscalls and the /proc/irq writes are mocked, so these
-+tests do not need root and do not change the system.
-+"""
++    def setUp(self):
++        self.tmp = tempfile.TemporaryDirectory()
++        self.path = os.path.join(self.tmp.name, 'cpuset')
++        os.mkdir(self.path)
++        self.partition = os.path.join(self.path, 'cpuset.cpus.partition')
 +
-+import builtins
-+import errno
-+import io
-+import sys
-+import unittest
-+from contextlib import redirect_stderr, redirect_stdout
-+from pathlib import Path
-+from unittest import mock
++    def tearDown(self):
++        self.tmp.cleanup()
 +
-+if Path(__file__).parent.name == 'tests':
-+    sys.path.insert(0, str(Path(__file__).parent.parent))
++    def test_demotes_partition_before_rmdir(self):
++        Path(self.partition).write_text('isolated\n')
++        seen = {}
++        real_rmdir = os.rmdir
 +
-+from tuna import tuna
++        def fake_rmdir(path):
++            # The kernel drops the cgroup files along with the directory
++            seen['partition'] = Path(self.partition).read_text()
++            os.unlink(self.partition)
++            real_rmdir(path)
 +
-+NR_CPUS = 4
-+ALL = {0, 1, 2, 3}
++        with mock.patch('tuna.cpuset.os.rmdir', side_effect=fake_rmdir):
++            cpuset.destroy_cpuset(self.path)
++        self.assertEqual(seen['partition'], 'member\n')
++        self.assertFalse(os.path.exists(self.path))
 +
++    def test_without_partition_file(self):
++        real_rmdir = os.rmdir
 +
-+class Task(dict):
-+    def __init__(self, comm, threads=None):
-+        super().__init__()
-+        self.stat = {'comm': comm}
-+        if threads is not None:
-+            self['threads'] = threads
++        def fake_rmdir(path):
++            real_rmdir(path)
 +
++        with mock.patch('tuna.cpuset.os.rmdir', side_effect=fake_rmdir):
++            cpuset.destroy_cpuset(self.path)
++        self.assertFalse(os.path.exists(self.path))
 +
-+def fake_procfs(ps, irqs):
-+    procfs = mock.MagicMock()
-+    procfs.pidstats.return_value = ps
-+    procfs.cannot_set_affinity.return_value = False
-+    procfs.cannot_set_thread_affinity.return_value = False
-+    procfs.interrupts.return_value = irqs
-+    procfs.hexbitmask.side_effect = lambda cpus, nr: sorted(cpus)
-+    return procfs
-+
-+
-+class TestIsolateCpusErrors(unittest.TestCase):
-+
-+    def run_isolate(self, ps, irqs, setaffinity, set_irq, read_irq=None):
-+        if read_irq is None:
-+            def read_irq(filename, nr_cpus):
-+                if filename == 'default_smp_affinity':
-+                    return list(ALL)
-+                return irqs[filename.split('/')[0]]['affinity']
-+        stdout, stderr = io.StringIO(), io.StringIO()
-+        with mock.patch.object(tuna, 'procfs', fake_procfs(ps, irqs)), \
-+             mock.patch.object(tuna.os, 'sched_getaffinity', return_value=set(ALL)), \
-+             mock.patch.object(tuna.os, 'sched_setaffinity', side_effect=setaffinity), \
-+             mock.patch.object(tuna, 'set_irq_affinity', side_effect=set_irq), \
-+             mock.patch.object(tuna, 'parse_irq_affinity_filename', side_effect=read_irq), \
-+             mock.patch.object(tuna, 'set_irq_affinity_filename', return_value=True), \
-+             redirect_stdout(stdout), redirect_stderr(stderr):
-+            result = tuna.isolate_cpus([3], NR_CPUS)
-+        return result, stdout.getvalue(), stderr.getvalue()
-+
-+    def test_thread_eperm_and_ebusy_continue(self):
-+        """A thread that refuses the new affinity does not stop isolation"""
-+        ps = mock.MagicMock()
-+        tasks = {100: Task('app', {101: Task('locked'), 102: Task('busy'), 103: Task('worker')})}
-+        ps.keys.return_value = list(tasks)
-+        ps.__getitem__.side_effect = tasks.__getitem__
-+        moved = {}
-+
-+        def setaffinity(tid, cpus):
-+            if tid == 101:
-+                raise OSError(errno.EPERM, 'Operation not permitted')
-+            if tid == 102:
-+                raise OSError(errno.EBUSY, 'Device or resource busy')
-+            moved[tid] = set(cpus)
-+
-+        _, stdout, _ = self.run_isolate(ps, {}, setaffinity, lambda irq, mask: True)
-+        self.assertEqual(moved, {100: {0, 1, 2}, 103: {0, 1, 2}})
-+        self.assertIn('Unable to isolate tid 101 [locked]', stdout)
-+        self.assertIn('Unable to isolate tid 102 [busy]', stdout)
-+
-+    def test_unmovable_irqs_reported_once(self):
-+        """IRQs whose affinity cannot be changed are listed in one warning"""
-+        ps = mock.MagicMock()
-+        ps.keys.return_value = []
-+        irqs = {'30': {'affinity': [0, 1, 2, 3]},
-+                '31': {'affinity': [3]},
-+                '32': {'affinity': [0, 1, 2, 3]},
-+                '33': {'affinity': [0]},
-+                'LOC': {}}
-+        written = {}
-+
-+        def set_irq(irq, mask):
-+            if irq == 30:
-+                return False   # e.g. managed IRQ, error reported on close()
-+            if irq == 31:
-+                raise OSError(errno.EIO, 'Input/output error')
-+            written[irq] = mask
-+            return True
-+
-+        (_, previous_irqs), _, stderr = self.run_isolate(ps, irqs, lambda t, c: None, set_irq)
-+        self.assertEqual(written, {32: [0, 1, 2]})
-+        self.assertEqual(sorted(previous_irqs), ['30', '31', '32'])
-+        warnings = [line for line in stderr.splitlines() if 'Unable to move IRQs' in line]
-+        self.assertEqual(len(warnings), 1)
-+        self.assertTrue(warnings[0].endswith(': 30,31'), warnings[0])
-+
-+    def test_irq_masks_are_read_at_runtime_width(self):
-+        """The mask must come from the file, not the truncated procfs value
-+
-+        procfs parses /proc/interrupts with one column per online CPU, so a
-+        mask referencing offline CPUs loses those bits. Callers that save and
-+        restore the mask use the runtime CPU count, so the 'before' value has
-+        to be read at that width too.
-+        """
-+        ps = mock.MagicMock()
-+        ps.keys.return_value = []
-+        # procfs only saw CPUs 0-3 and reports the truncated mask [0]
-+        irqs = {'40': {'affinity': [0]}}
-+        seen = []
-+
-+        def read_irq(filename, nr_cpus):
-+            if filename == 'default_smp_affinity':
-+                return list(ALL)
-+            seen.append((filename, nr_cpus))
-+            return [3, 8]          # the real mask: CPU 3 plus offline CPU 8
-+
-+        def set_irq(irq, mask):
-+            return True
-+
-+        (_, previous_irqs), _, _ = self.run_isolate(
-+            ps, irqs, lambda t, c: None, set_irq, read_irq)
-+        self.assertIn(('40/smp_affinity', NR_CPUS), seen)
-+        self.assertEqual(previous_irqs['40'], [3, 8])
-+
-+    def test_vanished_irq_falls_back_to_procfs(self):
-+        """An IRQ that disappeared since interrupts() was read is skipped"""
-+        ps = mock.MagicMock()
-+        ps.keys.return_value = []
-+        irqs = {'41': {'affinity': [0, 3]}}
-+
-+        def read_irq(filename, nr_cpus):
-+            if filename == 'default_smp_affinity':
-+                return list(ALL)
-+            raise OSError(errno.ENOENT, 'No such file or directory')
-+
-+        def set_irq(irq, mask):
-+            return True
-+
-+        (_, previous_irqs), _, stderr = self.run_isolate(
-+            ps, irqs, lambda t, c: None, set_irq, read_irq)
-+        self.assertEqual(previous_irqs['41'], [0, 3])
-+        self.assertEqual(stderr, '')
-+
-+    def test_parse_irq_affinity_filename_raises_on_missing_irq(self):
-+        """A vanished IRQ must not leave the caller reading an unbound file"""
++    def test_failed_demote_does_not_block_rmdir(self):
++        Path(self.partition).write_text('isolated\n')
 +        real_open = builtins.open
++        real_rmdir = os.rmdir
 +
-+        def fake_open(path, *args, **kwargs):
-+            if 'smp_affinity' in str(path):
-+                raise FileNotFoundError(errno.ENOENT, 'No such file')
-+            return real_open(path, *args, **kwargs)
++        def fake_open(file, mode='r', *args, **kwargs):
++            if file == self.partition and 'w' in mode:
++                raise OSError(errno.EROFS, 'Read-only file system', file)
++            return real_open(file, mode, *args, **kwargs)
 +
-+        with mock.patch('builtins.open', side_effect=fake_open):
-+            with self.assertRaises(OSError):
-+                tuna.parse_irq_affinity_filename('9999/smp_affinity', NR_CPUS)
++        def fake_rmdir(path):
++            os.unlink(self.partition)
++            real_rmdir(path)
++
++        with mock.patch('builtins.open', side_effect=fake_open), \
++             mock.patch('tuna.cpuset.os.rmdir', side_effect=fake_rmdir):
++            cpuset.destroy_cpuset(self.path)
++        self.assertFalse(os.path.exists(self.path))
++
++    def test_retries_rmdir_on_ebusy(self):
++        Path(self.partition).write_text('member\n')
++        calls = []
++        real_rmdir = os.rmdir
++
++        def fake_rmdir(path):
++            calls.append(path)
++            if len(calls) < 3:
++                raise OSError(errno.EBUSY, 'Device or resource busy', path)
++            os.unlink(self.partition)
++            real_rmdir(path)
++
++        with mock.patch('tuna.cpuset.os.rmdir', side_effect=fake_rmdir), \
++             mock.patch('tuna.cpuset.time.sleep') as sleep:
++            cpuset.destroy_cpuset(self.path)
++        self.assertEqual(len(calls), 3)
++        self.assertEqual(sleep.call_count, 2)
++        self.assertFalse(os.path.exists(self.path))
++
++    def test_other_errors_propagate_without_retry(self):
++        Path(self.partition).write_text('member\n')
++        with mock.patch('tuna.cpuset.os.rmdir',
++                        side_effect=OSError(errno.EACCES,
++                                            'Permission denied')) as rmdir:
++            with self.assertRaises(OSError) as ctx:
++                cpuset.destroy_cpuset(self.path)
++        self.assertEqual(ctx.exception.errno, errno.EACCES)
++        self.assertEqual(rmdir.call_count, 1)
++
++    def test_gives_up_after_bounded_backoff(self):
++        Path(self.partition).write_text('member\n')
++        clock = [0.0]
++
++        def fake_time():
++            clock[0] += 0.1
++            return clock[0]
++
++        with mock.patch('tuna.cpuset.os.rmdir',
++                        side_effect=OSError(errno.EBUSY,
++                                            'Device or resource busy')) as rmdir, \
++             mock.patch('tuna.cpuset.time.time', side_effect=fake_time), \
++             mock.patch('tuna.cpuset.time.sleep') as sleep:
++            with self.assertRaises(OSError) as ctx:
++                cpuset.destroy_cpuset(self.path)
++        self.assertEqual(ctx.exception.errno, errno.EBUSY)
++        self.assertGreaterEqual(rmdir.call_count, 2)
++        self.assertLessEqual(rmdir.call_count, 25)
++        self.assertEqual(sleep.call_count, rmdir.call_count - 1)
++        self.assertTrue(os.path.exists(self.path))
 +
 +
-+if __name__ == '__main__':
-+    unittest.main()
-diff --git a/tuna/tuna.py b/tuna/tuna.py
-index fd08b5e..293cca5 100755
---- a/tuna/tuna.py
-+++ b/tuna/tuna.py
-@@ -386,6 +386,7 @@ def parse_irq_affinity_filename(filename, nr_cpus):
-             print("This operation is not supported on s390", file=sys.stderr)
-             print(f"tuna: {err}", file=sys.stderr)
-             sys.exit(2)
-+        raise
++class TestCpusetDestroyMethod(unittest.TestCase):
++    """Cpuset.destroy() must behave like destroy_cpuset()
++
++    This is the teardown path used by the auto_destroy context manager, so it
++    has to demote the partition and drain tasks the same way the CLI does.
++    """
++
++    def setUp(self):
++        self.tmp = tempfile.TemporaryDirectory()
++        self.path = os.path.join(self.tmp.name, 'cpuset')
++        os.mkdir(self.path)
++        self.partition = os.path.join(self.path, 'cpuset.cpus.partition')
++        self.cs = fake_cpuset(self.path)
++
++    def tearDown(self):
++        self.tmp.cleanup()
++
++    def test_destroy_demotes_partition_first(self):
++        Path(self.partition).write_text('isolated\n')
++        seen = {}
++        real_rmdir = os.rmdir
++
++        def fake_rmdir(path):
++            seen['partition'] = Path(self.partition).read_text()
++            os.unlink(self.partition)
++            real_rmdir(path)
++
++        with mock.patch('tuna.cpuset.os.rmdir', side_effect=fake_rmdir):
++            self.cs.destroy()
++        self.assertEqual(seen['partition'], 'member\n')
++        self.assertFalse(os.path.exists(self.path))
++
++    def test_destroy_retries_on_ebusy(self):
++        Path(self.partition).write_text('member\n')
++        calls = []
++        real_rmdir = os.rmdir
++
++        def fake_rmdir(path):
++            calls.append(path)
++            if len(calls) < 2:
++                raise OSError(errno.EBUSY, 'Device or resource busy', path)
++            os.unlink(self.partition)
++            real_rmdir(path)
++
++        with mock.patch('tuna.cpuset.os.rmdir', side_effect=fake_rmdir), \
++             mock.patch('tuna.cpuset.time.sleep'):
++            self.cs.destroy()
++        self.assertEqual(len(calls), 2)
++        self.assertFalse(os.path.exists(self.path))
++
++    def test_context_manager_uses_the_same_teardown(self):
++        """Leaving an auto_destroy block must demote, not just rmdir"""
++        Path(self.partition).write_text('isolated\n')
++        seen = {}
++        real_rmdir = os.rmdir
++        cs = fake_cpuset(self.path)
++        cs.auto_destroy = True
++
++        def fake_rmdir(path):
++            seen['partition'] = Path(self.partition).read_text()
++            os.unlink(self.partition)
++            real_rmdir(path)
++
++        with mock.patch('tuna.cpuset.os.rmdir', side_effect=fake_rmdir):
++            with cs:
++                pass
++        self.assertEqual(seen['partition'], 'member\n')
++        self.assertFalse(os.path.exists(self.path))
++
++    def test_destroy_missing_dir_is_a_noop(self):
++        cs = fake_cpuset(os.path.join(self.tmp.name, 'never-created'))
++        cs.destroy()
++
++    def test_destroy_without_partition_file(self):
++        real_rmdir = os.rmdir
++
++        def fake_rmdir(path):
++            real_rmdir(path)
++
++        with mock.patch('tuna.cpuset.os.rmdir', side_effect=fake_rmdir):
++            self.cs.destroy()
++        self.assertFalse(os.path.exists(self.path))
++
++
+ @unittest.skipUnless(sys.platform.startswith('linux') and os.geteuid() == 0,
+                      "Requires root permissions")
+ @unittest.skipUnless(cpuset.CpusetsInit().supported, "Requires cgroup v2 support")
+diff --git a/tuna/cpuset.py b/tuna/cpuset.py
+index 23450ff..3b047e8 100644
+--- a/tuna/cpuset.py
++++ b/tuna/cpuset.py
+@@ -10,8 +10,9 @@
+ """ Module for creating and using cpusets (cgroup v2) """
  
-     line = f.readline()
-     f.close()
-@@ -456,6 +457,14 @@ def isolate_cpus(cpus, nr_cpus):
-                     if err.args[0] == errno.EINVAL:
-                         print("Function:", fname, ",", err.strerror, file=sys.stderr)
-                         sys.exit(2)
-+                    if err.args[0] == errno.EBUSY:
-+                        comm = threads[tid].stat["comm"]
-+                        print(f'Warning: Unable to isolate tid {tid} [{comm}]')
-+                        continue
-+                    if err.args[0] == errno.EPERM:
-+                        comm = threads[tid].stat["comm"]
-+                        print(f'Warning: Unable to isolate tid {tid} [{comm}]')
-+                        continue
-                     raise err
+ import errno
+-import os
+ import logging
++import os
++import time
+ from glob import glob
  
-     del ps
-@@ -463,15 +472,37 @@ def isolate_cpus(cpus, nr_cpus):
-     # Now isolate it from IRQs too
-     irqs = procfs.interrupts()
-     previous_irq_affinities = {}
-+    unmoved_irqs = []
-     for irq in list(irqs.keys()):
-         # LOC, NMI, TLB, etc
-         if "affinity" not in irqs[irq]:
-             continue
--        affinity = irqs[irq]["affinity"]
-+        # procfs parses /proc/interrupts with one column per online CPU, so a
-+        # mask that also references offline CPUs (common when some are
-+        # offlined) is truncated there. Read the file at nr_cpus so the
-+        # 'before' masks recorded below match the width used by callers that
-+        # save and restore them. An IRQ that disappeared since interrupts()
-+        # was read keeps the procfs value instead of aborting isolation.
+ logger = logging.getLogger(__name__)
+@@ -273,11 +274,16 @@ class Cpuset:
+     def destroy(self):
+         """
+         Remove this cpuset (cgroup directory)
+-        The cpuset must be empty (no processes) before it can be removed.
++
++        The partition is demoted to 'member' first so isolated CPUs are
++        returned to the root cgroup, and rmdir is retried briefly on EBUSY
++        while exiting tasks drain. The cpuset must be empty (no processes)
++        before it can be removed.
++
+         Raises OSError if the directory is not empty or doesn't exist.
+         """
+         if self._cpuset_path and os.path.exists(self._cpuset_path):
+-            os.rmdir(self._cpuset_path)
++            _demote_and_rmdir(self._cpuset_path)
+ 
+     def __enter__(self):
+         """
+@@ -634,6 +640,44 @@ def list_cpusets(pattern=None, recursive=True):
+     return sorted(cpusets)
+ 
+ 
++def _demote_and_rmdir(cpuset_path, timeout=1.0):
++    """
++    Demote a cpuset partition and remove the cgroup directory
++
++    Isolated CPUs are only returned to the root cgroup once the partition is
++    demoted, so do that before the rmdir. A cgroup with tasks still draining
++    out of it makes rmdir fail with EBUSY, which is transient; retry for a
++    bounded time before giving up.
++
++    Args:
++        cpuset_path: Full path to the cgroup directory
++        timeout: Seconds to keep retrying rmdir on EBUSY
++
++    Raises:
++        OSError: If the directory cannot be removed (including EBUSY once
++                 the timeout expires)
++    """
++    part_file = os.path.join(cpuset_path, 'cpuset.cpus.partition')
++    if os.path.exists(part_file):
 +        try:
-+            affinity = parse_irq_affinity_filename(f"{irq}/smp_affinity", nr_cpus)
++            with open(part_file, 'w', encoding='utf-8') as f:
++                f.write('member\n')
 +        except OSError:
-+            affinity = irqs[irq]["affinity"]
-         if set(affinity).intersection(set(cpus)):
-             previous_irq_affinities[irq] = copy.copy(affinity)
-             affinity = affinity_remove_cpus(affinity, cpus, nr_cpus)
--            set_irq_affinity(int(irq), procfs.hexbitmask(affinity, nr_cpus))
-+            try:
-+                moved = set_irq_affinity(int(irq), procfs.hexbitmask(affinity, nr_cpus))
-+            except OSError:
-+                moved = False
-+            if not moved:
-+                # Managed IRQs (e.g. per-queue NIC/NVMe vectors) reject writes
-+                unmoved_irqs.append(int(irq))
++            pass
 +
-+    if unmoved_irqs:
-+        print("Warning: Unable to move IRQs away from CPUs "
-+              f"{collapse_cpulist(cpus)}: "
-+              f"{','.join(str(i) for i in sorted(unmoved_irqs))}",
-+              file=sys.stderr)
++    # Retry on EBUSY while exiting tasks drain out of the cgroup
++    start = time.time()
++    while True:
++        try:
++            os.rmdir(cpuset_path)
++            return
++        except OSError as e:
++            if e.errno == errno.EBUSY and (time.time() - start) < timeout:
++                time.sleep(0.05)
++                continue
++            raise
++
++
+ def destroy_cpuset(name_or_path, force=False):
+     """
+     Destroy a cpuset by name or path
+@@ -681,8 +725,9 @@ def destroy_cpuset(name_or_path, force=False):
+         migrated, failed = tm.migrate()
+         logger.info(f"Migrated {migrated} tasks to root cgroup, {failed} failed")
  
-     affinity = parse_irq_affinity_filename("default_smp_affinity", nr_cpus)
-     affinity = affinity_remove_cpus(affinity, cpus, nr_cpus)
+-    # Destroy the cpuset
+-    os.rmdir(cpuset_path)
++    # Demote the partition and drop the cgroup, draining tasks if they are
++    # still on their way out (see _demote_and_rmdir)
++    _demote_and_rmdir(cpuset_path)
+     logger.info(f"Destroyed cpuset: {cpuset_path}")
+ 
+ 
 -- 
 2.52.0
 
