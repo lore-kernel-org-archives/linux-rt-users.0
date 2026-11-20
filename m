@@ -1,93 +1,93 @@
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=209.85.128.54
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=209.85.128.41
 ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1795198818;
-	b=MNey7WxM3yv8RU9sKQ+HT8luY+LsQZ6JOFXh5f5zZCLRGZ/C6c4LPUlLoqvY7PFPGys4
-	 Qqo9+VU+QvywKLxiiW4FpYgO2BiiiB7qix516hIcdkJuJBOOXOhDYD05u5/XxZCFGn2LT
-	 Pzuz1hP51wEZq6nxh9PPJU9Is96prnDIMOXjuiC/gh2s3oXqfdqwL92f/OQE+gi9/n7Vu
-	 3PzMGXhSZB0oCMmgSIBlUsEt7erWXdhjBeS52YtWum0NPHOEeWqnq33Jkd9FVW/vkxsUH
-	 +qrUjUifA64xBs0XikAGOkSk1TwwmSVJRfLC2tkozq2wmBV8e6gHlkOrSb0zE/uUfJQ==
+	t=1795198823;
+	b=r6lZSjCJayQs0aWaN0Af8qUQ66Ma0IIkqeK7YDY8yfVw7ykVX4Q6NtxZA4n3fsK/AyVv
+	 j5wPU3Ck28QeaTbCjAIIOPZIDZxNvj6poHHtPfQcoom4iycwGQZpHTKqq8h2mbeBM6/+x
+	 HJPim90dncqzWRaABYD4mBWpvxPh6Bubtjeh3KoDN/PB4Y/5i7+G9S5L6e0XS598yn2Ig
+	 RRpahE9CDp9+1MgJ250UgtS2BXftJCskS+vfgK+rLfcS464jTTAjiYs1jVfZeclsC+lL9
+	 jXjHl6bGyjtqnkYSxo68MZ9kCJC9YWOUmTYLWQIrLUDVkBu41ycT6QzvVZZGS8sOhlw==
 ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1795198818;
+	a=rsa-sha256; c=relaxed/relaxed; t=1795198823;
 	h=DMARC-Filter:Received:DKIM-Signature:X-Google-DKIM-Signature:
 	 X-Forwarded-Encrypted:X-Gm-Message-State:X-Gm-Gg:X-Received:Received:
 	 From:To:Cc:Subject:Date:Message-Id:X-Mailer:In-Reply-To:References:
 	 MIME-Version:Content-Transfer-Encoding;
-	bh=Xm4gBAjoi/87RyFMvAxqQNTLuj5YyKr9oL7G9qUbNSY=;
-	b=InPRgz9syX6ukePuJX2XMCvPJh9eYoeIPCunNQZz1WIKKAmc15+T4YfeYVIGGrRea8ps
-	 9qJR1oP7Xb/gQ78W9ukPWivWOKk5gkzE4mgp8fsavRdI09rtR+XSbdpvuwsAUC/dIrkuE
-	 AYgKLVveKdcuivfKAKpasY0g+XYFTv/2W2Rqu4EqOwLzh0vAysXVSryM9znXsYc8ehlzj
-	 btDPwEYJTypkgpT/9euL2z9hcMkUvHDkmnik639w86wuqPp3zZcMFRn1TdOaxV6sifbfe
-	 Y/OgHOak3bPCWWAE9xEQyVgMC9v5ZLmqBzr2PGfVOtC2bNEhYsZkPkgLp2ED8N3qOCw==
+	bh=qHyHugXT8A3gMhSG4ut0su7T08sNPi7lup8ky8aAdYA=;
+	b=sw9ZNpd7nC1tqr66oZW7Ed+H7syGbfnk6mVpwAT2NGrEefJTzcl/rEsIGIX1dHJZDITn
+	 19v6WHpgAE9WoSu1y8tIEDOqJQSLBycK7CMEZUmNTFwQjOSqCheByNaH/RDNVmZBir++3
+	 EImUY540mGGBkHOnB1/1TYs5c3wprnUcfLWOGTGGeJPK2/Ai6o5IQMBEnLxCkNj5R40ME
+	 n+JjYnAId2hjzteQINdd1NEjjkQmlHyriCdztNJ97MAG+zxo7jsLb4gLNt06GXRQZ4neK
+	 mdkfN+q7YX7fEd5vUD3h4O8Bd280uwtQcDisxd/GZpiDXx7qGNI4P2uL4vnzyCfHhDQ==
 ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
 	dmarc=pass header.from=gmail.com;
 	spf=pass smtp.mailfrom=gmail.com;
-	dkim=pass header.d=gmail.com header.i=@gmail.com header.a=rsa-sha256 header.s=20260707 header.b=Yc6g6M5K;
-	arc=none smtp.remote-ip=209.85.128.54
-Received: from mail-wm1-f54.google.com (mail-wm1-f54.google.com [209.85.128.54])
+	dkim=pass header.d=gmail.com header.i=@gmail.com header.a=rsa-sha256 header.s=20260707 header.b=SIqoiPHl;
+	arc=none smtp.remote-ip=209.85.128.41
+Received: from mail-wm1-f41.google.com (mail-wm1-f41.google.com [209.85.128.41])
 	(using TLSv1.3 with cipher TLS_AES_128_GCM_SHA256 (128/128 bits)
 	 key-exchange X25519 server-signature ECDSA (prime256v1) server-digest SHA256)
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id B472B606A8AB
-	for <linux-rt-users@vger.kernel.org>; Fri, 20 Nov 2026 18:20:16 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org B472B606A8AB
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 6085A606B44D
+	for <linux-rt-users@vger.kernel.org>; Fri, 20 Nov 2026 18:20:18 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 6085A606B44D
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.a=rsa-sha256 header.s=20260707 header.b=Yc6g6M5K
-Received: by mail-wm1-f54.google.com with SMTP id 5b1f17b1804b1-4a207b02a2cso8998455e9.1
-        for <linux-rt-users@vger.kernel.org>; Fri, 20 Nov 2026 10:20:16 -0800 (PST)
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.a=rsa-sha256 header.s=20260707 header.b=SIqoiPHl
+Received: by mail-wm1-f41.google.com with SMTP id 5b1f17b1804b1-4bb6ba3b244so11161445e9.3
+        for <linux-rt-users@vger.kernel.org>; Fri, 20 Nov 2026 10:20:18 -0800 (PST)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20260707; t=1795198815; x=1795803615; darn=vger.kernel.org;
+        d=gmail.com; s=20260707; t=1795198817; x=1795803617; darn=vger.kernel.org;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:from:to:cc:subject:date
          :message-id:reply-to:content-type;
-        bh=Xm4gBAjoi/87RyFMvAxqQNTLuj5YyKr9oL7G9qUbNSY=;
-        b=Yc6g6M5KN+kuShBFHEoQJBcc77N9CbegUzcp0PLgIg/S37JK7a/of6x/EHEUu5QvKr
-         KWBH1sF3KiPPb5QwF1NrITuEOOQSdMjvd0/kRy71hzpjM3Iu2O/ASsgNDWpX2aMu/9yP
-         mySRbNA1tUlvCEsSsLRuaYO46DUyxAgMggoVsmgiZmbDB10d1HJTphOUzhTStYA0AkoW
-         HGyFMHAXTCzff7MDtLUm82vmPRdcTxXcx2SpOsz5hGf+30EkoyYw6LKGvFgLZAu66uSZ
-         GRavWY+9CqoZCbueCHQ448U8UBijvp9nf76zJD6ST7yKj721pFudV4z67eABW0tlwWzv
-         SNLw==
+        bh=qHyHugXT8A3gMhSG4ut0su7T08sNPi7lup8ky8aAdYA=;
+        b=SIqoiPHl4PvkvH3uNUmWwM+jmheKQz3gILJ8Bof2Xhfc/jlWKFryJC7rR+YUM7AwFy
+         3WI23dfrODgmpMtus3eKndATKXoncXM0853HMuJlAmDxHHpHDaEL9O+GQjIliaubfDYu
+         SkJjEODQK47/wialIiZ0TThDTPpnIv+yp6RE7VgaqmfBD0/hXzFJG6pdlrboDGYCZbuQ
+         M7t8NcUWjsGpeeLfkVc8X+6WQErPsUoM8aaI3Lru1ezHaPlXJZ9jGLYbAf79JkrgCzos
+         QZqwfLMoWdrW4SYE8C6uEkxect7i6LirnNeLgnb81xSrtmP2TXSNwvI/rId9TG7Tb567
+         WXsw==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20260707; t=1795198815; x=1795803615;
+        d=1e100.net; s=20260707; t=1795198817; x=1795803617;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:x-gm-gg:x-gm-message-state:from
          :to:cc:subject:date:message-id:reply-to:content-type;
-        bh=Xm4gBAjoi/87RyFMvAxqQNTLuj5YyKr9oL7G9qUbNSY=;
-        b=YPhT2+AWHyecSHV/xb8CWN3eemVsZw2ku5Q+9gevxBgH1j8hgs3bPRkkLKnJGIdsIB
-         MxPNp5wsupNVzkqZoCHF5y4rg4kQfWNFDTl9E/gmmSWImY/tAelOhT3bvO8NY3OtUTm0
-         ICVccgj9zXHq3Sq6TvSK3DAwL5AwxdHCz5VIXYhSJ0rD6ROlB9dsgoyZMJ1gqRMF+m7C
-         iLX4DggDGbSzDiNBxpM5fU5ZleQQ0tReCT0fIDiJw6FCr91Kp3iE1hHLNb4qVUpaAOqM
-         n9XvMMvl7JuGHaI1e4URgvQ6Be1oPpUravtiwt0LSNY8/hhGeNc1BLTuXX0x9qEmFOSL
-         yOlA==
-X-Forwarded-Encrypted: i=1; AL+hErEiKwwhaVZfJ6AptVpYArXdVEPxPC+vQtz/acjKP7LJPE16wXaggJZTO90Z8BkMPpjnp8QoocGyRkrTjBTauA==@vger.kernel.org
-X-Gm-Message-State: APuU4Z9AkwzT9EdwnUR71+e9c/q37aN653aSMD6HbqTDHLsrHfneBIf1
-	9Sc11tsLDkofFHW3bhfNnXOzGqjuhX3MGmmdWNDbNAMKIXviSkNUY5v0e/G7EA==
-X-Gm-Gg: AYBFou1mZ5ZOP3xA210pL+dxWSU8+nomWf3V02RWsRyIlS+IPQUATT7rHi2+kyRD+Gu
-	y8eWMc4LH/Az/yz+nH3Z/15zO8DC6ZKfPScX+EMaQozkRk+4ZioWg1ArA6o7esvuCeukicx/WkL
-	TPUdhudk/JM8WvoMOWRMHj4brKUDE1apWwWoGtRGibUCzJMQJfFl/tHaX3WiBZj63GlcFq2g9g8
-	U/x8flyeCHTERcKgcReXG5vgDm76AbjJIs4hgD5nZ5JLINJ7eHxFg7NMwMuFmdLSXBL+5ORaFis
-	t57hsidgACH7oY+5N0mmZltY2/8U8TheYqK2+Mvg+qiw07OxjxJp83U5dLwzaoeUiPgFdVyLybM
-	qthzVQnK6X+y2TWYDpiWA5oJ4NUbsR4sQXZYdtDsT3717thMWxqjT/vUFG0AvrCoG/PONgR6uPF
-	WgJ4OOGAV4t8AS9wJN6h0HR2Sq4XryRX6Wzc9w7yTUKV5IEUCOa8axigeDkKsy9JUEyhSy0j4SV
-	SUhScUGMS9fC3uKTQQ6T/sE58I4QVnR5j3QQGQiny9RGcZFdt3xdN17oXzTh1GaiUW0aDiTCgl3
-	JkOXqwHB9wfhU0UNTcrj8ayNV13YOQr/ProF7Dpaw/OVHAsA8Cy0ad6V7/YZuUfcYDN40mZW6nM
-	12nnT4zdEOAQoETAO5Ei3bN3qeA==
-X-Received: by 2002:a05:600c:a085:b0:4a2:526b:d410 with SMTP id 5b1f17b1804b1-4bb8881092bmr93717615e9.13.1795198814998;
-        Fri, 20 Nov 2026 10:20:14 -0800 (PST)
+        bh=qHyHugXT8A3gMhSG4ut0su7T08sNPi7lup8ky8aAdYA=;
+        b=E31JaWBi3waTwp2sQryRTmzFsXgLLm4pt9lzaQq0ONl8nzs1XRDGaoHVeNWvxKRlna
+         m9vTrMoei4UrTdFVXQHB5VAaEN3huDYu7NF0UOmHKbB5VFFXsVR0gtZ6tCAMSfwSiICV
+         JI0YS5ukwM950gOe6+pI+kEEJRMGE7lkQD6SzEwzkwq0fOSoXuu0L9ewP0LAkX5hIeAc
+         VN1slVOU2dEgDNS9KNQOUhwO/aIxs06OSYuVCx7iBTh1dmlNJ1jGOggNxKHFIGJ6NAMB
+         WsdnY3XWilAvoSxV7AjJ+lHCZx0hATiYCDNk9uy4kJxQf4LApobGTipoA5h/nfq2O+zu
+         xbQw==
+X-Forwarded-Encrypted: i=1; AL+hErH3HQs7jyKlOsCBqHOckab6HG164L4biTffySLGkMQxW1dzO7WQWaoIEVFRKUM+pBJ2CvG55I7wV0zCuyJu/g==@vger.kernel.org
+X-Gm-Message-State: APuU4Z+2R9Yc8vOKhcGnRER0H5za3iF0nlU0+UEbTclfCY7y9Kdw/QhM
+	j1I+T347wgUNqlk29wq/UsLqqTCkmx5aZUq0L9qs0PyRYaGZLVLl2LvGe9ubWQ==
+X-Gm-Gg: AYBFou0Xz6sk5D8CtTYk6LG4FUZMQocPSC74rhsKdIAE5j9+lDWxHk5CpIl6pHyOLBq
+	oJ1Oc39H+Mc6C+dpv1EdSgmjVm2w8BJJGFsh0gv6hw9WLZtuPUufSR3EqvDv4Ek2GUb+MjDHt5l
+	Ktdzyfy4+nyPGNbWpn7w7akxrfmk+sdej774pUfiarKBGM8U8vC0UIckS2wW9YSLmU1bCVB7YNW
+	cSdfQqUN1oE10P8d1WomsqVe1MXz6fQZ7FXUD1bDkdNIeLZxnQKpwfUBWFmTH7ccqEsXHurlGdq
+	gfdv6yNkrP0gSyuTLzeRvUqiNCIiGlaSeEWR/BGBEyzLIkO5o+K3qB4H/3laXYnFsHkj3LiINaY
+	cY5aJWnVhWtEC8shY4RcxF2U7OcWsKeJ2qTIcRqMeyarWQIz4YV00N7uV6W+9SU/gwuhs8QDgPz
+	TlJgFpD6R0LQMrGVRx2etql28s/isRwKWyY4yuMk8E7zZ7SdOYML4yKyPlJlpp8/1qclJPvQk0n
+	sFQmgsBk3uEK3Smxe/QMZPzRJyRpbtvGGtYc3eerdT5TOCV+sL0MZl8xI7ixsjG74XkcRhTOhrF
+	nGJZG1PA5XvaTm+/FIkJqHbmNbguwt2OpxAWvjWJiNVDADQ/btjp7s8q1wwQFKzrCSrDu2dx3Rw
+	rhwQz2JuEHO3qpmhwW4+6zsoYTw29jdmJKX7m0HpTyaR+/vQ=
+X-Received: by 2002:a05:600c:1c28:b0:4bb:867b:f0f0 with SMTP id 5b1f17b1804b1-4bb88810708mr105298155e9.15.1795198816718;
+        Fri, 20 Nov 2026 10:20:16 -0800 (PST)
 Received: from mbp-de-florent.lan (37.170.0.109.rev.sfr.net. [109.0.170.37])
-        by smtp.gmail.com with ESMTPSA id 5b1f17b1804b1-4bb895eec06sm34789565e9.2.2026.11.20.10.20.13
+        by smtp.gmail.com with ESMTPSA id 5b1f17b1804b1-4bb895eec06sm34789565e9.2.2026.11.20.10.20.15
         (version=TLS1_3 cipher=TLS_CHACHA20_POLY1305_SHA256 bits=256/256);
-        Fri, 20 Nov 2026 10:20:13 -0800 (PST)
+        Fri, 20 Nov 2026 10:20:16 -0800 (PST)
 From: Florent Carli <fcarli@gmail.com>
 To: stable@vger.kernel.org
 Cc: Juri Lelli <juri.lelli@redhat.com>,
 	Peter Zijlstra <peterz@infradead.org>,
 	Gabriele Monaco <gmonaco@redhat.com>,
 	linux-rt-users@vger.kernel.org
-Subject: [PATCH 6.12.y 3/4] sched: Provide idle_rq() helper
-Date: Fri, 20 Nov 2026 19:19:48 +0100
-Message-Id: <20261120181949.7528-4-fcarli@gmail.com>
+Subject: [PATCH 6.12.y 4/4] sched/deadline: Fix server stopping with runnable tasks
+Date: Fri, 20 Nov 2026 19:19:49 +0100
+Message-Id: <20261120181949.7528-5-fcarli@gmail.com>
 X-Mailer: git-send-email 2.39.3 (Apple Git-146)
 In-Reply-To: <20261120181949.7528-1-fcarli@gmail.com>
 References: <awB-5usPb2QZXt37@jlelli-thinkpadt14gen4.remote.csb>
@@ -103,123 +103,83 @@ Precedence: list
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 
-From: Peter Zijlstra <peterz@infradead.org>
+From: Gabriele Monaco <gmonaco@redhat.com>
 
-commit 1e0a2ba7afb1b60f02599093d84b72ce62ad11c0 upstream.
+commit ca1e8eede4fc68ce85a9fdce1a6c13ad64933318 upstream.
 
-A fix for the dl_server 'requires' idle_cpu() usage, which made me
-note that it and available_idle_cpu() are extern function calls.
+The deadline server can currently stop due to idle although fair tasks
+are runnable. This happens essentially when:
 
-And while idle_cpu() is used outside of kernel/sched/,
-available_idle_cpu() is not.
+ * the server is set to idle, a task wakes up, the server stops
+ * a task wakes up, the server sets itself to idle and stops right away
 
-This makes it hard to make idle_cpu() an inline helper, so provide
-idle_rq() and implement idle_cpu() and available_idle_cpu() using
-that.
+Address both cases by clearing the server idle flag whenever a fair task
+wakes up and accounting also for pending tasks in the definition of idle.
 
+Fixes: f5a538c07df2 ("sched/deadline: Fix dl_server stop condition")
+Signed-off-by: Gabriele Monaco <gmonaco@redhat.com>
 Signed-off-by: Peter Zijlstra (Intel) <peterz@infradead.org>
-[ Florent: rq->ttwu_pending only exists with CONFIG_SMP in 6.12 ]
+Link: https://patch.msgid.link/20260113085159.114226-3-gmonaco@redhat.com
+[ Florent: context conflict in dl_server_start(), which still
+  initializes the fair server in 6.12 ]
 Signed-off-by: Florent Carli <fcarli@gmail.com>
 ---
- include/linux/sched.h   |  1 -
- kernel/sched/sched.h    | 28 ++++++++++++++++++++++++++++
- kernel/sched/syscalls.c | 32 +-------------------------------
- 3 files changed, 29 insertions(+), 32 deletions(-)
+ kernel/sched/deadline.c | 13 +++++++++----
+ 1 file changed, 9 insertions(+), 4 deletions(-)
 
-diff --git a/include/linux/sched.h b/include/linux/sched.h
-index 7f0fb62df..efee6139c 100644
---- a/include/linux/sched.h
-+++ b/include/linux/sched.h
-@@ -1895,7 +1895,6 @@ static inline int task_nice(const struct task_struct *p)
- extern int can_nice(const struct task_struct *p, const int nice);
- extern int task_curr(const struct task_struct *p);
- extern int idle_cpu(int cpu);
--extern int available_idle_cpu(int cpu);
- extern int sched_setscheduler(struct task_struct *, int, const struct sched_param *);
- extern int sched_setscheduler_nocheck(struct task_struct *, int, const struct sched_param *);
- extern void sched_set_fifo(struct task_struct *p);
-diff --git a/kernel/sched/sched.h b/kernel/sched/sched.h
-index 598dd26fe..27de92902 100644
---- a/kernel/sched/sched.h
-+++ b/kernel/sched/sched.h
-@@ -1390,6 +1390,34 @@ static inline u32 sched_rng(void)
- #define cpu_curr(cpu)		(cpu_rq(cpu)->curr)
- #define raw_rq()		raw_cpu_ptr(&runqueues)
+diff --git a/kernel/sched/deadline.c b/kernel/sched/deadline.c
+index ea64ab436..2da68de70 100644
+--- a/kernel/sched/deadline.c
++++ b/kernel/sched/deadline.c
+@@ -1482,7 +1482,7 @@ update_stats_dequeue_dl(struct dl_rq *dl_rq, struct sched_dl_entity *dl_se, int
  
-+static inline bool idle_rq(struct rq *rq)
-+{
-+	if (rq->curr != rq->idle || rq->nr_running)
-+		return false;
-+#ifdef CONFIG_SMP
-+	if (rq->ttwu_pending)
-+		return false;
-+#endif
-+	return true;
-+}
-+
-+/**
-+ * available_idle_cpu - is a given CPU idle for enqueuing work.
-+ * @cpu: the CPU in question.
-+ *
-+ * Return: 1 if the CPU is currently idle. 0 otherwise.
-+ */
-+static inline bool available_idle_cpu(int cpu)
-+{
-+	if (!idle_rq(cpu_rq(cpu)))
-+		return 0;
-+
-+	if (vcpu_is_preempted(cpu))
-+		return 0;
-+
-+	return 1;
-+}
-+
- #ifdef CONFIG_SCHED_CORE
- static inline struct cpumask *sched_group_span(struct sched_group *sg);
- 
-diff --git a/kernel/sched/syscalls.c b/kernel/sched/syscalls.c
-index b51b39a10..f31fcdcfe 100644
---- a/kernel/sched/syscalls.c
-+++ b/kernel/sched/syscalls.c
-@@ -201,37 +201,7 @@ int task_prio(const struct task_struct *p)
-  */
- int idle_cpu(int cpu)
+ static void update_curr_dl_se(struct rq *rq, struct sched_dl_entity *dl_se, s64 delta_exec)
  {
--	struct rq *rq = cpu_rq(cpu);
--
--	if (rq->curr != rq->idle)
--		return 0;
--
--	if (rq->nr_running)
--		return 0;
--
--#ifdef CONFIG_SMP
--	if (rq->ttwu_pending)
--		return 0;
--#endif
--
--	return 1;
--}
--
--/**
-- * available_idle_cpu - is a given CPU idle for enqueuing work.
-- * @cpu: the CPU in question.
-- *
-- * Return: 1 if the CPU is currently idle. 0 otherwise.
-- */
--int available_idle_cpu(int cpu)
--{
--	if (!idle_cpu(cpu))
--		return 0;
--
--	if (vcpu_is_preempted(cpu))
--		return 0;
--
--	return 1;
-+	return idle_rq(cpu_rq(cpu));
- }
+-	bool idle = rq->curr == rq->idle;
++	bool idle = idle_rq(rq);
+ 	s64 scaled_delta_exec;
  
- /**
+ 	if (unlikely(delta_exec <= 0)) {
+@@ -1663,8 +1663,8 @@ void dl_server_update(struct sched_dl_entity *dl_se, s64 delta_exec)
+  * | 8 |       B:zero_laxity-wait       |     |    |
+  * |   |                                | <---+    |
+  * |   +--------------------------------+          |
+- * |     |              ^     ^           2        |
+- * |     | 7            | 2   +--------------------+
++ * |     |              ^         ^       2        |
++ * |     | 7            | 2, 1    +----------------+
+  * |     v              |
+  * |   +-------------+  |
+  * +-- | C:idle-wait | -+
+@@ -1709,8 +1709,11 @@ void dl_server_update(struct sched_dl_entity *dl_se, s64 delta_exec)
+  *   dl_defer_idle = 0
+  *
+  *
+- * [1] A->B, A->D
++ * [1] A->B, A->D, C->B
+  * dl_server_start()
++ *   dl_defer_idle = 0;
++ *   if (dl_server_active)
++ *     return; // [B]
+  *   dl_server_active = 1;
+  *   enqueue_dl_entity()
+  *     update_dl_entity(WAKEUP)
+@@ -1825,6 +1828,7 @@ void dl_server_update(struct sched_dl_entity *dl_se, s64 delta_exec)
+  *   "B:zero_laxity-wait" -> "C:idle-wait"        [label="7:dl_server_update_idle"]
+  *   "B:zero_laxity-wait" -> "D:running"          [label="3:dl_server_timer"]
+  *   "C:idle-wait" -> "A:init"                    [label="8:dl_server_timer"]
++ *   "C:idle-wait" -> "B:zero_laxity-wait"        [label="1:dl_server_start"]
+  *   "C:idle-wait" -> "B:zero_laxity-wait"        [label="2:dl_server_update"]
+  *   "C:idle-wait" -> "C:idle-wait"               [label="7:dl_server_update_idle"]
+  *   "D:running" -> "A:init"                      [label="4:pick_task_dl"]
+@@ -1850,6 +1854,7 @@ void dl_server_start(struct sched_dl_entity *dl_se)
+ {
+ 	struct rq *rq = dl_se->rq;
+ 
++	dl_se->dl_defer_idle = 0;
+ 	/*
+ 	 * XXX: the apply do not work fine at the init phase for the
+ 	 * fair server because things are not yet set. We need to improve
 -- 
 2.39.3 (Apple Git-146)
 
