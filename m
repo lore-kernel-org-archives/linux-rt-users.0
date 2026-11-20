@@ -1,114 +1,100 @@
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=170.10.133.124
-ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1795194608;
-	b=QSe3iKIxY3AcO6s5mEiIzvzJrBwZ0E1hVLbiH6f7Xs7zmwW50DCrOxq4hYa2pzbnTEW6
-	 U0NwkNWARw0M7u6q6TJ/z2g91t7LY1CZgJLzKklaHvw9+reOz/DrjuRkXH0c2UuPVsejl
-	 BhZOIRnQdyHBr1oie8avGZTNyA58hbw5hrIj2hMTv+Dat8yeSpPXkByNVRfjeX+004VC4
-	 Iv1xjM06XthSF7di9Pt58kclJdHIDfOO4gElR4qRCszdjajbqspwvA5/ztO7OZanxjkkm
-	 OEQvIRM5zY4ZSqXKojuT8L8az0Rp7RhqTTtW87OOiSejbpZ0wCW0NyJudguMlMEdb2g==
-ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1795194608;
-	h=DMARC-Filter:DKIM-Signature:Received:X-MC-Unique:
-	 X-Mimecast-MFC-AGG-ID:Received:DKIM-Signature:X-Google-DKIM-Signature:
+Authentication-Results: smtp.subspace.kernel.org; arc=pass header.oldest-pass=0 smtp.remote-ip=209.85.214.179
+ARC-Seal: i=2; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=pass;
+	t=1795198757;
+	b=l+Tj4LuXLKJ2a+Z9VMHaGO4kV3s7+gvuCLB51SOLSXUJBwFmQBnDWMejhU8GwTvv1VX6
+	 tizAO2hJ4Z3qyTknQZcwAVZaKCkj3yHfZ6ziMbzvzDDmOFKNUmw5ZMW4vjnvCxi1JFLn9
+	 0LTzHYaaAPMbBhiAVe5RfrV7gwUygVoaziwn+m8gmRJt81UYEawWudg7oaVpob1qm0T7D
+	 gApRveN0GA6PGXiqPxpx8WjTlGMsaXrqZt+w5qVv4lHjgZOt+MWTAPnX3kU3rQYt+HXck
+	 u8sHz8Ex5tPGALowc1JoWOfeOf3YJJE7mKwiyNnyP4cIIkDyUclyBcquXcQzoeL2lXg==
+ARC-Message-Signature: i=2; d=subspace.kernel.org; s=arc20261015;
+	a=rsa-sha256; c=relaxed/relaxed; t=1795198757;
+	h=DMARC-Filter:Received:DKIM-Signature:X-Google-DKIM-Signature:
 	 X-Forwarded-Encrypted:X-Gm-Message-State:X-Gm-Gg:X-Received:
-	 X-Received:Received:Date:From:To:Cc:Subject:Message-ID:References:
-	 MIME-Version:Content-Type:Content-Disposition:In-Reply-To;
-	bh=J6EcKPCt+KfAzvCKSl56m3Ot7NS7Ub9tU52adEj4q9U=;
-	b=cvIWRkc3s6i5ZYjftl/E89skXSbMJlVL+Egl9hhvToYbCANRSXT/vzNbEZWEofO6FQJq
-	 6VNBdiGqZ64+3+NH67IczD3IHj5s+rOmALcNgeKxpNuhqdyh9fP6Q01z6RhJLT7MLyKjV
-	 8A8EdWVbmLjCtQOLTUQW6Py+SKTptxMmwunoC9drzgdQ1HNghvmMtn1PoEBhMZQu1ZvCW
-	 YVfNtVMoIphnTjSnVwB+rNz+DZASdX4jzuxCr3Cl7AYwfTE/c9lw6q32T9qrIrzaMzrdb
-	 /i1c42HQS80vwOffBKsTwRV5YH3cdprMLGV+hwCQvDlui/anXDjT6jan8vv85jn5q+g==
-ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
-	dmarc=pass header.from=redhat.com;
-	spf=pass smtp.mailfrom=redhat.com;
-	dkim=pass header.d=redhat.com header.i=@redhat.com header.a=rsa-sha256 header.s=mimecast20190719 header.b="Jr/xybZ7";
-	dkim=pass header.d=redhat.com header.i=@redhat.com header.a=rsa-sha256 header.s=google header.b=r9LlN0Uo;
-	arc=none smtp.remote-ip=170.10.133.124
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 MIME-Version:References:In-Reply-To:From:Date:X-Gm-Features:
+	 Message-ID:Subject:To:Cc:Content-Type:Content-Transfer-Encoding;
+	bh=6FUYcrD2ChNOm77umqGfBpxNsoS7ZAGf06/dNNITF3g=;
+	b=iV8ZQnFB7k0UZ+OTDREWrnRlZcFwHeIli3Li9oREcJODV24sPsKFolLInku6/SVoyDqg
+	 +vhAm9bi7/lEP6vII9fNMTM7xfUrFphfc5x6RpZy0bxQU3QZLDo4LC0JgUNBZ1HyoIRwI
+	 x/0iC1aRR2HtlU55nQDYLiKY/vF7vY/WfoWKNm1NmoVQFu4F59PPOSr6gRtedYVeQJd18
+	 QOWpZ9uHS7tQgX0SZeVOf/PUeaM3fF0SAWzXTazj7DRf6osJLu6E2DbnS7ZlOu2sggpIx
+	 VylZ5AmCoXM6cAv/w6jJhMwNniFTw+ufk04phnBy5amFV87s1DYG3oTqwD1CnN/GQbg==
+ARC-Authentication-Results: i=2; smtp.subspace.kernel.org; 
+	dmarc=pass header.from=gmail.com;
+	spf=pass smtp.mailfrom=gmail.com;
+	dkim=pass header.d=gmail.com header.i=@gmail.com header.a=rsa-sha256 header.s=20260707 header.b=Jidg5fuu;
+	arc=pass header.oldest-pass=0 smtp.remote-ip=209.85.214.179
+Received: from mail-pl1-f179.google.com (mail-pl1-f179.google.com [209.85.214.179])
+	(using TLSv1.3 with cipher TLS_AES_128_GCM_SHA256 (128/128 bits)
 	 key-exchange X25519 server-signature ECDSA (prime256v1) server-digest SHA256)
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id E0F3A606A336
-	for <linux-rt-users@vger.kernel.org>; Fri, 20 Nov 2026 17:10:07 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org E0F3A606A336
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id B303C606B230
+	for <linux-rt-users@vger.kernel.org>; Fri, 20 Nov 2026 18:19:16 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org B303C606B230
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.a=rsa-sha256 header.s=mimecast20190719 header.b=Jr/xybZ7;
-	dkim=pass (2048-bit key) header.d=redhat.com header.i=@redhat.com header.a=rsa-sha256 header.s=google header.b=r9LlN0Uo
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1795194606;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 in-reply-to:in-reply-to:references:references;
-	bh=J6EcKPCt+KfAzvCKSl56m3Ot7NS7Ub9tU52adEj4q9U=;
-	b=Jr/xybZ7xq72VXbfolJrdfMuqnmYmP6RR2BbuvbrMI4w1pVsjm+fE0fwHNNkveDbRlOlg+
-	yK4gjJXwa48v4xkwwNQRRWo4QxEshq3kszg0ex0VAI4yhhD+Z96AJbsmSlnvfjMtTInW8V
-	+hZlD6XF76Lkvp3pJ2Tm6HZ/kcvrBx8=
-Received: from mail-wr1-f69.google.com (mail-wr1-f69.google.com
- [209.85.221.69]) by relay.mimecast.com with ESMTP with STARTTLS
- (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
- us-mta-516-KlwdQkfqP2SkO98HmYwWpw-1; Fri, 20 Nov 2026 17:10:02 +0000
-X-MC-Unique: KlwdQkfqP2SkO98HmYwWpw-1
-X-Mimecast-MFC-AGG-ID: KlwdQkfqP2SkO98HmYwWpw_1795194601
-Received: by mail-wr1-f69.google.com with SMTP id ffacd0b85a97d-48e0389d6f9so667316f8f.1
-        for <linux-rt-users@vger.kernel.org>; Fri, 20 Nov 2026 09:10:02 -0800 (PST)
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.a=rsa-sha256 header.s=20260707 header.b=Jidg5fuu
+Received: by mail-pl1-f179.google.com with SMTP id d9443c01a7336-2f020d0169eso6532285ad.0
+        for <linux-rt-users@vger.kernel.org>; Fri, 20 Nov 2026 10:19:16 -0800 (PST)
+ARC-Seal: i=1; a=rsa-sha256; t=1795198756; cv=none;
+        d=google.com; s=arc-20260327;
+        b=K7LIerKMjuOfEXgcca2YjQSDFeI0ZlsSniNLBHNY7v8k2hKXDH03jzp8394ELKQ2Cc
+         CdtMC5v5pipMJlc7+IYBA9EZQ3KI9/PTYyLVOgPCx3nxZPkh6LKxha9bxuqEsKZ6VMy0
+         zOYyKKanqBlGwtOoOiqwADUfyRqyaa4DPqYtOKrF3jMichOA77Nbpi1dWHlEVTXv262G
+         LP6i+khhcb/j+JclYxr7tWMyVEXTK1PC4fHva9sJSluinadbtULIwOFaa5MqQBiCx7rc
+         n3l9H7zyugTNkpXGj+TTkezkCCP7Kgsnw8u7k5glLBjl4KsbkVq1kZp8rNtZk1Ox/iCV
+         h+Qw==
+ARC-Message-Signature: i=1; a=rsa-sha256; c=relaxed/relaxed; d=google.com; s=arc-20260327;
+        h=content-transfer-encoding:cc:to:subject:message-id:date:from
+         :in-reply-to:references:mime-version:dkim-signature;
+        bh=6FUYcrD2ChNOm77umqGfBpxNsoS7ZAGf06/dNNITF3g=;
+        fh=QjBLOwwS9chwNIj3WWaxr7n4vT9YzvEW4T358wygz4w=;
+        b=obLRmrHMYs7BpTjoioB+0dJ3l4tl1LbWZztmoVM1mh6TCjKVzIL/w1KeMcNV7V//uS
+         9elUYwk7GhWemzvZJ/l/oBtSOf00YBXIO0waVowFUPsvi1lWO1vbl+YSNbckMwtmWgYS
+         18iPRJZmlkHEUVS2Uy8cgIDKO+ZJIyMJXiiWLVvpCpvlIdf+R/MgYtjRWmUwD4dVp94d
+         vbG07J+GdmCbpFZa0+JjW8+F9jE00XVNy03zSW/sz1/SGistIPETycUx3UyffYRMAVOu
+         FcpoFE2hJls4D0MQeiNL266bK3fbFJiH/rdZJn9hOcOn1kt0g+lhiKw0wbDgXPCXmw46
+         +w5A==;
+        darn=vger.kernel.org
+ARC-Authentication-Results: i=1; mx.google.com; arc=none
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=redhat.com; s=google; t=1795194601; x=1795799401; darn=vger.kernel.org;
-        h=in-reply-to:content-disposition:content-type:mime-version
-         :references:message-id:subject:cc:to:from:date:from:to:cc:subject
+        d=gmail.com; s=20260707; t=1795198756; x=1795803556; darn=vger.kernel.org;
+        h=content-transfer-encoding:content-type:cc:to:subject:message-id
+         :date:from:in-reply-to:references:mime-version:from:to:cc:subject
          :date:message-id:reply-to:content-type;
-        bh=J6EcKPCt+KfAzvCKSl56m3Ot7NS7Ub9tU52adEj4q9U=;
-        b=r9LlN0UoZvF9GDkpYCcqm6LjKUkYUPlIUhYbV+2nG23t13IitrM77sx9dR2h2ecVz+
-         abNFMQY5z0ZWDmErm6eL2+in1XEOkKO0FD4aYLkemOPz01k0PlYEIcSVGh7syv73ecGc
-         eoEVuYyHoOQAlBs5kajQeh9v3tGqnnyIr30p7h7H0hsqJ/cuh43bal8Xn5tviFjOjMtb
-         W46DFR4ER8AsRUDkYOUqHXEpiiv8bwRPzs+NxeQJG2Icb5Blb6xFUWs0s6MAJ1M1htZL
-         ABd28WOx+pTw4CL3/d6mNO9aTVj84dxenvj4CDZIUTu79di1S02UxbDs3aCxh1PFbCYZ
-         1/+Q==
+        bh=6FUYcrD2ChNOm77umqGfBpxNsoS7ZAGf06/dNNITF3g=;
+        b=Jidg5fuunw4EYR2XPW0aGeaUC/aLy/87pXylqQM2qNsBnWLsRXuxtBxCVflPQnktTn
+         hj4sEnsZUI5tPg6rNDC/LBV+MypkICLLZqDupAQ3ZSGb+bJJCn3RxaD2iuXg7DzgLe9B
+         es+HuyxxEGbCyQTnPvstiytEHyGjLNHAhXoDUWt5/0Wwn/F1Md0JV8r7mbO3CSKJ7FS+
+         8ZOI6B4L3hKyoZrcQqna1wQURNlHm9y8MRmksd7fLps1GOYBOPj88DJ1KqVPWVhYfsas
+         q6Nb5hvR5BJrUrtAI1YdqxqKmW935zgajTuHH3+R7rqNHISifYXPc1xMci6MiSZus51i
+         NR+A==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20260707; t=1795194601; x=1795799401;
-        h=in-reply-to:content-disposition:content-type:mime-version
-         :references:message-id:subject:cc:to:from:date:x-gm-gg
+        d=1e100.net; s=20260707; t=1795198756; x=1795803556;
+        h=content-transfer-encoding:content-type:cc:to:subject:message-id
+         :date:from:in-reply-to:references:mime-version:x-gm-gg
          :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to
          :content-type;
-        bh=J6EcKPCt+KfAzvCKSl56m3Ot7NS7Ub9tU52adEj4q9U=;
-        b=IPPzDejxfMSUr+ZSYdgId4oLgBxPt0VNxRMILMtd1d/5goup18uyw/Gt6w9lu//lmc
-         RzvBdioW9EneiRyDMiAXknclS1zp5JgHB9W358N/Jg+rQPHr/1JkjANFiWPrgnBSqHA0
-         6m4FIfsltyROR/5J5DWbZNMm2iAsJmKLvRG6/H03y2PafP5pfMllE5DexTNGaP/X5tWV
-         lGs/jpiq54e1VPCT+Q4FvE3pbuDKfDEZjigUkJY6u5mDy55wblklUBGr8+RNhtl0UxUI
-         ntaLssOKWdV0BZd5RTFyB4Y4sjTitdY5YQxMwSs6DCJDwHVRdoJp3uMprrSbY/uE9h76
-         MTug==
-X-Forwarded-Encrypted: i=1; AL+hErFa5sQEhjtPI7Ku6849hSKperj9XLBaCnqd3mN6gpPYMbZhhA6ga5mCKMQ6eZs2VAECA6AKR4jmuKJLHnfa0w==@vger.kernel.org
-X-Gm-Message-State: APuU4Z+eIBK49lPpTYxT6VpaBz6DcSGX3dQz38E5hWVcswqLFj+bst+D
-	Ztt1SedMK20bMjRclcoHAqY2xoOrnKSF/EBzS2puh9nZ3OH1QO3gL23+7Yc02qNNtP9sO/cuDRr
-	/8fCf4t2NaxUh7ew++ocqgJ9zwxZrqfnrAlkuhKcoJxthq15JPVXoqH7DqxFiWghv2ZH0RGHtBN
-	rw
-X-Gm-Gg: AZFdTZfn3souPuRBCtltmM6klSZ3Z9PxxzahzjAMuOOs/IzeOJzqwjfhFti58wkrdS5
-	ML12I8ZVhCxRuyuAzSyVTzGMgoV5eSC9ELI8P57PSQzuPclfHvuCyYdiH64PgPU0aS0uz22TjhI
-	9NV6PQT+9Ifv8KUSAuipVaEGfjMAPAYAr+srA5guCXyb7gM2m4pxOoLygl2onmAxY82Rfsx7ptF
-	xSGzQznHPtmVzc4kSZqQcqTv9nBow15diyoFhBAwUqSn9aCEQzsD18Idz8IVvW+o6Xw8qAc3k4z
-	zQsnaFKsW4pcH8PLjwTg/cdapcQCR7MenefYACDuQGYDkutms9mCXfr0X1lO7oHU3G5/agfVWsN
-	x3Kf5xXQtBTGkKuqwacBcB6SJoNAa3lHP/L+TDwFLX5zWEombyECQpbdUHYLawlSAeNlkxIzgB2
-	d/FtE=
-X-Received: by 2002:adf:e010:0:10b0:4a7:518f:bea6 with SMTP id ffacd0b85a97d-4abb3a4d2b1mr5619850f8f.28.1795194601124;
-        Fri, 20 Nov 2026 09:10:01 -0800 (PST)
-X-Received: by 2002:adf:e010:0:10b0:4a7:518f:bea6 with SMTP id ffacd0b85a97d-4abb3a4d2b1mr5619795f8f.28.1795194600653;
-        Fri, 20 Nov 2026 09:10:00 -0800 (PST)
-Received: from jlelli-thinkpadt14gen4.remote.csb ([151.29.158.90])
-        by smtp.gmail.com with ESMTPSA id ffacd0b85a97d-4ab6a680483sm6652201f8f.28.2026.11.20.09.09.59
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Fri, 20 Nov 2026 09:10:00 -0800 (PST)
-Date: Fri, 20 Nov 2026 18:09:58 +0100
-From: Juri Lelli <juri.lelli@redhat.com>
-To: Florent Carli <fcarli@gmail.com>
-Cc: stable@vger.kernel.org, Peter Zijlstra <peterz@infradead.org>,
-	Vincent Guittot <vincent.guittot@linaro.org>,
-	linux-rt-users@vger.kernel.org
-Subject: Re: [REGRESSION] 6.12.y, 6.18.y: fair server runs SCHED_OTHER ahead
- of SCHED_FIFO on an idle CPU (fixed in 6.19)
-Message-ID: <awB-5usPb2QZXt37@jlelli-thinkpadt14gen4.remote.csb>
-References: <CAJuRqcD2=42CTQk2PSHofSmt+=H=qKT-x-ZXD76TwVshaepBAw@mail.gmail.com>
+        bh=6FUYcrD2ChNOm77umqGfBpxNsoS7ZAGf06/dNNITF3g=;
+        b=0STvDZ3DxbDzrMlNybi/Br7sxmh4nuLWf4OHxTlAY9tfs2tGytv1YRrHRqxT14J9rO
+         RZq7zW+h6Ll+erxXK+yqSZbIaB2H0yYq8aFwJEKu/PXQCX6lGXn0h34jYfwAAIDvyotj
+         uHn4oXRWaiQU95Iy4WcTyzCLK4toHeotteyozKJTFYl1GyV/yQWEVrXLJuhzQwP2FG2L
+         iSYVPu0XdUORhV0jhkAL/JgAKzNlVlIB01CMLXAP6wdzJflbjFQVKofr2nbPwz/raJlJ
+         6rzj1exKjtM1zPjDYtIEwMan8shrk4R8Yq6nGBk2yOTAnHm1bXL3jAqvc4fHUNCgedJY
+         K6kQ==
+X-Forwarded-Encrypted: i=1; AL+hErEDq3tX6H88FZIk4/eqn9g83jsi/C/n2EzmwzGrm1Cl71+8TsacB5dPaTCtM/reGpRvLSqnd/uqQD3zgSq+nw==@vger.kernel.org
+X-Gm-Message-State: APuU4Z/AdIpJxRfk4M+4QpdIkNORHTqzrC49v3aPQnkaK3HZmXCoU5Od
+	Mro9Fvsmkb6AEh8Q8yje5qAZEeKcQtSqv6GIaniuVUpAwLBs6w3DNdS8Vq+COTprIMewW61XsAB
+	ZGpqX96EDScQ4pICHTCBDYSUqYSXxEvg=
+X-Gm-Gg: AZFdTZeBzBKpLMqzFL3TQ+z+s6N/NXxhULG1oORvukRSan2prX826B4J3ChVEt6nYtU
+	VljR0tdPUjyQi4uwTqAjkkfw064rxrJ1SX7oEFZQM/kcyDjxrQNbCuAoCdnR4Ndhy39ubW4h0R7
+	DjwiWeSGondYuk1N2Wr9ZspR8MmpVSq79mCkTrRH8flbDte43H2GJeLvQn2sYrN8wECOO3rlBgh
+	c88wDE0LvN8tnJP4Sk4l1cOtoWWxNHqyk4JWdMeNEtM9ZGKd0d+tXQvSpXNkOTFg36VXrRYJiUp
+	Ug7yVx2ryogSE5JqOC9O5oKEQTAXsKHywf/0HJ0iAaTxPHTPYreRbSuGeAZKf7QDqV8FTwMQiSw
+	KAyKkRnkmCRFTrnKwJKsOahuANc+Xseuixh1YeuQZvJwoeH4EPH++hVS7kBmuL1q1Hd1p
+X-Received: by 2002:a17:903:4b07:b0:2ef:de9a:e59 with SMTP id
+ d9443c01a7336-2f03f1a1767mr37410195ad.23.1795198755912; Fri, 20 Nov 2026
+ 10:19:15 -0800 (PST)
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
 List-Post: <mailto:linux-rt-users@vger.kernel.org>
@@ -118,71 +104,130 @@ List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 List-Owner: <mailto:linux-rt-users+owner@vger.kernel.org>
 Precedence: list
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-In-Reply-To: <CAJuRqcD2=42CTQk2PSHofSmt+=H=qKT-x-ZXD76TwVshaepBAw@mail.gmail.com>
+References: <CAJuRqcD2=42CTQk2PSHofSmt+=H=qKT-x-ZXD76TwVshaepBAw@mail.gmail.com>
+ <awB-5usPb2QZXt37@jlelli-thinkpadt14gen4.remote.csb>
+In-Reply-To: <awB-5usPb2QZXt37@jlelli-thinkpadt14gen4.remote.csb>
+From: Florent Carli <fcarli@gmail.com>
+Date: Fri, 20 Nov 2026 19:19:04 +0100
+X-Gm-Features: AclHuK_LqX6_8yrX27ovYiu2OgdiE-yTgZNYyoT5miAuxF8i1_t91IXeVajxW-w
+Message-ID: <CAJuRqcCc-p3OYAp1Sz=qFPRLPgig=Vnnmemz-NsdER35sQHdiQ@mail.gmail.com>
+Subject: Re: [REGRESSION] 6.12.y, 6.18.y: fair server runs SCHED_OTHER ahead
+ of SCHED_FIFO on an idle CPU (fixed in 6.19)
+To: Juri Lelli <juri.lelli@redhat.com>
+Cc: stable@vger.kernel.org, Peter Zijlstra <peterz@infradead.org>, 
+	Vincent Guittot <vincent.guittot@linaro.org>, linux-rt-users@vger.kernel.org, 
+	Gabriele Monaco <gmonaco@redhat.com>
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
 
-Hello,
+Hi Juri,
 
-On 20/11/26 16:09, Florent Carli wrote:
+Thanks a lot for checking.
 
-...
+> It would also help if you could rerun your numbers (latency and the
+> starvation check) on current 6.18.y (64)
 
-> On 6.12.y and 6.18.y, I see it run SCHED_OTHER tasks ahead of RT tasks
-> on a CPU where nothing starves.
+Done, with v6.18.64 built with the Debian 6.18 rt config (PREEMPT_RT,
+PREEMPT_DYNAMIC, default preempt=3Dfull), in the same KVM guest as
+before, 30 s runs, 3 ms spin:
 
-...
+                         max FIFO latency, late wake-ups (> 500 us)
+                         sleep 1.00 s    sleep 1.02 s    sleep 1.04 s
+  6.18.64                3010 us, 15     2998 us, 15     3012 us, 14
+  6.18.64 + 4 commits      23 us, 0        13 us, 0        12 us, 0
 
-> The fix went into 6.19:
-> 
->   e636ffb9e31b ("sched/deadline: Fix dl_server time accounting")
->   f5a538c07df2 ("sched/deadline: Fix dl_server stop condition")
->   1e0a2ba7afb1 ("sched: Provide idle_rq() helper")
->   ca1e8eede4fc ("sched/deadline: Fix server stopping with runnable tasks")
-> 
-> None of them carries a stable tag, and only 1e0a2ba7afb1 applies
-> cleanly to 6.12.y or 6.18.y.
+Starvation check (SCHED_OTHER task on the CPU of a SCHED_FIFO 50 busy
+loop, 4.5 s window): 4.7% of the CPU on both, 0% with the fair_server
+runtime at 0. So 6.18.64 is affected as much as 6.18.15 was, and the
+four commits fix it there.
 
-Thanks for the detailed report and the reproducer, much appreciated.
+Stable team: please pick the following for 6.18.y, in this order. They
+cherry-pick cleanly on v6.18.64:
 
-I had a look and I agree with your analysis. Comparing v6.19 with the
-current stable heads (6.12.118 and 6.18.64), these four are the only
-dl_server changes not yet in either branch. The other dl_server fixes
-from that period (including 115135422562 "Fix 'stuck' dl_server" and
-the two "revised wakeup rule" follow-ups) are already in stable.
+  e636ffb9e31b ("sched/deadline: Fix dl_server time accounting")
+  f5a538c07df2 ("sched/deadline: Fix dl_server stop condition")
+  1e0a2ba7afb1 ("sched: Provide idle_rq() helper")
+  ca1e8eede4fc ("sched/deadline: Fix server stopping with runnable tasks")
 
-On applying them: with git am (no -3) I get exactly what you report,
-on both 6.18.15 and 6.18.64: only 1e0a2ba7afb1 applies on its own. The
-rejects are context only, though (upstream refactors around the
-sched_class callbacks that stable doesn't carry), and a 3-way merge
-takes care of them. With git cherry-pick, applying them in order:
+> - 6.12.y: e636ffb9e31b and f5a538c07df2 apply cleanly.
 
- - 6.18.y: all four apply cleanly, and the result matches upstream.
+They apply, but they don't build as is: both use rq->donor, which
+6.12 doesn't have, so my backport uses rq->curr there. I'll send the
+6.12.y series in reply to this thread, rebased on v6.12.118.
 
- - 6.12.y: e636ffb9e31b and f5a538c07df2 apply cleanly.
-   ca1e8eede4fc only has a context conflict in dl_server_start() and
-   1e0a2ba7afb1 needs a adaptation.
+> Just keep in mind that it removes starvation protection for all fair
+> tasks on those CPUs (kworkers included).
 
-So I'm in favor of taking these for 6.18.y and 6.12.y. 6.18.y should
-go first, so that 6.12.y never carries the fix without the newer
-stable branch also having it.
-
-For 6.18.y, since the commits cherry-pick cleanly, it might be enough
-to ask the stable team to pick them by SHA.
-
-For 6.12.y, could you then send your backport, rebased on the current
-head? Please Cc Peter and Gabriele on both requests, since they authored
-the commits and myself.
-
-It would also help if you could rerun your numbers (latency and the
-starvation check) on current 6.18.y (64), as 6.18.15 is quite a bit
-older and a few dl_server fixes went in since. I tried to reproduce on a
-local VM, but I think my system was too noisy to see what you reported.
-
-Until then, setting fair_server runtime to 0 on the isolated CPUs is
-a reasonable workaround. Just keep in mind that it removes starvation
-protection for all fair tasks on those CPUs (kworkers included).
+Noted, thanks. We only use it until we run a kernel with the fix.
 
 Thanks,
-Juri
+Florent
 
+On Fri, Nov 20, 2026 at 6:10=E2=80=AFPM Juri Lelli <juri.lelli@redhat.com> =
+wrote:
+>
+> Hello,
+>
+> On 20/11/26 16:09, Florent Carli wrote:
+>
+> ...
+>
+> > On 6.12.y and 6.18.y, I see it run SCHED_OTHER tasks ahead of RT tasks
+> > on a CPU where nothing starves.
+>
+> ...
+>
+> > The fix went into 6.19:
+> >
+> >   e636ffb9e31b ("sched/deadline: Fix dl_server time accounting")
+> >   f5a538c07df2 ("sched/deadline: Fix dl_server stop condition")
+> >   1e0a2ba7afb1 ("sched: Provide idle_rq() helper")
+> >   ca1e8eede4fc ("sched/deadline: Fix server stopping with runnable task=
+s")
+> >
+> > None of them carries a stable tag, and only 1e0a2ba7afb1 applies
+> > cleanly to 6.12.y or 6.18.y.
+>
+> Thanks for the detailed report and the reproducer, much appreciated.
+>
+> I had a look and I agree with your analysis. Comparing v6.19 with the
+> current stable heads (6.12.118 and 6.18.64), these four are the only
+> dl_server changes not yet in either branch. The other dl_server fixes
+> from that period (including 115135422562 "Fix 'stuck' dl_server" and
+> the two "revised wakeup rule" follow-ups) are already in stable.
+>
+> On applying them: with git am (no -3) I get exactly what you report,
+> on both 6.18.15 and 6.18.64: only 1e0a2ba7afb1 applies on its own. The
+> rejects are context only, though (upstream refactors around the
+> sched_class callbacks that stable doesn't carry), and a 3-way merge
+> takes care of them. With git cherry-pick, applying them in order:
+>
+>  - 6.18.y: all four apply cleanly, and the result matches upstream.
+>
+>  - 6.12.y: e636ffb9e31b and f5a538c07df2 apply cleanly.
+>    ca1e8eede4fc only has a context conflict in dl_server_start() and
+>    1e0a2ba7afb1 needs a adaptation.
+>
+> So I'm in favor of taking these for 6.18.y and 6.12.y. 6.18.y should
+> go first, so that 6.12.y never carries the fix without the newer
+> stable branch also having it.
+>
+> For 6.18.y, since the commits cherry-pick cleanly, it might be enough
+> to ask the stable team to pick them by SHA.
+>
+> For 6.12.y, could you then send your backport, rebased on the current
+> head? Please Cc Peter and Gabriele on both requests, since they authored
+> the commits and myself.
+>
+> It would also help if you could rerun your numbers (latency and the
+> starvation check) on current 6.18.y (64), as 6.18.15 is quite a bit
+> older and a few dl_server fixes went in since. I tried to reproduce on a
+> local VM, but I think my system was too noisy to see what you reported.
+>
+> Until then, setting fair_server runtime to 0 on the isolated CPUs is
+> a reasonable workaround. Just keep in mind that it removes starvation
+> protection for all fair tasks on those CPUs (kworkers included).
+>
+> Thanks,
+> Juri
+>
