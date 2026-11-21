@@ -1,58 +1,58 @@
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=49.12.199.46
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=100.103.45.18
 ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1795265894;
-	b=w9YvkXhEfDPTnm7ynnp11P9G9MTO84Sflpz1X22TavJOebPpBk4Rp+vKBoDs9eM1hAAi
-	 vonxkALgGICV+KkjahThmXloTMD5PG+EoRGUSygsQ0smaPmzldAWzNTVXMgvQ+RH3xeL6
-	 4tYD5E5ScPmJGKt/SBYzu9+5psVVHz3aSX3eyArz/E+jbTt5MHBHkxKGJMN6+3VvX9zu9
-	 lzoNkFM0D28bhu2MsKSxUUIhXg0Ji8IuFVfmp3FZAv7TKcl4rWqs0aXMZ6uU6mDBRLttE
-	 3s0dr6SXNAG1GRYpRKAEalwthkvWuqxZyKECDB1Py8V1jicFFQkc3DY1aX4L13uOBBA==
+	t=1795274871;
+	b=TexKhepZvRomQlmVRf6ETnvaPU/hs+6Q3FX2PqhgfYIdkZfLASH42M9UKqahZuSEFxlp
+	 5x1vfKv3oGnx+QNo0DxNZ7ZLTtzMtqk50JG3WcBP2ZgTVq11WmjVQsoOkrQaDDxYMzsxQ
+	 9X6K+6Wdody5JW2uW+v9Zb/meytxs3m1a5zliFh6g6Y8x4TIAqAJhlcXuWn+NUS3rMMjZ
+	 yHQi+RwcltI42w7oX6aPTrABz4tTfToELrIC866YlkwukcxRJpDkrlxCWK4v39iElQ6Ca
+	 dpBxeOPQrGXcTmoYeN1tbTUnRaEDF9c79zLGL5Eu6tm3+8Ha78Ty+SOiPKdtm6T2H0g==
 ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1795265894;
-	h=DMARC-Filter:DKIM-Signature:DKIM-Signature:Date:From:To:Subject:
-	 Message-ID:MIME-Version:Content-Type:Content-Disposition;
-	bh=ZK+lBSFkcCGDbs8Ur/722GMJ2Wd+4b9Rad+c5Jgph+s=;
-	b=zh59cYFNmKk2bXXAAG161qxFEvrChCClf1jzMHQe0jjaMOjKIdXyGKFWgqmGSCZwMxl8
-	 5jjW8163cIBZy7zwsZz8GHD2ASGE8MhMp5JJdbA1YLHt3tn/s8tgZADD1czyiOTec5lB7
-	 dGBZJuCZryi4ueQ7rT6yKEOKTrkKeduO8bBB4CZQ1dqfia0iyOqPFXM/Qsg4wzRKli/Gn
-	 kWzLWU/imNI4LIAUwQwR8RPNr1IWQTntWyEFAC58pNkpmx4WubmtnVfQa4Z+1Vd2KjZBS
-	 CJ/oYlE/T3efhXvV7vMMiuQoS6YsBwAIUP/k334azJtD6lz0a0FYOz2RPNnfZ9JeMYw==
+	a=rsa-sha256; c=relaxed/relaxed; t=1795274871;
+	h=Received:DKIM-Signature:From:To:Cc:Subject:Date:Message-ID:X-Mailer:
+	 In-Reply-To:References:MIME-Version:Content-Transfer-Encoding;
+	bh=ThTgZI/78437YCcIY9NTTebxpuiG9tbBO0b5jtrP61w=;
+	b=2ZwHYnkLLEjj7bfJYyQq3SYAa7BgzoNWp7KT1EuF3r4CtgpjdacSG80qnQNHLorSPBwv
+	 L8urZ412Lz+kV0NMbzJlA2a8AOmj5oPGvtiAy4tzxTx6Ih3iumJ6wo+JkHHlLkcucQgmV
+	 wRFHuzlMD2dxtYaRFUtXZL5STXHtPlhqCJLTBVjRC4VUt9sd/seHlABw+XrWoHNfDNHxF
+	 Omwu1h5Zri6Dl+K4vvJMtEI1wT8E5CaFLQa1368t79WAz9tUjaEMD0YxA9XPod2zYqGya
+	 x0giiUeKmnVp+vteiZYfvxCERAraiDRnuWFc2XcCEui7aMUo4YRCJKRi8/Ww6OO/O+Q==
 ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
-	dmarc=pass header.from=monom.org;
-	spf=pass smtp.mailfrom=monom.org;
-	dkim=pass header.d=monom.org header.i=@monom.org header.a=ed25519-sha256 header.s=v1-ed25519-20260726 header.b=4ddMz4Uu;
-	dkim=pass header.d=monom.org header.i=@monom.org header.a=rsa-sha256 header.s=v1-rsa-20260726 header.b=GS+gzwvv;
-	arc=none smtp.remote-ip=49.12.199.46
-Received: from mail.nearlyone.de (mail.nearlyone.de [49.12.199.46])
+	dkim=pass header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=KVxmQRBx;
+	arc=none smtp.remote-ip=100.103.45.18
+Received: from smtp.kernel.org (quasi.space.kernel.org [100.103.45.18])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature ECDSA (prime256v1) server-digest SHA256)
+	 key-exchange X25519 server-signature ECDSA (prime256v1))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id F169F606A320;
-	Sat, 21 Nov 2026 12:58:13 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org F169F606A320
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=monom.org
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=monom.org
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id D476E606A333;
+	Sat, 21 Nov 2026 15:27:51 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass header.d=monom.org header.i=@monom.org header.a=ed25519-sha256 header.s=v1-ed25519-20260726 header.b=4ddMz4Uu;
-	dkim=pass (2048-bit key, unprotected) header.d=monom.org header.i=@monom.org header.a=rsa-sha256 header.s=v1-rsa-20260726 header.b=GS+gzwvv
-DKIM-Signature: v=1; a=ed25519-sha256; s=v1-ed25519-20260726; d=monom.org; c=relaxed/relaxed; r=y;
-	h=Message-ID:Subject:To:From:Date; t=1795265868; bh=ZK+lBSFkcCGDbs8Ur/722GM
-	J2Wd+4b9Rad+c5Jgph+s=; b=4ddMz4Uup/R9CVsknq9Aany1751OgRXHKsoAIgUbyoumYup4DV
-	ky0dLzQa813pbPxgZ36y3H+bLS/rBp+UGSCA==;
-DKIM-Signature: v=1; a=rsa-sha256; s=v1-rsa-20260726; d=monom.org; c=relaxed/relaxed; r=y;
-	h=Message-ID:Subject:To:From:Date; t=1795265868; bh=ZK+lBSFkcCGDbs8Ur/722GM
-	J2Wd+4b9Rad+c5Jgph+s=; b=GS+gzwvvoh/uvOGdxw1SSeXQj/gOVfuC74PB2LOle1DzrmZTn/
-	OLpTcD2Ty1sTHNclxjf5A70d5HReb6g5mCC433NRcAg+0xgF0Hfq+7Niot5kGbbPQVkUwFr9QML
-	t0d3spyMuMJdnxaCuZEziHw8Jc0gb+eJUszUCZzDhAtp5eN7+MH9zHFsR7fwt/L8X4m8jJrFGwB
-	SSCgoz0BGbAo0zCMyZICHrGWsaBFheh6eReCiTxqeD468PYRtZU62R07aZSkcAs+fpu1YAjh+6k
-	c5wTY/fLOQtYU9Ftgi+PkjSIMMCz6ks4MqpaPyr5CgtUd1sETdw/ZC+SiQwl7yPgLow==;
-Date: Sat, 21 Nov 2026 13:57:47 +0100
-From: Daniel Wagner <wagi@monom.org>
-To: LKML <linux-kernel@vger.kernel.org>, linux-rt-users@vger.kernel.org, 
-	stable-rt@vger.kernel.org, Steven Rostedt <rostedt@goodmis.org>, 
-	Thomas Gleixner <tglx@linutronix.de>, Sebastian Andrzej Siewior <bigeasy@linutronix.de>, 
-	Clark Williams <williams@redhat.com>
-Subject: [ANNOUNCE] v6.12.118-rt24
-Message-ID: <5f522636-3555-4694-ac55-923c981eab3f@kernel.org>
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=KVxmQRBx
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id D128B1F000C0;
+	Sat, 21 Nov 2026 15:27:50 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=kernel.org;
+	s=k20260515; t=1795274871;
+	bh=ThTgZI/78437YCcIY9NTTebxpuiG9tbBO0b5jtrP61w=;
+	h=From:To:Cc:Subject:Date:In-Reply-To:References;
+	b=KVxmQRBxz+QM5ZHtPOl2w+IQgYS6UhxAUlvaExTax1UdLW4txNV5Z+55klB6kYlfj
+	 eYlDVP7ZK8f3tidjFQ9O8Q6GIOVTqJpPpclHZ7I0rZvLEPoZFDKuT7XFqYZ2FyquV2
+	 nuJzvQp96QuQivts5rv40mXW0tOiECOpJwtEKXGObURGDM8xMqQQVudi2oyxPSa+1Q
+	 gnZCSDlgqGhNqA6US10BTA1cQ8NW+IwOFbY1S9dHPoiLixDIhMGJNdDIWNOVgMFkO1
+	 qAJF5/Q60h7uo20U0lYUQvnksTx89a4SVw3UmmfArk0BTxmpg5GUfZZ0pCUP1HuXJn
+	 Vig3w6ij6U9tQ==
+From: Sasha Levin <sashal@kernel.org>
+To: stable@vger.kernel.org
+Cc: Sasha Levin <sashal@kernel.org>,
+	Juri Lelli <juri.lelli@redhat.com>,
+	Peter Zijlstra <peterz@infradead.org>,
+	Gabriele Monaco <gmonaco@redhat.com>,
+	linux-rt-users@vger.kernel.org,
+	Florent Carli <fcarli@gmail.com>
+Subject: Re: [PATCH 6.12.y 0/4] sched/deadline: dl_server fixes from 6.19
+Date: Sat, 21 Nov 2026 10:27:32 -0500
+Message-ID: <2026-11-21-1-daily-reply-0004@kernel.org>
+X-Mailer: git-send-email 2.53.0
+In-Reply-To: <20261120181949.7528-1-fcarli@gmail.com>
+References: <20261120181949.7528-1-fcarli@gmail.com>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
 List-Post: <mailto:linux-rt-users@vger.kernel.org>
@@ -62,42 +62,14 @@ List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 List-Owner: <mailto:linux-rt-users+owner@vger.kernel.org>
 Precedence: list
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
+Content-Transfer-Encoding: 8bit
 
-Hello RT-list!
+> This is the 6.12.y backport of the dl_server fixes discussed in the
+> parent thread: on 6.12.y, the deferred fair server can run a
+> SCHED_OTHER task ahead of SCHED_FIFO tasks on an almost idle CPU.
 
-I'm pleased to announce the 6.12.118-rt24 stable release.
+Queued the series for 6.12, thanks.
 
-Changes since 6.12.117-rt23:
-
-  - none
-
-The delta patch against 6.12.117-rt23 is appended below.
-
-You can get this release via the git tree at:
-
-  https://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git v6.12.118-rt24
-
-  branch: v6.12-rt
-
-Or to build 6.12.118-rt24 directly, the following patches should be applied:
-
-  https://www.kernel.org/pub/linux/kernel/v6.x/linux-6.12.tar.xz
-
-  https://www.kernel.org/pub/linux/kernel/v6.x/patch-6.12.118.xz
-
-  https://www.kernel.org/pub/linux/kernel/projects/rt/6.12/older/patch-6.12.118-rt24.patch.xz
-
-Signing key fingerprint:
-
-  5BF6 7BC5 0826 72CA BB45  ACAE 587C 5ECA 5D0A 306C
-
-All keys used for the above files and repositories can be found on the
-following git repository:
-
-   https://git.kernel.org/pub/scm/docs/kernel/pgpkeys.git
-
-Enjoy!
-Daniel
-
+-- 
+Thanks,
+Sasha
