@@ -1,93 +1,93 @@
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=209.85.160.169
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=209.85.219.52
 ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1795482516;
-	b=4yfAJJdBILZ9+t9ix0SYjkA5/OJyuIyyS9WW6oVPvfRrL61AsKJbGz135t5K9ZUKX+jU
-	 OzAHlKBh97+xrUmHCRZdniuJH9aN4bA7Sz60D5b+yLBkTSKbnHpVNndRGKNdzOtQ6vqpi
-	 8BS7GTP0iLCiQLn9lJDIoVPGpqHH7b9s6qgxqVbcPzp/gNtOV4dh/b2FmBNEka/D29mKq
-	 CAtSu7cgzeqjjaXgaSBbVJoX0spQpHiYdwsi7WZFKniFc3+0EcAWL79/uwyDln6FZxuuK
-	 6Prc0xmerXYtDoCcsm+qUUjfq9tyT9vA82AmqxhOFoAqlKucYexiC3wcxeIrAoIqbdA==
+	t=1795482518;
+	b=kG7NpxdnDeio9vnq0yZeKe6J9gQm6lciMNKVAgl9QfwaHQLVgOoVD2eA/R+f7jnc3Lsc
+	 spqkXi4/Tx1k95aag9bAcxGAcH2gyT8JhunTQQHVh88r/wvCeUJs9NShPtUUW84dxjPT+
+	 tOiCzxjrw/D1VA3321jla6MEgRgK624w/qidbjekLuyXWrlWFVE25h7MwEqENhfQFSKjL
+	 8UqrTG47yQs+1eoD2thlIZZUcGpLVlPdp0tUpN0Borq1Yn55LEnxdO6B8Qfz97J2zFsBH
+	 cprYvjZ7Lq0QPrwjYWLQO4rvJZP8mHVfOrZvXNwvxEDRlo95d/oJNv/yQe60QDfOsTA==
 ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1795482516;
+	a=rsa-sha256; c=relaxed/relaxed; t=1795482518;
 	h=DMARC-Filter:Received:DKIM-Signature:X-Google-DKIM-Signature:
 	 X-Gm-Message-State:X-Gm-Gg:X-Received:Received:Sender:From:To:Cc:
 	 Subject:Date:Message-ID:X-Mailer:In-Reply-To:References:MIME-Version:
 	 Content-Transfer-Encoding;
-	bh=k53qb80BuDDrVx8TdgPYzOXepk57HTnu97m5mswrW4Y=;
-	b=0BdOVGts70arOaseekeWl/4q7zgPYPQaKGZ29s9KbdIU22B9p4b1tG8q53+0IYO9BFzn
-	 AO0fQgRmdYIMbeujaMwbg0BRPCMtX3Dtcx3nKOpr39yNw4yjrvpXCRZx1m6JvVMhtLgvu
-	 vCZeBVLchHWFuzoSPM5T/03xkJKn0nF4hvCjrm9/MTofVK1wGrzF/FK+eSp3YeYoWiMXO
-	 VU+Or+S9cVg0x5o9qDPHXSHTycnoj07YWFQP8ZR9sNYLH+HowAZqROBqj9lOIwHPxIiBI
-	 Fi6pXCqw9mKULAis0ySmOvCi9QyT04E+t8oQL/N1AH9jGSx9QIjdUhHJ6fMf/kV8KbQ==
+	bh=nMuz/YdOluImCqwxfhfBEIm9Dp08SmuJqy1acwtPW2c=;
+	b=5hq7cidAu7bE+ZKDt48MqH6Jf6sFWtfskqdoTrxen38hFwMXIMtarPdI7k2QuvnVS1ms
+	 oxEZFMD0klNHDxMnismXbP05rVZ0+u+q8qGQ2wIQLI4xYPcL0aC05DX7vD2mQdC3Vm6KN
+	 8Tgf7wBoHIPPJ0SxpaLAU0JcPO2wU0Lra+8PJKQtZR02jAZ6PZq3I7tHVDN2EConcPe63
+	 gwvxg3ED0hZfKMgnILq4lNCU9GJZeaQQe+ehWjZy7rsrznc+v32U0pTnZ7U4QNI4nZf7i
+	 AqDG8RrAabCTT1IAIKxRYSTqNPwOP7fT6kaYmyxtVczQsW0l4di6ARukoxHQcfhPyew==
 ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
 	dmarc=fail header.from=redhat.com;
 	spf=pass smtp.mailfrom=gmail.com;
-	dkim=pass header.d=gmail.com header.i=@gmail.com header.a=rsa-sha256 header.s=20260707 header.b=Mty+UAWl;
-	arc=none smtp.remote-ip=209.85.160.169
-Received: from mail-qt1-f169.google.com (mail-qt1-f169.google.com [209.85.160.169])
+	dkim=pass header.d=gmail.com header.i=@gmail.com header.a=rsa-sha256 header.s=20260707 header.b=hSqsdJla;
+	arc=none smtp.remote-ip=209.85.219.52
+Received: from mail-qv1-f52.google.com (mail-qv1-f52.google.com [209.85.219.52])
 	(using TLSv1.3 with cipher TLS_AES_128_GCM_SHA256 (128/128 bits)
 	 key-exchange X25519 server-signature ECDSA (prime256v1) server-digest SHA256)
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id E6477606A32E
-	for <linux-rt-users@vger.kernel.org>; Tue, 24 Nov 2026 01:08:35 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org E6477606A32E
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id CA45F606A32E
+	for <linux-rt-users@vger.kernel.org>; Tue, 24 Nov 2026 01:08:37 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org CA45F606A32E
 Authentication-Results: smtp.subspace.kernel.org; dmarc=fail (p=quarantine dis=none) header.from=redhat.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.a=rsa-sha256 header.s=20260707 header.b=Mty+UAWl
-Received: by mail-qt1-f169.google.com with SMTP id d75a77b69052e-5495d549924so44236901cf.1
-        for <linux-rt-users@vger.kernel.org>; Mon, 23 Nov 2026 17:08:35 -0800 (PST)
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.a=rsa-sha256 header.s=20260707 header.b=hSqsdJla
+Received: by mail-qv1-f52.google.com with SMTP id 6a1803df08f44-9213fddb596so49123386d6.2
+        for <linux-rt-users@vger.kernel.org>; Mon, 23 Nov 2026 17:08:37 -0800 (PST)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20260707; t=1795482515; x=1796087315; darn=vger.kernel.org;
+        d=gmail.com; s=20260707; t=1795482517; x=1796087317; darn=vger.kernel.org;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:sender:from:to:cc:subject:date
          :message-id:reply-to:content-type;
-        bh=k53qb80BuDDrVx8TdgPYzOXepk57HTnu97m5mswrW4Y=;
-        b=Mty+UAWlXFRol7h++Xq5nUrghMQgOD99a+1Hjf7EeY54zu6pKhlFDX4e1FagXNCWdQ
-         JPadJRSMwXZn/uHY5of3obnkC9PCudYk6RwbYa/nQqkxNOQoCvRVXskFG5z2bDVDPfcg
-         24unBb/P7aXlr+YlH6m8ky31i6tK5h4mOf3d6Y7/SPRvwAhbjMQXN75JcGR4jLaDMEZ0
-         FPMIMnJ6oTl4xtoRJiTyN8WbdZN+Vy1NI1RX4lBKoGsQrskQOgt/6No63GbeWcPQC4k3
-         D06Yg50lFEuTaU3kcAoCjjaRIGOrUIbC0yW74mAi/Q/f9MrIbUgS9mmfZ7pnjg1UPUhH
-         8UVA==
+        bh=nMuz/YdOluImCqwxfhfBEIm9Dp08SmuJqy1acwtPW2c=;
+        b=hSqsdJlasbno+gpuRowjBg6q/daBcBrY9nFEViUL99JjbpJBRfT6LDOQ0kietgLv1P
+         k9E/gzkKKEjVN0eU5RpcvmJepfy6XCZqzVJ5B0TMgNJYSt8CD/FXnSvHnrBflmf61CmB
+         db8a6ADsr8QVeezJ8zFqRIn8kFBAuhC5T5Tw9gc//TCIQbSwVux8ZBcACeH+CbUQburm
+         A6+1U7eRr4p0Ek7KGmTELVevRU+dbLhJLjTsbX7lbssgorIPfCa5UV8+rkXOxq583Cp6
+         0vvhFsfeqAicpYPSQQV5bdCY6cNmg8rnDg3HrNnl5snK25N/5PimtL9nJQlGzBs6z2r0
+         gIIQ==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20260707; t=1795482515; x=1796087315;
+        d=1e100.net; s=20260707; t=1795482517; x=1796087317;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:sender:x-gm-gg
          :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to
          :content-type;
-        bh=k53qb80BuDDrVx8TdgPYzOXepk57HTnu97m5mswrW4Y=;
-        b=otWxdoROtcNCL3lNJnoT4tJvOX5QepfiFVcwVfeFzRh+cogHsyt65jcHbRVdba61nP
-         YO6wXMSFoG8sX1tCPEc1tjPTwf4TuSMkNrBmFjhk5tYFnvmJsM2lv0pgFI+z2gSDO2RU
-         ybrQgPO66anAEyaXISEmAo9gT/9AEGPM0VSroKDnRRhro+iart1mQFmzG6rHmSOC4GcM
-         xvdvVA4ffgiW7CspBIH/6igtE7mSwUcx9BnagITvYpECLzBCqsjcMkO0AFoZlxMUok2r
-         c81M+C4IDkqxOrU4ttZwQjJ9onGrMFqPxYyjqD3xU3zKc/ThDhV3zlGXoSpHyRs6EOsk
-         Nkfw==
-X-Gm-Message-State: APuU4Z8jGugTytIBtoi8mZIdne5NtMk2Ta7UP93PJ9D3Dn3Bdu2Aox0t
-	qQrADQ5WFZ2OtLgBLspGiKky1UOSe6LE7K+Z/AK5p5fM3wLEKgp+s1yzlEN/vQ==
-X-Gm-Gg: AZFdTZcdvqYdFgkydgW1MFSipHqfBn0mfmIFcNlNxi1YdmfD3U/bH3w6aWTFVf3zv8E
-	pHhqH5hu8C7I1gb+Gy7M/1SNpFokxV5JlErn2MXflPG+bd1n0HirVM+2DJdHNMGca8Dm4N5FRJu
-	O4HIjgROYixiDsW3wchuz/p6+JlnyTzmu/duUS4/07V5vjmhf2IHl1u1qVqCD23OwgkaVKXvJE5
-	zbzPBphABuXN7IoejISjX1uzEY1TlSuyBVD5ef1jwWjlqa37bCNwImcmWjZTCOqGCSiPhf55Usa
-	PcclPr9DLvRT6EyQMr1ha1V9sX4HlXpJC34j24t3AR6C8NlbU8H3bSd9R02VS1Kovuu7gCStYxO
-	ZvOeT/ZQw4rrhcnp6RmodEPYOICLi9GOfUgB+dRP3JXKy/uziUz2+wtLE2Lh6dZhLKv+RLyom4h
-	duJR51aPN8KdfX5FtUZnF24ooiFfP9Hqv+fE1m8+ObAsp9ftG9OJKTPMJK3ZUMce/I7Ja+96R8a
-	RZaZl2sBQYsoHpbkShu+n/1VQr+lsv0BQekKj+QZHiHezuUA5ymqMEfDusZimsJ8YeaSkld0jPV
-	qkK/jR/O5jg13RfRiydtnuPWbB4ec4sndeAVb/twXH9cff8hdxYFSip9bzLU13KWk6eRK0xpVad
-	HR5LKlWmljJqd49DHHM2gZo7i86zyvgWcCUcx
-X-Received: by 2002:a0c:f007:0:b0:91e:cb6c:a50f with SMTP id 6a1803df08f44-92134ac3de1mr194174226d6.33.1795482514836;
-        Mon, 23 Nov 2026 17:08:34 -0800 (PST)
+        bh=nMuz/YdOluImCqwxfhfBEIm9Dp08SmuJqy1acwtPW2c=;
+        b=I+wj0P1bD7DQ8gKf69SOwlsnbD5YyjzJGJXRi3GJhvpPoGjEjDmvNhSNvWBfcPefNK
+         kniD6gSDKGBSCXlJzSW5gWzsuFcrRAL+oxDJH8PMvktAMH+/b6AxT8+tMJq0p/b39Rp5
+         Wau4LlqkDs+Cne0fE9qmXgkdXZDkyd0arWd5zvU7Qe1KbYZBWY2dWxllXNBhcZ90hTD4
+         GGpz/BHTiweNI35Plcw5IiLba3ufYZe142mNuDFN2sIb5/17B0Y7YSi60CzdUF1pcYxv
+         NDs7Hmiy8fhkoyfFziC56K6Ilq9VIktOPQh+fbNGggAbHrIXaCkX2F+sq8tmUzE91Ryw
+         V41g==
+X-Gm-Message-State: APuU4Z+DY8v9eQLgvA5XGuauU9svCBM1443qnA51FGzqaPxa9vEIlVQ4
+	y0wge9lx/gr/yGgvaR4KklzWCRNl+rQblwFL/SX18BDGg2ijqdu2zQIw4hPONA==
+X-Gm-Gg: AZFdTZeI9EIsk2AeNAjYFWRcNlLgYTkTVI3QbeYAW+tAIS1X1dbxo4zVOnNcSIFzIfz
+	yS9sqfE2gW2PcK2iXjfrHuWiuyYPkz4BmN2LE4n9K+U3KKq73tH6JIL9iWtnuKV9GPgSzewQIUS
+	KbR7VBVpWRZchxxnWutOyaigIG1XJ56v1U5o5VMdzgdbsc5tIT6LhUMeDi/QQT8VHd5sTyq/L3y
+	2YzoidrEMY/7Jrvnb0lNPRQ2iwWglC3CJkNr1DEJNTpMfYNdw5Q1z1xfvmq6RR0NtK8gllu6wPc
+	0GVAgpxGsL/IaryT8FpxyFrttFgcb93L8AojKRDxNXbYEC6eROZ7iG1VQrhmX5Fa0AB4iJ8vOdh
+	wyyCUzuPM0N3A+yGaoxUhYebhPTv/Nd/t/+onn++Mt1l/TN8pSvn7G6xYph12gzd7WzG84sS1Si
+	4RBCW2VZ01DpspAP0mQ7FRTBzmfUd0zb4PY5s/5ZsWYzzxlT+Xq1tXZ6xCKZYTTXmHYZteSjXjR
+	bIMfEJ1RyCf0q9bSaZURFamdBod6XSW2NsFW36kbSM6+n9f/DYjAkRyZoCNlKIwAyuFq+rNsV6E
+	1yOUPwPQsmG+I/MQpU3VgmUC69tzFMlX3re6K/D2H06neOssDvoaV8PSZxmX2AP4+mxisTOiP3T
+	Lf+LiUqnVXAI68h4VnNd7CRoU4ibI8TOjzSjD
+X-Received: by 2002:a05:6214:c6e:b0:91e:d612:a120 with SMTP id 6a1803df08f44-921347740ccmr244237126d6.0.1795482516718;
+        Mon, 23 Nov 2026 17:08:36 -0800 (PST)
 Received: from jkacur-thinkpadp1gen8.rmtcaon.csb ([70.53.46.49])
-        by smtp.gmail.com with ESMTPSA id 6a1803df08f44-921349d14d1sm120624806d6.18.2026.11.23.17.08.33
+        by smtp.gmail.com with ESMTPSA id 6a1803df08f44-921349d14d1sm120624806d6.18.2026.11.23.17.08.34
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Mon, 23 Nov 2026 17:08:34 -0800 (PST)
+        Mon, 23 Nov 2026 17:08:36 -0800 (PST)
 Sender: John Kacur <jkacur@gmail.com>
 From: John Kacur <jkacur@redhat.com>
 To: linux-rt-users@vger.kernel.org
 Cc: Sana Sharma <sansshar@redhat.com>,
 	Clark Williams <williams@redhat.com>,
 	Chris White <chwhite@redhat.com>
-Subject: [PATCH 4/6] rteval: Make core-sharing tests independent of host SMT topology
-Date: Mon, 23 Nov 2026 20:07:46 -0500
-Message-ID: <fd73ec160d0e0168acf4d1160db4c24d175b8edb.1795478784.git.jkacur@redhat.com>
+Subject: [PATCH 5/6] rteval: Skip cpuset partition tests when CPUs are not cgroup-usable
+Date: Mon, 23 Nov 2026 20:07:47 -0500
+Message-ID: <bdff64f75c1d83d6387c5ea6f913c2989da42556.1795478784.git.jkacur@redhat.com>
 X-Mailer: git-send-email 2.56.1
 In-Reply-To: <cover.1795478784.git.jkacur@redhat.com>
 References: <cover.1795478784.git.jkacur@redhat.com>
@@ -102,73 +102,94 @@ Precedence: list
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 
-The core-sharing tests in tests/test_core_sharing_validation.py mocked the
-isolated CPU list but not the core-sibling data, which is read from sysfs via
-CoreSiblings. They therefore assumed an SMT topology where CPUs 0 and 8 are
-thread siblings and 1 and 9 are thread siblings.
+TestCpusetManagerHousekeepingPartitions hardcodes CPUs 0-3 and asserts that the
+housekeeping/measurement cpusets become partition=isolated. Some systems hold
+CPUs out of the root cgroup's cpuset.cpus.effective -- via isolcpus=, or a
+systemd/tuned cpu-partitioning setup (e.g. Fedora CSB reserves CPUs 0-5 with no
+isolcpus= boot parameter). Such CPUs cannot form an isolated partition, so the
+kernel reports:
 
-On a host without SMT (and on many VMs) no two CPUs share a core, so
-validate_core_sharing() produced no warnings and, in turn, no
-CoreSharingWarnings XML node. Four tests failed even though the product code
-was correct:
+    isolated invalid (Invalid cpu list in cpuset.cpus.exclusive)
 
-  - test_housekeeping_measurement_share_core
-  - test_multiple_conflicts
-  - test_isolated_marker_in_warnings
-  - test_xml_report_generation
+and test_housekeeping_isolated_flag and test_measurement_always_isolated fail
+under sudo make test-all. The product code is correct: an isolated partition
+built from CPUs that are in cpuset.cpus.effective works.
 
-Mock CoreSiblings.share_core() in setUp() so the sibling topology is
-deterministic (0<->8 and 1<->9), making the suite reproducible on any machine
-as the file originally intended.
+Skip the two affected tests when the CPUs they use are not in
+cpuset.cpus.effective, so the suite is green on such systems while still running
+normally elsewhere. A follow-up should pick usable CPUs from
+cpuset.cpus.effective instead of hardcoding them.
 
 Assisted-by: Claude:claude-opus-4-8
 Signed-off-by: John Kacur <jkacur@redhat.com>
 ---
- tests/test_core_sharing_validation.py | 24 ++++++++++++++++++++++++
- 1 file changed, 24 insertions(+)
+ tests/test_cpusetmanager.py | 39 +++++++++++++++++++++++++++++++++++++
+ 1 file changed, 39 insertions(+)
 
-diff --git a/tests/test_core_sharing_validation.py b/tests/test_core_sharing_validation.py
-index 383b028516c1..05de4590bd35 100755
---- a/tests/test_core_sharing_validation.py
-+++ b/tests/test_core_sharing_validation.py
-@@ -26,6 +26,19 @@ from rteval.sysinfo.cputopology import CPUtopology
+diff --git a/tests/test_cpusetmanager.py b/tests/test_cpusetmanager.py
+index 3da042dbeaad..50ec478a7427 100644
+--- a/tests/test_cpusetmanager.py
++++ b/tests/test_cpusetmanager.py
+@@ -23,6 +23,43 @@ from rteval import cpuset
  from rteval.Log import Log
  
  
-+# These tests assume an SMT topology where CPUs 0 & 8 are thread siblings and
-+# 1 & 9 are thread siblings.  The real sibling relationships come from sysfs via
-+# CoreSiblings, so mock share_core() here to keep the tests reproducible on any
-+# machine -- otherwise they fail on hosts without SMT (where no CPUs share a
-+# core) even though the product code is correct.
-+_SIBLING_PAIRS = {frozenset((0, 8)), frozenset((1, 9))}
++def _expand_cpulist(s):
++    """Expand a cpuset list string like '0-5,8' into a set of ints."""
++    cpus = set()
++    for part in s.split(','):
++        part = part.strip()
++        if not part:
++            continue
++        if '-' in part:
++            start, end = part.split('-')
++            cpus.update(range(int(start), int(end) + 1))
++        else:
++            cpus.add(int(part))
++    return cpus
 +
 +
-+def _fake_share_core(cpu1, cpu2):
-+    """Deterministic stand-in for CoreSiblings.share_core()."""
-+    return frozenset((cpu1, cpu2)) in _SIBLING_PAIRS
++def _skip_if_isolated(test, cpus):
++    """Skip test if any of cpus are not usable by cgroup cpusets.
++
++    Some systems hold CPUs out of the root cgroup's cpuset.cpus.effective
++    (via isolcpus=, or a systemd/tuned cpu-partitioning setup -- e.g. Fedora
++    CSB reserves 0-5 with no isolcpus= boot parameter). Such CPUs cannot form
++    an isolated partition, so a test that hardcodes them would spuriously
++    fail. A later change should pick usable CPUs from cpuset.cpus.effective
++    instead of hardcoding them.
++    """
++    try:
++        with open('/sys/fs/cgroup/cpuset.cpus.effective') as f:
++            usable = _expand_cpulist(f.read().strip())
++    except OSError:
++        return
++    missing = sorted(set(cpus) - usable)
++    if missing:
++        test.skipTest(f"CPUs {missing} are not in cpuset.cpus.effective "
++                      "(reserved outside the root cgroup); cannot form an "
++                      "isolated partition")
 +
 +
- class TestCoreSharingValidation(unittest.TestCase):
-     """Test suite for core sharing validation with mocked isolated CPUs"""
+ class TestCpusetManagerBasic(unittest.TestCase):
+     """Test basic CpusetManager functionality (non-root tests)"""
  
-@@ -33,6 +46,17 @@ class TestCoreSharingValidation(unittest.TestCase):
-     # Based on typical topology: CPUs 0 and 8 share a core, 1 and 9 share a core
-     MOCK_ISOLATED_CPUS = [0, 8, 1, 9]
+@@ -74,6 +111,7 @@ class TestCpusetManagerHousekeepingPartitions(unittest.TestCase):
  
-+    def setUp(self):
-+        """Mock CoreSiblings so core-sharing is deterministic on any host.
-+
-+        validate_core_sharing() imports CoreSiblings from
-+        rteval.sysinfo.coresiblings at call time, so patch it there.
-+        """
-+        patcher = patch('rteval.sysinfo.coresiblings.CoreSiblings')
-+        mock_cs_cls = patcher.start()
-+        self.addCleanup(patcher.stop)
-+        mock_cs_cls.return_value.share_core.side_effect = _fake_share_core
-+
-     @patch('rteval.systopology.SysTopology')
-     def test_housekeeping_measurement_share_core(self, mock_systopo):
-         """Test warning when housekeeping and measurement share a core"""
+     def test_housekeeping_isolated_flag(self):
+         """Test that housekeeping_isolated=True makes partition=isolated"""
++        _skip_if_isolated(self, [0, 1, 2, 3])
+         with CpusetManager(
+             housekeeping_cpus=[0, 1],
+             measurement_cpus=[2, 3],
+@@ -89,6 +127,7 @@ class TestCpusetManagerHousekeepingPartitions(unittest.TestCase):
+ 
+     def test_measurement_always_isolated(self):
+         """Test that measurement cpuset is always partition=isolated"""
++        _skip_if_isolated(self, [0, 1, 2, 3])
+         # Test with housekeeping_isolated=False
+         with CpusetManager(
+             housekeeping_cpus=[0, 1],
 -- 
 2.56.1
 
